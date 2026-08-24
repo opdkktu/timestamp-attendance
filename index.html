@@ -410,7 +410,8 @@ function requestLocation(){
     }
 
     const onSuccess = pos => {
-      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, name: '' };
+      reverseGeocode(userLocation.lat, userLocation.lng);
       resolve();
     };
 
