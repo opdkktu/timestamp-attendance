@@ -318,7 +318,7 @@
 <script>
 /* ============ CONFIG — fill in your deployed Apps Script Web App URL ============ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
-const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master';
+const MODEL_URL = './models';        // self-hosted — see setup note below, avoids CDN reliability issues
 const MATCH_THRESHOLD = 0.5;         // lower = stricter match
 const AMBIGUITY_MARGIN = 0.07;       // min gap needed between best and 2nd-best match
 const RECOGNIZE_STABLE_FRAMES = 3;   // consecutive detections before we lock a match
@@ -333,6 +333,14 @@ let lastCandidate = null;
 let lastLoggedIc = null;
 let lastLoggedAt = 0;
 let isOffline = false;
+let modelsReady = false;
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled error:', e.reason);
+  if(!modelsReady){
+    showLoadError(e.reason && e.reason.message ? e.reason.message : 'Failed to load recognition models');
+  }
+});
 
 window.addEventListener('DOMContentLoaded', init);
 window.addEventListener('online', () => setOffline(false));
@@ -353,6 +361,7 @@ async function init(){
 
   overlay.classList.remove('error', 'hide');
   setOffline(!navigator.onLine);
+  modelsReady = false;
 
   try{
     await requestLocation();
@@ -416,10 +425,17 @@ function requestLocation(){
 async function loadModels(){
   setProgress(10, 'Loading face detection model');
   await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+  if(!faceapi.nets.tinyFaceDetector.isLoaded) throw new Error('Face detection model failed to load');
+
   setProgress(30, 'Loading landmark model');
   await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+  if(!faceapi.nets.faceLandmark68Net.isLoaded) throw new Error('Landmark model failed to load');
+
   setProgress(50, 'Loading recognition model');
   await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+  if(!faceapi.nets.faceRecognitionNet.isLoaded) throw new Error('Recognition model failed to load');
+
+  modelsReady = true;
   setProgress(60, 'Models ready');
 }
 
@@ -486,14 +502,21 @@ function hideOverlay(){
 }
 
 async function detectLoop(){
-  if(!scanning || isOffline){
+  if(!scanning || isOffline || !modelsReady){
     if(isOffline) statusLine.textContent = 'Waiting for connection…';
     requestAnimationFrame(detectLoop);
     return;
   }
 
-  const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-    .withFaceLandmarks().withFaceDescriptor();
+  let det = null;
+  try{
+    det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks().withFaceDescriptor();
+  }catch(err){
+    console.warn('Detection frame skipped:', err);
+    requestAnimationFrame(detectLoop);
+    return;
+  }
 
   if(det){
     ring.classList.add('scanning');
