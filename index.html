@@ -408,17 +408,27 @@ function requestLocation(){
       document.getElementById('locationBlocker').classList.add('show');
       return reject(new Error('Geolocation not supported'));
     }
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        resolve();
-      },
-      () => {
-        document.getElementById('locationBlocker').classList.add('show');
-        reject(new Error('Location permission denied'));
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+
+    const onSuccess = pos => {
+      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      resolve();
+    };
+
+    const onFail = () => {
+      document.getElementById('locationBlocker').classList.add('show');
+      reject(new Error('Location permission denied'));
+    };
+
+    // Laptops have no GPS chip, so enableHighAccuracy forces CoreLocation
+    // (macOS) to attempt a GPS-grade fix and it can fail outright
+    // (kCLErrorLocationUnknown) instead of falling back to WiFi-based
+    // positioning. We don't need GPS precision here — just confirmation
+    // the device is on-site — so ask for standard accuracy first.
+    navigator.geolocation.getCurrentPosition(onSuccess, () => {
+      // One retry with a longer timeout in case it was just slow to resolve
+      navigator.geolocation.getCurrentPosition(onSuccess, onFail,
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 });
+    }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
   });
 }
 
