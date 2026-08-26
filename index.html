@@ -401,6 +401,23 @@ function setProgress(pct, sub){
   if(sub) overlaySub.textContent = sub;
 }
 
+/** Turns raw coordinates into a readable place name via OpenStreetMap Nominatim (free, no API key). */
+async function reverseGeocode(lat, lng){
+  try{
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+    const data = await res.json();
+    const addr = data.address || {};
+    const name = addr.amenity || addr.building || addr.road || addr.suburb || addr.village || addr.town || data.display_name || '';
+    if(userLocation){
+      userLocation.name = name;
+      const note = document.getElementById('locationNote');
+      if(note && name) note.textContent = `Checking in from: ${name}`;
+    }
+  }catch(err){
+    console.warn('Reverse geocoding failed (coordinates still recorded):', err);
+  }
+}
+
 function requestLocation(){
   document.getElementById('locationBlocker').classList.remove('show');
   return new Promise((resolve, reject) => {
@@ -596,7 +613,8 @@ async function handleMatch(ic, name){
         action: 'logAttendance',
         ic, name,
         lat: userLocation ? userLocation.lat : '',
-        lng: userLocation ? userLocation.lng : ''
+        lng: userLocation ? userLocation.lng : '',
+        locName: userLocation ? userLocation.name : ''
       })
     });
     const data = await res.json();
