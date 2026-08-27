@@ -171,6 +171,31 @@
     opacity:.75;
   }
  
+  .location-map{
+    margin-top:14px;
+    border-radius:14px;
+    overflow:hidden;
+    border:1px solid var(--line);
+    display:none;
+  }
+  .location-map.show{ display:block; }
+  .location-map iframe{
+    width:100%; height:140px; border:0; display:block;
+  }
+  .geo-coords{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 12px;
+    background:var(--mint-100);
+    font-size:11px;
+    color:var(--ink-500);
+    font-variant-numeric:tabular-nums;
+  }
+  .geo-coords .place-name{
+    font-weight:600; color:var(--teal-900);
+    max-width:60%;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+ 
   /* Loading overlay */
   .overlay{
     position:fixed; inset:0;
@@ -309,6 +334,14 @@
     </div>
  
     <div class="foot-note" id="locationNote">Location is recorded with every check-in to prevent misuse.</div>
+ 
+    <div class="location-map" id="locationMap">
+      <iframe id="mapFrame" loading="lazy" title="Your current location"></iframe>
+      <div class="geo-coords">
+        <span class="place-name" id="placeName">Locating…</span>
+        <span id="coordsText">—</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -324,6 +357,7 @@ const AMBIGUITY_MARGIN = 0.07;       // min gap needed between best and 2nd-best
 const RECOGNIZE_STABLE_FRAMES = 3;   // consecutive detections before we lock a match
 const COOLDOWN_MS = 15000;           // ignore repeat scans of same person for this long
 
+
 let video, ring, statusLine, overlay, overlaySub, progressFill;
 let labeledDescriptors = [];
 let userLocation = null;
@@ -334,23 +368,23 @@ let lastLoggedIc = null;
 let lastLoggedAt = 0;
 let isOffline = false;
 let modelsReady = false;
-
+ 
 window.addEventListener('unhandledrejection', (e) => {
   console.error('Unhandled error:', e.reason);
   if(!modelsReady){
     showLoadError(e.reason && e.reason.message ? e.reason.message : 'Failed to load recognition models');
   }
 });
-
+ 
 window.addEventListener('DOMContentLoaded', init);
 window.addEventListener('online', () => setOffline(false));
 window.addEventListener('offline', () => setOffline(true));
-
+ 
 function setOffline(state){
   isOffline = state;
   document.getElementById('offlineBanner').classList.toggle('show', state);
 }
-
+ 
 async function init(){
   video = document.getElementById('video');
   ring = document.getElementById('ring');
@@ -358,11 +392,11 @@ async function init(){
   overlay = document.getElementById('overlay');
   overlaySub = document.getElementById('overlaySub');
   progressFill = document.getElementById('progressFill');
-
+ 
   overlay.classList.remove('error', 'hide');
   setOffline(!navigator.onLine);
   modelsReady = false;
-
+ 
   try{
     await requestLocation();
     await loadModels();
@@ -378,13 +412,13 @@ async function init(){
     }
   }
 }
-
+ 
 function showLoadError(message){
   document.getElementById('overlayMsg').textContent = 'Could not start check-in';
   overlaySub.textContent = message || 'Please check your connection and try again';
   overlay.classList.add('error');
 }
-
+ 
 async function retryCamera(){
   document.getElementById('cameraBlocker').classList.remove('show');
   try{
@@ -395,12 +429,22 @@ async function retryCamera(){
     document.getElementById('cameraBlocker').classList.add('show');
   }
 }
-
+ 
 function setProgress(pct, sub){
   progressFill.style.width = pct + '%';
   if(sub) overlaySub.textContent = sub;
 }
-
+ 
+/** Shows a small embedded OpenStreetMap (no API key needed) plus raw coordinates, right after a location fix. */
+function showLocationMap(lat, lng){
+  const delta = 0.003; // small bounding box for a close-in view
+  const bbox = `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`;
+  document.getElementById('mapFrame').src =
+    `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&marker=${lat},${lng}&layer=mapnik`;
+  document.getElementById('coordsText').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  document.getElementById('locationMap').classList.add('show');
+}
+ 
 /** Turns raw coordinates into a readable place name via OpenStreetMap Nominatim (free, no API key). */
 async function reverseGeocode(lat, lng){
   try{
@@ -412,12 +456,16 @@ async function reverseGeocode(lat, lng){
       userLocation.name = name;
       const note = document.getElementById('locationNote');
       if(note && name) note.textContent = `Checking in from: ${name}`;
+      const placeLabel = document.getElementById('placeName');
+      if(placeLabel && name) placeLabel.textContent = name;
     }
   }catch(err){
     console.warn('Reverse geocoding failed (coordinates still recorded):', err);
+    const placeLabel = document.getElementById('placeName');
+    if(placeLabel) placeLabel.textContent = 'Name unavailable';
   }
 }
-
+ 
 function requestLocation(){
   document.getElementById('locationBlocker').classList.remove('show');
   return new Promise((resolve, reject) => {
@@ -425,18 +473,19 @@ function requestLocation(){
       document.getElementById('locationBlocker').classList.add('show');
       return reject(new Error('Geolocation not supported'));
     }
-
+ 
     const onSuccess = pos => {
       userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, name: '' };
+      showLocationMap(userLocation.lat, userLocation.lng);
       reverseGeocode(userLocation.lat, userLocation.lng);
       resolve();
     };
-
+ 
     const onFail = () => {
       document.getElementById('locationBlocker').classList.add('show');
       reject(new Error('Location permission denied'));
     };
-
+ 
     // Laptops have no GPS chip, so enableHighAccuracy forces CoreLocation
     // (macOS) to attempt a GPS-grade fix and it can fail outright
     // (kCLErrorLocationUnknown) instead of falling back to WiFi-based
@@ -449,24 +498,24 @@ function requestLocation(){
     }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
   });
 }
-
+ 
 async function loadModels(){
   setProgress(10, 'Loading face detection model');
   await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
   if(!faceapi.nets.tinyFaceDetector.isLoaded) throw new Error('Face detection model failed to load');
-
+ 
   setProgress(30, 'Loading landmark model');
   await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
   if(!faceapi.nets.faceLandmark68Net.isLoaded) throw new Error('Landmark model failed to load');
-
+ 
   setProgress(50, 'Loading recognition model');
   await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
   if(!faceapi.nets.faceRecognitionNet.isLoaded) throw new Error('Recognition model failed to load');
-
+ 
   modelsReady = true;
   setProgress(60, 'Models ready');
 }
-
+ 
 async function fetchStaff(){
   setProgress(65, 'Loading staff database');
   const res = await fetch(API_URL + '?action=getStaff');
@@ -474,7 +523,7 @@ async function fetchStaff(){
   if(!data.ok) throw new Error(data.error || 'Failed to load staff');
   return data.staff;
 }
-
+ 
 async function buildFaceMatcher(staff){
   labeledDescriptors = [];
   const total = staff.length;
@@ -493,7 +542,7 @@ async function buildFaceMatcher(staff){
   if(labeledDescriptors.length === 0) throw new Error('No usable staff photos found');
   setProgress(100, 'Ready');
 }
-
+ 
 /**
  * Compares a live descriptor against every staff descriptor and returns the
  * best match, but ONLY if it's clearly ahead of the second-best candidate.
@@ -504,7 +553,7 @@ function matchFace(descriptor){
   const distances = labeledDescriptors
     .map(s => ({ ic: s.ic, name: s.name, distance: faceapi.euclideanDistance(descriptor, s.descriptor) }))
     .sort((a, b) => a.distance - b.distance);
-
+ 
   if(distances.length === 0 || distances[0].distance > MATCH_THRESHOLD){
     return { label: 'unknown' };
   }
@@ -513,7 +562,7 @@ function matchFace(descriptor){
   }
   return { label: distances[0].ic + '|' + distances[0].name };
 }
-
+ 
 async function startCamera(){
   try{
     const stream = await navigator.mediaDevices.getUserMedia({ video: { width:320, height:320 } });
@@ -524,18 +573,18 @@ async function startCamera(){
     throw new Error('Camera permission denied');
   }
 }
-
+ 
 function hideOverlay(){
   overlay.classList.add('hide');
 }
-
+ 
 async function detectLoop(){
   if(!scanning || isOffline || !modelsReady){
     if(isOffline) statusLine.textContent = 'Waiting for connection…';
     requestAnimationFrame(detectLoop);
     return;
   }
-
+ 
   let det = null;
   try{
     det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
@@ -545,11 +594,11 @@ async function detectLoop(){
     requestAnimationFrame(detectLoop);
     return;
   }
-
+ 
   if(det){
     ring.classList.add('scanning');
     const best = matchFace(det.descriptor);
-
+ 
     if(best.label === 'ambiguous'){
       statusLine.textContent = 'Not clear enough — move closer and hold still';
       lastCandidate = null; stableCount = 0;
@@ -561,7 +610,7 @@ async function detectLoop(){
         stableCount = 1;
       }
       statusLine.textContent = 'Face detected — hold still…';
-
+ 
       if(stableCount >= RECOGNIZE_STABLE_FRAMES){
         const [ic, name] = best.label.split('|');
         const now = Date.now();
@@ -582,10 +631,10 @@ async function detectLoop(){
     statusLine.textContent = 'Position your face in the frame';
     lastCandidate = null; stableCount = 0;
   }
-
+ 
   requestAnimationFrame(detectLoop);
 }
-
+ 
 async function handleMatch(ic, name){
   if(isOffline){
     statusLine.textContent = 'No connection — please try again in a moment';
@@ -593,7 +642,7 @@ async function handleMatch(ic, name){
     return;
   }
   statusLine.textContent = 'Checking…';
-
+ 
   // Snapshot — captured now, but uploaded separately in the background
   const canvas = document.getElementById('snapshotCanvas');
   canvas.width = 240; canvas.height = 240;
@@ -602,7 +651,7 @@ async function handleMatch(ic, name){
   const imageBase64 = canvas.toDataURL('image/jpeg', 0.7);
   video.style.display = 'none';
   canvas.style.display = 'block';
-
+ 
   try{
     // Fast call: just confirms + writes the attendance row. No image payload,
     // so this is quick — the sound only plays once this is genuinely saved.
@@ -618,19 +667,19 @@ async function handleMatch(ic, name){
       })
     });
     const data = await res.json();
-
+ 
     if(!data.ok){
       statusLine.textContent = data.error || 'Could not record check-in';
       resetAfterDelay();
       return;
     }
-
+ 
     // Success UI — fires as soon as the row write is confirmed, doesn't wait on the photo
     ring.classList.remove('scanning');
     ring.classList.add('success');
     document.getElementById('checkBadge').classList.add('show');
     document.getElementById('successSound').play().catch(()=>{});
-
+ 
     document.getElementById('resultName').textContent = name;
     document.getElementById('resultIc').textContent = ic;
     document.getElementById('resultTime').textContent = data.time;
@@ -640,10 +689,10 @@ async function handleMatch(ic, name){
     pill.className = 'type-pill' + (data.type === 'OUT' ? ' out' : '');
     document.getElementById('resultCard').classList.add('show');
     statusLine.textContent = `Checked ${data.type} successfully`;
-
+ 
     lastLoggedIc = ic;
     lastLoggedAt = Date.now();
-
+ 
     // Slow call: uploads the snapshot to Drive and links it into the row just
     // written. Runs in the background — never blocks the confirmation above.
     fetch(API_URL, {
@@ -651,14 +700,14 @@ async function handleMatch(ic, name){
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'attachSnapshot', ic, date: data.date, type: data.type, imageBase64 })
     }).catch(err => console.warn('Snapshot upload failed (attendance row still saved):', err));
-
+ 
   }catch(err){
     statusLine.textContent = 'Network error — please try again';
   }
-
+ 
   resetAfterDelay();
 }
-
+ 
 function resetAfterDelay(){
   setTimeout(() => {
     document.getElementById('checkBadge').classList.remove('show');
