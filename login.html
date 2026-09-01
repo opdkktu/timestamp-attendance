@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KKAH HR Portal · Log In</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
+    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60; --red-500:#B3311A;
+    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
+    font-family:'Inter',sans-serif; color:var(--ink-700);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card{
+    width:100%; max-width:420px; background:#fff; border-radius:28px;
+    box-shadow:0 20px 60px -20px rgba(11,61,58,0.25);
+    overflow:hidden; border:1px solid var(--line);
+  }
+  .head{ padding:24px 28px 20px; background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); color:#fff; position:relative; }
+  .head .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:4px 0 0; }
+  .gold-dot{ position:absolute; top:24px; right:28px; width:8px;height:8px;border-radius:50%; background:var(--gold-500); box-shadow:0 0 0 4px rgba(201,162,39,0.18); }
+  .stage{ padding:28px; }
+
+  .step{ display:none; }
+  .step.show{ display:block; }
+
+  .field{ margin-bottom:16px; }
+  .field label{ font-size:12px; font-weight:600; color:var(--ink-500); display:block; margin-bottom:6px; }
+  input[type=text], input[type=password]{
+    width:100%; padding:12px 14px; border-radius:12px; font-size:14px;
+    border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700);
+  }
+  input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,0.15); }
+  input.code-input{ text-align:center; letter-spacing:0.4em; font-size:20px; font-weight:700; }
+
+  .btn{
+    width:100%; padding:13px 14px; border-radius:12px; font-size:14px; font-family:'Inter',sans-serif;
+    border:none; background:var(--teal-700); color:#fff; font-weight:700; cursor:pointer;
+    margin-top:6px; transition:background .2s ease;
+  }
+  .btn:hover{ background:var(--teal-900); }
+  .btn:disabled{ background:var(--line); color:var(--ink-500); cursor:not-allowed; }
+  .btn.secondary{ background:transparent; color:var(--teal-700); border:1.5px solid var(--line); }
+  .btn.secondary:hover{ background:var(--mint-100); }
+  .btn:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
+
+  .divider{ display:flex; align-items:center; gap:10px; margin:18px 0; color:var(--ink-500); font-size:12px; }
+  .divider::before, .divider::after{ content:''; flex:1; height:1px; background:var(--line); }
+
+  .banner{ display:none; padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:16px; }
+  .banner.show{ display:block; }
+  .banner.error{ background:rgba(179,49,26,0.1); color:var(--red-500); }
+  .banner.info{ background:rgba(28,143,132,0.1); color:var(--teal-700); }
+
+  .qr-wrap{ text-align:center; margin-bottom:16px; }
+  #qrCanvas{ margin:0 auto 12px; border-radius:12px; overflow:hidden; }
+  .manual-key{
+    font-family:monospace; font-size:13px; background:var(--mint-100); padding:8px 12px;
+    border-radius:10px; word-break:break-all; color:var(--teal-900); margin-bottom:14px;
+  }
+  .hint-text{ font-size:12px; color:var(--ink-500); text-align:center; margin-bottom:14px; line-height:1.5; }
+
+  .spinner-inline{
+    width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,.4);
+    border-top-color:#fff; animation:spin .8s linear infinite; display:inline-block;
+    vertical-align:middle; margin-right:8px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="head">
+    <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
+    <h1>HR Portal</h1>
+    <div class="gold-dot"></div>
+  </div>
+  <div class="stage">
+    <div class="banner" id="banner"></div>
+
+    <!-- Step 1: Password -->
+    <div class="step show" id="stepPassword">
+      <div class="field">
+        <label for="icInput">IC Number</label>
+        <input type="text" id="icInput" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="passwordInput">Password</label>
+        <input type="password" id="passwordInput" autocomplete="current-password">
+      </div>
+      <button class="btn" id="loginBtn" onclick="handlePasswordLogin()">Log In</button>
+
+      <div id="biometricArea" style="display:none;">
+        <div class="divider">OR</div>
+        <button class="btn secondary" id="biometricBtn" onclick="handleBiometricLogin()">Log in with Face ID / Touch ID</button>
+      </div>
+    </div>
+
+    <!-- Step 2a: Enroll 2FA (first login only) -->
+    <div class="step" id="stepEnroll">
+      <div class="qr-wrap"><canvas id="qrCanvas"></canvas></div>
+      <div class="hint-text">Scan this with Google Authenticator or Authy. Can't scan? Enter this key manually:</div>
+      <div class="manual-key" id="manualKey">—</div>
+      <div class="field">
+        <label for="enrollCodeInput">Enter the 6-digit code from your app</label>
+        <input type="text" class="code-input" id="enrollCodeInput" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+      </div>
+      <button class="btn" id="enrollBtn" onclick="handleVerifyCode(true)">Confirm & Continue</button>
+    </div>
+
+    <!-- Step 2b: Verify 2FA (returning users) -->
+    <div class="step" id="stepTotp">
+      <div class="hint-text">Enter the 6-digit code from your authenticator app</div>
+      <div class="field">
+        <input type="text" class="code-input" id="totpCodeInput" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+      </div>
+      <button class="btn" id="totpBtn" onclick="handleVerifyCode(false)">Verify</button>
+    </div>
+
+    <!-- Step 3: Offer biometric enrollment -->
+    <div class="step" id="stepOfferBiometric">
+      <div class="hint-text">Enable Face ID / Touch ID for faster login next time on this device?</div>
+      <button class="btn" onclick="handleEnableBiometric()">Enable Face ID / Touch ID</button>
+      <button class="btn secondary" onclick="goToDashboard()">Skip for now</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE';
+let pendingToken = null;
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('kkah_session_token')) {
+    window.location.href = './dashboard.html';
+    return;
+  }
+  checkBiometricAvailable();
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+});
+
+function showStep(id){
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+}
+function showBanner(message, type){
+  const b = document.getElementById('banner');
+  if(!message){ b.className = 'banner'; return; }
+  b.textContent = message;
+  b.className = 'banner show ' + (type || 'error');
+}
+
+/* ---------- Password step ---------- */
+async function handlePasswordLogin(){
+  const ic = document.getElementById('icInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+  if(!ic || !password){ showBanner('Please enter your IC number and password.'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Logging in…';
+  showBanner(null);
+
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'login', ic, password })
+    });
+    const data = await res.json();
+    if(!data.ok){ showBanner(data.error || 'Login failed.'); }
+    else{
+      pendingToken = data.pendingToken;
+      if(data.step === 'enroll2fa'){
+        renderQr(data.otpauthUrl);
+        document.getElementById('manualKey').textContent = data.secret;
+        showStep('stepEnroll');
+      }else{
+        showStep('stepTotp');
+      }
+    }
+  }catch(err){ showBanner('Network error — please try again.'); }
+
+  btn.disabled = false; btn.textContent = 'Log In';
+}
+
+function renderQr(otpauthUrl){
+  QRCode.toCanvas(document.getElementById('qrCanvas'), otpauthUrl, { width: 200, margin: 1,
+    color: { dark: '#0B3D3A', light: '#FFFFFF' } }, () => {});
+}
+
+/* ---------- 2FA verification (enrollment or regular) ---------- */
+async function handleVerifyCode(isEnrollment){
+  const code = document.getElementById(isEnrollment ? 'enrollCodeInput' : 'totpCodeInput').value.trim();
+  if(!code || code.length !== 6){ showBanner('Please enter the 6-digit code.'); return; }
+
+  const btnId = isEnrollment ? 'enrollBtn' : 'totpBtn';
+  const btn = document.getElementById(btnId);
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Verifying…';
+  showBanner(null);
+
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verifyTotp', pendingToken, code })
+    });
+    const data = await res.json();
+    if(!data.ok){ showBanner(data.error || 'Verification failed.'); }
+    else{
+      sessionStorage.setItem('kkah_session_token', data.token);
+      sessionStorage.setItem('kkah_role', data.role);
+      sessionStorage.setItem('kkah_ic', data.ic);
+      if(data.mustChangePassword){
+        window.location.href = './dashboard.html?forcePasswordChange=1';
+        return;
+      }
+      if(await canOfferBiometric()){ showStep('stepOfferBiometric'); }
+      else{ goToDashboard(); }
+    }
+  }catch(err){ showBanner('Network error — please try again.'); }
+
+  btn.disabled = false;
+  btn.textContent = isEnrollment ? 'Confirm & Continue' : 'Verify';
+}
+
+function goToDashboard(){ window.location.href = './dashboard.html'; }
+
+/* ---------- Local biometric unlock ---------- */
+async function canOfferBiometric(){
+  if(!window.PublicKeyCredential) return false;
+  if(localStorage.getItem('kkah_biometric_device_token')) return false; // already enabled
+  try{ return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); }
+  catch(e){ return false; }
+}
+
+async function checkBiometricAvailable(){
+  const hasDeviceToken = !!localStorage.getItem('kkah_biometric_device_token');
+  if(!hasDeviceToken || !window.PublicKeyCredential) return;
+  try{
+    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    if(available) document.getElementById('biometricArea').style.display = 'block';
+  }catch(e){}
+}
+
+async function handleEnableBiometric(){
+  try{
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    const ic = sessionStorage.getItem('kkah_ic') || '';
+    const userId = new TextEncoder().encode(ic);
+
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { name: 'KKAH HR Portal' },
+        user: { id: userId, name: ic, displayName: ic },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+        timeout: 60000,
+        attestation: 'none'
+      }
+    });
+
+    if(!credential) throw new Error('No credential created');
+
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'registerBiometric', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(data.ok){
+      localStorage.setItem('kkah_biometric_device_token', data.deviceToken);
+      localStorage.setItem('kkah_biometric_credential_id', arrayBufferToBase64(credential.rawId));
+    }
+  }catch(err){
+    console.warn('Biometric setup skipped:', err);
+  }
+  goToDashboard();
+}
+
+async function handleBiometricLogin(){
+  const deviceToken = localStorage.getItem('kkah_biometric_device_token');
+  const credentialId = localStorage.getItem('kkah_biometric_credential_id');
+  if(!deviceToken || !credentialId){ showBanner('Face ID / Touch ID is not set up on this device yet.'); return; }
+
+  const btn = document.getElementById('biometricBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Verifying…';
+
+  try{
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [{ id: base64ToArrayBuffer(credentialId), type: 'public-key' }],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    });
+
+    // Browser confirmed the local biometric prompt — now exchange the device token for a session.
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'biometricLogin', deviceToken })
+    });
+    const data = await res.json();
+    if(!data.ok){
+      showBanner(data.error || 'Device login failed — please use your password.');
+      localStorage.removeItem('kkah_biometric_device_token');
+      localStorage.removeItem('kkah_biometric_credential_id');
+    }else{
+      sessionStorage.setItem('kkah_session_token', data.token);
+      sessionStorage.setItem('kkah_role', data.role);
+      sessionStorage.setItem('kkah_ic', data.ic);
+      goToDashboard();
+    }
+  }catch(err){
+    showBanner('Face ID / Touch ID was not confirmed. Please use your password.');
+  }
+
+  btn.disabled = false; btn.textContent = 'Log in with Face ID / Touch ID';
+}
+
+function arrayBufferToBase64(buf){
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+}
+function base64ToArrayBuffer(b64){
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+</script>
+</body>
+</html>
