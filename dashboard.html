@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KKAH HR Portal · Dashboard</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
+    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60; --red-500:#B3311A;
+    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
+    font-family:'Inter',sans-serif; color:var(--ink-700);
+  }
+  .topbar{
+    background:linear-gradient(135deg, var(--teal-900), var(--teal-700));
+    color:#fff; padding:20px 24px 28px;
+  }
+  .topbar-row{ display:flex; justify-content:space-between; align-items:flex-start; max-width:720px; margin:0 auto; }
+  .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
+  .topbar h1{ font-family:'Manrope',sans-serif; font-size:22px; font-weight:800; margin:4px 0 0; }
+  .role-pill{
+    font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    background:rgba(255,255,255,0.15); padding:4px 10px; border-radius:100px; display:inline-block; margin-top:8px;
+  }
+  .menu-btn{
+    background:rgba(255,255,255,0.12); border:none; color:#fff; width:38px; height:38px;
+    border-radius:12px; cursor:pointer; font-size:18px;
+  }
+  .menu-btn:focus-visible{ outline:2px solid var(--gold-500); }
+
+  .content{ max-width:720px; margin:-14px auto 40px; padding:0 20px; }
+
+  .banner{ display:none; padding:12px 16px; border-radius:12px; font-size:13px; margin-bottom:16px; }
+  .banner.show{ display:block; }
+  .banner.info{ background:rgba(28,143,132,0.1); color:var(--teal-700); }
+  .banner.error{ background:rgba(179,49,26,0.1); color:var(--red-500); }
+
+  .section-title{ font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; color:var(--ink-500); margin:22px 4px 10px; }
+
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .module-card{
+    background:#fff; border:1px solid var(--line); border-radius:20px; padding:20px 16px;
+    text-align:left; cursor:pointer; box-shadow:0 8px 24px -16px rgba(11,61,58,0.2);
+    transition:transform .15s ease, box-shadow .15s ease; display:flex; flex-direction:column; gap:10px;
+    font-family:'Inter',sans-serif; color:var(--ink-700);
+  }
+  .module-card:hover{ transform:translateY(-2px); box-shadow:0 14px 28px -16px rgba(11,61,58,0.28); }
+  .module-card:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
+  .module-card.disabled{ opacity:.55; cursor:not-allowed; }
+  .module-card.disabled:hover{ transform:none; box-shadow:0 8px 24px -16px rgba(11,61,58,0.2); }
+  .module-icon{
+    width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+    background:var(--mint-100); font-size:20px;
+  }
+  .module-name{ font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; }
+  .module-status{ font-size:11px; color:var(--ink-500); }
+  .module-status.soon{ color:var(--gold-500); font-weight:700; }
+
+  .footer-actions{ display:flex; gap:10px; margin-top:28px; }
+  .btn{
+    flex:1; padding:12px 14px; border-radius:12px; font-size:13px; font-weight:700;
+    border:1.5px solid var(--line); background:#fff; color:var(--ink-700); cursor:pointer;
+  }
+  .btn:hover{ background:var(--mint-100); }
+  .btn.danger{ color:var(--red-500); border-color:rgba(179,49,26,0.3); }
+  .btn:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
+
+  /* Change-password modal */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(11,61,58,0.55); display:none;
+    align-items:center; justify-content:center; padding:20px; z-index:60;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal{ background:#fff; border-radius:22px; padding:26px; width:100%; max-width:380px; }
+  .modal h2{ font-family:'Manrope',sans-serif; font-size:17px; margin:0 0 4px; color:var(--teal-900); }
+  .modal .sub{ font-size:12px; color:var(--ink-500); margin-bottom:18px; }
+  .field{ margin-bottom:14px; text-align:left; }
+  .field label{ font-size:12px; font-weight:600; color:var(--ink-500); display:block; margin-bottom:6px; }
+  input[type=password]{
+    width:100%; padding:11px 13px; border-radius:12px; font-size:14px;
+    border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700);
+  }
+  input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,0.15); }
+  .req-list{ font-size:11px; color:var(--ink-500); margin:-6px 0 14px; line-height:1.6; }
+  .modal-btn{
+    width:100%; padding:12px; border-radius:12px; border:none; background:var(--teal-700);
+    color:#fff; font-weight:700; cursor:pointer; margin-top:4px;
+  }
+  .modal-btn:disabled{ background:var(--line); color:var(--ink-500); }
+  .modal-cancel{ background:transparent; color:var(--ink-500); font-weight:600; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-row">
+    <div>
+      <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
+      <h1>HR Portal</h1>
+      <span class="role-pill" id="rolePill">STAFF</span>
+    </div>
+    <button class="menu-btn" onclick="document.getElementById('menuBanner').classList.toggle('show')" aria-label="Account menu">⋯</button>
+  </div>
+</div>
+
+<div class="content">
+  <div class="banner info" id="menuBanner">
+    <strong id="menuIc">—</strong>
+  </div>
+  <div class="banner error" id="forcedBanner">Please set a new password before continuing.</div>
+
+  <div class="section-title">Available</div>
+  <div class="grid" id="activeGrid"></div>
+
+  <div class="section-title">Coming Soon</div>
+  <div class="grid" id="soonGrid"></div>
+
+  <div class="footer-actions">
+    <button class="btn" onclick="openPasswordModal(false)">Change Password</button>
+    <button class="btn danger" onclick="handleLogout()">Log Out</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pwModalOverlay">
+  <div class="modal">
+    <h2>Change Password</h2>
+    <div class="sub" id="pwModalSub">Enter your current and new password.</div>
+    <div class="banner error" id="pwBanner"></div>
+    <div class="field">
+      <label for="oldPw">Current Password</label>
+      <input type="password" id="oldPw">
+    </div>
+    <div class="field">
+      <label for="newPw">New Password</label>
+      <input type="password" id="newPw">
+    </div>
+    <div class="req-list">At least 10 characters, with uppercase, lowercase, a number, and a symbol.</div>
+    <button class="modal-btn" id="pwSubmitBtn" onclick="handleChangePassword()">Update Password</button>
+    <button class="modal-btn modal-cancel" id="pwCancelBtn" onclick="closePasswordModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+const MODULES = [
+  { id: 'attendance', name: 'Timestamp Attendance', icon: '🕒', status: 'active', href: './checkin.html' },
+  { id: 'trolley', name: 'Emergency Trolley Checklist', icon: '🧰', status: 'soon' },
+  { id: 'ambulance', name: 'Ambulance Checklist', icon: '🚑', status: 'soon' },
+  { id: 'birthday', name: 'Birthday Notifications', icon: '🎂', status: 'soon' },
+  { id: 'kursus', name: 'Kursus Reminders', icon: '📚', status: 'soon' },
+  { id: 'cme', name: 'CME Records', icon: '📄', status: 'soon' }
+];
+const ADMIN_MODULES = [
+  { id: 'addstaff', name: 'Add Staff', icon: '➕', status: 'active', href: './staff-config.html' },
+  { id: 'myreport', name: 'My Attendance Report', icon: '📊', status: 'active', href: './report.html' }
+];
+
+window.addEventListener('DOMContentLoaded', () => {
+  const token = sessionStorage.getItem('kkah_session_token');
+  if(!token){ window.location.href = './login.html'; return; }
+
+  const role = sessionStorage.getItem('kkah_role') || 'staff';
+  const ic = sessionStorage.getItem('kkah_ic') || '—';
+  document.getElementById('rolePill').textContent = role.toUpperCase();
+  document.getElementById('menuIc').textContent = 'IC: ' + ic;
+
+  renderModules(role);
+
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('forcePasswordChange') === '1'){
+    document.getElementById('forcedBanner').classList.add('show');
+    openPasswordModal(true);
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+});
+
+function renderModules(role){
+  const activeGrid = document.getElementById('activeGrid');
+  const soonGrid = document.getElementById('soonGrid');
+  let list = MODULES.slice();
+  if(role === 'admin' || role === 'superadmin') list = list.concat(ADMIN_MODULES);
+
+  list.forEach(m => {
+    const card = document.createElement(m.status === 'active' ? 'button' : 'div');
+    card.className = 'module-card' + (m.status === 'active' ? '' : ' disabled');
+    card.innerHTML = `
+      <div class="module-icon">${m.icon}</div>
+      <div class="module-name">${m.name}</div>
+      <div class="module-status ${m.status === 'soon' ? 'soon' : ''}">${m.status === 'active' ? 'Open' : 'Coming soon'}</div>
+    `;
+    if(m.status === 'active'){
+      card.addEventListener('click', () => { window.location.href = m.href; });
+      activeGrid.appendChild(card);
+    }else{
+      soonGrid.appendChild(card);
+    }
+  });
+}
+
+function handleLogout(){
+  sessionStorage.removeItem('kkah_session_token');
+  sessionStorage.removeItem('kkah_role');
+  sessionStorage.removeItem('kkah_ic');
+  window.location.href = './login.html';
+}
+
+let forcedChange = false;
+function openPasswordModal(forced){
+  forcedChange = forced;
+  document.getElementById('pwModalSub').textContent = forced
+    ? 'This is your first login — please set a new password to continue.'
+    : 'Enter your current and new password.';
+  document.getElementById('pwCancelBtn').style.display = forced ? 'none' : 'block';
+  document.getElementById('pwBanner').className = 'banner error';
+  document.getElementById('oldPw').value = '';
+  document.getElementById('newPw').value = '';
+  document.getElementById('pwModalOverlay').classList.add('show');
+}
+function closePasswordModal(){
+  document.getElementById('pwModalOverlay').classList.remove('show');
+}
+
+async function handleChangePassword(){
+  const oldPassword = document.getElementById('oldPw').value;
+  const newPassword = document.getElementById('newPw').value;
+  const banner = document.getElementById('pwBanner');
+  if(!oldPassword || !newPassword){ banner.textContent = 'Please fill in both fields.'; banner.classList.add('show'); return; }
+
+  const btn = document.getElementById('pwSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Updating…';
+
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'changePassword', token: sessionStorage.getItem('kkah_session_token'), oldPassword, newPassword })
+    });
+    const data = await res.json();
+    if(!data.ok){
+      banner.textContent = data.error || 'Could not update password.';
+      banner.classList.add('show');
+    }else{
+      closePasswordModal();
+      document.getElementById('forcedBanner').classList.remove('show');
+      if(forcedChange){
+        const url = new URL(window.location.href);
+        url.searchParams.delete('forcePasswordChange');
+        window.history.replaceState({}, '', url);
+      }
+    }
+  }catch(err){
+    banner.textContent = 'Network error — please try again.';
+    banner.classList.add('show');
+  }
+
+  btn.disabled = false; btn.textContent = 'Update Password';
+}
+
+const API_URL_DASHBOARD = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE';
+</script>
+</body>
+</html>
