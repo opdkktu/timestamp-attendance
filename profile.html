@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KKAH HR Portal · My Profile</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
+    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60; --red-500:#B3311A;
+    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
+    font-family:'Inter',sans-serif; color:var(--ink-700);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card{ width:100%; max-width:420px; background:#fff; border-radius:28px; box-shadow:0 20px 60px -20px rgba(11,61,58,0.25); overflow:hidden; border:1px solid var(--line); }
+  .head{ padding:22px 28px 18px; background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); color:#fff; position:relative; }
+  .head .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:20px; font-weight:800; margin:4px 0 0; }
+  .back-link{ position:absolute; top:24px; right:28px; color:#fff; opacity:.8; text-decoration:none; font-size:13px; }
+  .stage{ padding:28px; }
+
+  .avatar-ring{
+    width:80px; height:80px; border-radius:50%; margin:0 auto 16px;
+    background:var(--mint-100); display:flex; align-items:center; justify-content:center;
+    font-family:'Manrope',sans-serif; font-size:28px; font-weight:800; color:var(--teal-700);
+  }
+  .profile-name{ text-align:center; font-family:'Manrope',sans-serif; font-size:19px; font-weight:800; color:var(--teal-900); margin-bottom:4px; }
+  .profile-ic{ text-align:center; font-size:13px; color:var(--ink-500); margin-bottom:22px; }
+
+  .info-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px; }
+  .info-box{ background:var(--mint-100); border-radius:14px; padding:14px 16px; }
+  .info-box .label{ font-size:11px; color:var(--ink-500); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .info-box .value{ font-family:'Manrope',sans-serif; font-size:18px; font-weight:800; color:var(--teal-900); margin-top:4px; }
+
+  .section-title{ font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; color:var(--ink-500); margin:20px 4px 10px; }
+
+  .btn{
+    width:100%; padding:13px 14px; border-radius:12px; font-size:14px; font-family:'Inter',sans-serif;
+    border:1.5px solid var(--line); background:#fff; color:var(--ink-700); font-weight:700; cursor:pointer;
+    margin-top:8px; transition:background .2s ease;
+  }
+  .btn:hover{ background:var(--mint-100); }
+  .btn.primary{ background:var(--teal-700); color:#fff; border:none; }
+  .btn.primary:hover{ background:var(--teal-900); }
+  .btn:disabled{ background:var(--line); color:var(--ink-500); cursor:not-allowed; }
+  .btn:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
+
+  .modal-overlay{ position:fixed; inset:0; background:rgba(11,61,58,0.55); display:none; align-items:center; justify-content:center; padding:20px; z-index:60; }
+  .modal-overlay.show{ display:flex; }
+  .modal{ background:#fff; border-radius:22px; padding:26px; width:100%; max-width:380px; }
+  .modal h2{ font-family:'Manrope',sans-serif; font-size:17px; margin:0 0 4px; color:var(--teal-900); }
+  .modal .sub{ font-size:12px; color:var(--ink-500); margin-bottom:18px; }
+  .field{ margin-bottom:14px; text-align:left; }
+  .field label{ font-size:12px; font-weight:600; color:var(--ink-500); display:block; margin-bottom:6px; }
+  input[type=password]{ width:100%; padding:11px 13px; border-radius:12px; font-size:14px; border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700); }
+  input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,0.15); }
+  .req-list{ font-size:11px; color:var(--ink-500); margin:-6px 0 14px; line-height:1.6; }
+  .banner{ display:none; padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:16px; }
+  .banner.show{ display:block; }
+  .banner.error{ background:rgba(179,49,26,0.1); color:var(--red-500); }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="head">
+    <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
+    <h1>My Profile</h1>
+    <a class="back-link" href="./dashboard.html">← Dashboard</a>
+  </div>
+  <div class="stage">
+    <div class="avatar-ring" id="avatarInitial">—</div>
+    <div class="profile-name" id="profileName">Loading…</div>
+    <div class="profile-ic" id="profileIc">—</div>
+
+    <div class="info-grid">
+      <div class="info-box"><div class="label">Age</div><div class="value" id="profileAge">—</div></div>
+      <div class="info-box"><div class="label">Birthday</div><div class="value" id="profileDob">—</div></div>
+    </div>
+
+    <div class="section-title">Account</div>
+    <button class="btn primary" onclick="handleChangePasswordClick()">Change Password</button>
+    <a class="btn" href="./dashboard.html" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Back to Dashboard</a>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pwModalOverlay">
+  <div class="modal">
+    <h2>Change Password</h2>
+    <div class="sub">Enter your current and new password.</div>
+    <div class="banner error" id="pwBanner"></div>
+    <div class="field"><label for="oldPw">Current Password</label><input type="password" id="oldPw"></div>
+    <div class="field"><label for="newPw">New Password</label><input type="password" id="newPw"></div>
+    <div class="req-list">At least 10 characters, with uppercase, lowercase, a number, and a symbol.</div>
+    <button class="btn primary" id="pwSubmitBtn" onclick="handleChangePassword()">Update Password</button>
+    <button class="btn" onclick="closePasswordModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE';
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const token = sessionStorage.getItem('kkah_session_token');
+  if(!token){ window.location.href = './login.html'; return; }
+  await loadProfile();
+});
+
+async function loadProfile(){
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getMyProfile', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error);
+
+    document.getElementById('profileName').textContent = data.name;
+    document.getElementById('profileIc').textContent = 'IC: ' + data.ic;
+    document.getElementById('avatarInitial').textContent = data.name.trim().charAt(0).toUpperCase();
+
+    const dob = parseIcBirthday(data.ic);
+    if(dob){
+      document.getElementById('profileAge').textContent = dob.age;
+      document.getElementById('profileDob').textContent = dob.day + '/' + dob.month + '/' + dob.year;
+    }
+  }catch(err){
+    document.getElementById('profileName').textContent = 'Could not load profile';
+  }
+}
+
+/** Parses a Malaysian IC (YYMMDD-PB-###G or without dashes) into a birthday + current age. */
+function parseIcBirthday(ic){
+  const digits = String(ic).replace(/\D/g, '');
+  if(digits.length < 6) return null;
+  const yy = parseInt(digits.substring(0,2), 10);
+  const mm = parseInt(digits.substring(2,4), 10);
+  const dd = parseInt(digits.substring(4,6), 10);
+  if(mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
+
+  const now = new Date();
+  const currentYY = now.getFullYear() % 100;
+  const year = yy <= currentYY ? 2000 + yy : 1900 + yy;
+
+  let age = now.getFullYear() - year;
+  const hadBirthdayThisYear = (now.getMonth() + 1 > mm) || (now.getMonth() + 1 === mm && now.getDate() >= dd);
+  if(!hadBirthdayThisYear) age--;
+
+  return { year, month: mm, day: dd, age };
+}
+
+/* ---------- Face ID gate (same logic as dashboard.html) ---------- */
+let forcedChange = false;
+
+async function handleChangePasswordClick(){
+  const hasEnrolled = localStorage.getItem('kkah_biometric_device_token') && localStorage.getItem('kkah_biometric_credential_id');
+  const canBiometric = window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+
+  if(!canBiometric || !hasEnrolled){
+    if(canBiometric && !hasEnrolled){
+      alert('For extra security, please enable Face ID / Touch ID from the login screen first, then come back to change your password.');
+      return;
+    }
+    openPasswordModal();
+    return;
+  }
+
+  try{
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [{ id: base64ToArrayBuffer(localStorage.getItem('kkah_biometric_credential_id')), type: 'public-key' }],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    });
+    openPasswordModal();
+  }catch(err){
+    alert('Face ID / Touch ID verification is required to change your password.');
+  }
+}
+
+function base64ToArrayBuffer(b64){
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+function openPasswordModal(){
+  document.getElementById('pwBanner').className = 'banner error';
+  document.getElementById('oldPw').value = '';
+  document.getElementById('newPw').value = '';
+  document.getElementById('pwModalOverlay').classList.add('show');
+}
+function closePasswordModal(){
+  document.getElementById('pwModalOverlay').classList.remove('show');
+}
+
+async function handleChangePassword(){
+  const oldPassword = document.getElementById('oldPw').value;
+  const newPassword = document.getElementById('newPw').value;
+  const banner = document.getElementById('pwBanner');
+  if(!oldPassword || !newPassword){ banner.textContent = 'Please fill in both fields.'; banner.classList.add('show'); return; }
+
+  const btn = document.getElementById('pwSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Updating…';
+
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'changePassword', token: sessionStorage.getItem('kkah_session_token'), oldPassword, newPassword })
+    });
+    const data = await res.json();
+    if(!data.ok){ banner.textContent = data.error || 'Could not update password.'; banner.classList.add('show'); }
+    else{ closePasswordModal(); alert('Password updated successfully.'); }
+  }catch(err){ banner.textContent = 'Network error — please try again.'; banner.classList.add('show'); }
+
+  btn.disabled = false; btn.textContent = 'Update Password';
+}
+</script>
+</body>
+</html>
