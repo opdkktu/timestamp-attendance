@@ -47,6 +47,15 @@
 
   .section-title{ font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; color:var(--ink-500); margin:22px 4px 10px; }
 
+  .schedule-card{
+    background:linear-gradient(135deg, var(--teal-700), var(--teal-500)); color:#fff;
+    border-radius:20px; padding:18px 20px; margin-top:4px; display:none;
+  }
+  .schedule-card.show{ display:block; }
+  .schedule-card .label{ font-size:11px; letter-spacing:.05em; text-transform:uppercase; opacity:.8; font-weight:600; }
+  .schedule-card .zone{ font-family:'Manrope',sans-serif; font-size:22px; font-weight:800; margin-top:4px; }
+  .schedule-card.loading .zone{ font-size:14px; font-weight:600; opacity:.85; }
+
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .module-card{
     background:#fff; border:1px solid var(--line); border-radius:20px; padding:20px 16px;
@@ -119,6 +128,11 @@
   </div>
   <div class="banner error" id="forcedBanner">Please set a new password before continuing.</div>
 
+  <div class="schedule-card loading" id="scheduleCard">
+    <div class="label">Today's Working Zone</div>
+    <div class="zone" id="scheduleZone">Loading…</div>
+  </div>
+
   <div class="section-title">Available</div>
   <div class="grid" id="activeGrid"></div>
 
@@ -126,7 +140,7 @@
   <div class="grid" id="soonGrid"></div>
 
   <div class="footer-actions">
-    <button class="btn" onclick="openPasswordModal(false)">Change Password</button>
+    <button class="btn" onclick="handleChangePasswordClick()">Change Password</button>
     <button class="btn danger" onclick="handleLogout()">Log Out</button>
   </div>
 </div>
@@ -150,9 +164,12 @@
   </div>
 </div>
 
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
+const ONESIGNAL_APP_ID = 'PASTE_YOUR_ONESIGNAL_APP_ID_HERE'; // public App ID — safe to expose client-side, unlike the REST API key
 const MODULES = [
-  { id: 'attendance', name: 'Timestamp Attendance', icon: '🕒', status: 'active', href: './checkin.html' },
+  { id: 'profile', name: 'Update Profile', icon: '👤', status: 'active', href: './profile.html' },
+  { id: 'attendance', name: 'Timestamp Attendance', icon: '🕒', status: 'active', href: './my-checkin.html' },
   { id: 'trolley', name: 'Emergency Trolley Checklist', icon: '🧰', status: 'soon' },
   { id: 'ambulance', name: 'Ambulance Checklist', icon: '🚑', status: 'soon' },
   { id: 'birthday', name: 'Birthday Notifications', icon: '🎂', status: 'soon' },
@@ -184,7 +201,71 @@ window.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
+
+  initOneSignal(ic);
+  loadTodaySchedule();
 });
+
+/** Published "today list" sheet — column A name, column B working zone. */
+const SCHEDULE_SHEET_ID = '191ZTgpVGen3Y1Ksj7-h8rtdCkuj4U1QIam4A1N6QkuY';
+const SCHEDULE_SHEET_NAME = 'today list';
+
+async function loadTodaySchedule(){
+  const card = document.getElementById('scheduleCard');
+  const zoneEl = document.getElementById('scheduleZone');
+  try{
+    const profileRes = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getMyProfile', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const profile = await profileRes.json();
+    if(!profile.ok) throw new Error(profile.error);
+    sessionStorage.setItem('kkah_name', profile.name);
+
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${SCHEDULE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SCHEDULE_SHEET_NAME)}`;
+    const csvRes = await fetch(csvUrl);
+    const csvText = await csvRes.text();
+    const rows = parseCsv(csvText);
+
+    const match = rows.find(r => (r[0] || '').trim().toLowerCase() === profile.name.trim().toLowerCase());
+    if(match && match[1]){
+      zoneEl.textContent = match[1].trim();
+      card.classList.remove('loading');
+      card.classList.add('show');
+    }
+    // If no match found today, leave the card hidden rather than showing a confusing blank.
+  }catch(err){
+    console.warn('Could not load today\'s schedule:', err);
+  }
+}
+
+function parseCsv(text){
+  return text.trim().split('\n').map(line => {
+    const cells = [];
+    let cur = '', inQuotes = false;
+    for(let i = 0; i < line.length; i++){
+      const ch = line[i];
+      if(ch === '"'){ inQuotes = !inQuotes; }
+      else if(ch === ',' && !inQuotes){ cells.push(cur); cur = ''; }
+      else{ cur += ch; }
+    }
+    cells.push(cur);
+    return cells;
+  }).slice(1); // drop header row
+}
+
+/** Registers this device for push and tags it with the staff member's IC, so backend birthday
+ *  notifications (and future reminders) can target them by External ID. */
+function initOneSignal(ic){
+  if(!ic || ic === '—') return;
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal){
+    try{
+      await OneSignal.init({ appId: ONESIGNAL_APP_ID });
+      await OneSignal.login(ic);
+    }catch(err){ console.warn('OneSignal setup skipped:', err); }
+  });
+}
 
 function renderModules(role){
   const activeGrid = document.getElementById('activeGrid');
@@ -217,6 +298,50 @@ function handleLogout(){
 }
 
 let forcedChange = false;
+
+/**
+ * Face ID / Touch ID gate before password change. Only enforced when this
+ * device actually has biometric hardware AND it's already enrolled — a
+ * device with no biometric capability falls back to the password-only gate
+ * (the change-password form already requires the current password), so
+ * staff on basic phones are never permanently locked out of changing it.
+ */
+async function handleChangePasswordClick(){
+  const hasEnrolled = localStorage.getItem('kkah_biometric_device_token') && localStorage.getItem('kkah_biometric_credential_id');
+  const canBiometric = window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+
+  if(!canBiometric || !hasEnrolled){
+    if(canBiometric && !hasEnrolled){
+      alert('For extra security, please enable Face ID / Touch ID from the login screen first, then come back to change your password.');
+      return;
+    }
+    openPasswordModal(false); // no biometric hardware on this device — password-only gate
+    return;
+  }
+
+  try{
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [{ id: base64ToArrayBuffer(localStorage.getItem('kkah_biometric_credential_id')), type: 'public-key' }],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    });
+    openPasswordModal(false);
+  }catch(err){
+    alert('Face ID / Touch ID verification is required to change your password.');
+  }
+}
+
+function base64ToArrayBuffer(b64){
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
 function openPasswordModal(forced){
   forcedChange = forced;
   document.getElementById('pwModalSub').textContent = forced
@@ -267,7 +392,7 @@ async function handleChangePassword(){
   btn.disabled = false; btn.textContent = 'Update Password';
 }
 
-const API_URL_DASHBOARD = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const API_URL_DASHBOARD = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE';
 </script>
 </body>
 </html>
