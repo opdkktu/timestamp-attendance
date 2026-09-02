@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KKAH · My Check-In</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
+    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60;
+    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
+    font-family:'Inter',sans-serif; color:var(--ink-700);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .kiosk{
+    width:100%; max-width:440px; background:#fff; border-radius:28px;
+    box-shadow:0 20px 60px -20px rgba(11,61,58,0.25); overflow:hidden; border:1px solid var(--line);
+  }
+  .kiosk-header{ padding:20px 26px 16px; background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); color:#fff; position:relative; }
+  .kiosk-header .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
+  .kiosk-header h1{ font-family:'Manrope',sans-serif; font-size:19px; font-weight:800; margin:4px 0 0; }
+  .back-link{ position:absolute; top:20px; right:24px; color:#fff; opacity:.8; text-decoration:none; font-size:13px; }
+  .stage{ padding:26px; }
+
+  .viewfinder{ position:relative; width:240px; height:240px; margin:0 auto 18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .viewfinder video, .viewfinder canvas.snapshot{ width:200px; height:200px; border-radius:50%; object-fit:cover; background:#0B3D3A; }
+  .ring{ position:absolute; inset:0; border-radius:50%; border:3px solid var(--line); transition:border-color .4s ease, box-shadow .4s ease; }
+  .ring.scanning{ border-color:var(--teal-500); animation:pulse 1.6s ease-in-out infinite; }
+  .ring.success{ border-color:var(--green-500); box-shadow:0 0 0 8px rgba(47,174,96,0.15); }
+  @keyframes pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(28,143,132,.25);} 50%{ box-shadow:0 0 0 12px rgba(28,143,132,0);} }
+
+  .check-badge{ position:absolute; bottom:4px; right:4px; width:48px; height:48px; border-radius:50%; background:var(--green-500); display:flex; align-items:center; justify-content:center; transform:scale(0); opacity:0; }
+  .check-badge.show{ animation:pop .5s cubic-bezier(.34,1.56,.64,1) forwards; }
+  @keyframes pop{ 0%{ transform:scale(0); opacity:0; } 60%{ transform:scale(1.15); opacity:1; } 100%{ transform:scale(1); opacity:1; } }
+  .check-badge svg{ width:24px; height:24px; }
+  .check-path{ stroke-dasharray:24; stroke-dashoffset:24; }
+  .check-badge.show .check-path{ animation:draw .35s ease .25s forwards; }
+  @keyframes draw{ to{ stroke-dashoffset:0; } }
+
+  .status-line{ text-align:center; font-size:14px; color:var(--ink-500); min-height:20px; margin-bottom:16px; }
+
+  .result-card{ background:var(--mint-100); border:1px solid var(--line); border-radius:16px; padding:16px 20px; display:none; }
+  .result-card.show{ display:block; }
+  .result-row{ display:flex; justify-content:space-between; padding:5px 0; font-size:14px; }
+  .result-row .label{ color:var(--ink-500); }
+  .result-row .value{ font-weight:600; }
+  .type-pill{ display:inline-block; font-size:11px; font-weight:700; letter-spacing:.05em; padding:3px 10px; border-radius:100px; background:var(--green-500); color:#fff; margin-bottom:8px; }
+  .type-pill.out{ background:var(--gold-500); }
+
+  .location-map{ margin-top:14px; border-radius:14px; overflow:hidden; border:1px solid var(--line); display:none; }
+  .location-map.show{ display:block; }
+  .location-map iframe{ width:100%; height:120px; border:0; display:block; }
+  .geo-coords{ display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--mint-100); font-size:11px; color:var(--ink-500); font-variant-numeric:tabular-nums; }
+  .geo-coords .place-name{ font-weight:600; color:var(--teal-900); max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .overlay{ position:fixed; inset:0; background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; z-index:50; transition:opacity .5s ease; }
+  .overlay.hide{ opacity:0; pointer-events:none; }
+  .spinner{ width:44px; height:44px; border-radius:50%; border:3px solid rgba(255,255,255,0.25); border-top-color:#fff; animation:spin 0.9s linear infinite; margin-bottom:18px; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .overlay .msg{ font-family:'Manrope',sans-serif; font-weight:700; font-size:15px; text-align:center; padding:0 20px; }
+  .overlay .sub{ font-size:13px; opacity:.7; margin-top:6px; text-align:center; padding:0 20px; }
+  .progress-track{ width:200px; height:4px; border-radius:4px; background:rgba(255,255,255,0.2); margin-top:16px; overflow:hidden; }
+  .progress-fill{ height:100%; width:0%; background:var(--gold-500); transition:width .3s ease; }
+  .retry-btn{ margin-top:16px; padding:10px 20px; border-radius:100px; border:none; background:var(--gold-500); color:var(--teal-900); font-weight:700; cursor:pointer; display:none; }
+  .overlay.error .spinner{ display:none; }
+  .overlay.error .retry-btn{ display:inline-block; }
+
+  .offline-banner{ position:fixed; top:0; left:0; right:0; z-index:70; background:#B3311A; color:#fff; text-align:center; font-size:13px; font-weight:600; padding:8px 12px; transform:translateY(-100%); transition:transform .3s ease; }
+  .offline-banner.show{ transform:translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="offline-banner" id="offlineBanner">No internet connection — check-ins can't be recorded right now</div>
+
+<div class="overlay" id="startScreen">
+  <div class="msg" style="margin-bottom:6px;">My Check-In</div>
+  <div class="sub" style="margin-bottom:20px;">Tap below to start — this lets your phone ask for camera and location access properly.</div>
+  <button class="retry-btn" style="display:inline-block;" onclick="beginStart()">Tap to Start</button>
+</div>
+
+<div class="overlay hide" id="overlay">
+  <div class="spinner"></div>
+  <div class="msg" id="overlayMsg">Preparing your check-in…</div>
+  <div class="sub" id="overlaySub">Loading recognition models</div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <button class="retry-btn" id="overlayRetry" onclick="init()">Try again</button>
+</div>
+
+<div class="kiosk">
+  <div class="kiosk-header">
+    <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
+    <h1 id="headerName">My Check-In</h1>
+    <a class="back-link" href="./dashboard.html">← Dashboard</a>
+  </div>
+  <div class="stage">
+    <div class="viewfinder">
+      <div class="ring" id="ring"></div>
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="snapshotCanvas" class="snapshot" style="display:none;"></canvas>
+      <div class="check-badge" id="checkBadge">
+        <svg viewBox="0 0 26 26" fill="none"><path class="check-path" d="M5 13l5 5 11-11" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="status-line" id="statusLine">Position your face in the frame</div>
+    <div class="result-card" id="resultCard">
+      <span class="type-pill" id="typePill">IN</span>
+      <div class="result-row"><span class="label">Time</span><span class="value" id="resultTime">—</span></div>
+      <div class="result-row"><span class="label">Date</span><span class="value" id="resultDate">—</span></div>
+    </div>
+    <div class="location-map" id="locationMap">
+      <iframe id="mapFrame" loading="lazy" title="Your current location"></iframe>
+      <div class="geo-coords"><span class="place-name" id="placeName">Locating…</span><span id="coordsText">—</span></div>
+    </div>
+  </div>
+</div>
+
+<audio id="successSound" src="https://opdkktu.github.io/trial1/register.mp3" preload="auto"></audio>
+
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const MODEL_URL = './models';
+const MATCH_THRESHOLD = 0.5;
+const RECOGNIZE_STABLE_FRAMES = 3;
+const COOLDOWN_MS = 15000;
+
+let video, ring, statusLine, overlay, overlaySub, progressFill;
+let myDescriptor = null, myName = null, myIc = null;
+let userLocation = null;
+let scanning = true;
+let stableCount = 0;
+let modelsReady = false;
+let lastLoggedAt = 0;
+let isOffline = false;
+
+window.addEventListener('DOMContentLoaded', () => {
+  overlay = document.getElementById('overlay');
+  const token = sessionStorage.getItem('kkah_session_token');
+  if(!token){ window.location.href = './login.html'; }
+});
+window.addEventListener('online', () => setOffline(false));
+window.addEventListener('offline', () => setOffline(true));
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled error:', e.reason);
+  if(!modelsReady) showLoadError(e.reason && e.reason.message ? e.reason.message : 'Something went wrong');
+});
+
+function setOffline(state){
+  isOffline = state;
+  document.getElementById('offlineBanner').classList.toggle('show', state);
+}
+
+function beginStart(){
+  document.getElementById('startScreen').classList.add('hide');
+  overlay.classList.remove('hide');
+  init();
+}
+
+async function init(){
+  video = document.getElementById('video');
+  ring = document.getElementById('ring');
+  statusLine = document.getElementById('statusLine');
+  overlaySub = document.getElementById('overlaySub');
+  progressFill = document.getElementById('progressFill');
+  overlay.classList.remove('error', 'hide');
+  setOffline(!navigator.onLine);
+  modelsReady = false;
+
+  try{
+    await requestLocation();
+    await loadModels();
+    await loadMyDescriptor();
+    await startCamera();
+    hideOverlay();
+    detectLoop();
+  }catch(err){
+    console.error(err);
+    if(err.message !== 'Location permission denied' && err.message !== 'Camera permission denied'){
+      showLoadError(err.message);
+    }
+  }
+}
+
+function showLoadError(message){
+  document.getElementById('overlayMsg').textContent = 'Could not start check-in';
+  overlaySub.textContent = message || 'Please check your connection and try again';
+  overlay.classList.add('error');
+}
+
+function setProgress(pct, sub){ progressFill.style.width = pct + '%'; if(sub) overlaySub.textContent = sub; }
+
+function requestLocation(){
+  return new Promise((resolve, reject) => {
+    if(!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+    const onSuccess = pos => {
+      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, name: '' };
+      showLocationMap(userLocation.lat, userLocation.lng);
+      reverseGeocode(userLocation.lat, userLocation.lng);
+      resolve();
+    };
+    const onFail = () => reject(new Error('Location permission denied'));
+    navigator.geolocation.getCurrentPosition(onSuccess, () => {
+      navigator.geolocation.getCurrentPosition(onSuccess, onFail, { enableHighAccuracy:false, timeout:15000, maximumAge:60000 });
+    }, { enableHighAccuracy:false, timeout:8000, maximumAge:60000 });
+  });
+}
+
+function showLocationMap(lat, lng){
+  const delta = 0.003;
+  const bbox = `${lng-delta},${lat-delta},${lng+delta},${lat+delta}`;
+  document.getElementById('mapFrame').src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&marker=${lat},${lng}&layer=mapnik`;
+  document.getElementById('coordsText').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  document.getElementById('locationMap').classList.add('show');
+}
+
+async function reverseGeocode(lat, lng){
+  try{
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+    const data = await res.json();
+    const addr = data.address || {};
+    const name = addr.amenity || addr.building || addr.road || addr.suburb || addr.village || addr.town || data.display_name || '';
+    if(userLocation){ userLocation.name = name; const el = document.getElementById('placeName'); if(el && name) el.textContent = name; }
+  }catch(err){ console.warn('Reverse geocoding failed:', err); }
+}
+
+async function loadModels(){
+  setProgress(15, 'Loading face detection model');
+  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+  if(!faceapi.nets.tinyFaceDetector.isLoaded) throw new Error('Face detection model failed to load');
+  setProgress(45, 'Loading landmark model');
+  await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+  if(!faceapi.nets.faceLandmark68Net.isLoaded) throw new Error('Landmark model failed to load');
+  setProgress(70, 'Loading recognition model');
+  await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+  if(!faceapi.nets.faceRecognitionNet.isLoaded) throw new Error('Recognition model failed to load');
+  modelsReady = true;
+  setProgress(80, 'Models ready');
+}
+
+/** Fetches only YOUR photo (not the whole roster) — this is the speed win of being logged in. */
+async function loadMyDescriptor(){
+  setProgress(85, 'Loading your profile');
+  const token = sessionStorage.getItem('kkah_session_token');
+  const res = await fetch(API_URL, {
+    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'getMyPhoto', token })
+  });
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error || 'Could not load your profile');
+  myName = data.name; myIc = data.ic;
+  document.getElementById('headerName').textContent = 'Hi, ' + myName;
+
+  const img = await faceapi.fetchImage(data.photo);
+  const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+  if(!det) throw new Error('Could not read your profile photo. Contact admin to re-take it.');
+  myDescriptor = det.descriptor;
+  setProgress(100, 'Ready');
+}
+
+async function startCamera(){
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width:320, height:320 } });
+    video.srcObject = stream;
+    await new Promise(r => video.onloadedmetadata = r);
+  }catch(err){ throw new Error('Camera permission denied'); }
+}
+
+function hideOverlay(){ overlay.classList.add('hide'); }
+
+async function detectLoop(){
+  if(!scanning || isOffline || !modelsReady){ requestAnimationFrame(detectLoop); return; }
+
+  let det = null;
+  try{
+    det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+  }catch(err){ console.warn('Detection frame skipped:', err); requestAnimationFrame(detectLoop); return; }
+
+  if(det){
+    ring.classList.add('scanning');
+    const distance = faceapi.euclideanDistance(det.descriptor, myDescriptor);
+
+    if(distance <= MATCH_THRESHOLD){
+      stableCount++;
+      statusLine.textContent = 'Verifying…';
+      if(stableCount >= RECOGNIZE_STABLE_FRAMES){
+        const now = Date.now();
+        if((now - lastLoggedAt) < COOLDOWN_MS){
+          statusLine.textContent = 'Already recorded — thank you';
+        }else{
+          scanning = false;
+          await handleMatch();
+        }
+        stableCount = 0;
+      }
+    }else{
+      statusLine.textContent = "This doesn't look like you — try repositioning";
+      stableCount = 0;
+    }
+  }else{
+    ring.classList.remove('scanning');
+    statusLine.textContent = 'Position your face in the frame';
+    stableCount = 0;
+  }
+  requestAnimationFrame(detectLoop);
+}
+
+async function handleMatch(){
+  if(isOffline){ statusLine.textContent = 'No connection — please try again in a moment'; resetAfterDelay(); return; }
+  statusLine.textContent = 'Checking…';
+
+  const canvas = document.getElementById('snapshotCanvas');
+  canvas.width = 240; canvas.height = 240;
+  canvas.getContext('2d').drawImage(video, 0, 0, 240, 240);
+  const imageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+  video.style.display = 'none'; canvas.style.display = 'block';
+
+  try{
+    const token = sessionStorage.getItem('kkah_session_token');
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'logAttendance', token, name: myName,
+        lat: userLocation ? userLocation.lat : '', lng: userLocation ? userLocation.lng : '',
+        locName: userLocation ? userLocation.name : ''
+      })
+    });
+    const data = await res.json();
+
+    if(!data.ok){ statusLine.textContent = data.error || 'Could not record check-in'; resetAfterDelay(); return; }
+
+    ring.classList.remove('scanning'); ring.classList.add('success');
+    document.getElementById('checkBadge').classList.add('show');
+    document.getElementById('successSound').play().catch(()=>{});
+    document.getElementById('resultTime').textContent = data.time;
+    document.getElementById('resultDate').textContent = data.date;
+    const pill = document.getElementById('typePill');
+    pill.textContent = data.type; pill.className = 'type-pill' + (data.type === 'OUT' ? ' out' : '');
+    document.getElementById('resultCard').classList.add('show');
+    statusLine.textContent = `Checked ${data.type} successfully`;
+    lastLoggedAt = Date.now();
+
+    fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'attachSnapshot', ic: myIc, date: data.date, type: data.type, imageBase64 })
+    }).catch(err => console.warn('Snapshot upload failed (attendance row still saved):', err));
+
+  }catch(err){ statusLine.textContent = 'Network error — please try again'; }
+  resetAfterDelay();
+}
+
+function resetAfterDelay(){
+  setTimeout(() => {
+    document.getElementById('checkBadge').classList.remove('show');
+    document.getElementById('resultCard').classList.remove('show');
+    ring.classList.remove('success');
+    video.style.display = 'block';
+    document.getElementById('snapshotCanvas').style.display = 'none';
+    statusLine.textContent = 'Position your face in the frame';
+    scanning = true;
+  }, 4000);
+}
+</script>
+</body>
+</html>
