@@ -102,6 +102,9 @@
         <input type="password" id="passwordInput" autocomplete="current-password">
       </div>
       <button class="btn" id="loginBtn" onclick="handlePasswordLogin()">Log In</button>
+      <div style="text-align:center; font-size:13px; color:var(--ink-500); margin-top:14px;">
+        Don't have an account? <a href="./signup.html" style="color:var(--teal-700); font-weight:600; text-decoration:none;">Sign up</a>
+      </div>
 
       <div id="biometricArea" style="display:none;">
         <div class="divider">OR</div>
@@ -141,7 +144,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE';
 let pendingToken = null;
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -166,6 +169,25 @@ function showBanner(message, type){
   b.className = 'banner show ' + (type || 'error');
 }
 
+function showResendOption(ic){
+  const b = document.getElementById('banner');
+  const link = document.createElement('a');
+  link.href = '#'; link.textContent = ' Resend verification email';
+  link.style.cssText = 'color:inherit; font-weight:700; text-decoration:underline; margin-left:4px;';
+  link.onclick = async (e) => {
+    e.preventDefault();
+    link.textContent = ' Sending…';
+    try{
+      await fetch(API_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'resendVerification', ic })
+      });
+      link.textContent = ' Sent! Check your inbox.';
+    }catch(err){ link.textContent = ' Could not send — try again later.'; }
+  };
+  b.appendChild(link);
+}
+
 /* ---------- Password step ---------- */
 async function handlePasswordLogin(){
   const ic = document.getElementById('icInput').value.trim();
@@ -182,7 +204,12 @@ async function handlePasswordLogin(){
       body: JSON.stringify({ action: 'login', ic, password })
     });
     const data = await res.json();
-    if(!data.ok){ showBanner(data.error || 'Login failed.'); }
+    if(!data.ok){
+      showBanner(data.error || 'Login failed.');
+      if(data.needsVerification){
+        showResendOption(data.ic);
+      }
+    }
     else{
       pendingToken = data.pendingToken;
       if(data.step === 'enroll2fa'){
