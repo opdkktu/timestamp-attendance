@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KKAH HR Portal · Sign Up</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
+    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60; --red-500:#B3311A;
+    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
+    font-family:'Inter',sans-serif; color:var(--ink-700);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card{ width:100%; max-width:440px; background:#fff; border-radius:28px; box-shadow:0 20px 60px -20px rgba(11,61,58,0.25); overflow:hidden; border:1px solid var(--line); }
+  .head{ padding:22px 28px 18px; background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); color:#fff; position:relative; }
+  .head .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:20px; font-weight:800; margin:4px 0 0; }
+  .gold-dot{ position:absolute; top:24px; right:28px; width:8px;height:8px;border-radius:50%; background:var(--gold-500); box-shadow:0 0 0 4px rgba(201,162,39,0.18); }
+  .stage{ padding:26px; }
+
+  .step{ display:none; }
+  .step.show{ display:block; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ font-size:12px; font-weight:600; color:var(--ink-500); display:block; margin-bottom:6px; }
+  input[type=text], input[type=email], input[type=password]{
+    width:100%; padding:11px 13px; border-radius:12px; font-size:14px;
+    border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700);
+  }
+  input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,0.15); }
+
+  .viewfinder{ position:relative; width:180px; height:180px; margin:0 auto 14px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .viewfinder video, .viewfinder canvas{ width:150px; height:150px; border-radius:50%; object-fit:cover; background:#0B3D3A; }
+  .viewfinder canvas{ display:none; }
+  .viewfinder.captured video{ display:none; }
+  .viewfinder.captured canvas{ display:block; }
+  .ring{ position:absolute; inset:0; border-radius:50%; border:3px solid var(--line); transition:border-color .4s ease; }
+  .ring.ready{ border-color:var(--teal-500); }
+  .ring.captured{ border-color:var(--green-500); box-shadow:0 0 0 8px rgba(47,174,96,0.15); }
+  .camera-status{ text-align:center; font-size:12px; color:var(--ink-500); margin-bottom:10px; }
+  .camera-actions{ display:flex; gap:10px; margin-bottom:16px; }
+  .camera-actions .btn{ margin-top:0; }
+  .btn.outline{ background:transparent; color:var(--teal-700); border:1.5px solid var(--line); }
+  .btn.outline:hover{ background:var(--mint-100); }
+
+  .btn{
+    width:100%; padding:13px 14px; border-radius:12px; font-size:14px; font-family:'Inter',sans-serif;
+    border:none; background:var(--teal-700); color:#fff; font-weight:700; cursor:pointer;
+    margin-top:6px; transition:background .2s ease;
+  }
+  .btn:hover{ background:var(--teal-900); }
+  .btn:disabled{ background:var(--line); color:var(--ink-500); cursor:not-allowed; }
+  .btn:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
+
+  .strength-list{ font-size:11px; color:var(--ink-500); margin:-6px 0 14px; line-height:1.7; }
+  .strength-list li{ list-style:none; padding-left:18px; position:relative; }
+  .strength-list li::before{ content:'○'; position:absolute; left:0; color:var(--ink-500); }
+  .strength-list li.met{ color:var(--green-500); }
+  .strength-list li.met::before{ content:'●'; color:var(--green-500); }
+
+  .banner{ display:none; padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:16px; }
+  .banner.show{ display:block; }
+  .banner.error{ background:rgba(179,49,26,0.1); color:var(--red-500); }
+  .banner.success{ background:rgba(47,174,96,0.12); color:#1E7A45; }
+
+  .login-link{ text-align:center; font-size:13px; color:var(--ink-500); margin-top:16px; }
+  .login-link a{ color:var(--teal-700); font-weight:600; text-decoration:none; }
+
+  .spinner-inline{ width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; animation:spin .8s linear infinite; display:inline-block; vertical-align:middle; margin-right:8px; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .confirm-icon{ width:56px; height:56px; border-radius:50%; background:var(--green-500); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+  .confirm-icon svg{ width:28px; height:28px; }
+  .confirm-text{ text-align:center; font-size:14px; color:var(--ink-500); margin-bottom:20px; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="head">
+    <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
+    <h1>Create Account</h1>
+    <div class="gold-dot"></div>
+  </div>
+  <div class="stage">
+
+    <!-- Step 1: Signup form -->
+    <div class="step show" id="stepForm">
+      <div class="banner error" id="banner"></div>
+
+      <div class="field">
+        <label>Photo</label>
+        <div class="viewfinder" id="viewfinder">
+          <div class="ring" id="camRing"></div>
+          <video id="video" autoplay muted playsinline></video>
+          <canvas id="snapshotCanvas"></canvas>
+        </div>
+        <div class="camera-status" id="camStatus">Starting camera…</div>
+        <div class="camera-actions">
+          <button class="btn" id="captureBtn" onclick="capturePhoto()" disabled>Capture Photo</button>
+          <button class="btn outline" id="retakeBtn" onclick="retakePhoto()" style="display:none;">Retake</button>
+        </div>
+      </div>
+
+      <div class="field"><label for="nameInput">Full Name</label><input type="text" id="nameInput" autocomplete="name"></div>
+      <div class="field"><label for="icInput">IC Number</label><input type="text" id="icInput" autocomplete="off"></div>
+      <div class="field"><label for="emailInput">Email</label><input type="email" id="emailInput" autocomplete="email"></div>
+      <div class="field"><label for="passwordInput">Password</label><input type="password" id="passwordInput" autocomplete="new-password" oninput="updateStrength()"></div>
+      <ul class="strength-list" id="strengthList">
+        <li id="reqLen">At least 10 characters</li>
+        <li id="reqLower">A lowercase letter</li>
+        <li id="reqUpper">An uppercase letter</li>
+        <li id="reqNum">A number</li>
+        <li id="reqSym">A symbol</li>
+      </ul>
+
+      <button class="btn" id="signupBtn" onclick="handleSignup()">Create Account</button>
+      <div class="login-link">Already have an account? <a href="./login.html">Log in</a></div>
+    </div>
+
+    <!-- Step 2: Check your email -->
+    <div class="step" id="stepConfirm">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 6l8 6 8-6M4 6h16v12H4V6z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="confirm-text">We've sent a verification link to your email. Click it to activate your account, then come back and log in.</div>
+      <button class="btn outline" onclick="handleResend()" id="resendBtn">Resend Email</button>
+      <div class="login-link" style="margin-top:16px;"><a href="./login.html">Back to Log In</a></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE';
+let selectedImageBase64 = null;
+let signedUpIc = null;
+
+const video = document.getElementById('video');
+const canvas = document.getElementById('snapshotCanvas');
+const viewfinder = document.getElementById('viewfinder');
+const camRing = document.getElementById('camRing');
+const camStatus = document.getElementById('camStatus');
+const captureBtn = document.getElementById('captureBtn');
+const retakeBtn = document.getElementById('retakeBtn');
+
+window.addEventListener('DOMContentLoaded', startCamera);
+
+async function startCamera(){
+  camStatus.textContent = 'Starting camera…';
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width:320, height:320 } });
+    video.srcObject = stream;
+    await new Promise(r => video.onloadedmetadata = r);
+    camRing.classList.add('ready');
+    camStatus.textContent = 'Center your face, then capture';
+    captureBtn.disabled = false;
+  }catch(err){
+    camStatus.textContent = 'Camera access denied — please allow camera access and reload.';
+    showBanner('Camera access is required to sign up.');
+  }
+}
+
+function capturePhoto(){
+  canvas.width = 240; canvas.height = 240;
+  canvas.getContext('2d').drawImage(video, 0, 0, 240, 240);
+  selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+  viewfinder.classList.add('captured');
+  camRing.classList.remove('ready'); camRing.classList.add('captured');
+  camStatus.textContent = 'Photo captured';
+  captureBtn.style.display = 'none'; retakeBtn.style.display = 'inline-block';
+}
+
+function retakePhoto(){
+  selectedImageBase64 = null;
+  viewfinder.classList.remove('captured'); camRing.classList.remove('captured'); camRing.classList.add('ready');
+  camStatus.textContent = 'Center your face, then capture';
+  captureBtn.style.display = 'inline-block'; retakeBtn.style.display = 'none';
+}
+
+function showBanner(message){
+  const b = document.getElementById('banner');
+  if(!message){ b.classList.remove('show'); return; }
+  b.textContent = message; b.classList.add('show');
+}
+
+function updateStrength(){
+  const pw = document.getElementById('passwordInput').value;
+  setReq('reqLen', pw.length >= 10);
+  setReq('reqLower', /[a-z]/.test(pw));
+  setReq('reqUpper', /[A-Z]/.test(pw));
+  setReq('reqNum', /[0-9]/.test(pw));
+  setReq('reqSym', /[^a-zA-Z0-9]/.test(pw));
+}
+function setReq(id, met){ document.getElementById(id).classList.toggle('met', met); }
+
+async function handleSignup(){
+  const name = document.getElementById('nameInput').value.trim();
+  const ic = document.getElementById('icInput').value.trim();
+  const email = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+
+  if(!name || !ic || !email || !password){ showBanner('Please fill in all fields.'); return; }
+  if(!selectedImageBase64){ showBanner('Please capture a photo.'); return; }
+
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Creating account…';
+  showBanner(null);
+
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'signup', name, ic, email, password, imageBase64: selectedImageBase64 })
+    });
+    const data = await res.json();
+    if(!data.ok){ showBanner(data.error || 'Could not create account.'); }
+    else{
+      signedUpIc = data.ic;
+      if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+      document.getElementById('stepForm').classList.remove('show');
+      document.getElementById('stepConfirm').classList.add('show');
+    }
+  }catch(err){ showBanner('Network error — please try again.'); }
+
+  btn.disabled = false; btn.textContent = 'Create Account';
+}
+
+async function handleResend(){
+  const btn = document.getElementById('resendBtn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  try{
+    await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'resendVerification', ic: signedUpIc })
+    });
+  }catch(err){}
+  btn.disabled = false; btn.textContent = 'Resend Email';
+}
+</script>
+</body>
+</html>
