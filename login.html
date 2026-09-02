@@ -157,7 +157,7 @@ window.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 });
-
+ 
 function showStep(id){
   document.querySelectorAll('.step').forEach(s => s.classList.remove('show'));
   document.getElementById(id).classList.add('show');
@@ -168,7 +168,7 @@ function showBanner(message, type){
   b.textContent = message;
   b.className = 'banner show ' + (type || 'error');
 }
-
+ 
 function showResendOption(ic){
   const b = document.getElementById('banner');
   const link = document.createElement('a');
@@ -187,17 +187,17 @@ function showResendOption(ic){
   };
   b.appendChild(link);
 }
-
+ 
 /* ---------- Password step ---------- */
 async function handlePasswordLogin(){
   const ic = document.getElementById('icInput').value.trim();
   const password = document.getElementById('passwordInput').value;
   if(!ic || !password){ showBanner('Please enter your IC number and password.'); return; }
-
+ 
   const btn = document.getElementById('loginBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Logging in…';
   showBanner(null);
-
+ 
   try{
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -221,25 +221,25 @@ async function handlePasswordLogin(){
       }
     }
   }catch(err){ showBanner('Network error — please try again.'); }
-
+ 
   btn.disabled = false; btn.textContent = 'Log In';
 }
-
+ 
 function renderQr(otpauthUrl){
   QRCode.toCanvas(document.getElementById('qrCanvas'), otpauthUrl, { width: 200, margin: 1,
     color: { dark: '#0B3D3A', light: '#FFFFFF' } }, () => {});
 }
-
+ 
 /* ---------- 2FA verification (enrollment or regular) ---------- */
 async function handleVerifyCode(isEnrollment){
   const code = document.getElementById(isEnrollment ? 'enrollCodeInput' : 'totpCodeInput').value.trim();
   if(!code || code.length !== 6){ showBanner('Please enter the 6-digit code.'); return; }
-
+ 
   const btnId = isEnrollment ? 'enrollBtn' : 'totpBtn';
   const btn = document.getElementById(btnId);
   btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Verifying…';
   showBanner(null);
-
+ 
   try{
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -259,13 +259,13 @@ async function handleVerifyCode(isEnrollment){
       else{ goToDashboard(); }
     }
   }catch(err){ showBanner('Network error — please try again.'); }
-
+ 
   btn.disabled = false;
   btn.textContent = isEnrollment ? 'Confirm & Continue' : 'Verify';
 }
-
+ 
 function goToDashboard(){ window.location.href = './dashboard.html'; }
-
+ 
 /* ---------- Local biometric unlock ---------- */
 async function canOfferBiometric(){
   if(!window.PublicKeyCredential) return false;
@@ -273,7 +273,7 @@ async function canOfferBiometric(){
   try{ return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); }
   catch(e){ return false; }
 }
-
+ 
 async function checkBiometricAvailable(){
   const hasDeviceToken = !!localStorage.getItem('kkah_biometric_device_token');
   if(!hasDeviceToken || !window.PublicKeyCredential) return;
@@ -282,14 +282,14 @@ async function checkBiometricAvailable(){
     if(available) document.getElementById('biometricArea').style.display = 'block';
   }catch(e){}
 }
-
+ 
 async function handleEnableBiometric(){
   try{
     const challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
     const ic = sessionStorage.getItem('kkah_ic') || '';
     const userId = new TextEncoder().encode(ic);
-
+ 
     const credential = await navigator.credentials.create({
       publicKey: {
         challenge,
@@ -301,9 +301,9 @@ async function handleEnableBiometric(){
         attestation: 'none'
       }
     });
-
+ 
     if(!credential) throw new Error('No credential created');
-
+ 
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'registerBiometric', token: sessionStorage.getItem('kkah_session_token') })
@@ -318,15 +318,15 @@ async function handleEnableBiometric(){
   }
   goToDashboard();
 }
-
+ 
 async function handleBiometricLogin(){
   const deviceToken = localStorage.getItem('kkah_biometric_device_token');
   const credentialId = localStorage.getItem('kkah_biometric_credential_id');
   if(!deviceToken || !credentialId){ showBanner('Face ID / Touch ID is not set up on this device yet.'); return; }
-
+ 
   const btn = document.getElementById('biometricBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Verifying…';
-
+ 
   try{
     const challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
@@ -338,7 +338,7 @@ async function handleBiometricLogin(){
         timeout: 60000
       }
     });
-
+ 
     // Browser confirmed the local biometric prompt — now exchange the device token for a session.
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -358,10 +358,10 @@ async function handleBiometricLogin(){
   }catch(err){
     showBanner('Face ID / Touch ID was not confirmed. Please use your password.');
   }
-
+ 
   btn.disabled = false; btn.textContent = 'Log in with Face ID / Touch ID';
 }
-
+ 
 function arrayBufferToBase64(buf){
   return btoa(String.fromCharCode(...new Uint8Array(buf)));
 }
@@ -374,3 +374,4 @@ function base64ToArrayBuffer(b64){
 </script>
 </body>
 </html>
+ 
