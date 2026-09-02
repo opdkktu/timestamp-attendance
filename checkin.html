@@ -274,11 +274,35 @@
     .kiosk-header{ padding:18px 20px 14px; }
     .stage{ padding:20px; }
   }
+
+  .geofence-blocker{
+    position:fixed; inset:0; z-index:80; background:#4A1010;
+    display:none; align-items:center; justify-content:center; padding:24px; text-align:center; color:#fff;
+  }
+  .geofence-blocker.show{ display:flex; }
+  .geofence-box{ max-width:360px; }
+  .geofence-box .zone-msg{ font-family:'Manrope',sans-serif; font-size:17px; font-weight:700; margin-bottom:10px; }
+  .geofence-box .warning{
+    font-weight:800; font-size:16px; color:#FFD9D9; margin-bottom:16px;
+    animation: blinkWarn 1s step-start infinite;
+  }
+  @keyframes blinkWarn{ 50%{ opacity:0.15; } }
+  .geofence-box .distance{ font-size:12px; opacity:.75; margin-bottom:18px; }
+  .geofence-retry{ padding:10px 22px; border-radius:100px; border:none; background:#fff; color:#4A1010; font-weight:700; cursor:pointer; }
 </style>
 </head>
 <body>
 
 <div class="offline-banner" id="offlineBanner">No internet connection — check-ins can't be recorded right now</div>
+
+<div class="geofence-blocker" id="geofenceBlocker">
+  <div class="geofence-box">
+    <div class="zone-msg" id="geofenceZoneMsg">Anda berada di luar bangunan klinik</div>
+    <div class="warning" id="geofenceWarning">⚠ AMARAN! ANDA DILARANG UNTUK TERUSKAN FACEPRINT.</div>
+    <div class="distance" id="geofenceDistance">—</div>
+    <button class="geofence-retry" onclick="recheckGeofence()">Semak Semula Lokasi</button>
+  </div>
+</div>
 
 <div class="overlay" id="startScreen">
   <div class="msg" style="margin-bottom:6px;">KKAH Staff Check-In</div>
@@ -358,6 +382,28 @@
 /* ============ CONFIG — fill in your deployed Apps Script Web App URL ============ */
 const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE';
 const MODEL_URL = './models';        // self-hosted — see setup note below, avoids CDN reliability issues
+/* ---------------- Geofence config — Klinik Kesihatan Ayer Hitam ---------------- */
+// Kampung Lubok Ayer, 06150 Ayer Hitam, Kedah — adjust radii after on-site GPS testing.
+const CLINIC_LAT = 6.237;
+const CLINIC_LNG = 100.24664;
+const BUILDING_RADIUS_M = 60;
+const AREA_RADIUS_M = 150;
+
+function distanceMeters(lat1, lng1, lat2, lng2){
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function checkGeofence(lat, lng){
+  const dist = Math.round(distanceMeters(lat, lng, CLINIC_LAT, CLINIC_LNG));
+  if(dist <= BUILDING_RADIUS_M) return null;
+  if(dist <= AREA_RADIUS_M) return { zoneMsg: 'Anda berada di luar bangunan klinik', dist };
+  return { zoneMsg: 'Anda berada di luar kawasan klinik', dist };
+}
+
 const MATCH_THRESHOLD = 0.5;         // lower = stricter match
 const AMBIGUITY_MARGIN = 0.07;       // min gap needed between best and 2nd-best match
 const RECOGNIZE_STABLE_FRAMES = 3;   // consecutive detections before we lock a match
@@ -419,7 +465,7 @@ async function init(){
     detectLoop();
   }catch(err){
     console.error(err);
-    if(err.message !== 'Location permission denied' && err.message !== 'Camera permission denied'){
+    if(err.message !== 'Location permission denied' && err.message !== 'Camera permission denied' && err.message !== 'Outside allowed zone'){
       showLoadError(err.message);
     }
   }
@@ -488,6 +534,16 @@ function requestLocation(){
 
     const onSuccess = pos => {
       userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, name: '' };
+
+      const violation = checkGeofence(userLocation.lat, userLocation.lng);
+      if(violation){
+        document.getElementById('geofenceZoneMsg').textContent = violation.zoneMsg;
+        document.getElementById('geofenceDistance').textContent = `Jarak dari klinik: ~${violation.dist}m`;
+        document.getElementById('geofenceBlocker').classList.add('show');
+        reject(new Error('Outside allowed zone'));
+        return;
+      }
+
       showLocationMap(userLocation.lat, userLocation.lng);
       reverseGeocode(userLocation.lat, userLocation.lng);
       resolve();
@@ -509,6 +565,11 @@ function requestLocation(){
         { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 });
     }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
   });
+}
+
+function recheckGeofence(){
+  document.getElementById('geofenceBlocker').classList.remove('show');
+  init();
 }
 
 async function loadModels(){
