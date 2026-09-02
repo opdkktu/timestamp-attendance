@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KKAH HR Portal · Verify Email</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56;
+    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60; --red-500:#B3311A;
+    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
+    font-family:'Inter',sans-serif; color:var(--ink-700);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card{ width:100%; max-width:400px; background:#fff; border-radius:28px; box-shadow:0 20px 60px -20px rgba(11,61,58,0.25); overflow:hidden; border:1px solid var(--line); padding:36px 30px; text-align:center; }
+  .icon{ width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
+  .icon.success{ background:var(--green-500); }
+  .icon.error{ background:var(--red-500); }
+  .icon.loading{ background:var(--teal-700); }
+  .icon svg{ width:30px; height:30px; }
+  .spinner{ width:28px; height:28px; border-radius:50%; border:3px solid rgba(255,255,255,.35); border-top-color:#fff; animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  h1{ font-family:'Manrope',sans-serif; font-size:19px; color:var(--teal-900); margin:0 0 8px; }
+  p{ font-size:14px; color:var(--ink-500); line-height:1.6; margin:0 0 22px; }
+  .btn{
+    display:inline-block; padding:12px 24px; border-radius:12px; font-size:14px; font-weight:700;
+    background:var(--teal-700); color:#fff; text-decoration:none;
+  }
+  .btn:hover{ background:var(--teal-900); }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="icon loading" id="icon"><div class="spinner"></div></div>
+  <h1 id="title">Verifying your email…</h1>
+  <p id="message">Just a moment.</p>
+  <a class="btn" href="./login.html" id="actionBtn" style="display:none;">Go to Log In</a>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  const icon = document.getElementById('icon');
+  const title = document.getElementById('title');
+  const message = document.getElementById('message');
+  const actionBtn = document.getElementById('actionBtn');
+
+  if(!token){
+    showError('Missing verification link', 'This link looks incomplete. Please use the link from your email.');
+    return;
+  }
+
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verifyEmail', token })
+    });
+    const data = await res.json();
+    if(!data.ok){
+      showError('Verification failed', data.error || 'This link is invalid or has expired.');
+    }else{
+      icon.className = 'icon success';
+      icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l5 5 11-11" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      title.textContent = data.alreadyVerified ? 'Already verified' : 'Email verified!';
+      message.textContent = 'Your account is active. You can now log in.';
+      actionBtn.style.display = 'inline-block';
+    }
+  }catch(err){
+    showError('Network error', 'Please check your connection and try opening the link again.');
+  }
+
+  function showError(t, m){
+    icon.className = 'icon error';
+    icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>';
+    title.textContent = t; message.textContent = m;
+    actionBtn.textContent = 'Back to Sign Up';
+    actionBtn.href = './signup.html';
+    actionBtn.style.display = 'inline-block';
+  }
+});
+</script>
+</body>
+</html>
