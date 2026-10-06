@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#0B3D3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <style>
   :root{
     --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
@@ -107,6 +108,89 @@
   }
   .modal-btn:disabled{ background:var(--line); color:var(--ink-500); }
   .modal-cancel{ background:transparent; color:var(--ink-500); font-weight:600; margin-top:8px; }
+
+  /* === FESTIVE / BIRTHDAY POPUPS === */
+  .festival-overlay{
+    position:fixed; inset:0; background:rgba(11,61,58,0.55); display:none;
+    align-items:center; justify-content:center; padding:20px; z-index:70;
+  }
+  .festival-overlay.show{ display:flex; }
+  .festival-card{
+    background:linear-gradient(135deg, var(--teal-700), var(--teal-500)); color:#fff;
+    border-radius:24px; padding:34px 26px; width:100%; max-width:340px; text-align:center;
+    box-shadow:0 20px 50px -20px rgba(11,61,58,0.5);
+  }
+  .festival-emoji{ font-size:48px; margin-bottom:10px; }
+  .festival-title{ font-family:'Manrope',sans-serif; font-weight:800; font-size:18px; margin-bottom:18px; }
+  .festival-close{
+    background:rgba(255,255,255,0.18); border:none; color:#fff; font-weight:700;
+    padding:10px 22px; border-radius:100px; cursor:pointer;
+  }
+
+  .birthday-card{
+    background:linear-gradient(135deg, var(--gold-500), #E8C65A); color:var(--teal-900);
+    border-radius:24px; padding:36px 26px; width:100%; max-width:340px; text-align:center;
+    box-shadow:0 20px 50px -20px rgba(201,162,39,0.6);
+  }
+  .birthday-card .emoji{ font-size:54px; margin-bottom:8px; }
+  .birthday-card h2{ font-family:'Manrope',sans-serif; font-weight:800; font-size:20px; margin:0 0 6px; }
+  .birthday-card p{ font-size:13px; margin:0 0 20px; opacity:.85; }
+  .birthday-card button{
+    background:var(--teal-900); color:#fff; border:none; font-weight:700;
+    padding:10px 24px; border-radius:100px; cursor:pointer;
+  }
+
+  .birthday-eve-banner{
+    display:none; background:rgba(201,162,39,0.12); color:var(--teal-900);
+    border:1px solid rgba(201,162,39,0.35); border-radius:12px; padding:12px 16px;
+    font-size:13px; margin-bottom:16px; font-weight:600;
+  }
+  .birthday-eve-banner.show{ display:block; }
+
+  .bday-toast-stack{ display:none; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .bday-toast-stack.show{ display:flex; }
+  .bday-toast{
+    background:#fff; border:1px solid var(--line); border-radius:16px; padding:12px 14px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    box-shadow:0 8px 20px -14px rgba(11,61,58,0.25); font-size:13px;
+  }
+  .bday-toast-text{ flex:1; }
+  .bday-toast-actions{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .bday-send-btn{
+    background:var(--teal-700); color:#fff; border:none; font-weight:700; font-size:12px;
+    padding:8px 12px; border-radius:100px; cursor:pointer; white-space:nowrap;
+  }
+  .bday-send-btn:disabled{ opacity:.6; cursor:default; }
+  .bday-dismiss-btn{
+    background:none; border:none; color:var(--ink-500); font-size:14px; cursor:pointer; padding:4px;
+  }
+
+  /* === MULTI-BOX STATUS DASHBOARD (boxes 2-7; box 1 is .schedule-card above) === */
+  .status-boxes-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+  .status-box{
+    border-radius:18px; padding:16px; color:#fff; min-height:86px;
+    box-shadow:0 8px 20px -14px rgba(11,61,58,0.3);
+  }
+  .status-box .sb-label{ font-size:10.5px; letter-spacing:.04em; text-transform:uppercase; opacity:.85; font-weight:700; }
+  .status-box .sb-main{ font-family:'Manrope',sans-serif; font-size:17px; font-weight:800; margin-top:6px; line-height:1.2; }
+  .status-box .sb-sub{ font-size:11px; opacity:.9; margin-top:4px; }
+  .sb-ok{ background:linear-gradient(135deg,#198754,#20c997); }
+  .sb-warn{ background:linear-gradient(135deg,var(--gold-500),#e0b93a); }
+  .sb-alert{ background:linear-gradient(135deg,var(--red-500),#e25a42); animation:sb-pulse 1.6s infinite; }
+  .sb-neutral{ background:linear-gradient(135deg,#64748b,#94a3b8); }
+  .sb-info{ background:linear-gradient(135deg,var(--teal-700),var(--teal-500)); }
+  @keyframes sb-pulse{
+    0%{ box-shadow:0 0 0 0 rgba(179,49,26,.5); }
+    70%{ box-shadow:0 0 0 14px rgba(179,49,26,0); }
+    100%{ box-shadow:0 0 0 0 rgba(179,49,26,0); }
+  }
+  .status-box.loading{ background:var(--mint-100); color:var(--ink-500); }
+  .status-box.loading .sb-main{
+    background:linear-gradient(90deg,#DCEAE6 25%,#EAF6F2 50%,#DCEAE6 75%);
+    background-size:200% 100%; animation:sb-skeleton 1.5s infinite;
+    height:17px; border-radius:4px; color:transparent;
+  }
+  @keyframes sb-skeleton{ 0%{ background-position:-200% 0; } 100%{ background-position:200% 0; } }
 </style>
 </head>
 <body>
@@ -128,9 +212,21 @@
   </div>
   <div class="banner error" id="forcedBanner">Please set a new password before continuing.</div>
 
+  <div class="birthday-eve-banner" id="birthdayEveBanner">🎂 Esok hari jadi anda — semoga hari yang indah menanti!</div>
+  <div class="bday-toast-stack" id="birthdayToastStack"></div>
+
   <div class="schedule-card loading" id="scheduleCard">
     <div class="label">Today's Working Zone</div>
     <div class="zone" id="scheduleZone">Loading…</div>
+  </div>
+
+  <div class="status-boxes-grid">
+    <div class="status-box loading" id="box_bls"><div class="sb-label">BLS Validity</div><div class="sb-main">&nbsp;</div></div>
+    <div class="status-box loading" id="box_trolley"><div class="sb-label">Emergency Trolley</div><div class="sb-main">&nbsp;</div></div>
+    <div class="status-box loading" id="box_bag"><div class="sb-label">Ambulance Bag</div><div class="sb-main">&nbsp;</div></div>
+    <div class="status-box loading" id="box_ambulance"><div class="sb-label">Ambulance</div><div class="sb-main">&nbsp;</div></div>
+    <div class="status-box loading" id="box_apps"><div class="sb-label">Jumlah Permohonan</div><div class="sb-main">&nbsp;</div></div>
+    <div class="status-box loading" id="box_hours"><div class="sb-label">Jumlah Jam</div><div class="sb-main">&nbsp;</div></div>
   </div>
 
   <div class="section-title">Available</div>
@@ -164,12 +260,32 @@
   </div>
 </div>
 
+<div class="festival-overlay" id="festivalOverlay">
+  <div class="festival-card">
+    <div class="festival-emoji" id="festivalEmoji">🎉</div>
+    <div class="festival-title" id="festivalTitle"></div>
+    <button class="festival-close" onclick="closeFestivalPopup()">Teruskan</button>
+  </div>
+</div>
+
+<div class="festival-overlay" id="birthdayCardOverlay">
+  <div class="birthday-card">
+    <div class="emoji">🎂</div>
+    <h2>Happy Birthday!</h2>
+    <p>Semoga sihat sejahtera dan bahagia sepanjang tahun ini. Daripada semua di KKAH 💛</p>
+    <button onclick="closeBirthdayCard()">Terima Kasih!</button>
+  </div>
+</div>
+
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
-const ONESIGNAL_APP_ID = 'PASTE_YOUR_ONESIGNAL_APP_ID_HERE'; // public App ID — safe to expose client-side, unlike the REST API key
+const ONESIGNAL_APP_ID = 6aa5fe5d-9596-45ef-a783-da4a81cf9cf6'; // public App ID — safe to expose client-side, unlike the REST API key
 const MODULES = [
   { id: 'profile', name: 'Update Profile', icon: '👤', status: 'active', href: './profile.html' },
   { id: 'attendance', name: 'Timestamp Attendance', icon: '🕒', status: 'active', href: './my-checkin.html' },
+  { id: 'borang', name: 'Borang Permohonan', icon: '📝', status: 'active', href: './borang.html' },
+  { id: 'jadual', name: 'Jadual & Rekod Saya', icon: '📅', status: 'active', href: './jadual.html' },
   { id: 'trolley', name: 'Emergency Trolley Checklist', icon: '🧰', status: 'soon' },
   { id: 'ambulance', name: 'Ambulance Checklist', icon: '🚑', status: 'soon' },
   { id: 'birthday', name: 'Birthday Notifications', icon: '🎂', status: 'soon' },
@@ -204,7 +320,254 @@ window.addEventListener('DOMContentLoaded', () => {
 
   initOneSignal(ic);
   loadTodaySchedule();
+  checkSpecialDayPopup();
+  loadBirthdayAlerts();
+  loadBlsBox();
+  loadLeaveStatBoxes();
+  loadChecklistBoxes();
+  setInterval(loadChecklistBoxes, 5 * 60 * 1000); // refresh trolley/bag/ambulance every 5 min
 });
+
+/* === STATUS BOXES 2-7 === */
+
+async function loadBlsBox(){
+  const el = document.getElementById('box_bls');
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getBlsStatus', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(!data.ok){ renderBoxError(el, 'BLS Validity'); return; }
+    const status = String(data.status || '').toUpperCase();
+    let cls = 'sb-neutral';
+    if(status.indexOf('SAH') !== -1 || status.indexOf('VALID') !== -1 || status.indexOf('AKTIF') !== -1) cls = 'sb-ok';
+    else if(status.indexOf('TAMAT') !== -1 || status.indexOf('EXPIRE') !== -1) cls = 'sb-alert';
+    else if(status) cls = 'sb-warn';
+    el.className = 'status-box ' + cls;
+    el.innerHTML = '<div class="sb-label">BLS Validity</div><div class="sb-main">' + (data.status || 'Tiada Rekod') +
+      '</div><div class="sb-sub">Sah sehingga: ' + (data.validUntil || '-') + '</div>';
+  }catch(err){ renderBoxError(el, 'BLS Validity'); }
+}
+
+async function loadLeaveStatBoxes(){
+  const elApps = document.getElementById('box_apps');
+  const elHours = document.getElementById('box_hours');
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getLeaveStats', token: sessionStorage.getItem('kkah_session_token'), year: new Date().getFullYear() })
+    });
+    const data = await res.json();
+    if(!data.ok){ renderBoxError(elApps, 'Jumlah Permohonan'); renderBoxError(elHours, 'Jumlah Jam'); return; }
+
+    elApps.className = 'status-box sb-info';
+    elApps.innerHTML = '<div class="sb-label">Jumlah Permohonan</div><div class="sb-main">' + data.totalApps +
+      '</div><div class="sb-sub">Tahun ' + new Date().getFullYear() + '</div>';
+
+    elHours.className = 'status-box sb-info';
+    elHours.innerHTML = '<div class="sb-label">Jumlah Jam</div><div class="sb-main">' + data.totalHours +
+      ' jam</div><div class="sb-sub">Tahun ' + new Date().getFullYear() + '</div>';
+  }catch(err){ renderBoxError(elApps, 'Jumlah Permohonan'); renderBoxError(elHours, 'Jumlah Jam'); }
+}
+
+// EDIT THESE THREE URLS — published-CSV links for your trolley/bag/ambulance
+// checklists, same pattern as your reference 4-box dashboard.
+const CHECKLIST_SOURCES = {
+  box_trolley:   { name: 'Emergency Trolley', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT424D0MKxyW0YGUYQwmd3J0UFD7idzhVW4Vv2fxxA3YJxVh43-n55KfKBveA8qMS8YFPK4DxlprRJb/pub?gid=619976719&single=true&output=csv' },
+  box_bag:       { name: 'Ambulance Bag',     url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQcig6WG_AwN21YylQnm5ZHK69fbYp8TC_sK_5bgvlC9_cQq5DGdiFGCMS3yrdmlqQymhRKZE_NZffl/pub?gid=619976719&single=true&output=csv' },
+  box_ambulance: { name: 'Ambulance',         url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQl68jBOD7vc2cGKj5c3flwt48f_tjIqsBIBnRoqqNZF4bKrsxrdrkPM0QYgdBA4axnMksu0uwoLFF0/pub?gid=619976719&single=true&output=csv' },
+  box_temperature_OPD: { name: 'Temperature OPD',         url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTMEGoKlPIt4jm2thHLjEYaSM4iGDlyViBlFoO40_FGqEHNDBHwNIOgIO4rJhAMZEEiawv1oq6n60HT/pub?gid=0&single=true&output=csv' },
+};
+
+function loadChecklistBoxes(){
+  Object.keys(CHECKLIST_SOURCES).forEach(function(boxId){
+    const cfg = CHECKLIST_SOURCES[boxId];
+    const el = document.getElementById(boxId);
+    if(!cfg.url || cfg.url.indexOf('PASTE_') === 0){ renderBoxError(el, cfg.name); return; }
+
+    Papa.parse(cfg.url, {
+      download: true, header: true,
+      complete: function(res){
+        const today = new Date().toLocaleDateString('en-CA');
+        const rows = (res.data || []).filter(function(r){ return r.Date === today; });
+        if(!rows.length){
+          el.className = 'status-box sb-alert';
+          el.innerHTML = '<div class="sb-label">' + cfg.name + '</div><div class="sb-main">BELUM DISEMAK</div><div class="sb-sub">Sila semak sekarang</div>';
+        }else{
+          const last = rows[rows.length - 1];
+          el.className = 'status-box sb-ok';
+          el.innerHTML = '<div class="sb-label">' + cfg.name + '</div><div class="sb-main">Disemak ✓</div>' +
+            '<div class="sb-sub">' + (last['Checked By'] || '') + '<br>' + (last['Timestamp'] || '') + '</div>';
+        }
+      },
+      error: function(){ renderBoxError(el, cfg.name); }
+    });
+  });
+}
+
+function renderBoxError(el, label){
+  if(!el) return;
+  el.className = 'status-box sb-neutral';
+  el.innerHTML = '<div class="sb-label">' + label + '</div><div class="sb-main">-</div><div class="sb-sub">Tiada data</div>';
+}
+
+/* === FESTIVE / SPECIAL DAY POPUP (login-time, once per day per device) === */
+
+function getLastSaturdayOfSeptember(y){
+  const d = new Date(y, 9, 0); // day 0 of October = last day of September
+  d.setDate(d.getDate() - ((d.getDay() + 1) % 7));
+  return d;
+}
+
+// EDIT/EXTEND THIS LIST as needed — month/day only matters, the year in each
+// Date is overwritten by getSpecialDaysForYear() below.
+function getSpecialDaysForYear(y){
+  return [
+    { name:"Hari Pekerja", emoji:"👷", date: new Date(y+"-05-01") },
+    { name:"Hari Kebangsaan ke-"+(y-1957), emoji:"🇲🇾", date: new Date(y+"-08-31") },
+    { name:"Hari Malaysia", emoji:"🇲🇾", date: new Date(y+"-09-16") },
+    { name:"Hari Pembantu Perubatan Malaysia (Penolong Pegawai Perubatan) (NG 999 Responder)", emoji:"🩺", date: new Date(y+"-03-10") },
+    { name:"Hari Pembantu Perawatan Kesihatan Malaysia", emoji:"🏥", date: new Date(y+"-11-01") },
+    { name:"Hari Jururawat Sedunia", emoji:"👩‍⚕️", date: new Date(y+"-05-12") },
+    { name:"Hari Sindrom Down Sedunia (World Down Syndrome Day)", emoji:"💛", date: new Date(y+"-03-21") },
+    { name:"Hari Hipertensi Sedunia (World Hypertension Day)", emoji:"❤️", date: new Date(y+"-05-17") },
+    { name:"Hari Hepatitis (World Hepatitis Day)", emoji:"🎗️", date: new Date(y+"-07-28") },
+    { name:"Hari Keselamatan Pesakit Sedunia (World Patient Safety Day)", emoji:"🛡️", date: new Date(y+"-09-17") },
+    { name:"Hari Jantung Sedunia (World Heart Day)", emoji:"💓", date: new Date(y+"-09-29") },
+    { name:"Hari Kesihatan Sedunia (World Health Day)", emoji:"🌍", date: new Date(y+"-04-07") },
+    { name:"Hari Kebersihan Tangan Sedunia (World Hand Hygiene Day)", emoji:"🙌", date: new Date(y+"-05-05") },
+    { name:"Hari Tanpa Tembakau Sedunia (World No Tobacco Day)", emoji:"🚭", date: new Date(y+"-05-31") },
+    { name:"Hari Derma Darah Sedunia (World Blood Donor Day)", emoji:"🩸", date: new Date(y+"-06-14") },
+    { name:"Hari Kesihatan Mulut Sedunia (World Oral Health Day)", emoji:"🦷", date: new Date(y+"-03-20") },
+    { name:"Hari Guru (Teachers' Day)", emoji:"🧑‍🏫", date: new Date(y+"-05-16") },
+    { name:"Hari Muzium Sedunia (International Museum Day)", emoji:"🏛️", date: new Date(y+"-05-18") },
+    { name:"Hari Kesihatan Gusi Sedunia", emoji:"🦷", date: new Date(y+"-05-12") },
+    { name:"Hari Doktor Gigi Sedunia (International Dentist Day)", emoji:"🦷", date: new Date(y+"-03-06") },
+    { name:"Hari Cuci Malaysia", emoji:"🧹", date: getLastSaturdayOfSeptember(y) },
+    { name:"World Cleanup Day", emoji:"🧹", date: new Date(y+"-09-20") },
+    { name:"Hari Ozon Sedunia (World Ozone Day)", emoji:"🌏", date: new Date(y+"-09-16") },
+    { name:"Hari Kesihatan Mental Sedunia (World Mental Health Day)", emoji:"🧠", date: new Date(y+"-10-10") },
+    { name:"Hari Diabetes Sedunia (World Diabetes Day)", emoji:"💉", date: new Date(y+"-11-14") },
+    { name:"Hari Bidan Sedunia (World Midwife Day)", emoji:"🤰", date: new Date(y+"-05-05") },
+    { name:"Hari Terapi Cara Kerja Sedunia (World Occupational Therapy Day)", emoji:"🦽", date: new Date(y+"-10-27") },
+    { name:"Hari Fisiotherapi Sedunia (World Physiotherapy Day)", emoji:"🦽", date: new Date(y+"-09-08") },
+    { name:"Hari Tuberkulosis Sedunia (World Tuberculosis Day)", emoji:"🫁", date: new Date(y+"-03-24") },
+    { name:"Hari AIDS Sedunia", emoji:"🔴", date: new Date(y+"-12-01") },
+    { name:"Hari Bumi Sedunia", emoji:"🌱", date: new Date(y+"-04-22") },
+    { name:"Hari Persekitaran Sedunia (World Environment Day)", emoji:"🌿", date: new Date(y+"-06-05") },
+    { name:"Tahun Baharu "+y, emoji:"🎆", date: new Date(y+"-01-01") },
+    { name:"Hari Bomba Sedunia (NG999 Responder)", emoji:"🚒", date: new Date(y+"-05-04") },
+    { name:"Hari APM Malaysia ke-"+(y-1954)+" (NG999 Responder)", emoji:"🪖", date: new Date(y+"-03-24") },
+    { name:"Hari Polis ke-"+(y-1807)+" (NG999 Responder)", emoji:"👮", date: new Date(y+"-03-25") }
+  ];
+}
+
+function isSameMonthDay(a, b){
+  return a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function checkSpecialDayPopup(){
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if(localStorage.getItem('kkah_special_day_shown') === todayStr) return; // already shown today on this device
+
+  const today = new Date();
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+  const days = getSpecialDaysForYear(today.getFullYear()).concat(getSpecialDaysForYear(tomorrow.getFullYear())); // handles Dec 31 -> Jan 1
+
+  const todayMatch = days.find(function(d){ return isSameMonthDay(d.date, today); });
+  const tomorrowMatch = !todayMatch && days.find(function(d){ return isSameMonthDay(d.date, tomorrow); });
+
+  if(todayMatch) showFestivalPopup(todayMatch, 'today');
+  else if(tomorrowMatch) showFestivalPopup(tomorrowMatch, 'tomorrow');
+
+  localStorage.setItem('kkah_special_day_shown', todayStr);
+}
+
+function showFestivalPopup(day, when){
+  document.getElementById('festivalEmoji').textContent = day.emoji || '🎉';
+  document.getElementById('festivalTitle').textContent = (when === 'today' ? 'Hari ini: ' : 'Esok: ') + day.name;
+  document.getElementById('festivalOverlay').classList.add('show');
+}
+function closeFestivalPopup(){
+  document.getElementById('festivalOverlay').classList.remove('show');
+}
+
+/* === BIRTHDAY POPUPS (self card + colleague "send a wish?" reminders) === */
+
+async function loadBirthdayAlerts(){
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getBirthdayAlerts', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(!data.ok) return;
+
+    if(data.selfToday) showBirthdayCard();
+    else if(data.selfTomorrow) document.getElementById('birthdayEveBanner').classList.add('show');
+
+    const pending = (data.colleagues || []).filter(function(c){ return !c.alreadySent; });
+    renderColleagueBirthdayToasts(pending);
+  }catch(err){
+    console.warn('Could not load birthday alerts:', err);
+  }
+}
+
+function showBirthdayCard(){
+  document.getElementById('birthdayCardOverlay').classList.add('show');
+  try{ confetti({ particleCount: 120, spread: 90, origin: { y: 0.6 } }); }catch(e){}
+}
+function closeBirthdayCard(){
+  document.getElementById('birthdayCardOverlay').classList.remove('show');
+}
+
+function renderColleagueBirthdayToasts(list){
+  const container = document.getElementById('birthdayToastStack');
+  container.innerHTML = '';
+  list.forEach(function(c){
+    const card = document.createElement('div');
+    card.className = 'bday-toast';
+    card.id = 'bdayToast_' + c.ic;
+    card.innerHTML =
+      '<div class="bday-toast-text">🎂 ' + (c.when === 'today' ? 'Hari ini' : 'Esok') + ' hari jadi <strong>' + c.name + '</strong>!</div>' +
+      '<div class="bday-toast-actions">' +
+        '<button class="bday-send-btn" onclick="sendBirthdayWish(\'' + c.ic + '\',\'' + c.name.replace(/'/g, "\\'") + '\')">Hantar Ucapan 🎉</button>' +
+        '<button class="bday-dismiss-btn" onclick="dismissBirthdayToast(\'' + c.ic + '\')">✕</button>' +
+      '</div>';
+    container.appendChild(card);
+  });
+  container.classList.toggle('show', list.length > 0);
+}
+
+function dismissBirthdayToast(ic){
+  const el = document.getElementById('bdayToast_' + ic);
+  if(el) el.remove();
+}
+
+async function sendBirthdayWish(targetIc, targetName){
+  const card = document.getElementById('bdayToast_' + targetIc);
+  const btn = card ? card.querySelector('.bday-send-btn') : null;
+  if(btn){ btn.disabled = true; btn.textContent = 'Menghantar…'; }
+
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'sendBirthdayWish', token: sessionStorage.getItem('kkah_session_token'), targetIc: targetIc })
+    });
+    const data = await res.json();
+    if(data.ok && card){
+      card.innerHTML = '<div class="bday-toast-text">✅ Ucapan dihantar kepada ' + targetName + '!</div>';
+      setTimeout(function(){ card.remove(); }, 2500);
+    }else if(!data.ok){
+      alert('Gagal menghantar ucapan: ' + (data.error || 'Ralat tidak diketahui'));
+      if(btn){ btn.disabled = false; btn.textContent = 'Hantar Ucapan 🎉'; }
+    }
+  }catch(err){
+    alert('Ralat rangkaian — sila cuba sebentar lagi.');
+    if(btn){ btn.disabled = false; btn.textContent = 'Hantar Ucapan 🎉'; }
+  }
+}
 
 /** Published "today list" sheet — column A name, column B working zone. */
 const SCHEDULE_SHEET_ID = '191ZTgpVGen3Y1Ksj7-h8rtdCkuj4U1QIam4A1N6QkuY';
