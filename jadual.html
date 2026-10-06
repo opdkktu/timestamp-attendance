@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KKAH HR Portal · Jadual &amp; Rekod Saya</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
+    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60; --red-500:#B3311A;
+    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
+    font-family:'Inter',sans-serif; color:var(--ink-700);
+  }
+  .topbar{ background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); color:#fff; padding:20px 24px 28px; }
+  .topbar-row{ display:flex; justify-content:space-between; align-items:flex-start; max-width:720px; margin:0 auto; }
+  .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
+  .topbar h1{ font-family:'Manrope',sans-serif; font-size:22px; font-weight:800; margin:4px 0 0; }
+  .back-link{ color:#fff; opacity:.85; text-decoration:none; font-size:13px; }
+
+  .content{ max-width:720px; margin:-14px auto 40px; padding:0 20px; }
+
+  .card{ background:#fff; border:1px solid var(--line); border-radius:20px; box-shadow:0 8px 24px -16px rgba(11,61,58,0.2); }
+  .search-card{ padding:16px 18px; margin-bottom:16px; display:flex; gap:10px; align-items:center; }
+  .search-card select{
+    padding:10px 12px; border-radius:10px; border:1px solid var(--line); font-size:14px; font-family:'Inter',sans-serif;
+  }
+  .search-card label{ font-size:12px; font-weight:700; color:var(--ink-500); }
+
+  .stats-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+  .stat-box{ background:var(--mint-100); border-radius:16px; padding:16px; text-align:center; }
+  .stat-box .label{ font-size:11px; color:var(--ink-500); font-weight:700; text-transform:uppercase; }
+  .stat-box .value{ font-family:'Manrope',sans-serif; font-size:22px; font-weight:800; color:var(--teal-900); margin-top:4px; }
+
+  .section-title{ font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; color:var(--ink-500); margin:22px 4px 10px; }
+
+  .record-card{ padding:16px; margin-bottom:10px; }
+  .record-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+  .record-date{ font-family:'Manrope',sans-serif; font-weight:800; color:var(--teal-900); font-size:14px; }
+  .record-sub{ font-size:12px; color:var(--ink-500); margin-top:10px; line-height:1.5; }
+  .pill{ padding:4px 10px; border-radius:100px; font-weight:700; font-size:10.5px; letter-spacing:.02em; }
+  .pill-ok{ background:#dcfce7; color:#166534; }
+  .pill-bad{ background:#fee2e2; color:#991b1b; }
+  .pill-pending{ background:#fef9c3; color:#854d0e; }
+  .record-actions{ display:flex; gap:8px; margin-top:12px; }
+  .mini-btn{
+    flex:1; padding:9px 10px; border-radius:10px; font-size:12px; font-weight:700;
+    border:1.5px solid var(--line); background:#fff; color:var(--teal-700); cursor:pointer; text-align:center; text-decoration:none;
+  }
+  .mini-btn.wa{ background:#25D366; color:#fff; border:none; }
+  .mini-btn input[type=file]{ display:none; }
+  .empty-state{ text-align:center; padding:30px; color:var(--ink-500); font-size:13px; }
+
+  /* Leave-type accordion (native <details>) */
+  .leave-accordion{ padding:6px 0; }
+  .leave-accordion details{ border-bottom:1px solid var(--line); }
+  .leave-accordion summary{
+    list-style:none; cursor:pointer; padding:14px 18px; display:flex; align-items:center; gap:8px;
+    font-weight:700; font-size:13px; color:var(--teal-900);
+  }
+  .leave-accordion summary::-webkit-details-marker{ display:none; }
+  .leave-accordion summary::before{ content:'▸'; color:var(--teal-500); transition:transform .15s; }
+  .leave-accordion details[open] summary::before{ transform:rotate(90deg); }
+  .evidence-badge{ font-size:10px; background:#fef9c3; color:#854d0e; border-radius:4px; padding:2px 7px; }
+  .leave-count-badge{ margin-left:auto; background:var(--teal-700); color:#fff; border-radius:100px; padding:2px 10px; font-size:11px; }
+  .chip-wrap{ padding:4px 18px 16px; display:flex; flex-wrap:wrap; gap:6px; }
+  .chip{
+    display:inline-flex; align-items:center; gap:6px; background:var(--mint-100); border:1px solid var(--line);
+    border-radius:8px; padding:5px 9px; font-size:11.5px; color:var(--ink-700);
+  }
+  .chip.uploaded{ background:#dcfce7; border-color:#86efac; color:#166534; }
+  .chip .chip-val{ color:var(--teal-700); font-weight:700; }
+  .chip.uploaded .chip-val{ color:#166534; }
+  .chip-upload-btn{ background:none; border:none; padding:0; color:#94a3b8; cursor:pointer; font-size:12px; }
+  .chip-upload-btn.uploaded{ color:#16a34a; }
+
+  .skeleton-line{
+    height:46px; border-radius:10px; margin-bottom:8px;
+    background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%); background-size:200% 100%;
+    animation:sk 1.5s infinite;
+  }
+  @keyframes sk{ 0%{ background-position:-200% 0; } 100%{ background-position:200% 0; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-row">
+    <div>
+      <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
+      <h1>Jadual &amp; Rekod Saya</h1>
+    </div>
+    <a class="back-link" href="./dashboard.html">← Dashboard</a>
+  </div>
+</div>
+
+<div class="content">
+  <div class="card search-card">
+    <label for="yearSelect">Tahun</label>
+    <select id="yearSelect" onchange="loadAll()"></select>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box"><div class="label">Jumlah Permohonan</div><div class="value" id="statApps">—</div></div>
+    <div class="stat-box"><div class="label">Jumlah Jam</div><div class="value" id="statHours">—</div></div>
+  </div>
+
+  <div class="section-title">Sejarah Permohonan</div>
+  <div id="recordsList"><div class="skeleton-line"></div><div class="skeleton-line" style="opacity:.7"></div></div>
+
+  <div class="section-title">Analisis Jadual Bertugas</div>
+  <div class="card leave-accordion" id="scheduleAccordion">
+    <div style="padding:16px;"><div class="skeleton-line"></div><div class="skeleton-line" style="opacity:.7"></div></div>
+  </div>
+</div>
+
+<script>
+const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE';
+let currentRecords = [];
+
+window.addEventListener('DOMContentLoaded', () => {
+  const token = sessionStorage.getItem('kkah_session_token');
+  if(!token){ window.location.href = './login.html'; return; }
+
+  const sel = document.getElementById('yearSelect');
+  const currY = new Date().getFullYear();
+  for(let y = currY + 1; y >= 2024; y--) sel.add(new Option(y, y));
+  sel.value = currY;
+
+  loadAll();
+});
+
+function loadAll(){
+  loadRecords();
+  loadSchedule();
+}
+
+async function loadRecords(){
+  const year = document.getElementById('yearSelect').value;
+  const listEl = document.getElementById('recordsList');
+  listEl.innerHTML = '<div class="skeleton-line"></div><div class="skeleton-line" style="opacity:.7"></div>';
+
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getMyLeaveRecords', token: sessionStorage.getItem('kkah_session_token'), year })
+    });
+    const data = await res.json();
+    if(!data.ok){ listEl.innerHTML = '<div class="empty-state">Ralat: ' + (data.error || 'Tidak diketahui') + '</div>'; return; }
+
+    currentRecords = data.list || [];
+    document.getElementById('statApps').textContent = data.stats.totalApps;
+    document.getElementById('statHours').textContent = data.stats.totalHours + ' jam';
+
+    if(!currentRecords.length){
+      listEl.innerHTML = '<div class="empty-state">Tiada rekod dijumpai untuk tahun ini.</div>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    currentRecords.forEach((row, i) => {
+      const s = row.status.toUpperCase();
+      const pillClass = s.indexOf('LULUS') !== -1 ? 'pill-ok' : s.indexOf('TOLAK') !== -1 ? 'pill-bad' : 'pill-pending';
+      const isPending = pillClass === 'pill-pending';
+
+      const card = document.createElement('div');
+      card.className = 'card record-card';
+      let docAction = '';
+      if(row.lampiran && row.lampiran.indexOf('http') !== -1){
+        docAction = '<a class="mini-btn" href="' + row.lampiran + '" target="_blank">👁 Lihat Bukti</a>';
+      }else{
+        docAction = '<label class="mini-btn">📎 Muat Naik<input type="file" onchange="doRetroUpload(this, ' + i + ')"></label>';
+      }
+      const waAction = isPending
+        ? '<button class="mini-btn wa" onclick="notify(' + i + ')">💬 WhatsApp Info</button>'
+        : '';
+
+      card.innerHTML =
+        '<div class="record-head">' +
+          '<div class="record-date">' + row.tarikh + '</div>' +
+          '<span class="pill ' + pillClass + '">' + row.status + '</span>' +
+        '</div>' +
+        '<div class="record-sub"><strong>Tujuan:</strong> ' + row.tujuan + '<br><strong>Masa:</strong> ' + row.masa + ' (' + row.jam + ')</div>' +
+        '<div class="record-actions">' + docAction + waAction + '</div>';
+      listEl.appendChild(card);
+    });
+  }catch(err){
+    listEl.innerHTML = '<div class="empty-state">Ralat rangkaian — sila cuba sebentar lagi.</div>';
+  }
+}
+
+function notify(i){
+  const r = currentRecords[i];
+  const msg = '*BORANG KEBENARAN KELUAR*\n\nMohon pada *' + r.tarikh + '* jam *' + r.masa + '* bagi tujuan *' + r.tujuan + '*.';
+  window.open('https://wa.me/' + r.phone + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function doRetroUpload(el, i){
+  if(!el.files[0]) return;
+  const f = el.files[0];
+  const label = el.parentElement;
+  label.innerHTML = '⏳ Memuat naik…';
+
+  const reader = new FileReader();
+  reader.onload = async function(e){
+    try{
+      const res = await fetch(API_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'uploadRetrospectiveProof',
+          token: sessionStorage.getItem('kkah_session_token'),
+          base64: e.target.result.split(',')[1],
+          mimeType: f.type, fileName: f.name,
+          timestamp: currentRecords[i].timestamp
+        })
+      });
+      const data = await res.json();
+      if(data.ok){ loadRecords(); }
+      else{ label.innerHTML = '⚠️ Gagal'; alert('Gagal memuat naik: ' + (data.error || '')); }
+    }catch(err){ label.innerHTML = '⚠️ Ralat'; }
+  };
+  reader.readAsDataURL(f);
+}
+
+async function loadSchedule(){
+  const year = document.getElementById('yearSelect').value;
+  const el = document.getElementById('scheduleAccordion');
+  el.innerHTML = '<div style="padding:16px;"><div class="skeleton-line"></div><div class="skeleton-line" style="opacity:.7"></div></div>';
+
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getMyScheduleData', token: sessionStorage.getItem('kkah_session_token'), year })
+    });
+    const data = await res.json();
+    if(!data.ok){ el.innerHTML = '<div class="empty-state">' + (data.error || 'Tiada data') + '</div>'; return; }
+
+    const proofMap = data.proofMap || {};
+    const evidenceRequired = data.evidenceRequired || [];
+    el.innerHTML = '';
+    let any = false;
+
+    Object.keys(data.summary).forEach((type, idx) => {
+      const item = data.summary[type];
+      if(item.count === 0) return;
+      any = true;
+      const needsEvidence = evidenceRequired.indexOf(type) !== -1;
+
+      const chips = item.dates.map((d, dIdx) => {
+        const key = type + '|' + d.date;
+        const hasProof = !!proofMap[key];
+        const chipId = 'chip_' + idx + '_' + dIdx;
+        let action = '';
+        if(needsEvidence){
+          action = hasProof
+            ? '<a href="' + proofMap[key] + '" target="_blank" class="chip-upload-btn uploaded" title="Lihat dokumen">✓</a>'
+            : '<label class="chip-upload-btn" id="lbl_' + chipId + '" title="Muat naik bukti">📎<input type="file" style="display:none" onchange="doPerDateUpload(this,\'' + type + '\',\'' + d.date + '\',\'' + chipId + '\')"></label>';
+        }
+        return '<span class="chip' + (hasProof ? ' uploaded' : '') + '" id="' + chipId + '">' + d.date + ' <span class="chip-val">' + d.value + '</span>' + action + '</span>';
+      }).join('');
+
+      const details = document.createElement('details');
+      details.innerHTML =
+        '<summary>' + type + (needsEvidence ? '<span class="evidence-badge">Perlu Bukti</span>' : '') +
+        '<span class="leave-count-badge">' + item.count + ' hari</span></summary>' +
+        '<div class="chip-wrap">' + chips + '</div>';
+      el.appendChild(details);
+    });
+
+    if(!any) el.innerHTML = '<div class="empty-state">Tiada cuti direkodkan.</div>';
+  }catch(err){
+    el.innerHTML = '<div class="empty-state">Ralat rangkaian — sila cuba sebentar lagi.</div>';
+  }
+}
+
+function doPerDateUpload(el, leaveType, date, chipId){
+  if(!el.files[0]) return;
+  const f = el.files[0];
+  document.getElementById('lbl_' + chipId).innerHTML = '⏳';
+
+  const reader = new FileReader();
+  reader.onload = async function(e){
+    try{
+      const res = await fetch(API_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'uploadScheduleProof',
+          token: sessionStorage.getItem('kkah_session_token'),
+          base64: e.target.result.split(',')[1],
+          mimeType: f.type, fileName: leaveType + '_' + date + '_' + f.name,
+          leaveType, date
+        })
+      });
+      const data = await res.json();
+      if(data.ok){
+        const chip = document.getElementById(chipId);
+        chip.classList.add('uploaded');
+        const lbl = document.getElementById('lbl_' + chipId);
+        if(lbl) lbl.outerHTML = '<a href="' + data.url + '" target="_blank" class="chip-upload-btn uploaded">✓</a>';
+      }else{
+        document.getElementById('lbl_' + chipId).innerHTML = '⚠️';
+        alert('Gagal: ' + (data.error || ''));
+      }
+    }catch(err){
+      document.getElementById('lbl_' + chipId).innerHTML = '⚠️';
+    }
+  };
+  reader.readAsDataURL(f);
+}
+</script>
+</body>
+</html>
