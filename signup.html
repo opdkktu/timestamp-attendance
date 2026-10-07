@@ -84,6 +84,8 @@
   .confirm-icon svg{ width:28px; height:28px; }
   .confirm-text{ text-align:center; font-size:14px; color:var(--ink-500); margin-bottom:20px; line-height:1.6; }
 </style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
 </head>
 <body>
 
@@ -110,6 +112,9 @@
         <div class="camera-actions">
           <button class="btn" id="captureBtn" onclick="capturePhoto()" disabled>Capture Photo</button>
           <button class="btn outline" id="retakeBtn" onclick="retakePhoto()" style="display:none;">Retake</button>
+        </div>
+        <div class="login-link" style="margin-top:10px;">
+          Already have a photo on file with the clinic? <a href="#" onclick="skipPhoto(event)">Skip this step</a>
         </div>
       </div>
 
@@ -143,7 +148,7 @@
 </div>
 
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE';
 let selectedImageBase64 = null;
 let signedUpIc = null;
 
@@ -184,9 +189,24 @@ function capturePhoto(){
 
 function retakePhoto(){
   selectedImageBase64 = null;
+  photoSkipped = false;
   viewfinder.classList.remove('captured'); camRing.classList.remove('captured'); camRing.classList.add('ready');
   camStatus.textContent = 'Center your face, then capture';
   captureBtn.style.display = 'inline-block'; retakeBtn.style.display = 'none';
+}
+
+/**
+ * For staff whose name/IC are already in DATABASE from before the portal
+ * existed — the backend reuses their existing photo on file, so a new
+ * capture isn't required. If it turns out there's no photo on file (brand
+ * new staff), signup() will say so and they can come back and capture one.
+ */
+let photoSkipped = false;
+function skipPhoto(e){
+  e.preventDefault();
+  photoSkipped = true;
+  camStatus.textContent = 'Skipped — will use the photo already on file, if any';
+  showBanner(null);
 }
 
 function showBanner(message){
@@ -212,7 +232,7 @@ async function handleSignup(){
   const password = document.getElementById('passwordInput').value;
 
   if(!name || !ic || !email || !password){ showBanner('Please fill in all fields.'); return; }
-  if(!selectedImageBase64){ showBanner('Please capture a photo.'); return; }
+  if(!selectedImageBase64 && !photoSkipped){ showBanner('Please capture a photo, or tap "Skip this step" if one is already on file.'); return; }
 
   const btn = document.getElementById('signupBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Creating account…';
