@@ -69,6 +69,8 @@
   .banner.show{ display:block; }
   .banner.error{ background:rgba(179,49,26,0.1); color:var(--red-500); }
 </style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
 </head>
 <body>
 
@@ -108,7 +110,7 @@
 </div>
 
 <script>
-const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
 
 window.addEventListener('DOMContentLoaded', async () => {
   const token = sessionStorage.getItem('kkah_session_token');
