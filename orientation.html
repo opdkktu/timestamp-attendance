@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KKAH HR Portal · Orientasi Staf Baharu</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
+    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60; --red-500:#B3311A;
+    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
+    font-family:'Inter',sans-serif; color:var(--ink-700);
+  }
+  .topbar{ background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); color:#fff; padding:24px; text-align:center; }
+  .topbar .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
+  .topbar h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:4px 0 6px; }
+  .topbar p{ font-size:13px; opacity:.85; margin:0; max-width:420px; margin:0 auto; }
+
+  .content{ max-width:640px; margin:0 auto; padding:20px 20px 100px; }
+
+  .progress{ background:var(--mint-100); border-radius:100px; height:8px; margin-bottom:24px; overflow:hidden; }
+  .progress-fill{ background:var(--teal-700); height:100%; width:0%; transition:width .3s ease; }
+
+  .topic-card{ background:#fff; border:1px solid var(--line); border-radius:18px; padding:18px 20px; margin-bottom:14px; box-shadow:0 8px 20px -16px rgba(11,61,58,0.2); }
+  .topic-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .topic-icon{ width:36px; height:36px; border-radius:10px; background:var(--mint-100); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .topic-title{ font-family:'Manrope',sans-serif; font-weight:800; font-size:14.5px; color:var(--teal-900); }
+  .topic-body{ font-size:13px; color:var(--ink-500); line-height:1.6; margin-bottom:12px; }
+  .placeholder-box{
+    background:var(--mint-050); border:1.5px dashed var(--line); border-radius:12px; padding:14px;
+    font-size:12px; color:var(--ink-500); margin-bottom:12px; text-align:center;
+  }
+  .ack-check{ display:flex; align-items:center; gap:9px; font-size:13px; font-weight:600; color:var(--teal-900); cursor:pointer; }
+  .ack-check input{ width:18px; height:18px; accent-color:var(--teal-700); cursor:pointer; }
+
+  .sticky-footer{
+    position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--line);
+    padding:14px 20px; box-shadow:0 -8px 24px -16px rgba(11,61,58,0.2);
+  }
+  .sticky-footer-inner{ max-width:640px; margin:0 auto; display:flex; align-items:center; gap:12px; }
+  .footer-status{ font-size:12px; color:var(--ink-500); flex:1; }
+  .btn{
+    padding:13px 20px; border-radius:12px; font-size:14px; font-family:'Inter',sans-serif;
+    border:none; background:var(--teal-700); color:#fff; font-weight:700; cursor:pointer; white-space:nowrap;
+  }
+  .btn:disabled{ background:var(--line); color:var(--ink-500); cursor:not-allowed; }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
+  <h1>Orientasi Staf Baharu</h1>
+  <p>Selamat datang ke KKAH! Sila baca dan sahkan setiap topik di bawah sebelum meneruskan ke papan pemuka.</p>
+</div>
+
+<div class="content">
+  <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+
+  <div class="topic-card">
+    <div class="topic-head"><div class="topic-icon">🗑️</div><div class="topic-title">Pelupusan Sharp Bin</div></div>
+    <div class="topic-body">Prosedur pelupusan jarum dan objek tajam dengan selamat. Jangan sekali-kali tutup semula penutup jarum (no recapping).</div>
+    <div class="placeholder-box">📎 [Admin: letakkan gambar/poster sharp bin &amp; prosedur pelupusan di sini]</div>
+    <label class="ack-check"><input type="checkbox" class="ack" data-topic="sharpBin"> Saya faham prosedur pelupusan sharp bin</label>
+  </div>
+
+  <div class="topic-card">
+    <div class="topic-head"><div class="topic-icon">🧼</div><div class="topic-title">Kawalan Jangkitan (Infection Control)</div></div>
+    <div class="topic-body">Kebersihan tangan (5 Moments), penggunaan PPE, dan prosedur isolasi pesakit berjangkit.</div>
+    <div class="placeholder-box">📎 [Admin: letakkan garis panduan kawalan jangkitan KKAH di sini]</div>
+    <label class="ack-check"><input type="checkbox" class="ack" data-topic="infectionControl"> Saya faham garis panduan kawalan jangkitan</label>
+  </div>
+
+  <div class="topic-card">
+    <div class="topic-head"><div class="topic-icon">📋</div><div class="topic-title">Pelaporan Insiden</div></div>
+    <div class="topic-body">Cara melaporkan insiden keselamatan pesakit atau staf — borang, saluran pelaporan, dan tempoh masa pelaporan.</div>
+    <div class="placeholder-box">📎 [Admin: letakkan carta alir/borang pelaporan insiden di sini]</div>
+    <label class="ack-check"><input type="checkbox" class="ack" data-topic="incidentReporting"> Saya faham prosedur pelaporan insiden</label>
+  </div>
+
+  <div class="topic-card">
+    <div class="topic-head"><div class="topic-icon">🏢</div><div class="topic-title">Carta Organisasi</div></div>
+    <div class="topic-body">Ketua Jabatan (HOD), Ketua Klinik, dan Pegawai Penyelia anda — rantaian pelaporan di KKAH.</div>
+    <div class="placeholder-box">📎 [Admin: letakkan carta organisasi KKAH di sini]</div>
+    <label class="ack-check"><input type="checkbox" class="ack" data-topic="orgChart"> Saya faham carta organisasi klinik</label>
+  </div>
+
+  <div class="topic-card">
+    <div class="topic-head"><div class="topic-icon">🚪</div><div class="topic-title">Laluan Keluar Kecemasan</div></div>
+    <div class="topic-body">Pelan lantai KKAH dengan laluan keluar kecemasan dan titik pertemuan (assembly point).</div>
+    <div class="placeholder-box">📎 [Admin: letakkan pelan lantai laluan keluar kecemasan di sini]</div>
+    <label class="ack-check"><input type="checkbox" class="ack" data-topic="emergencyExit"> Saya faham laluan keluar kecemasan</label>
+  </div>
+</div>
+
+<div class="sticky-footer">
+  <div class="sticky-footer-inner">
+    <div class="footer-status" id="footerStatus">0 / 5 disahkan</div>
+    <button class="btn" id="completeBtn" disabled onclick="handleComplete()">Lengkapkan Orientasi</button>
+  </div>
+</div>
+
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const token = sessionStorage.getItem('kkah_session_token');
+  if(!token){ window.location.href = './login.html'; return; }
+
+  document.querySelectorAll('.ack').forEach(cb => cb.addEventListener('change', updateProgress));
+});
+
+function updateProgress(){
+  const boxes = document.querySelectorAll('.ack');
+  const checked = document.querySelectorAll('.ack:checked').length;
+  document.getElementById('progressFill').style.width = (checked / boxes.length * 100) + '%';
+  document.getElementById('footerStatus').textContent = checked + ' / ' + boxes.length + ' disahkan';
+  document.getElementById('completeBtn').disabled = checked < boxes.length;
+}
+
+async function handleComplete(){
+  const btn = document.getElementById('completeBtn');
+  btn.disabled = true; btn.textContent = 'Menyimpan…';
+
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'completeOrientation', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(data.ok){
+      window.location.href = './dashboard.html';
+    }else{
+      alert('Ralat: ' + (data.error || 'Sila cuba sebentar lagi.'));
+      btn.disabled = false; btn.textContent = 'Lengkapkan Orientasi';
+    }
+  }catch(err){
+    alert('Ralat rangkaian — sila cuba sebentar lagi.');
+    btn.disabled = false; btn.textContent = 'Lengkapkan Orientasi';
+  }
+}
+
+const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_EXEC_URL_HERE';
+</script>
+</body>
+</html>
