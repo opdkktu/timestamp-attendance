@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KKAH HR Portal · About</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
+    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
+    font-family:'Inter',sans-serif; color:var(--ink-700);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card{ width:100%; max-width:400px; background:#fff; border-radius:28px; box-shadow:0 20px 60px -20px rgba(11,61,58,0.25); overflow:hidden; border:1px solid var(--line); }
+  .head{ padding:26px 28px 20px; background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); color:#fff; position:relative; text-align:center; }
+  .head .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:20px; font-weight:800; margin:4px 0 0; }
+  .back-link{ position:absolute; top:24px; right:28px; color:#fff; opacity:.8; text-decoration:none; font-size:13px; }
+  .stage{ padding:24px 28px 28px; }
+
+  .info-list{ display:flex; flex-direction:column; gap:12px; }
+  .info-row{ background:var(--mint-100); border-radius:14px; padding:13px 16px; }
+  .info-row .label{ font-size:10.5px; color:var(--ink-500); font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  .info-row .value{ font-family:'Manrope',sans-serif; font-size:15px; font-weight:800; color:var(--teal-900); margin-top:3px; }
+
+  .footer-note{ text-align:center; font-size:11px; color:var(--ink-500); margin-top:22px; line-height:1.6; }
+  .btn{
+    width:100%; padding:12px 14px; border-radius:12px; font-size:13px; font-family:'Inter',sans-serif;
+    border:1.5px solid var(--line); background:#fff; color:var(--ink-700); font-weight:700; cursor:pointer;
+    margin-top:20px; display:block; text-align:center; text-decoration:none; box-sizing:border-box;
+  }
+  .btn:hover{ background:var(--mint-100); }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="head">
+    <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
+    <h1>About This System</h1>
+    <a class="back-link" href="./dashboard.html">← Dashboard</a>
+  </div>
+  <div class="stage">
+    <div class="info-list">
+      <div class="info-row"><div class="label">App Name</div><div class="value">KKAH HR Portal</div></div>
+      <div class="info-row"><div class="label">Version</div><div class="value" id="versionValue">—</div></div>
+      <div class="info-row"><div class="label">System Launch Date</div><div class="value" id="launchValue">—</div></div>
+      <div class="info-row"><div class="label">Developer</div><div class="value" id="devValue">—</div></div>
+    </div>
+    <div class="footer-note" id="copyrightLine">—</div>
+    <a class="btn" href="./dashboard.html">Back to Dashboard</a>
+  </div>
+</div>
+
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+<script>
+  document.getElementById('versionValue').textContent = 'v' + APP_VERSION + ' (' + APP_BUILD_DATE + ')';
+  document.getElementById('launchValue').textContent = SYSTEM_LAUNCH_DATE;
+  document.getElementById('devValue').textContent = APP_DEVELOPER;
+  document.getElementById('copyrightLine').textContent = getCopyrightLine();
+</script>
+</body>
+</html>
