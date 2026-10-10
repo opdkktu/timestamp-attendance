@@ -192,6 +192,8 @@
   }
   @keyframes sb-skeleton{ 0%{ background-position:-200% 0; } 100%{ background-position:200% 0; } }
 </style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
 </head>
 <body>
 
@@ -209,6 +211,7 @@
 <div class="content">
   <div class="banner info" id="menuBanner">
     <strong id="menuIc">—</strong>
+    <a href="./about.html" style="display:block; margin-top:8px; color:inherit; font-weight:700; text-decoration:none;">ℹ️ About System</a>
   </div>
   <div class="banner error" id="forcedBanner">Please set a new password before continuing.</div>
 
@@ -227,6 +230,9 @@
     <div class="status-box loading" id="box_ambulance"><div class="sb-label">Ambulance</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_apps"><div class="sb-label">Jumlah Permohonan</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_hours"><div class="sb-label">Jumlah Jam</div><div class="sb-main">&nbsp;</div></div>
+    <div class="status-box loading" id="box_kursus" onclick="openKursusModal()" style="cursor:pointer;"><div class="sb-label">Jumlah Hari Kursus</div><div class="sb-main">&nbsp;</div></div>
+    <div class="status-box loading" id="box_health" onclick="openHealthModal()" style="cursor:pointer;"><div class="sb-label">Pemeriksaan Kesihatan</div><div class="sb-main">&nbsp;</div></div>
+    <div class="status-box sb-neutral" id="box_cme"><div class="sb-label">Kehadiran CME (Dalaman)</div><div class="sb-main">Akan Datang</div><div class="sb-sub">Modul ILMU standby</div></div>
   </div>
 
   <div class="section-title">Available</div>
@@ -260,6 +266,24 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="kursusModalOverlay">
+  <div class="modal">
+    <h2>Senarai Kursus</h2>
+    <div class="sub">Tahun <span id="kursusYearLabel"></span></div>
+    <div id="kursusListBody" style="max-height:50vh; overflow-y:auto; margin-bottom:8px;"></div>
+    <button class="modal-btn modal-cancel" onclick="closeKursusModal()">Tutup</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="healthModalOverlay">
+  <div class="modal">
+    <h2>Pemeriksaan Kesihatan</h2>
+    <div class="sub">Status terkini anda</div>
+    <div id="healthBody" style="margin-bottom:8px;"></div>
+    <button class="modal-btn modal-cancel" onclick="closeHealthModal()">Tutup</button>
+  </div>
+</div>
+
 <div class="festival-overlay" id="festivalOverlay">
   <div class="festival-card">
     <div class="festival-emoji" id="festivalEmoji">🎉</div>
@@ -280,7 +304,7 @@
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
-const ONESIGNAL_APP_ID = 6aa5fe5d-9596-45ef-a783-da4a81cf9cf6'; // public App ID — safe to expose client-side, unlike the REST API key
+const ONESIGNAL_APP_ID = '6aa5fe5d-9596-45ef-a783-da4a81cf9cf6'; // public App ID — safe to expose client-side, unlike the REST API key
 const MODULES = [
   { id: 'profile', name: 'Update Profile', icon: '👤', status: 'active', href: './profile.html' },
   { id: 'attendance', name: 'Timestamp Attendance', icon: '🕒', status: 'active', href: './my-checkin.html' },
@@ -325,8 +349,91 @@ window.addEventListener('DOMContentLoaded', () => {
   loadBlsBox();
   loadLeaveStatBoxes();
   loadChecklistBoxes();
+  loadKursusBox();
+  loadHealthBox();
   setInterval(loadChecklistBoxes, 5 * 60 * 1000); // refresh trolley/bag/ambulance every 5 min
 });
+
+/* === BOX 8: JUMLAH HARI KURSUS (click to expand) === */
+
+let cachedKursusList = [];
+
+async function loadKursusBox(){
+  const el = document.getElementById('box_kursus');
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getMyKursusList', token: sessionStorage.getItem('kkah_session_token'), year: new Date().getFullYear() })
+    });
+    const data = await res.json();
+    if(!data.ok){ renderBoxError(el, 'Jumlah Hari Kursus'); return; }
+    cachedKursusList = data.list || [];
+    el.className = 'status-box sb-info';
+    el.style.cursor = 'pointer';
+    el.innerHTML = '<div class="sb-label">Jumlah Hari Kursus</div><div class="sb-main">' + cachedKursusList.length +
+      '</div><div class="sb-sub">Tahun ' + new Date().getFullYear() + ' · ketik untuk senarai</div>';
+  }catch(err){ renderBoxError(el, 'Jumlah Hari Kursus'); }
+}
+
+function openKursusModal(){
+  document.getElementById('kursusYearLabel').textContent = new Date().getFullYear();
+  const body = document.getElementById('kursusListBody');
+  if(!cachedKursusList.length){
+    body.innerHTML = '<div style="font-size:13px; color:var(--ink-500); text-align:center; padding:20px 0;">Tiada kursus direkodkan setakat ini.</div>';
+  }else{
+    body.innerHTML = cachedKursusList.map(k =>
+      '<div style="padding:10px 0; border-bottom:1px solid var(--line);">' +
+        '<div style="font-weight:700; font-size:13px; color:var(--teal-900);">' + k.kursus + '</div>' +
+        '<div style="font-size:11.5px; color:var(--ink-500); margin-top:2px;">' + k.tarikh + '</div>' +
+      '</div>'
+    ).join('');
+  }
+  document.getElementById('kursusModalOverlay').classList.add('show');
+}
+function closeKursusModal(){ document.getElementById('kursusModalOverlay').classList.remove('show'); }
+
+/* === BOX 9: PEMERIKSAAN KESIHATAN (click to expand) === */
+
+async function loadHealthBox(){
+  const el = document.getElementById('box_health');
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getHealthScreeningStatus', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(!data.ok){ renderBoxError(el, 'Pemeriksaan Kesihatan'); return; }
+
+    const needsAttention = data.influenzaDue || (data.hepBStatus && data.hepBStatus.toLowerCase().indexOf('not') !== -1);
+    el.className = 'status-box ' + (needsAttention ? 'sb-warn' : 'sb-ok');
+    el.style.cursor = 'pointer';
+    el.innerHTML = '<div class="sb-label">Pemeriksaan Kesihatan</div><div class="sb-main">' +
+      (needsAttention ? 'Perlu Tindakan' : 'Lengkap') + '</div><div class="sb-sub">Ketik untuk butiran</div>';
+
+    window.lastHealthData = data;
+  }catch(err){ renderBoxError(el, 'Pemeriksaan Kesihatan'); }
+}
+
+function openHealthModal(){
+  const d = window.lastHealthData || {};
+  const row = (label, value, warn) =>
+    '<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); font-size:13px;">' +
+      '<span style="color:var(--ink-500); font-weight:600;">' + label + '</span>' +
+      '<span style="font-weight:700; color:' + (warn ? 'var(--red-500)' : 'var(--teal-900)') + ';">' + (value || '-') + '</span>' +
+    '</div>';
+
+  const body = document.getElementById('healthBody');
+  body.innerHTML =
+    row('Mantoux Test', d.mantoux) +
+    row('Chest X-Ray', d.cxr) +
+    row('Hep B Titre', d.hepBTitre) +
+    row('Hep B Status', d.hepBStatus, d.hepBStatus && d.hepBStatus.toLowerCase().indexOf('not') !== -1) +
+    row('Hep B Booster Seterusnya', d.hepBBoosterNext) +
+    row('Influenza (Tahunan)', d.influenza + (d.influenzaDue ? ' — DUE' : ''), d.influenzaDue);
+
+  document.getElementById('healthModalOverlay').classList.add('show');
+}
+function closeHealthModal(){ document.getElementById('healthModalOverlay').classList.remove('show'); }
 
 /* === STATUS BOXES 2-7 === */
 
@@ -374,10 +481,9 @@ async function loadLeaveStatBoxes(){
 // EDIT THESE THREE URLS — published-CSV links for your trolley/bag/ambulance
 // checklists, same pattern as your reference 4-box dashboard.
 const CHECKLIST_SOURCES = {
-  box_trolley:   { name: 'Emergency Trolley', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT424D0MKxyW0YGUYQwmd3J0UFD7idzhVW4Vv2fxxA3YJxVh43-n55KfKBveA8qMS8YFPK4DxlprRJb/pub?gid=619976719&single=true&output=csv' },
-  box_bag:       { name: 'Ambulance Bag',     url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQcig6WG_AwN21YylQnm5ZHK69fbYp8TC_sK_5bgvlC9_cQq5DGdiFGCMS3yrdmlqQymhRKZE_NZffl/pub?gid=619976719&single=true&output=csv' },
-  box_ambulance: { name: 'Ambulance',         url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQl68jBOD7vc2cGKj5c3flwt48f_tjIqsBIBnRoqqNZF4bKrsxrdrkPM0QYgdBA4axnMksu0uwoLFF0/pub?gid=619976719&single=true&output=csv' },
-  box_temperature_OPD: { name: 'Temperature OPD',         url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTMEGoKlPIt4jm2thHLjEYaSM4iGDlyViBlFoO40_FGqEHNDBHwNIOgIO4rJhAMZEEiawv1oq6n60HT/pub?gid=0&single=true&output=csv' },
+  box_trolley:   { name: 'Emergency Trolley', url: 'PASTE_YOUR_TROLLEY_PUBLISHED_CSV_URL_HERE' },
+  box_bag:       { name: 'Ambulance Bag',     url: 'PASTE_YOUR_AMBULANCE_BAG_PUBLISHED_CSV_URL_HERE' },
+  box_ambulance: { name: 'Ambulance',         url: 'PASTE_YOUR_AMBULANCE_PUBLISHED_CSV_URL_HERE' }
 };
 
 function loadChecklistBoxes(){
