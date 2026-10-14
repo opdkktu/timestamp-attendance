@@ -1068,8 +1068,8 @@ async function loadOnCallBox(){
     const csvText = await res.text();
     const rows = parseCsv(csvText);
 
-    const r2 = rows[1] || [];
-    const r3 = rows[2] || [];
+    const r2 = rows[2] || [];
+    const r3 = rows[3] || [];
     const role1 = (r2[0] || '🩺 Assistant Medical Officer').trim();
     const name1 = (r2[1] || '').trim();
     const role2 = (r3[0] || '🚁 Pilot').trim();
