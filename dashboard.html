@@ -191,11 +191,72 @@
     height:17px; border-radius:4px; color:transparent;
   }
   @keyframes sb-skeleton{ 0%{ background-position:-200% 0; } 100%{ background-position:200% 0; } }
+
+  /* === Persistent location bar (always shown, top of page) === */
+  .location-bar{
+    max-width:720px; margin:14px auto 0; display:flex; align-items:center; gap:7px;
+    background:rgba(255,255,255,0.12); border-radius:100px; padding:7px 14px;
+    font-size:12px; color:#fff; width:fit-content; cursor:pointer; border:none;
+  }
+  .location-bar:hover{ background:rgba(255,255,255,0.2); }
+  .loc-dot{ width:7px; height:7px; border-radius:50%; background:var(--green-500); flex-shrink:0; animation:loc-pulse 2s infinite; }
+  @keyframes loc-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+
+  /* === Animated welcome overlay (shown on entering dashboard) === */
+  .welcome-overlay{
+    position:fixed; inset:0; z-index:95; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, var(--teal-900), var(--teal-700) 55%, var(--teal-500));
+    opacity:0; pointer-events:none; transition:opacity .5s ease;
+  }
+  .welcome-overlay.show{ opacity:1; pointer-events:auto; }
+  .welcome-overlay.hide{ opacity:0; }
+  .welcome-overlay::before{
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(600px 400px at 50% 20%, rgba(255,255,255,0.12), transparent 70%);
+  }
+  .welcome-content{ position:relative; text-align:center; color:#fff; padding:20px; }
+  .welcome-icon{
+    font-size:48px; margin-bottom:14px; display:inline-block;
+    animation:welcome-wave 1.4s ease-in-out .3s 1;
+  }
+  @keyframes welcome-wave{
+    0%{ transform:rotate(0deg) scale(0.6); opacity:0; }
+    30%{ transform:rotate(14deg) scale(1.1); opacity:1; }
+    45%{ transform:rotate(-8deg) scale(1); }
+    60%{ transform:rotate(14deg) scale(1); }
+    75%{ transform:rotate(-4deg) scale(1); }
+    100%{ transform:rotate(0deg) scale(1); }
+  }
+  .welcome-greeting{
+    font-family:'Inter',sans-serif; font-size:14px; letter-spacing:.06em; text-transform:uppercase;
+    opacity:0; font-weight:600; animation:welcome-fade-up .6s ease .5s forwards;
+  }
+  .welcome-name{
+    font-family:'Manrope',sans-serif; font-size:30px; font-weight:800; margin:6px 0 10px;
+    opacity:0; animation:welcome-fade-up .6s ease .65s forwards;
+  }
+  .welcome-sub{
+    font-size:13px; opacity:0; color:rgba(255,255,255,0.75);
+    animation:welcome-fade-up .6s ease .8s forwards;
+  }
+  @keyframes welcome-fade-up{
+    from{ opacity:0; transform:translateY(14px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
 </head>
 <body>
+
+<div class="welcome-overlay" id="welcomeOverlay">
+  <div class="welcome-content">
+    <div class="welcome-icon">👋</div>
+    <div class="welcome-greeting" id="welcomeGreeting">Selamat Kembali,</div>
+    <div class="welcome-name" id="welcomeName">—</div>
+    <div class="welcome-sub">Klinik Kesihatan Ayer Hitam · HR Portal</div>
+  </div>
+</div>
 
 <div class="topbar">
   <div class="topbar-row">
@@ -206,6 +267,9 @@
     </div>
     <button class="menu-btn" onclick="document.getElementById('menuBanner').classList.toggle('show')" aria-label="Account menu">⋯</button>
   </div>
+  <button class="location-bar" id="locationBar" onclick="initLocationBar()" title="Ketik untuk cuba kesan semula">
+    <span class="loc-dot"></span><span id="locationText">Mengesan lokasi…</span>
+  </button>
 </div>
 
 <div class="content">
@@ -304,7 +368,7 @@
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
-const ONESIGNAL_APP_ID = '6aa5fe5d-9596-45ef-a783-da4a81cf9cf6'; // public App ID — safe to expose client-side, unlike the REST API key
+const ONESIGNAL_APP_ID = 'PASTE_YOUR_ONESIGNAL_APP_ID_HERE'; // public App ID — safe to expose client-side, unlike the REST API key
 const MODULES = [
   { id: 'profile', name: 'Update Profile', icon: '👤', status: 'active', href: './profile.html' },
   { id: 'attendance', name: 'Timestamp Attendance', icon: '🕒', status: 'active', href: './my-checkin.html' },
@@ -336,12 +400,15 @@ window.addEventListener('DOMContentLoaded', () => {
   if(params.get('forcePasswordChange') === '1'){
     document.getElementById('forcedBanner').classList.add('show');
     openPasswordModal(true);
+  }else{
+    showWelcomeOverlay(); // skip the overlay when a forced password change needs attention first
   }
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 
+  initLocationBar();
   initOneSignal(ic);
   loadTodaySchedule();
   checkSpecialDayPopup();
@@ -353,6 +420,66 @@ window.addEventListener('DOMContentLoaded', () => {
   loadHealthBox();
   setInterval(loadChecklistBoxes, 5 * 60 * 1000); // refresh trolley/bag/ambulance every 5 min
 });
+
+/* === Animated welcome, shown once each time the dashboard is entered === */
+async function showWelcomeOverlay(){
+  const overlay = document.getElementById('welcomeOverlay');
+  const hour = new Date().getHours();
+  let greet = 'Selamat Pagi,';
+  if(hour >= 12 && hour < 15) greet = 'Selamat Tengah Hari,';
+  else if(hour >= 15 && hour < 19) greet = 'Selamat Petang,';
+  else if(hour >= 19 || hour < 5) greet = 'Selamat Malam,';
+  document.getElementById('welcomeGreeting').textContent = greet;
+
+  let name = sessionStorage.getItem('kkah_ic') || '';
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getMyProfile', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(data.ok && data.name) name = data.name;
+  }catch(err){ /* fall back to IC if the profile lookup fails */ }
+  document.getElementById('welcomeName').textContent = name;
+
+  overlay.classList.add('show');
+  const dismiss = () => {
+    overlay.classList.add('hide');
+    setTimeout(() => overlay.remove(), 550);
+  };
+  overlay.addEventListener('click', dismiss, { once: true });
+  setTimeout(dismiss, 2200); // auto-dismiss even if nobody taps it
+}
+
+/* === Persistent location bar — always visible at the top === */
+async function initLocationBar(){
+  const text = document.getElementById('locationText');
+  text.textContent = 'Mengesan lokasi…';
+
+  if(!navigator.geolocation){
+    text.textContent = '📍 Lokasi tidak disokong peranti ini';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const { latitude, longitude } = pos.coords;
+    try{
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16&addressdetails=1`,
+        { headers: { 'Accept-Language': 'ms,en' } }
+      );
+      const data = await res.json();
+      const a = data.address || {};
+      const place = a.suburb || a.village || a.town || a.city || a.town_or_city || a.county
+        || (data.display_name ? data.display_name.split(',')[0] : null) || 'Lokasi dikesan';
+      text.textContent = '📍 ' + place;
+    }catch(err){
+      text.textContent = '📍 ' + latitude.toFixed(4) + ', ' + longitude.toFixed(4);
+    }
+  }, (err) => {
+    text.textContent = '📍 Kebenaran lokasi diperlukan — ketik untuk cuba lagi';
+  }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 });
+}
 
 /* === BOX 8: JUMLAH HARI KURSUS (click to expand) === */
 
