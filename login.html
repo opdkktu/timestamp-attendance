@@ -114,25 +114,13 @@
       </div>
     </div>
 
-    <!-- Step 2a: Enroll 2FA (first login only) -->
-    <div class="step" id="stepEnroll">
-      <div class="qr-wrap"><canvas id="qrCanvas"></canvas></div>
-      <div class="hint-text">Scan this with Google Authenticator or Authy. Can't scan? Enter this key manually:</div>
-      <div class="manual-key" id="manualKey">—</div>
-      <div class="field">
-        <label for="enrollCodeInput">Enter the 6-digit code from your app</label>
-        <input type="text" class="code-input" id="enrollCodeInput" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
-      </div>
-      <button class="btn" id="enrollBtn" onclick="handleVerifyCode(true)">Confirm & Continue</button>
-    </div>
-
-    <!-- Step 2b: Verify 2FA (returning users) -->
+    <!-- Step 2: Verify 2FA (only for staff who opted into 2-Step Verification in Profile > Security) -->
     <div class="step" id="stepTotp">
       <div class="hint-text">Enter the 6-digit code from your authenticator app</div>
       <div class="field">
         <input type="text" class="code-input" id="totpCodeInput" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
       </div>
-      <button class="btn" id="totpBtn" onclick="handleVerifyCode(false)">Verify</button>
+      <button class="btn" id="totpBtn" onclick="handleVerifyCode()">Verify</button>
     </div>
 
     <!-- Step 3: Offer biometric enrollment -->
@@ -144,7 +132,6 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
 let pendingToken = null;
@@ -212,33 +199,26 @@ async function handlePasswordLogin(){
         showResendOption(data.ic);
       }
     }
-    else{
+    else if(data.step === '2fa'){
+      // Only staff who turned on 2-Step Verification themselves land here.
       pendingToken = data.pendingToken;
-      if(data.step === 'enroll2fa'){
-        renderQr(data.otpauthUrl);
-        document.getElementById('manualKey').textContent = data.secret;
-        showStep('stepEnroll');
-      }else{
-        showStep('stepTotp');
-      }
+      showStep('stepTotp');
+    }
+    else{
+      // step === 'done' — password alone was enough, no forced authenticator step.
+      await finishLogin(data);
     }
   }catch(err){ showBanner('Network error — please try again.'); }
 
   btn.disabled = false; btn.textContent = 'Log In';
 }
 
-function renderQr(otpauthUrl){
-  QRCode.toCanvas(document.getElementById('qrCanvas'), otpauthUrl, { width: 200, margin: 1,
-    color: { dark: '#0B3D3A', light: '#FFFFFF' } }, () => {});
-}
-
-/* ---------- 2FA verification (enrollment or regular) ---------- */
-async function handleVerifyCode(isEnrollment){
-  const code = document.getElementById(isEnrollment ? 'enrollCodeInput' : 'totpCodeInput').value.trim();
+/* ---------- Optional 2FA verification (only if enabled in Profile > Security) ---------- */
+async function handleVerifyCode(){
+  const code = document.getElementById('totpCodeInput').value.trim();
   if(!code || code.length !== 6){ showBanner('Please enter the 6-digit code.'); return; }
 
-  const btnId = isEnrollment ? 'enrollBtn' : 'totpBtn';
-  const btn = document.getElementById(btnId);
+  const btn = document.getElementById('totpBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Verifying…';
   showBanner(null);
 
@@ -249,25 +229,28 @@ async function handleVerifyCode(isEnrollment){
     });
     const data = await res.json();
     if(!data.ok){ showBanner(data.error || 'Verification failed.'); }
-    else{
-      sessionStorage.setItem('kkah_session_token', data.token);
-      sessionStorage.setItem('kkah_role', data.role);
-      sessionStorage.setItem('kkah_ic', data.ic);
-      if(data.mustChangePassword){
-        window.location.href = './dashboard.html?forcePasswordChange=1';
-        return;
-      }
-      if(data.mustCompleteOrientation){
-        window.location.href = './orientation.html';
-        return;
-      }
-      if(await canOfferBiometric()){ showStep('stepOfferBiometric'); }
-      else{ goToDashboard(); }
-    }
+    else{ await finishLogin(data); }
   }catch(err){ showBanner('Network error — please try again.'); }
 
   btn.disabled = false;
-  btn.textContent = isEnrollment ? 'Confirm & Continue' : 'Verify';
+  btn.textContent = 'Verify';
+}
+
+/** Shared tail end for every successful login path (password-only, 2FA, or biometric). */
+async function finishLogin(data){
+  sessionStorage.setItem('kkah_session_token', data.token);
+  sessionStorage.setItem('kkah_role', data.role);
+  sessionStorage.setItem('kkah_ic', data.ic);
+  if(data.mustChangePassword){
+    window.location.href = './dashboard.html?forcePasswordChange=1';
+    return;
+  }
+  if(data.mustCompleteOrientation){
+    window.location.href = './orientation.html';
+    return;
+  }
+  if(await canOfferBiometric()){ showStep('stepOfferBiometric'); }
+  else{ goToDashboard(); }
 }
 
 function goToDashboard(){ window.location.href = './dashboard.html'; }
