@@ -1058,7 +1058,7 @@ function formatTime12_(hms){
  * and same published-CSV pattern as "today list" (must be shared "Anyone
  * with the link can view"). Expected layout: row 2 = role label (col A) +
  * staff name (col B) for the Assistant Medical Officer, row 3 = same for
- * the Pilot. Row 1 can be a title/header — it's skipped.
+ * the . Row 1 can be a title/header — it's skipped.
  */
 async function loadOnCallBox(){
   const el = document.getElementById('box_oncall');
@@ -1068,8 +1068,8 @@ async function loadOnCallBox(){
     const csvText = await res.text();
     const rows = parseCsv(csvText);
 
-    const r2 = rows[2] || [];
-    const r3 = rows[3] || [];
+    const r2 = rows[1] || [];
+    const r3 = rows[2] || [];
     const role1 = (r2[0] || '🩺 Assistant Medical Officer').trim();
     const name1 = (r2[1] || '').trim();
     const role2 = (r3[0] || '🚁 Pilot').trim();
