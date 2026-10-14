@@ -54,8 +54,23 @@
   }
   .schedule-card.show{ display:block; }
   .schedule-card .label{ font-size:11px; letter-spacing:.05em; text-transform:uppercase; opacity:.8; font-weight:600; }
-  .schedule-card .zone{ font-family:'Manrope',sans-serif; font-size:22px; font-weight:800; margin-top:4px; }
+  .schedule-card .zone{ font-family:'Manrope',sans-serif; font-size:22px; font-weight:800; margin-top:4px; transition:font-size .2s ease; }
   .schedule-card.loading .zone{ font-size:14px; font-weight:600; opacity:.85; }
+  .schedule-card .zone.zone-empty{ font-size:14px; font-weight:700; color:#FFC9C0; }
+
+  .attendance-row{
+    display:flex; align-items:stretch; margin-top:18px; padding-top:16px;
+    border-top:1px solid rgba(255,255,255,0.2);
+  }
+  .attendance-col{ flex:1; text-align:center; }
+  .attendance-divider{ width:1px; background:rgba(255,255,255,0.2); margin:2px 10px; }
+  .att-label{ font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; opacity:.8; font-weight:700; display:flex; align-items:center; justify-content:center; gap:5px; }
+  .att-time{ font-family:'Manrope',sans-serif; font-size:19px; font-weight:800; margin-top:6px; transition:opacity .3s ease; }
+  .att-time.loading{ opacity:.5; }
+  .att-time.empty{ font-size:13px; font-weight:700; color:#FFC9C0; }
+  .att-dot{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .att-dot.in{ background:#7FE3B4; }
+  .att-dot.out{ background:#FFC9C0; }
 
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .module-card{
@@ -364,6 +379,18 @@
   <div class="schedule-card loading" id="scheduleCard">
     <div class="label">Today's Working Zone</div>
     <div class="zone" id="scheduleZone">Loading…</div>
+
+    <div class="attendance-row">
+      <div class="attendance-col">
+        <div class="att-label"><span class="att-dot in"></span>Masuk</div>
+        <div class="att-time loading" id="attInTime">&nbsp;</div>
+      </div>
+      <div class="attendance-divider"></div>
+      <div class="attendance-col">
+        <div class="att-label"><span class="att-dot out"></span>Keluar</div>
+        <div class="att-time loading" id="attOutTime">&nbsp;</div>
+      </div>
+    </div>
   </div>
 
   <div class="status-boxes-grid">
@@ -498,6 +525,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initLocationBar();
   initOneSignal(ic);
   loadTodaySchedule();
+  loadTodayAttendance();
   checkSpecialDayPopup();
   loadBirthdayAlerts();
   loadBlsBox();
@@ -506,6 +534,7 @@ window.addEventListener('DOMContentLoaded', () => {
   loadKursusBox();
   loadHealthBox();
   setInterval(loadChecklistBoxes, 5 * 60 * 1000); // refresh trolley/bag/ambulance every 5 min
+  setInterval(loadTodayAttendance, 5 * 60 * 1000); // pick up a check-in/out made elsewhere (e.g. kiosk) without a refresh
 });
 
 /* === Animated welcome, shown once each time the dashboard is entered === */
@@ -911,15 +940,61 @@ async function loadTodaySchedule(){
     const rows = parseCsv(csvText);
 
     const match = rows.find(r => (r[0] || '').trim().toLowerCase() === profile.name.trim().toLowerCase());
+    card.classList.remove('loading');
+    card.classList.add('show');
     if(match && match[1]){
       zoneEl.textContent = match[1].trim();
-      card.classList.remove('loading');
-      card.classList.add('show');
+      zoneEl.classList.remove('zone-empty');
+    }else{
+      zoneEl.textContent = 'Tiada rekod zon hari ini';
+      zoneEl.classList.add('zone-empty');
     }
-    // If no match found today, leave the card hidden rather than showing a confusing blank.
   }catch(err){
     console.warn('Could not load today\'s schedule:', err);
+    card.classList.remove('loading');
+    card.classList.add('show');
+    zoneEl.textContent = 'Tiada rekod zon hari ini';
+    zoneEl.classList.add('zone-empty');
   }
+}
+
+/* === Main box: today's own check-in / check-out time === */
+async function loadTodayAttendance(){
+  const inEl = document.getElementById('attInTime');
+  const outEl = document.getElementById('attOutTime');
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getTodayAttendance', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error);
+    renderAttTime(inEl, data.checkIn);
+    renderAttTime(outEl, data.checkOut);
+  }catch(err){
+    renderAttTime(inEl, '');
+    renderAttTime(outEl, '');
+  }
+}
+
+function renderAttTime(el, timeStr){
+  el.classList.remove('loading');
+  if(timeStr){
+    el.textContent = formatTime12_(timeStr);
+    el.classList.remove('empty');
+  }else{
+    el.textContent = 'Tiada Rekod';
+    el.classList.add('empty');
+  }
+}
+
+/** "08:15:32" -> "8:15 AM" */
+function formatTime12_(hms){
+  const parts = String(hms).split(':').map(Number);
+  let h = parts[0] || 0, m = parts[1] || 0;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + String(m).padStart(2, '0') + ' ' + ampm;
 }
 
 function parseCsv(text){
