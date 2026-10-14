@@ -68,6 +68,23 @@
   .banner{ display:none; padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:16px; }
   .banner.show{ display:block; }
   .banner.error{ background:rgba(179,49,26,0.1); color:var(--red-500); }
+  .banner.info{ background:rgba(28,143,132,0.1); color:var(--teal-700); }
+
+  .sec-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--mint-100); border-radius:14px; padding:14px 16px; margin-bottom:10px; }
+  .sec-row .sec-title{ font-family:'Manrope',sans-serif; font-weight:800; font-size:13.5px; color:var(--teal-900); }
+  .sec-row .sec-sub{ font-size:11.5px; color:var(--ink-500); margin-top:2px; }
+  .pill{ font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; white-space:nowrap; }
+  .pill.on{ background:rgba(47,174,96,0.15); color:var(--green-500); }
+  .pill.off{ background:var(--line); color:var(--ink-500); }
+  .sec-btn{ border:none; background:var(--teal-700); color:#fff; font-weight:700; font-size:12px; padding:9px 14px; border-radius:10px; cursor:pointer; white-space:nowrap; }
+  .sec-btn:hover{ background:var(--teal-900); }
+  .sec-btn.danger{ background:#fff; color:var(--red-500); border:1.5px solid rgba(179,49,26,0.3); }
+
+  .qr-wrap{ text-align:center; margin-bottom:16px; }
+  #qrCanvas{ margin:0 auto 12px; border-radius:12px; overflow:hidden; }
+  .manual-key{ font-family:monospace; font-size:13px; background:var(--mint-100); padding:8px 12px; border-radius:10px; word-break:break-all; color:var(--teal-900); margin-bottom:14px; }
+  .hint-text{ font-size:12px; color:var(--ink-500); text-align:center; margin-bottom:14px; line-height:1.5; }
+  input[type=text].code-input{ width:100%; text-align:center; letter-spacing:0.4em; font-size:20px; font-weight:700; padding:11px 13px; border-radius:12px; border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700); }
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
@@ -92,7 +109,27 @@
 
     <div class="section-title">Account</div>
     <button class="btn primary" onclick="handleChangePasswordClick()">Change Password</button>
-    <a class="btn" href="./dashboard.html" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Back to Dashboard</a>
+
+    <div class="section-title">Security</div>
+    <div class="sec-row">
+      <div>
+        <div class="sec-title">Face ID / Touch ID</div>
+        <div class="sec-sub">Skip typing your password on this device</div>
+      </div>
+      <span class="pill off" id="bioPill">Checking…</span>
+    </div>
+    <button class="btn" id="bioActionBtn" style="display:none;" onclick="handleEnableBiometricFromProfile()">Enable on this device</button>
+
+    <div class="sec-row" style="margin-top:14px;">
+      <div>
+        <div class="sec-title">2-Step Verification</div>
+        <div class="sec-sub">Optional — adds a 6-digit app code at login</div>
+      </div>
+      <span class="pill off" id="totpPill">—</span>
+    </div>
+    <button class="btn" id="totpActionBtn" onclick="handleTotpActionClick()">Set Up</button>
+
+    <a class="btn" href="./dashboard.html" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box; margin-top:10px;">Back to Dashboard</a>
   </div>
 </div>
 
@@ -109,6 +146,21 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="totpModalOverlay">
+  <div class="modal">
+    <h2>Set Up 2-Step Verification</h2>
+    <div class="sub">Optional — scan this with Google Authenticator or Authy, then enter the code it shows.</div>
+    <div class="banner error" id="totpBanner"></div>
+    <div class="qr-wrap"><canvas id="qrCanvas"></canvas></div>
+    <div class="hint-text">Can't scan? Enter this key manually:</div>
+    <div class="manual-key" id="manualKey">—</div>
+    <div class="field"><label for="totpCodeInput">6-digit code</label><input type="text" class="code-input" id="totpCodeInput" maxlength="6" inputmode="numeric" autocomplete="one-time-code"></div>
+    <button class="btn primary" id="totpConfirmBtn" onclick="handleConfirmEnrollTotp()">Confirm & Enable</button>
+    <button class="btn" onclick="closeTotpModal()">Cancel</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
 
@@ -136,9 +188,148 @@ async function loadProfile(){
       document.getElementById('profileAge').textContent = dob.age;
       document.getElementById('profileDob').textContent = dob.day + '/' + dob.month + '/' + dob.year;
     }
+
+    totpEnabled = !!data.totpEnabled;
+    renderTotpPill();
   }catch(err){
     document.getElementById('profileName').textContent = 'Could not load profile';
   }
+
+  await renderBiometricPill();
+}
+
+/* ---------- Security: Face ID / Touch ID ---------- */
+async function renderBiometricPill(){
+  const pill = document.getElementById('bioPill');
+  const btn = document.getElementById('bioActionBtn');
+  const hasEnrolled = !!(localStorage.getItem('kkah_biometric_device_token') && localStorage.getItem('kkah_biometric_credential_id'));
+  const canBiometric = window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+
+  if(hasEnrolled){
+    pill.textContent = 'Enabled'; pill.className = 'pill on'; btn.style.display = 'none';
+  }else if(canBiometric){
+    pill.textContent = 'Not set up'; pill.className = 'pill off'; btn.style.display = 'block';
+  }else{
+    pill.textContent = 'Unavailable on this device'; pill.className = 'pill off'; btn.style.display = 'none';
+  }
+}
+
+async function handleEnableBiometricFromProfile(){
+  const btn = document.getElementById('bioActionBtn');
+  btn.disabled = true; btn.textContent = 'Setting up…';
+  try{
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    const ic = sessionStorage.getItem('kkah_ic') || '';
+    const userId = new TextEncoder().encode(ic);
+
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge, rp: { name: 'KKAH HR Portal' }, user: { id: userId, name: ic, displayName: ic },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+        timeout: 60000, attestation: 'none'
+      }
+    });
+    if(!credential) throw new Error('No credential created');
+
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'registerBiometric', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(data.ok){
+      localStorage.setItem('kkah_biometric_device_token', data.deviceToken);
+      localStorage.setItem('kkah_biometric_credential_id', arrayBufferToBase64(credential.rawId));
+      alert('Face ID / Touch ID is now enabled on this device.');
+    }
+  }catch(err){
+    alert('Could not set up Face ID / Touch ID on this device.');
+  }
+  await renderBiometricPill();
+  btn.disabled = false; btn.textContent = 'Enable on this device';
+}
+
+/* ---------- Security: optional 2-Step Verification ---------- */
+let totpEnabled = false;
+
+function renderTotpPill(){
+  const pill = document.getElementById('totpPill');
+  const btn = document.getElementById('totpActionBtn');
+  if(totpEnabled){
+    pill.textContent = 'Enabled'; pill.className = 'pill on';
+    btn.textContent = 'Turn Off'; btn.className = 'btn danger';
+  }else{
+    pill.textContent = 'Disabled'; pill.className = 'pill off';
+    btn.textContent = 'Set Up'; btn.className = 'btn';
+  }
+}
+
+async function handleTotpActionClick(){
+  if(totpEnabled){ handleDisableTotp(); }
+  else{ handleBeginEnrollTotp(); }
+}
+
+async function handleBeginEnrollTotp(){
+  const btn = document.getElementById('totpActionBtn');
+  btn.disabled = true;
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'beginEnrollTotp', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(!data.ok){ alert(data.error || 'Could not start setup.'); }
+    else{
+      document.getElementById('totpBanner').className = 'banner error';
+      document.getElementById('totpCodeInput').value = '';
+      document.getElementById('manualKey').textContent = data.secret;
+      QRCode.toCanvas(document.getElementById('qrCanvas'), data.otpauthUrl, { width: 200, margin: 1, color: { dark: '#0B3D3A', light: '#FFFFFF' } }, () => {});
+      document.getElementById('totpModalOverlay').classList.add('show');
+    }
+  }catch(err){ alert('Network error — please try again.'); }
+  btn.disabled = false;
+}
+
+function closeTotpModal(){ document.getElementById('totpModalOverlay').classList.remove('show'); }
+
+async function handleConfirmEnrollTotp(){
+  const code = document.getElementById('totpCodeInput').value.trim();
+  const banner = document.getElementById('totpBanner');
+  if(!code || code.length !== 6){ banner.textContent = 'Please enter the 6-digit code.'; banner.classList.add('show'); return; }
+
+  const btn = document.getElementById('totpConfirmBtn');
+  btn.disabled = true; btn.textContent = 'Confirming…';
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'confirmEnrollTotp', token: sessionStorage.getItem('kkah_session_token'), code })
+    });
+    const data = await res.json();
+    if(!data.ok){ banner.textContent = data.error || 'Incorrect code.'; banner.classList.add('show'); }
+    else{
+      closeTotpModal();
+      totpEnabled = true; renderTotpPill();
+      alert('2-Step Verification is now enabled.');
+    }
+  }catch(err){ banner.textContent = 'Network error — please try again.'; banner.classList.add('show'); }
+  btn.disabled = false; btn.textContent = 'Confirm & Enable';
+}
+
+async function handleDisableTotp(){
+  if(!confirm('Turn off 2-Step Verification? You will be able to log in with just your password (or Face ID / Touch ID) again.')) return;
+  const btn = document.getElementById('totpActionBtn');
+  btn.disabled = true;
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'disableTotp', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(!data.ok){ alert(data.error || 'Could not turn off 2-Step Verification.'); }
+    else{ totpEnabled = false; renderTotpPill(); }
+  }catch(err){ alert('Network error — please try again.'); }
+  btn.disabled = false;
 }
 
 /** Parses a Malaysian IC (YYMMDD-PB-###G or without dashes) into a birthday + current age. */
@@ -199,6 +390,9 @@ function base64ToArrayBuffer(b64){
   const bytes = new Uint8Array(bin.length);
   for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
   return bytes.buffer;
+}
+function arrayBufferToBase64(buf){
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
 }
 
 function openPasswordModal(){
