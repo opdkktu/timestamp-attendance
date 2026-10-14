@@ -243,6 +243,54 @@
     from{ opacity:0; transform:translateY(14px); }
     to{ opacity:1; transform:translateY(0); }
   }
+
+  /* === Account sidebar (replaces the old "⋯" dropdown banner) === */
+  .sidebar-overlay{
+    position:fixed; inset:0; background:rgba(11,61,58,0.5); z-index:80;
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .sidebar-overlay.show{ opacity:1; pointer-events:auto; }
+  .sidebar{
+    position:fixed; top:0; right:0; bottom:0; width:280px; max-width:84vw;
+    background:#fff; z-index:85; padding:22px 18px; box-shadow:-10px 0 40px -14px rgba(11,61,58,0.4);
+    transform:translateX(100%); transition:transform .3s cubic-bezier(.2,.8,.3,1);
+    display:flex; flex-direction:column; overflow-y:auto;
+  }
+  .sidebar.show{ transform:translateX(0); }
+  .sidebar-close{
+    align-self:flex-end; background:var(--mint-100); border:none; color:var(--teal-900);
+    width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; margin-bottom:10px;
+  }
+  .sidebar-profile{ text-align:center; padding:4px 0 20px; border-bottom:1px solid var(--line); margin-bottom:14px; }
+  .sidebar-avatar{
+    width:72px; height:72px; border-radius:50%; margin:0 auto 12px; object-fit:cover;
+    background:var(--mint-100); display:flex; align-items:center; justify-content:center;
+    font-family:'Manrope',sans-serif; font-size:26px; font-weight:800; color:var(--teal-700);
+  }
+  .sidebar-name{ font-family:'Manrope',sans-serif; font-weight:800; font-size:15.5px; color:var(--teal-900); }
+  .sidebar-ic{ font-size:12px; color:var(--ink-500); margin-top:2px; }
+
+  .sidebar-nav{ display:flex; flex-direction:column; gap:4px; flex:1; }
+  .sidebar-item{
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    background:none; border:none; padding:12px 10px; border-radius:12px; cursor:pointer;
+    font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; color:var(--ink-700); text-decoration:none;
+  }
+  .sidebar-item:hover{ background:var(--mint-100); }
+  .sidebar-item-static{ cursor:default; }
+  .sidebar-item-static:hover{ background:none; }
+  .sidebar-item-icon{ font-size:16px; width:20px; text-align:center; flex-shrink:0; }
+  .sidebar-item-label{ flex:1; }
+  .sidebar-pill{ font-size:10.5px; font-weight:700; padding:4px 9px; border-radius:100px; white-space:nowrap; }
+  .sidebar-pill.yes{ background:rgba(47,174,96,0.15); color:var(--green-500); }
+  .sidebar-pill.no{ background:rgba(179,49,26,0.12); color:var(--red-500); }
+
+  .sidebar-logout{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+    background:none; border:1.5px solid rgba(179,49,26,0.3); color:var(--red-500);
+    font-weight:700; font-size:13.5px; padding:12px; border-radius:12px; cursor:pointer; margin-top:12px;
+  }
+  .sidebar-logout:hover{ background:rgba(179,49,26,0.06); }
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
@@ -258,6 +306,41 @@
   </div>
 </div>
 
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar" onclick="event.stopPropagation()">
+  <button class="sidebar-close" onclick="closeSidebar()" aria-label="Close menu">✕</button>
+
+  <div class="sidebar-profile">
+    <div class="sidebar-avatar" id="sidebarAvatar">—</div>
+    <div class="sidebar-name" id="sidebarName">Loading…</div>
+    <div class="sidebar-ic" id="sidebarIc">—</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="sidebar-item" href="./profile.html">
+      <span class="sidebar-item-icon">👤</span>
+      <span class="sidebar-item-label">Update Profile</span>
+    </a>
+    <button class="sidebar-item" onclick="closeSidebar(); handleChangePasswordClick();">
+      <span class="sidebar-item-icon">🔒</span>
+      <span class="sidebar-item-label">Change Password</span>
+    </button>
+    <div class="sidebar-item sidebar-item-static">
+      <span class="sidebar-item-icon">✉️</span>
+      <span class="sidebar-item-label">Email Verification</span>
+      <span class="sidebar-pill" id="sidebarEmailPill">—</span>
+    </div>
+    <a class="sidebar-item" href="./about.html">
+      <span class="sidebar-item-icon">ℹ️</span>
+      <span class="sidebar-item-label">About System</span>
+    </a>
+  </nav>
+
+  <button class="sidebar-logout" onclick="handleLogout()">
+    <span class="sidebar-item-icon">🚪</span> Log Out
+  </button>
+</aside>
+
 <div class="topbar">
   <div class="topbar-row">
     <div>
@@ -265,7 +348,7 @@
       <h1>HR Portal</h1>
       <span class="role-pill" id="rolePill">STAFF</span>
     </div>
-    <button class="menu-btn" onclick="document.getElementById('menuBanner').classList.toggle('show')" aria-label="Account menu">⋯</button>
+    <button class="menu-btn" onclick="openSidebar()" aria-label="Account menu">⋯</button>
   </div>
   <button class="location-bar" id="locationBar" onclick="initLocationBar()" title="Ketik untuk cuba kesan semula">
     <span class="loc-dot"></span><span id="locationText">Mengesan lokasi…</span>
@@ -273,10 +356,6 @@
 </div>
 
 <div class="content">
-  <div class="banner info" id="menuBanner">
-    <strong id="menuIc">—</strong>
-    <a href="./about.html" style="display:block; margin-top:8px; color:inherit; font-weight:700; text-decoration:none;">ℹ️ About System</a>
-  </div>
   <div class="banner error" id="forcedBanner">Please set a new password before continuing.</div>
 
   <div class="birthday-eve-banner" id="birthdayEveBanner">🎂 Esok hari jadi anda — semoga hari yang indah menanti!</div>
@@ -392,9 +471,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const role = sessionStorage.getItem('kkah_role') || 'staff';
   const ic = sessionStorage.getItem('kkah_ic') || '—';
   document.getElementById('rolePill').textContent = role.toUpperCase();
-  document.getElementById('menuIc').textContent = 'IC: ' + ic;
 
   renderModules(role);
+  loadSidebarProfile();
 
   const params = new URLSearchParams(window.location.search);
   if(params.get('forcePasswordChange') === '1'){
@@ -402,6 +481,14 @@ window.addEventListener('DOMContentLoaded', () => {
     openPasswordModal(true);
   }else{
     showWelcomeOverlay(); // skip the overlay when a forced password change needs attention first
+  }
+
+  // The sidebar only auto-opens the very first time someone lands on the
+  // dashboard right after logging in (set by login.html). Coming back here
+  // from another page (profile, borang, jadual, etc.) never triggers it.
+  if(sessionStorage.getItem('kkah_just_logged_in') === '1'){
+    sessionStorage.removeItem('kkah_just_logged_in');
+    setTimeout(openSidebar, 900); // let the welcome animation lead first
   }
 
   if ('serviceWorker' in navigator) {
@@ -891,6 +978,53 @@ function handleLogout(){
   sessionStorage.removeItem('kkah_role');
   sessionStorage.removeItem('kkah_ic');
   window.location.href = './login.html';
+}
+
+/* === Account sidebar === */
+function openSidebar(){
+  document.getElementById('sidebarOverlay').classList.add('show');
+  document.getElementById('sidebar').classList.add('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebarOverlay').classList.remove('show');
+  document.getElementById('sidebar').classList.remove('show');
+}
+
+async function loadSidebarProfile(){
+  const ic = sessionStorage.getItem('kkah_ic') || '—';
+  document.getElementById('sidebarIc').textContent = 'IC: ' + ic;
+
+  // Verification status + name (fast, no photo fetch)
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getMyProfile', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(data.ok){
+      document.getElementById('sidebarName').textContent = data.name;
+      document.getElementById('sidebarAvatar').textContent = data.name.trim().charAt(0).toUpperCase();
+      const pill = document.getElementById('sidebarEmailPill');
+      if(data.emailVerified){ pill.textContent = 'Verified'; pill.className = 'sidebar-pill yes'; }
+      else{ pill.textContent = 'Not Verified'; pill.className = 'sidebar-pill no'; }
+    }
+  }catch(err){ document.getElementById('sidebarName').textContent = ic; }
+
+  // Photo (slower — base64, so it comes in and replaces the initial avatar once ready)
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getMyPhoto', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(data.ok && data.photo){
+      const avatar = document.getElementById('sidebarAvatar');
+      avatar.textContent = '';
+      avatar.style.backgroundImage = `url(${data.photo})`;
+      avatar.style.backgroundSize = 'cover';
+      avatar.style.backgroundPosition = 'center';
+    }
+  }catch(err){ /* initials fallback already showing */ }
 }
 
 let forcedChange = false;
