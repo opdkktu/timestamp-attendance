@@ -241,6 +241,7 @@ async function finishLogin(data){
   sessionStorage.setItem('kkah_session_token', data.token);
   sessionStorage.setItem('kkah_role', data.role);
   sessionStorage.setItem('kkah_ic', data.ic);
+  sessionStorage.setItem('kkah_just_logged_in', '1'); // tells dashboard.html to auto-open the account sidebar once
   if(data.mustChangePassword){
     window.location.href = './dashboard.html?forcePasswordChange=1';
     return;
@@ -342,6 +343,7 @@ async function handleBiometricLogin(){
       sessionStorage.setItem('kkah_session_token', data.token);
       sessionStorage.setItem('kkah_role', data.role);
       sessionStorage.setItem('kkah_ic', data.ic);
+      sessionStorage.setItem('kkah_just_logged_in', '1'); // tells dashboard.html to auto-open the account sidebar once
       goToDashboard();
     }
   }catch(err){
