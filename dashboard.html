@@ -306,6 +306,20 @@
     font-weight:700; font-size:13.5px; padding:12px; border-radius:12px; cursor:pointer; margin-top:12px;
   }
   .sidebar-logout:hover{ background:rgba(179,49,26,0.06); }
+
+  /* === Kursus modal: scrollable year tabs (keeps working however many years accumulate) === */
+  .year-tabs{
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:12px;
+    scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;
+  }
+  .year-tabs::-webkit-scrollbar{ height:4px; }
+  .year-tabs::-webkit-scrollbar-thumb{ background:var(--line); border-radius:4px; }
+  .year-tab{
+    flex-shrink:0; scroll-snap-align:center; border:1.5px solid var(--line); background:#fff;
+    color:var(--ink-500); font-weight:700; font-size:13px; padding:8px 16px; border-radius:100px;
+    cursor:pointer; white-space:nowrap;
+  }
+  .year-tab.active{ background:var(--teal-700); border-color:var(--teal-700); color:#fff; }
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
@@ -395,9 +409,11 @@
 
   <div class="status-boxes-grid">
     <div class="status-box loading" id="box_bls"><div class="sb-label">BLS Validity</div><div class="sb-main">&nbsp;</div></div>
+    <div class="status-box loading" id="box_temperature"><div class="sb-label">Temperature</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_trolley"><div class="sb-label">Emergency Trolley</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_bag"><div class="sb-label">Ambulance Bag</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_ambulance"><div class="sb-label">Ambulance</div><div class="sb-main">&nbsp;</div></div>
+    <div class="status-box loading" id="box_oncall" style="grid-column:1 / -1;"><div class="sb-label">🚑 On-Call Ambulance Crew</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_apps"><div class="sb-label">Jumlah Permohonan</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_hours"><div class="sb-label">Jumlah Jam</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_kursus" onclick="openKursusModal()" style="cursor:pointer;"><div class="sb-label">Jumlah Hari Kursus</div><div class="sb-main">&nbsp;</div></div>
@@ -439,8 +455,9 @@
 <div class="modal-overlay" id="kursusModalOverlay">
   <div class="modal">
     <h2>Senarai Kursus</h2>
-    <div class="sub">Tahun <span id="kursusYearLabel"></span></div>
-    <div id="kursusListBody" style="max-height:50vh; overflow-y:auto; margin-bottom:8px;"></div>
+    <div class="sub">Jumlah hari kursus mengikut tahun</div>
+    <div class="year-tabs" id="kursusYearTabs"></div>
+    <div id="kursusListBody" style="max-height:44vh; overflow-y:auto; margin-bottom:8px;"></div>
     <button class="modal-btn modal-cancel" onclick="closeKursusModal()">Tutup</button>
   </div>
 </div>
@@ -526,6 +543,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initOneSignal(ic);
   loadTodaySchedule();
   loadTodayAttendance();
+  loadOnCallBox();
   checkSpecialDayPopup();
   loadBirthdayAlerts();
   loadBlsBox();
@@ -533,7 +551,8 @@ window.addEventListener('DOMContentLoaded', () => {
   loadChecklistBoxes();
   loadKursusBox();
   loadHealthBox();
-  setInterval(loadChecklistBoxes, 5 * 60 * 1000); // refresh trolley/bag/ambulance every 5 min
+  setInterval(loadChecklistBoxes, 5 * 60 * 1000); // refresh temperature/trolley/bag/ambulance every 5 min
+  setInterval(loadOnCallBox, 5 * 60 * 1000); // on-call crew can change during the day
   setInterval(loadTodayAttendance, 5 * 60 * 1000); // pick up a check-in/out made elsewhere (e.g. kiosk) without a refresh
 });
 
@@ -597,42 +616,80 @@ async function initLocationBar(){
   }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 });
 }
 
-/* === BOX 8: JUMLAH HARI KURSUS (click to expand) === */
+/* === BOX 8: JUMLAH HARI KURSUS (click to expand) ===
+ * Year tabs run from KURSUS_BASE_YEAR (the system's launch year — bump this
+ * if that ever changes) up to the current year, so a new, still-empty tab
+ * appears automatically the moment a new year starts. As that range grows
+ * over the years, the tab strip scrolls horizontally instead of wrapping or
+ * shrinking — it stays usable with 3 years or 30, nothing to redesign later. */
+const KURSUS_BASE_YEAR = 2026;
 
-let cachedKursusList = [];
+let cachedKursusByYear = {};   // { "2026": [ {kursus, mula, akhir, days}, ... ], ... }
+let activeKursusYear = new Date().getFullYear();
 
 async function loadKursusBox(){
   const el = document.getElementById('box_kursus');
   try{
     const res = await fetch(API_URL_DASHBOARD, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getMyKursusList', token: sessionStorage.getItem('kkah_session_token'), year: new Date().getFullYear() })
+      body: JSON.stringify({ action: 'getMyKursusList', token: sessionStorage.getItem('kkah_session_token') })
     });
     const data = await res.json();
     if(!data.ok){ renderBoxError(el, 'Jumlah Hari Kursus'); return; }
-    cachedKursusList = data.list || [];
+    cachedKursusByYear = data.byYear || {};
+
+    const thisYear = String(new Date().getFullYear());
+    const thisYearDays = (cachedKursusByYear[thisYear] || []).reduce((sum, k) => sum + k.days, 0);
+
     el.className = 'status-box sb-info';
     el.style.cursor = 'pointer';
-    el.innerHTML = '<div class="sb-label">Jumlah Hari Kursus</div><div class="sb-main">' + cachedKursusList.length +
-      '</div><div class="sb-sub">Tahun ' + new Date().getFullYear() + ' · ketik untuk senarai</div>';
+    el.innerHTML = '<div class="sb-label">Jumlah Hari Kursus</div><div class="sb-main">' + thisYearDays +
+      '</div><div class="sb-sub">Tahun ' + thisYear + ' · ketik untuk senarai</div>';
   }catch(err){ renderBoxError(el, 'Jumlah Hari Kursus'); }
 }
 
 function openKursusModal(){
-  document.getElementById('kursusYearLabel').textContent = new Date().getFullYear();
-  const body = document.getElementById('kursusListBody');
-  if(!cachedKursusList.length){
-    body.innerHTML = '<div style="font-size:13px; color:var(--ink-500); text-align:center; padding:20px 0;">Tiada kursus direkodkan setakat ini.</div>';
-  }else{
-    body.innerHTML = cachedKursusList.map(k =>
-      '<div style="padding:10px 0; border-bottom:1px solid var(--line);">' +
-        '<div style="font-weight:700; font-size:13px; color:var(--teal-900);">' + k.kursus + '</div>' +
-        '<div style="font-size:11.5px; color:var(--ink-500); margin-top:2px;">' + k.tarikh + '</div>' +
-      '</div>'
-    ).join('');
+  const currentYear = new Date().getFullYear();
+  activeKursusYear = currentYear;
+
+  const tabsEl = document.getElementById('kursusYearTabs');
+  tabsEl.innerHTML = '';
+  for(let y = KURSUS_BASE_YEAR; y <= currentYear; y++){
+    const btn = document.createElement('button');
+    btn.className = 'year-tab' + (y === currentYear ? ' active' : '');
+    btn.textContent = y;
+    btn.onclick = () => selectKursusYear(y);
+    tabsEl.appendChild(btn);
   }
+  tabsEl.scrollLeft = tabsEl.scrollWidth; // land on the current (rightmost) year
+
+  renderKursusList(currentYear);
   document.getElementById('kursusModalOverlay').classList.add('show');
 }
+
+function selectKursusYear(year){
+  activeKursusYear = year;
+  document.querySelectorAll('#kursusYearTabs .year-tab').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.textContent, 10) === year);
+  });
+  renderKursusList(year);
+}
+
+function renderKursusList(year){
+  const body = document.getElementById('kursusListBody');
+  const list = cachedKursusByYear[String(year)] || [];
+  if(!list.length){
+    body.innerHTML = '<div style="font-size:13px; color:var(--ink-500); text-align:center; padding:20px 0;">Tiada kursus direkodkan untuk ' + year + '.</div>';
+    return;
+  }
+  body.innerHTML = list.map(k =>
+    '<div style="padding:10px 0; border-bottom:1px solid var(--line);">' +
+      '<div style="font-weight:700; font-size:13px; color:var(--teal-900);">' + k.kursus + '</div>' +
+      '<div style="font-size:11.5px; color:var(--ink-500); margin-top:2px;">' + k.mula + ' – ' + k.akhir + ' · ' + k.days + ' hari</div>' +
+    '</div>'
+  ).join('');
+}
+
 function closeKursusModal(){ document.getElementById('kursusModalOverlay').classList.remove('show'); }
 
 /* === BOX 9: PEMERIKSAAN KESIHATAN (click to expand) === */
@@ -721,12 +778,11 @@ async function loadLeaveStatBoxes(){
   }catch(err){ renderBoxError(elApps, 'Jumlah Permohonan'); renderBoxError(elHours, 'Jumlah Jam'); }
 }
 
-// EDIT THESE THREE URLS — published-CSV links for your trolley/bag/ambulance
-// checklists, same pattern as your reference 4-box dashboard.
 const CHECKLIST_SOURCES = {
-  box_trolley:   { name: 'Emergency Trolley', url: 'PASTE_YOUR_TROLLEY_PUBLISHED_CSV_URL_HERE' },
-  box_bag:       { name: 'Ambulance Bag',     url: 'PASTE_YOUR_AMBULANCE_BAG_PUBLISHED_CSV_URL_HERE' },
-  box_ambulance: { name: 'Ambulance',         url: 'PASTE_YOUR_AMBULANCE_PUBLISHED_CSV_URL_HERE' }
+  box_temperature: { name: '🧰 Temperature',       url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTMEGoKlPIt4jm2thHLjEYaSM4iGDlyViBlFoO40_FGqEHNDBHwNIOgIO4rJhAMZEEiawv1oq6n60HT/pub?gid=0&single=true&output=csv' },
+  box_trolley:     { name: '🧰 Emergency Trolley', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT424D0MKxyW0YGUYQwmd3J0UFD7idzhVW4Vv2fxxA3YJxVh43-n55KfKBveA8qMS8YFPK4DxlprRJb/pub?gid=619976719&single=true&output=csv' },
+  box_bag:         { name: '🎒 Ambulance Bag',     url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQcig6WG_AwN21YylQnm5ZHK69fbYp8TC_sK_5bgvlC9_cQq5DGdiFGCMS3yrdmlqQymhRKZE_NZffl/pub?gid=619976719&single=true&output=csv' },
+  box_ambulance:   { name: '🚑 Ambulance',         url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQl68jBOD7vc2cGKj5c3flwt48f_tjIqsBIBnRoqqNZF4bKrsxrdrkPM0QYgdBA4axnMksu0uwoLFF0/pub?gid=619976719&single=true&output=csv' }
 };
 
 function loadChecklistBoxes(){
@@ -995,6 +1051,40 @@ function formatTime12_(hms){
   const ampm = h >= 12 ? 'PM' : 'AM';
   h = h % 12 || 12;
   return h + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+}
+
+/**
+ * 🚑 On-Call Ambulance Crew — reads the "ONCALL TODAY" tab, same spreadsheet
+ * and same published-CSV pattern as "today list" (must be shared "Anyone
+ * with the link can view"). Expected layout: row 2 = role label (col A) +
+ * staff name (col B) for the Assistant Medical Officer, row 3 = same for
+ * the Pilot. Row 1 can be a title/header — it's skipped.
+ */
+async function loadOnCallBox(){
+  const el = document.getElementById('box_oncall');
+  try{
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${SCHEDULE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('ONCALL TODAY')}`;
+    const res = await fetch(csvUrl);
+    const csvText = await res.text();
+    const rows = parseCsv(csvText);
+
+    const r2 = rows[1] || [];
+    const r3 = rows[2] || [];
+    const role1 = (r2[0] || '🩺 Assistant Medical Officer').trim();
+    const name1 = (r2[1] || '').trim();
+    const role2 = (r3[0] || '🚁 Pilot').trim();
+    const name2 = (r3[1] || '').trim();
+
+    const line = (role, name) => name
+      ? '<b>' + name + '</b> <span style="opacity:.8;">— ' + role + '</span>'
+      : '<span style="color:#FFC9C0; font-weight:700;">Tiada Rekod</span> <span style="opacity:.8;">— ' + role + '</span>';
+
+    el.className = 'status-box sb-info';
+    el.innerHTML = '<div class="sb-label">🚑 On-Call Ambulance Crew</div>' +
+      '<div class="sb-main" style="font-size:14px; line-height:1.7; margin-top:8px;">' +
+        line(role1, name1) + '<br>' + line(role2, name2) +
+      '</div>';
+  }catch(err){ renderBoxError(el, '🚑 On-Call Ambulance Crew'); }
 }
 
 function parseCsv(text){
