@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KKAH HR Portal · Log In</title>
+<title>SIAGA · Log In</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,7 +87,7 @@
 <div class="card">
   <div class="head">
     <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
-    <h1>HR Portal</h1>
+    <h1>SIAGA</h1>
     <div class="gold-dot"></div>
   </div>
   <div class="stage">
@@ -283,7 +283,7 @@ async function handleEnableBiometric(){
     const credential = await navigator.credentials.create({
       publicKey: {
         challenge,
-        rp: { name: 'KKAH HR Portal' },
+        rp: { name: 'SIAGA' },
         user: { id: userId, name: ic, displayName: ic },
         pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
         authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
