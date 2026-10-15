@@ -1056,39 +1056,63 @@ function formatTime12_(hms){
 /**
  * 🚑 On-Call Ambulance Crew — reads the "ONCALL TODAY" tab, same spreadsheet
  * and same published-CSV pattern as "today list" (must be shared "Anyone
- * with the link can view"). Expected layout: row 2 = role label (col A) +
- * staff name (col B) for the Assistant Medical Officer, row 3 = same for
- * the . Row 1 can be a title/header — it's skipped.
+ * with the link can view"). Layout:
+ *   Row 1:  A = year (e.g. 2026) | B = the date this roster is for (dd/mm/yyyy)
+ *   Row 2+: A = role (PPP / PEMANDU) | B = staff name
+ * Rows are picked out by CONTENT, not by position, so an extra title row or a
+ * header-dropping CSV parser can't shift names into the wrong role.
  */
+const ONCALL_ROLE_LABELS = {
+  'PPP':     '🩺 PPP',
+  'PEMANDU': '🚑 Pemandu'
+};
+
 async function loadOnCallBox(){
   const el = document.getElementById('box_oncall');
   try{
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${SCHEDULE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('ONCALL TODAY')}`;
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${SCHEDULE_SHEET_ID}/gviz/tq?tqx=out:csv&headers=0&sheet=${encodeURIComponent('ONCALL TODAY')}`;
     const res = await fetch(csvUrl);
     const csvText = await res.text();
-    const rows = parseCsv(csvText);
+    const rows = parseCsv(csvText, true); // keep row 1 — it holds the roster date
 
-    const r2 = rows[1] || [];
-    const r3 = rows[2] || [];
-    const role1 = (r2[0] || '🩺 Assistant Medical Officer').trim();
-    const name1 = (r2[1] || '').trim();
-    const role2 = (r3[0] || '🚁 Pilot').trim();
-    const name2 = (r3[1] || '').trim();
+    // Roster date: first cell anywhere that looks like dd/mm/yyyy
+    let rosterDate = '';
+    rows.some(r => r.some(c => { const m = (c || '').trim().match(/^\d{1,2}\/\d{1,2}\/\d{4}$/); if(m) rosterDate = m[0]; return !!m; }));
 
-    const line = (role, name) => name
-      ? '<b>' + name + '</b> <span style="opacity:.8;">— ' + role + '</span>'
-      : '<span style="color:#FFC9C0; font-weight:700;">Tiada Rekod</span> <span style="opacity:.8;">— ' + role + '</span>';
+    // Crew rows: has a role label in col A that isn't just the year
+    const crew = rows
+      .filter(r => (r[0] || '').trim() && !/^\d{4}$/.test((r[0] || '').trim()))
+      .slice(0, 2)
+      .map(r => {
+        const rawRole = (r[0] || '').trim();
+        return { role: ONCALL_ROLE_LABELS[rawRole.toUpperCase()] || rawRole, name: (r[1] || '').trim() };
+      });
+    if(!crew.length) throw new Error('No crew rows');
+
+    const line = c => c.name
+      ? '<b>' + c.name + '</b> <span style="opacity:.8;">— ' + c.role + '</span>'
+      : '<span style="color:#FFC9C0; font-weight:700;">Tiada Rekod</span> <span style="opacity:.8;">— ' + c.role + '</span>';
+
+    // Flag a stale roster in red — the sheet says which date it is for
+    const todayStr = new Date().toLocaleDateString('en-GB'); // dd/mm/yyyy
+    const norm = s => s.split('/').map(p => p.padStart(2, '0')).join('/');
+    const stale = rosterDate && norm(rosterDate) !== todayStr;
+    const sub = rosterDate
+      ? (stale
+          ? '<div class="sb-sub" style="color:#FFC9C0; font-weight:700;">⚠ Senarai untuk ' + rosterDate + ' — belum dikemas kini</div>'
+          : '<div class="sb-sub">Bertugas hari ini · ' + rosterDate + '</div>')
+      : '';
 
     el.className = 'status-box sb-info';
     el.innerHTML = '<div class="sb-label">🚑 On-Call Ambulance Crew</div>' +
       '<div class="sb-main" style="font-size:14px; line-height:1.7; margin-top:8px;">' +
-        line(role1, name1) + '<br>' + line(role2, name2) +
-      '</div>';
+        crew.map(line).join('<br>') +
+      '</div>' + sub;
   }catch(err){ renderBoxError(el, '🚑 On-Call Ambulance Crew'); }
 }
 
-function parseCsv(text){
-  return text.trim().split('\n').map(line => {
+function parseCsv(text, keepHeader){
+  const parsed = text.trim().split('\n').map(line => {
     const cells = [];
     let cur = '', inQuotes = false;
     for(let i = 0; i < line.length; i++){
@@ -1099,7 +1123,8 @@ function parseCsv(text){
     }
     cells.push(cur);
     return cells;
-  }).slice(1); // drop header row
+  });
+  return keepHeader ? parsed : parsed.slice(1); // default: drop header row (used by "today list")
 }
 
 /** Registers this device for push and tags it with the staff member's IC, so backend birthday
