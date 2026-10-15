@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kkah-hr-shell-v1';
+const CACHE_NAME = 'kkah-hr-shell-v2';
 const SHELL_FILES = [
   './login.html',
   './dashboard.html',
