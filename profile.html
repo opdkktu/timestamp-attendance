@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KKAH HR Portal · My Profile</title>
+<title>SIAGA · My Profile</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -62,6 +62,10 @@
   .modal .sub{ font-size:12px; color:var(--ink-500); margin-bottom:18px; }
   .field{ margin-bottom:14px; text-align:left; }
   .field label{ font-size:12px; font-weight:600; color:var(--ink-500); display:block; margin-bottom:6px; }
+  input[type=date], input[type=number], select{ width:100%; padding:11px 13px; border-radius:12px; font-size:14px; border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700); background:#fff; }
+  select:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,0.15); }
+  .calc-box{ display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--mint-100); border-radius:12px; padding:11px 14px; margin:-4px 0 14px; font-size:12px; color:var(--ink-500); }
+  .calc-box b{ font-family:'Manrope',sans-serif; color:var(--teal-900); font-size:13px; text-align:right; }
   input[type=password]{ width:100%; padding:11px 13px; border-radius:12px; font-size:14px; border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700); }
   input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,0.15); }
   .req-list{ font-size:11px; color:var(--ink-500); margin:-6px 0 14px; line-height:1.6; }
@@ -106,6 +110,26 @@
       <div class="info-box"><div class="label">Age</div><div class="value" id="profileAge">—</div></div>
       <div class="info-box"><div class="label">Birthday</div><div class="value" id="profileDob">—</div></div>
     </div>
+
+    <div class="section-title">Maklumat Perkhidmatan</div>
+    <div class="banner error" id="svcBanner"></div>
+    <div class="banner info" id="svcOk">✓ Maklumat disimpan.</div>
+
+    <div class="field"><label for="fL">Tarikh pindah masuk / lapor diri di KKAH</label><input type="date" id="fL" oninput="recalcDurations()"></div>
+    <div class="calc-box"><span>Jumlah berkhidmat di KKAH</span><b id="calcM">—</b></div>
+
+    <div class="field"><label for="fN">Tarikh berpindah keluar / berhenti berkhidmat</label><input type="date" id="fN" oninput="recalcDurations()"></div>
+
+    <div class="field"><label for="fO">Tarikh lantikan pertama</label><input type="date" id="fO" oninput="recalcDurations()"></div>
+    <div class="calc-box"><span>Jumlah perkhidmatan (SPA)</span><b id="calcP">—</b></div>
+
+    <div class="field"><label for="fR">Status</label>
+      <select id="fR"><option value="">— Pilih —</option><option>TETAP</option><option>BERPENCEN</option><option>KWSP</option><option>KONTRAK</option></select></div>
+    <div class="field"><label for="fS">Status perkahwinan</label>
+      <select id="fS"><option value="">— Pilih —</option><option>BUJANG</option><option>BERKAHWIN</option><option>DUDA</option><option>BALU</option><option>BERCERAI</option></select></div>
+    <div class="field"><label for="fT">Bilangan anak</label><input type="number" id="fT" min="0" max="30" inputmode="numeric"></div>
+
+    <button class="btn primary" id="svcSaveBtn" onclick="saveServiceInfo()">Simpan Maklumat</button>
 
     <div class="section-title">Account</div>
     <button class="btn primary" onclick="handleChangePasswordClick()">Change Password</button>
@@ -196,6 +220,74 @@ async function loadProfile(){
   }
 
   await renderBiometricPill();
+  loadServiceInfo();
+}
+
+/* ---------- Maklumat Perkhidmatan (DATABASE cols L–T) ---------- */
+// Same rules as the sheet formulas for M and P, computed here so they update live while typing.
+function durationText(start, end){
+  if(!start || !end || end < start) return '';
+  let y = end.getFullYear() - start.getFullYear();
+  let mo = end.getMonth() - start.getMonth();
+  let d = end.getDate() - start.getDate();
+  if(d < 0){ mo -= 1; d += new Date(end.getFullYear(), end.getMonth(), 0).getDate(); }
+  if(mo < 0){ y -= 1; mo += 12; }
+  return y + ' years, ' + mo + ' months, ' + d + ' days';
+}
+function parseIso(v){ const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; }
+function recalcDurations(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const l = parseIso(document.getElementById('fL').value);
+  const n = parseIso(document.getElementById('fN').value);
+  const o = parseIso(document.getElementById('fO').value);
+  document.getElementById('calcM').textContent = l ? (durationText(l, (n && n > l) ? n : today) || '—') : '—';
+  document.getElementById('calcP').textContent = o ? (durationText(o, today) || '—') : '—';
+}
+function fillServiceForm(d){
+  document.getElementById('fL').value = d.tarikhMasukKkah || '';
+  document.getElementById('fN').value = d.tarikhKeluar || '';
+  document.getElementById('fO').value = d.tarikhLantikan || '';
+  document.getElementById('fR').value = d.status || '';
+  document.getElementById('fS').value = d.statusPerkahwinan || '';
+  document.getElementById('fT').value = d.bilanganAnak === '' || d.bilanganAnak == null ? '' : d.bilanganAnak;
+  recalcDurations();
+}
+async function loadServiceInfo(){
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getMyProfileFull', token: sessionStorage.getItem('kkah_session_token') })
+    });
+    const data = await res.json();
+    if(data.ok) fillServiceForm(data);
+  }catch(err){ /* form stays blank; save still works */ }
+}
+async function saveServiceInfo(){
+  const err = document.getElementById('svcBanner'), ok = document.getElementById('svcOk'), btn = document.getElementById('svcSaveBtn');
+  err.classList.remove('show'); ok.classList.remove('show');
+  btn.disabled = true; btn.textContent = 'Menyimpan…';
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'updateMyProfile', token: sessionStorage.getItem('kkah_session_token'),
+        tarikhMasukKkah: document.getElementById('fL').value,
+        tarikhKeluar: document.getElementById('fN').value,
+        tarikhLantikan: document.getElementById('fO').value,
+        status: document.getElementById('fR').value,
+        statusPerkahwinan: document.getElementById('fS').value,
+        bilanganAnak: document.getElementById('fT').value
+      })
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || 'Gagal menyimpan.');
+    fillServiceForm(data);
+    ok.classList.add('show');
+  }catch(e){
+    err.textContent = e.message; err.classList.add('show');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Simpan Maklumat';
+  }
 }
 
 /* ---------- Security: Face ID / Touch ID ---------- */
@@ -225,7 +317,7 @@ async function handleEnableBiometricFromProfile(){
 
     const credential = await navigator.credentials.create({
       publicKey: {
-        challenge, rp: { name: 'KKAH HR Portal' }, user: { id: userId, name: ic, displayName: ic },
+        challenge, rp: { name: 'SIAGA' }, user: { id: userId, name: ic, displayName: ic },
         pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
         authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
         timeout: 60000, attestation: 'none'
