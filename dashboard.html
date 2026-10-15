@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KKAH HR Portal · Dashboard</title>
+<title>SIAGA · Dashboard</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -331,7 +331,7 @@
     <div class="welcome-icon">👋</div>
     <div class="welcome-greeting" id="welcomeGreeting">Selamat Kembali,</div>
     <div class="welcome-name" id="welcomeName">—</div>
-    <div class="welcome-sub">Klinik Kesihatan Ayer Hitam · HR Portal</div>
+    <div class="welcome-sub">Klinik Kesihatan Ayer Hitam · SIAGA</div>
   </div>
 </div>
 
@@ -359,6 +359,11 @@
       <span class="sidebar-item-label">Email Verification</span>
       <span class="sidebar-pill" id="sidebarEmailPill">—</span>
     </div>
+    <button class="sidebar-item" id="sidebarNotifRow" onclick="toggleNotifications()">
+      <span class="sidebar-item-icon">🔔</span>
+      <span class="sidebar-item-label">Push Notification</span>
+      <span class="sidebar-pill no" id="sidebarNotifPill">…</span>
+    </button>
     <a class="sidebar-item" href="./about.html">
       <span class="sidebar-item-icon">ℹ️</span>
       <span class="sidebar-item-label">About System</span>
@@ -374,7 +379,7 @@
   <div class="topbar-row">
     <div>
       <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
-      <h1>HR Portal</h1>
+      <h1>SIAGA</h1>
       <span class="role-pill" id="rolePill">STAFF</span>
     </div>
     <button class="menu-btn" onclick="openSidebar()" aria-label="Account menu">⋯</button>
@@ -427,10 +432,6 @@
   <div class="section-title">Coming Soon</div>
   <div class="grid" id="soonGrid"></div>
 
-  <div class="footer-actions">
-    <button class="btn" onclick="handleChangePasswordClick()">Change Password</button>
-    <button class="btn danger" onclick="handleLogout()">Log Out</button>
-  </div>
 </div>
 
 <div class="modal-overlay" id="pwModalOverlay">
@@ -567,14 +568,12 @@ async function showWelcomeOverlay(){
   document.getElementById('welcomeGreeting').textContent = greet;
 
   let name = sessionStorage.getItem('kkah_ic') || '';
-  try{
-    const res = await fetch(API_URL_DASHBOARD, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getMyProfile', token: sessionStorage.getItem('kkah_session_token') })
-    });
-    const data = await res.json();
-    if(data.ok && data.name) name = data.name;
-  }catch(err){ /* fall back to IC if the profile lookup fails */ }
+  const cp = cacheGet('getMyProfile');
+  if(cp && cp.data.name) name = cp.data.name;
+  else{
+    const data = await cachedApi('getMyProfile', TTL.profile, () => {});
+    if(data && data.ok && data.name) name = data.name;
+  }
   document.getElementById('welcomeName').textContent = name;
 
   overlay.classList.add('show');
@@ -629,12 +628,7 @@ let activeKursusYear = new Date().getFullYear();
 
 async function loadKursusBox(){
   const el = document.getElementById('box_kursus');
-  try{
-    const res = await fetch(API_URL_DASHBOARD, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getMyKursusList', token: sessionStorage.getItem('kkah_session_token') })
-    });
-    const data = await res.json();
+  await cachedApi('getMyKursusList', TTL.kursus, (data) => {
     if(!data.ok){ renderBoxError(el, 'Jumlah Hari Kursus'); return; }
     cachedKursusByYear = data.byYear || {};
 
@@ -645,7 +639,7 @@ async function loadKursusBox(){
     el.style.cursor = 'pointer';
     el.innerHTML = '<div class="sb-label">Jumlah Hari Kursus</div><div class="sb-main">' + thisYearDays +
       '</div><div class="sb-sub">Tahun ' + thisYear + ' · ketik untuk senarai</div>';
-  }catch(err){ renderBoxError(el, 'Jumlah Hari Kursus'); }
+  });
 }
 
 function openKursusModal(){
@@ -696,12 +690,7 @@ function closeKursusModal(){ document.getElementById('kursusModalOverlay').class
 
 async function loadHealthBox(){
   const el = document.getElementById('box_health');
-  try{
-    const res = await fetch(API_URL_DASHBOARD, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getHealthScreeningStatus', token: sessionStorage.getItem('kkah_session_token') })
-    });
-    const data = await res.json();
+  await cachedApi('getHealthScreeningStatus', TTL.health, (data) => {
     if(!data.ok){ renderBoxError(el, 'Pemeriksaan Kesihatan'); return; }
 
     const needsAttention = data.influenzaDue || (data.hepBStatus && data.hepBStatus.toLowerCase().indexOf('not') !== -1);
@@ -711,7 +700,7 @@ async function loadHealthBox(){
       (needsAttention ? 'Perlu Tindakan' : 'Lengkap') + '</div><div class="sb-sub">Ketik untuk butiran</div>';
 
     window.lastHealthData = data;
-  }catch(err){ renderBoxError(el, 'Pemeriksaan Kesihatan'); }
+  });
 }
 
 function openHealthModal(){
@@ -739,12 +728,7 @@ function closeHealthModal(){ document.getElementById('healthModalOverlay').class
 
 async function loadBlsBox(){
   const el = document.getElementById('box_bls');
-  try{
-    const res = await fetch(API_URL_DASHBOARD, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getBlsStatus', token: sessionStorage.getItem('kkah_session_token') })
-    });
-    const data = await res.json();
+  await cachedApi('getBlsStatus', TTL.bls, (data) => {
     if(!data.ok){ renderBoxError(el, 'BLS Validity'); return; }
     const status = String(data.status || '').toUpperCase();
     let cls = 'sb-neutral';
@@ -754,18 +738,13 @@ async function loadBlsBox(){
     el.className = 'status-box ' + cls;
     el.innerHTML = '<div class="sb-label">BLS Validity</div><div class="sb-main">' + (data.status || 'Tiada Rekod') +
       '</div><div class="sb-sub">Sah sehingga: ' + (data.validUntil || '-') + '</div>';
-  }catch(err){ renderBoxError(el, 'BLS Validity'); }
+  });
 }
 
 async function loadLeaveStatBoxes(){
   const elApps = document.getElementById('box_apps');
   const elHours = document.getElementById('box_hours');
-  try{
-    const res = await fetch(API_URL_DASHBOARD, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getLeaveStats', token: sessionStorage.getItem('kkah_session_token'), year: new Date().getFullYear() })
-    });
-    const data = await res.json();
+  await cachedApi('getLeaveStats', TTL.leave, (data) => {
     if(!data.ok){ renderBoxError(elApps, 'Jumlah Permohonan'); renderBoxError(elHours, 'Jumlah Jam'); return; }
 
     elApps.className = 'status-box sb-info';
@@ -775,7 +754,7 @@ async function loadLeaveStatBoxes(){
     elHours.className = 'status-box sb-info';
     elHours.innerHTML = '<div class="sb-label">Jumlah Jam</div><div class="sb-main">' + data.totalHours +
       ' jam</div><div class="sb-sub">Tahun ' + new Date().getFullYear() + '</div>';
-  }catch(err){ renderBoxError(elApps, 'Jumlah Permohonan'); renderBoxError(elHours, 'Jumlah Jam'); }
+  }, { year: new Date().getFullYear() });
 }
 
 const CHECKLIST_SOURCES = {
@@ -1131,13 +1110,86 @@ function parseCsv(text, keepHeader){
  *  notifications (and future reminders) can target them by External ID. */
 function initOneSignal(ic){
   if(!ic || ic === '—') return;
+  if(ONESIGNAL_APP_ID.indexOf('PASTE_') === 0){ setNotifPill('Belum disetkan', 'no'); return; }
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   OneSignalDeferred.push(async function(OneSignal){
     try{
       await OneSignal.init({ appId: ONESIGNAL_APP_ID });
       await OneSignal.login(ic);
-    }catch(err){ console.warn('OneSignal setup skipped:', err); }
+      window._os = OneSignal;
+      refreshNotifPill();
+      OneSignal.User.PushSubscription.addEventListener('change', refreshNotifPill);
+    }catch(err){ console.warn('OneSignal setup skipped:', err); setNotifPill('Tidak tersedia', 'no'); }
   });
+}
+
+/* === Sidebar push-notification row (mirrors the Email Verification pill) === */
+function setNotifPill(text, cls){
+  const p = document.getElementById('sidebarNotifPill');
+  if(p){ p.textContent = text; p.className = 'sidebar-pill ' + cls; }
+}
+function refreshNotifPill(){
+  const os = window._os;
+  if(!os){ return; }
+  if(!('Notification' in window)){ setNotifPill('Tidak disokong', 'no'); return; }
+  if(Notification.permission === 'denied'){ setNotifPill('Disekat', 'no'); return; }
+  const on = os.User.PushSubscription.optedIn && Notification.permission === 'granted';
+  setNotifPill(on ? 'On' : 'Off', on ? 'yes' : 'no');
+}
+async function toggleNotifications(){
+  const os = window._os;
+  if(!os){ alert('Notifikasi belum sedia. Sila cuba sebentar lagi atau semak tetapan OneSignal.'); return; }
+  if(!('Notification' in window)){ alert('Peranti/pelayar ini tidak menyokong push notification. Di iPhone, tambah SIAGA ke Home Screen dahulu.'); return; }
+  if(Notification.permission === 'denied'){
+    alert('Notifikasi disekat oleh pelayar. Buka tetapan tapak/aplikasi dan benarkan Notifications, kemudian cuba lagi.');
+    return;
+  }
+  try{
+    if(os.User.PushSubscription.optedIn){
+      await os.User.PushSubscription.optOut();
+    }else{
+      if(Notification.permission !== 'granted') await os.Notifications.requestPermission();
+      if(Notification.permission === 'granted') await os.User.PushSubscription.optIn();
+    }
+  }catch(err){ console.warn('Notification toggle failed:', err); }
+  refreshNotifPill();
+}
+
+/* === Client cache (stale-while-revalidate) for data that doesn't change daily ===
+ * Shows the cached copy instantly, then refreshes in the background only when older than ttlMs.
+ * Keyed by IC so a shared device never shows another person's data; wiped on logout. */
+const CACHE_PREFIX = 'kkah_cache_';
+const TTL = { profile: 12*60*60*1000, photo: 24*60*60*1000, bls: 12*60*60*1000, kursus: 6*60*60*1000, health: 12*60*60*1000, leave: 60*60*1000 };
+function cacheKey(action){ return CACHE_PREFIX + (sessionStorage.getItem('kkah_ic') || '') + '_' + action; }
+function cacheGet(action){
+  try{ const v = JSON.parse(localStorage.getItem(cacheKey(action)) || 'null'); return v && v.data ? v : null; }catch(e){ return null; }
+}
+function cacheSet(action, data){
+  try{ localStorage.setItem(cacheKey(action), JSON.stringify({ t: Date.now(), data: data })); }catch(e){ /* quota — skip */ }
+}
+function clearAllCaches(){
+  try{ Object.keys(localStorage).filter(k => k.indexOf(CACHE_PREFIX) === 0).forEach(k => localStorage.removeItem(k)); }catch(e){}
+}
+/** render(data, fromCache) is called with cached data first (if any), then fresh data if a refresh ran. */
+async function cachedApi(action, ttlMs, render, extra){
+  const hit = cacheGet(action);
+  if(hit){
+    try{ render(hit.data, true); }catch(e){}
+    if(Date.now() - hit.t < ttlMs) return hit.data; // still fresh — no network at all
+  }
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ action: action, token: sessionStorage.getItem('kkah_session_token') }, extra || {}))
+    });
+    const data = await res.json();
+    if(data && data.ok){ cacheSet(action, data); render(data, false); }
+    else if(!hit){ render(data || { ok:false }, false); }
+    return data;
+  }catch(err){
+    if(!hit) render({ ok:false, error:'network' }, false);
+    return null;
+  }
 }
 
 function renderModules(role){
@@ -1164,6 +1216,7 @@ function renderModules(role){
 }
 
 function handleLogout(){
+  clearAllCaches();
   sessionStorage.removeItem('kkah_session_token');
   sessionStorage.removeItem('kkah_role');
   sessionStorage.removeItem('kkah_ic');
@@ -1185,28 +1238,18 @@ async function loadSidebarProfile(){
   document.getElementById('sidebarIc').textContent = 'IC: ' + ic;
 
   // Verification status + name (fast, no photo fetch)
-  try{
-    const res = await fetch(API_URL_DASHBOARD, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getMyProfile', token: sessionStorage.getItem('kkah_session_token') })
-    });
-    const data = await res.json();
+  cachedApi('getMyProfile', TTL.profile, (data) => {
     if(data.ok){
       document.getElementById('sidebarName').textContent = data.name;
       document.getElementById('sidebarAvatar').textContent = data.name.trim().charAt(0).toUpperCase();
       const pill = document.getElementById('sidebarEmailPill');
       if(data.emailVerified){ pill.textContent = 'Verified'; pill.className = 'sidebar-pill yes'; }
       else{ pill.textContent = 'Not Verified'; pill.className = 'sidebar-pill no'; }
-    }
-  }catch(err){ document.getElementById('sidebarName').textContent = ic; }
+    }else{ document.getElementById('sidebarName').textContent = ic; }
+  });
 
-  // Photo (slower — base64, so it comes in and replaces the initial avatar once ready)
-  try{
-    const res = await fetch(API_URL_DASHBOARD, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getMyPhoto', token: sessionStorage.getItem('kkah_session_token') })
-    });
-    const data = await res.json();
+  // Photo (large base64) — cached a day so it paints instantly on later visits
+  cachedApi('getMyPhoto', TTL.photo, (data) => {
     if(data.ok && data.photo){
       const avatar = document.getElementById('sidebarAvatar');
       avatar.textContent = '';
@@ -1214,7 +1257,7 @@ async function loadSidebarProfile(){
       avatar.style.backgroundSize = 'cover';
       avatar.style.backgroundPosition = 'center';
     }
-  }catch(err){ /* initials fallback already showing */ }
+  });
 }
 
 let forcedChange = false;
