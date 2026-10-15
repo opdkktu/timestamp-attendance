@@ -16,6 +16,6 @@ const APP_VERSION = '1.0.0';
 const APP_BUILD_DATE = '2026-10-07';          // update alongside APP_VERSION on each deploy
 
 // --- About System tab ---
-const SYSTEM_LAUNCH_DATE = 'PASTE_YOUR_SYSTEM_LAUNCH_DATE_HERE'; // e.g. '1 September 2026'
-const APP_DEVELOPER = 'Nick — Klinik Kesihatan Ayer Hitam';
+const SYSTEM_LAUNCH_DATE = '15-10-2026'; // e.g. '1 September 2026'
+const APP_DEVELOPER = 'TO BE ANNOUCED SDN BHD';
 const COPYRIGHT_HOLDER = 'Klinik Kesihatan Ayer Hitam';
