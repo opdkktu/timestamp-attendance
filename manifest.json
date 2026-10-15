@@ -1,6 +1,6 @@
 {
-  "name": "KKAH HR Portal",
-  "short_name": "KKAH HR",
+  "name": "KKAH SIAGA",
+  "short_name": "SIAGA",
   "description": "Staff portal for Klinik Kesihatan Ayer Hitam — attendance, checklists, notifications and more",
   "start_url": "./login.html",
   "display": "standalone",
