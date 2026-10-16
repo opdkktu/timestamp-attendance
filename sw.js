@@ -1,10 +1,12 @@
-const CACHE_NAME = 'kkah-hr-shell-v2';
+importScripts('./version.js');
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); // push handling lives in this same worker (one worker per scope) // defines APP_VERSION — bumping it on deploy auto-invalidates the old cache below
+const CACHE_NAME = 'kkah-hr-shell-' + APP_VERSION;
 const SHELL_FILES = [
   './login.html',
   './dashboard.html',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  './siaga-192.png',
+  './siaga-512.png'
 ];
 
 self.addEventListener('install', (event) => {
