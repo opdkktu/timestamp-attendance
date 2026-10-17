@@ -226,6 +226,56 @@
   .kc-icon{ width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:800; animation:kcPop .5s cubic-bezier(.17,.67,.3,1.4); }
   @keyframes kcPop{ from{ transform:scale(0) rotate(-120deg); opacity:0; } to{ transform:none; opacity:1; } }
   .kc-msg{ margin-top:12px; text-align:center; font-size:13px; font-weight:600; min-height:18px; line-height:1.35; padding:0 6px; }
+  /* === CME scan tile + scanner === */
+  .cme-scan-tile{
+    width:100%; margin-top:12px; display:flex; align-items:center; gap:14px; text-align:left; cursor:pointer;
+    padding:16px 18px; border-radius:20px; border:1.5px solid var(--line); background:#fff; color:var(--ink-700);
+    font-family:'Inter',sans-serif; box-shadow:0 10px 24px -18px rgba(11,61,58,.5); transition:transform .2s, box-shadow .2s;
+  }
+  .cme-scan-tile:active{ transform:scale(.985); }
+  .cme-scan-ic{ width:46px; height:46px; border-radius:14px; background:var(--mint-100); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+  .cme-scan-tile b{ display:block; font-family:'Manrope',sans-serif; font-size:15px; color:var(--teal-900); }
+  .cme-scan-tile small{ display:block; font-size:11.5px; color:var(--ink-500); margin-top:2px; }
+  .scan-modal{ position:fixed; inset:0; z-index:150; display:none; flex-direction:column; background:#05080f; color:#fff; }
+  .scan-modal.show{ display:flex; }
+  .scan-top{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; font-family:'Manrope',sans-serif; font-weight:800; }
+  .scan-top button{ background:rgba(255,255,255,.14); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:15px; cursor:pointer; }
+  .scan-stage{ flex:1; position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .scan-stage video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .scan-frame{ position:relative; width:min(68vw,300px); aspect-ratio:1; border-radius:24px; box-shadow:0 0 0 100vmax rgba(5,8,15,.62); }
+  .scan-frame::before, .scan-frame::after{ content:''; position:absolute; width:42px; height:42px; border:4px solid #0fa; }
+  .scan-frame::before{ top:-2px; left:-2px; border-right:none; border-bottom:none; border-radius:24px 0 0 0; }
+  .scan-frame::after{ bottom:-2px; right:-2px; border-left:none; border-top:none; border-radius:0 0 24px 0; }
+  .scan-line{ position:absolute; left:8%; right:8%; height:3px; background:linear-gradient(90deg,transparent,#0fa,transparent); box-shadow:0 0 14px #0fa; animation:scanMove 2s ease-in-out infinite; }
+  @keyframes scanMove{ 0%,100%{ top:10%; } 50%{ top:88%; } }
+  .scan-hint{ padding:16px 24px 28px; text-align:center; font-size:13px; color:#aab; }
+  .scan-result{ flex:1; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; }
+  .scan-modal.res .scan-stage, .scan-modal.res .scan-hint{ display:none; }
+  .scan-modal.res .scan-result{ display:flex; }
+  .sr-icon{ width:104px; height:104px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:52px; font-weight:800; border:2px solid; animation:kcPop .6s cubic-bezier(.17,.67,.3,1.4); }
+  .sr-icon.ok{ color:#0fa; border-color:#0fa; background:rgba(0,255,170,.12); box-shadow:0 0 40px rgba(0,255,170,.4); }
+  .sr-icon.info{ color:#ffd166; border-color:#ffd166; background:rgba(255,209,102,.12); }
+  .sr-icon.bad{ color:#ff5d6c; border-color:#ff5d6c; background:rgba(255,93,108,.12); }
+  .sr-title{ margin-top:22px; font-family:'Manrope',sans-serif; font-weight:800; font-size:22px; }
+  .sr-card{ margin-top:16px; width:100%; max-width:340px; text-align:left; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:14px 16px; font-size:13px; line-height:1.7; }
+  .sr-card b{ color:#fff; } .sr-card span{ color:#b9bfd6; }
+  .sr-actions{ margin-top:20px; display:flex; gap:10px; width:100%; max-width:340px; }
+  .sr-actions button{ flex:1; height:48px; border-radius:14px; border:none; font-weight:700; font-size:14px; cursor:pointer; background:rgba(255,255,255,.14); color:#fff; }
+  .sr-actions button.primary{ background:linear-gradient(90deg,#00c6ff,#0072ff); }
+
+  /* === Notification diagnosis + prompt sheet === */
+  .notif-sheet{
+    position:fixed; left:12px; right:12px; bottom:12px; z-index:140; background:#fff; border-radius:22px; padding:18px 18px 16px;
+    box-shadow:0 20px 50px -10px rgba(11,61,58,.5); border:1px solid var(--line); max-width:460px; margin:0 auto;
+    transform:translateY(130%); transition:transform .45s cubic-bezier(.2,.8,.2,1);
+  }
+  .notif-sheet.show{ transform:none; }
+  .notif-sheet h3{ margin:0 0 4px; font-family:'Manrope',sans-serif; font-size:16px; color:var(--teal-900); }
+  .notif-sheet p{ margin:0 0 14px; font-size:12.5px; color:var(--ink-500); line-height:1.5; }
+  .notif-sheet .row{ display:flex; gap:10px; }
+  .notif-sheet .row button{ flex:1; height:46px; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer; border:1.5px solid var(--line); background:#fff; color:var(--ink-500); }
+  .notif-sheet .row button.primary{ background:var(--teal-700); border-color:var(--teal-700); color:#fff; }
+
   .status-boxes-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
   .status-box{
     border-radius:18px; padding:16px; color:#fff; min-height:86px;
@@ -368,6 +418,8 @@
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
+<script src="./permission-gate.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 </head>
 <body>
 
@@ -408,6 +460,10 @@
       <span class="sidebar-item-icon">🔔</span>
       <span class="sidebar-item-label">Push Notification</span>
       <span class="sidebar-pill no" id="sidebarNotifPill">…</span>
+    </button>
+    <button class="sidebar-item" onclick="closeSidebar(); openNotifDiag();" style="padding-top:2px; font-size:12px; font-weight:500; color:var(--ink-500);">
+      <span class="sidebar-item-icon"></span>
+      <span class="sidebar-item-label">Semak masalah notifikasi →</span>
     </button>
     <a class="sidebar-item" href="./about.html">
       <span class="sidebar-item-icon">ℹ️</span>
@@ -470,6 +526,11 @@
     </div>
   </div>
 
+  <button class="cme-scan-tile" onclick="openCmeScanner()" aria-label="Imbas QR kehadiran CME">
+    <span class="cme-scan-ic">📷</span>
+    <span><b>Imbas QR Kehadiran CME</b><small>Rekod kehadiran CME / mesyuarat dengan kamera</small></span>
+  </button>
+
   <div class="status-boxes-grid">
     <div class="status-box loading" id="box_bls"><div class="sb-label">BLS Validity</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_temperature"><div class="sb-label">Temperature</div><div class="sb-main">&nbsp;</div></div>
@@ -481,7 +542,7 @@
     <div class="status-box loading" id="box_hours"><div class="sb-label">Jumlah Jam</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_kursus" onclick="openKursusModal()" style="cursor:pointer;"><div class="sb-label">Jumlah Hari Kursus</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_health" onclick="openHealthModal()" style="cursor:pointer;"><div class="sb-label">Pemeriksaan Kesihatan</div><div class="sb-main">&nbsp;</div></div>
-    <div class="status-box sb-neutral" id="box_cme"><div class="sb-label">Kehadiran CME (Dalaman)</div><div class="sb-main">Akan Datang</div><div class="sb-sub">Modul ILMU standby</div></div>
+    <div class="status-box loading" id="box_cme" onclick="openCmeList()" style="cursor:pointer;"><div class="sb-label">Kehadiran CME</div><div class="sb-main">&nbsp;</div></div>
   </div>
 
   <div class="section-title">Available</div>
@@ -508,6 +569,49 @@
     <div class="req-list">At least 10 characters, with uppercase, lowercase, a number, and a symbol.</div>
     <button class="modal-btn" id="pwSubmitBtn" onclick="handleChangePassword()">Update Password</button>
     <button class="modal-btn modal-cancel" id="pwCancelBtn" onclick="closePasswordModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- CME QR scanner (full screen) -->
+<div class="scan-modal" id="scanModal" role="dialog" aria-modal="true" aria-label="Imbas QR CME">
+  <div class="scan-top"><span id="scanTitle">Imbas QR CME</span><button onclick="closeCmeScanner()" aria-label="Tutup">✕</button></div>
+  <div class="scan-stage">
+    <video id="scanVideo" playsinline muted></video>
+    <div class="scan-frame"><div class="scan-line"></div></div>
+  </div>
+  <div class="scan-hint" id="scanHint">Halakan kamera ke kod QR yang dipaparkan oleh urusetia</div>
+  <div class="scan-result" id="scanResult"></div>
+</div>
+
+<!-- CME attendance list -->
+<div class="modal-overlay" id="cmeListOverlay">
+  <div class="modal">
+    <h2>Kehadiran CME</h2>
+    <div class="sub" id="cmeListSub">Sejarah kehadiran mengikut tahun</div>
+    <div class="year-tabs" id="cmeYearTabs"></div>
+    <div id="cmeListBody" style="max-height:44vh; overflow-y:auto; margin-bottom:8px;"></div>
+    <button class="modal-btn modal-cancel" onclick="closeCmeList()">Tutup</button>
+  </div>
+</div>
+
+<!-- Notification diagnosis -->
+<div class="modal-overlay" id="notifDiagOverlay">
+  <div class="modal">
+    <h2>Semakan Notifikasi</h2>
+    <div class="sub">Sebab notifikasi mungkin tidak berfungsi pada peranti ini</div>
+    <div id="notifDiagBody" style="max-height:48vh; overflow-y:auto; margin-bottom:12px;"></div>
+    <button class="modal-btn" id="notifDiagEnable" onclick="enableFromDiag()" style="display:none;">Aktifkan sekarang</button>
+    <button class="modal-btn modal-cancel" onclick="closeNotifDiag()">Tutup</button>
+  </div>
+</div>
+
+<!-- One-time prompt to switch notifications on (a tap is required by browsers) -->
+<div class="notif-sheet" id="notifSheet" role="dialog" aria-label="Aktifkan notifikasi">
+  <h3>🔔 Aktifkan notifikasi?</h3>
+  <p>Terima peringatan hari jadi, kursus dan makluman penting terus ke telefon anda.</p>
+  <div class="row">
+    <button onclick="closeNotifSheet()">Kemudian</button>
+    <button class="primary" onclick="acceptNotifSheet()">Aktifkan</button>
   </div>
 </div>
 
@@ -550,7 +654,7 @@
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
-const ONESIGNAL_APP_ID = '6aa5fe5d-9596-45ef-a783-da4a81cf9cf6'; // public App ID — safe to expose client-side, unlike the REST API key
+const ONESIGNAL_APP_ID = 'PASTE_YOUR_ONESIGNAL_APP_ID_HERE'; // public App ID — safe to expose client-side, unlike the REST API key
 const MODULES = [
   { id: 'profile', name: 'Update Profile', icon: '👤', status: 'active', href: './profile.html' },
   { id: 'attendance', name: 'Timestamp Attendance', icon: '🕒', status: 'active', href: './my-checkin.html' },
@@ -610,6 +714,7 @@ window.addEventListener('DOMContentLoaded', () => {
   loadChecklistBoxes();
   loadKursusBox();
   loadHealthBox();
+  loadCmeBox();
   setInterval(loadChecklistBoxes, 5 * 60 * 1000); // refresh temperature/trolley/bag/ambulance every 5 min
   setInterval(loadOnCallBox, 5 * 60 * 1000); // on-call crew can change during the day
   setInterval(loadTodayAttendance, 5 * 60 * 1000); // pick up a check-in/out made elsewhere (e.g. kiosk) without a refresh
@@ -814,6 +919,166 @@ async function loadLeaveStatBoxes(){
       ' jam</div><div class="sb-sub">Tahun ' + new Date().getFullYear() + '</div>';
   }, { year: new Date().getFullYear() });
 }
+
+/* === CME: QR scanner → attendance (ILMU sheet) === */
+let cmeStream = null, cmeScanTimer = null, cmeScanning = false, cmeDetector = null, cmeCanvas = null;
+const cmeEsc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function openCmeScanner(){
+  if(window.SiagaGate && !SiagaGate.isOk()) return; // location gate is still blocking
+  const modal = document.getElementById('scanModal');
+  modal.classList.remove('res'); modal.classList.add('show');
+  document.getElementById('scanTitle').textContent = 'Imbas QR CME';
+  document.getElementById('scanHint').textContent = 'Halakan kamera ke kod QR yang dipaparkan oleh urusetia';
+  try{
+    cmeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+    const video = document.getElementById('scanVideo');
+    video.srcObject = cmeStream;
+    await video.play();
+    if('BarcodeDetector' in window){ try{ cmeDetector = new BarcodeDetector({ formats: ['qr_code'] }); }catch(e){ cmeDetector = null; } }
+    cmeScanning = true;
+    cmeScanLoop();
+  }catch(err){
+    const denied = err && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError');
+    cmeShowResult('bad', '✕', denied ? 'Kamera tidak dibenarkan' : 'Kamera tidak dapat dibuka',
+      '<span>' + (denied
+        ? 'Benarkan akses Kamera untuk SIAGA dalam tetapan telefon/pelayar, kemudian cuba lagi.'
+        : 'Pastikan tiada aplikasi lain sedang menggunakan kamera.') + '</span>', true);
+  }
+}
+
+function cmeStopCamera(){
+  cmeScanning = false; clearTimeout(cmeScanTimer);
+  if(cmeStream){ cmeStream.getTracks().forEach(t => t.stop()); cmeStream = null; }
+  const v = document.getElementById('scanVideo'); if(v) v.srcObject = null;
+}
+function closeCmeScanner(){ cmeStopCamera(); document.getElementById('scanModal').classList.remove('show', 'res'); }
+
+function cmeScanLoop(){
+  if(!cmeScanning) return;
+  const video = document.getElementById('scanVideo');
+  const next = () => { cmeScanTimer = setTimeout(cmeScanLoop, 130); };
+  if(video.readyState < 2){ next(); return; }
+  if(cmeDetector){
+    cmeDetector.detect(video).then(codes => {
+      if(codes && codes.length){ cmeOnCode(codes[0].rawValue); } else next();
+    }).catch(next);
+    return;
+  }
+  if(typeof jsQR !== 'function'){ next(); return; }
+  const w = 480, h = Math.round(480 * (video.videoHeight / video.videoWidth)) || 360;
+  cmeCanvas = cmeCanvas || document.createElement('canvas');
+  cmeCanvas.width = w; cmeCanvas.height = h;
+  const ctx = cmeCanvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(video, 0, 0, w, h);
+  const code = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' });
+  if(code && code.data){ cmeOnCode(code.data); } else next();
+}
+
+function cmeShowResult(kind, icon, title, cardHtml, retry){
+  cmeStopCamera();
+  const modal = document.getElementById('scanModal');
+  modal.classList.add('res');
+  document.getElementById('scanTitle').textContent = 'Kehadiran CME';
+  document.getElementById('scanResult').innerHTML =
+    '<div class="sr-icon ' + kind + '">' + icon + '</div>' +
+    '<div class="sr-title">' + title + '</div>' +
+    (cardHtml ? '<div class="sr-card">' + cardHtml + '</div>' : '') +
+    '<div class="sr-actions">' + (retry ? '<button class="primary" onclick="openCmeScanner()">Imbas semula</button>' : '') +
+    '<button onclick="closeCmeScanner()">Tutup</button></div>';
+}
+
+async function cmeOnCode(text){
+  cmeStopCamera();
+  if(navigator.vibrate) navigator.vibrate(40);
+  const modal = document.getElementById('scanModal');
+  modal.classList.add('res');
+  document.getElementById('scanResult').innerHTML =
+    '<div class="kc-spin" style="width:54px;height:54px;border-width:5px;"></div><div class="sr-title" style="font-size:17px;">Merekod kehadiran…</div>';
+
+  let data;
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'cmeCheckIn', token: sessionStorage.getItem('kkah_session_token'), qr: text })
+    });
+    data = await res.json();
+  }catch(err){ data = { ok:false, error:'Ralat sambungan. Cuba lagi.' }; }
+
+  const s = (data && data.session) || {};
+  const details = s.topic ?
+    '<b>' + cmeEsc(s.topic) + '</b><br><span>Penyampai:</span> ' + cmeEsc(s.presenter || '—') +
+    '<br><span>Lokasi:</span> ' + cmeEsc(s.location || '—') + '<br><span>Tarikh:</span> ' + cmeEsc(s.date || '') + ' ' + cmeEsc(s.time || '') +
+    '<br><span>Mata CPD:</span> ' + cmeEsc(s.cpdPoints || 1) : '';
+
+  if(data && data.ok && !data.already){
+    if(navigator.vibrate) navigator.vibrate([60, 40, 60]);
+    cmeShowResult('ok', '✓', 'Kehadiran direkodkan', details +
+      '<br><span>Masa:</span> ' + cmeEsc(new Date(data.checkedInAt).toLocaleTimeString('ms-MY', { hour:'2-digit', minute:'2-digit', second:'2-digit' })), false);
+    try{ localStorage.removeItem(cacheKey('getMyCmeSummary')); }catch(e){}
+    loadCmeBox();
+  }else if(data && data.ok && data.already){
+    cmeShowResult('info', 'i', 'Sudah direkodkan', details, false);
+  }else{
+    const code = data && data.code;
+    const title = code === 'expired' ? 'QR telah tamat tempoh' : code === 'notstarted' ? 'Sesi belum bermula'
+      : code === 'badqr' ? 'Bukan kod CME' : code === 'notfound' ? 'Sesi tidak dijumpai' : 'Kehadiran gagal';
+    cmeShowResult('bad', '✕', title, (details ? details + '<br><br>' : '') + '<span>' + cmeEsc((data && data.error) || 'Sila cuba lagi.') + '</span>', code !== 'expired' && code !== 'notstarted');
+  }
+}
+
+/* === CME analysis box (this year's count + CPD; tap for history by year) === */
+let cmeSummary = { total: 0, totalCpd: 0, byYear: {} };
+let cmeActiveYear = new Date().getFullYear();
+
+async function loadCmeBox(){
+  const el = document.getElementById('box_cme');
+  await cachedApi('getMyCmeSummary', 60 * 60 * 1000, (data) => {
+    if(!data.ok){ renderBoxError(el, 'Kehadiran CME'); return; }
+    cmeSummary = data;
+    const y = String(new Date().getFullYear());
+    const cur = data.byYear[y] || { count: 0, cpd: 0 };
+    el.className = 'status-box sb-info';
+    el.style.cursor = 'pointer';
+    el.innerHTML = '<div class="sb-label">Kehadiran CME</div><div class="sb-main">' + cur.count +
+      '</div><div class="sb-sub">' + cur.cpd + ' mata CPD · ' + y + ' · ketik</div>';
+  });
+}
+function openCmeList(){
+  const cy = new Date().getFullYear();
+  const years = Object.keys(cmeSummary.byYear || {}).map(Number);
+  const first = years.length ? Math.min.apply(null, years.concat([cy])) : cy;
+  const tabs = document.getElementById('cmeYearTabs'); tabs.innerHTML = '';
+  for(let y = first; y <= cy; y++){
+    const b = document.createElement('button');
+    b.className = 'year-tab' + (y === cy ? ' active' : ''); b.textContent = y;
+    b.onclick = () => selectCmeYear(y);
+    tabs.appendChild(b);
+  }
+  tabs.scrollLeft = tabs.scrollWidth;
+  document.getElementById('cmeListSub').textContent = 'Jumlah keseluruhan: ' + (cmeSummary.total || 0) + ' sesi · ' + (cmeSummary.totalCpd || 0) + ' mata CPD';
+  selectCmeYear(cy);
+  document.getElementById('cmeListOverlay').classList.add('show');
+}
+function selectCmeYear(y){
+  cmeActiveYear = y;
+  document.querySelectorAll('#cmeYearTabs .year-tab').forEach(b => b.classList.toggle('active', parseInt(b.textContent, 10) === y));
+  const d = (cmeSummary.byYear || {})[String(y)];
+  const body = document.getElementById('cmeListBody');
+  if(!d || !d.items.length){
+    body.innerHTML = '<div style="font-size:13px; color:var(--ink-500); text-align:center; padding:20px 0;">Tiada kehadiran CME direkodkan untuk ' + y + '.</div>';
+    return;
+  }
+  body.innerHTML = '<div style="font-size:12px; color:var(--ink-500); margin-bottom:6px;">' + d.count + ' sesi · ' + d.cpd + ' mata CPD</div>' +
+    d.items.map(k =>
+      '<div style="padding:10px 0; border-bottom:1px solid var(--line);">' +
+        '<div style="font-weight:700; font-size:13px; color:var(--teal-900);">' + cmeEsc(k.topic) + '</div>' +
+        '<div style="font-size:11.5px; color:var(--ink-500); margin-top:2px;">' + cmeEsc(k.date) + (k.time ? ' · ' + cmeEsc(k.time) : '') +
+        (k.presenter ? ' · ' + cmeEsc(k.presenter) : '') + ' · ' + cmeEsc(k.cpd) + ' CPD</div>' +
+      '</div>'
+    ).join('');
+}
+function closeCmeList(){ document.getElementById('cmeListOverlay').classList.remove('show'); }
 
 /* === KAUNTER C — type 4 digits, it calls automatically (no confirm button) === */
 let kcBusy = false, kcTimer = null, kcIdle = null;
@@ -1237,6 +1502,13 @@ function initOneSignal(ic){
   if(!ic || ic === '—') return;
   if(ONESIGNAL_APP_ID.indexOf('PASTE_') === 0){ setNotifPill('Belum disetkan', 'no'); return; }
   window.OneSignalDeferred = window.OneSignalDeferred || [];
+  // Watchdog: if the SDK never answers (blocked CDN, ad-blocker, offline) say so instead of spinning forever.
+  setTimeout(() => {
+    if(!window._osReady && !window._osError){
+      window._osError = 'SDK OneSignal tidak dimuatkan (rangkaian / ad-blocker?)';
+      setNotifPill('Gagal dimulakan', 'no');
+    }
+  }, 10000);
   OneSignalDeferred.push(async function(OneSignal){
     try{
       const base = location.pathname.replace(/[^/]*$/, ''); // works on a GitHub Pages sub-path
@@ -1244,15 +1516,81 @@ function initOneSignal(ic){
         appId: ONESIGNAL_APP_ID,
         serviceWorkerPath: base + 'sw.js',
         serviceWorkerParam: { scope: base },
-        notifyButton: { enable: false }
+        notifyButton: { enable: false },
+        allowLocalhostAsSecureOrigin: true
       });
-      await OneSignal.login(ic);
-      window._os = OneSignal;
+      window._os = OneSignal;        // usable from here on, even if login() below hiccups
+      window._osReady = true;
+      window._osError = null;
       refreshNotifPill();
       OneSignal.User.PushSubscription.addEventListener('change', refreshNotifPill);
-    }catch(err){ console.warn('OneSignal setup skipped:', err); setNotifPill('Tidak tersedia', 'no'); }
+      try{ await OneSignal.login(ic); }catch(e){ console.warn('OneSignal login failed:', e); }
+      maybeShowNotifPrompt();
+    }catch(err){
+      console.warn('OneSignal setup failed:', err);
+      window._osError = String((err && err.message) || err);
+      setNotifPill('Gagal dimulakan', 'no');
+    }
   });
 }
+
+/* === Notification diagnostics: tells the person exactly why push isn't working === */
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+const IS_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+async function gatherNotifDiagnostics(){
+  const rows = [];
+  const add = (label, ok, detail) => rows.push({ label, ok, detail: detail || '' });
+  add('Sambungan selamat (HTTPS)', location.protocol === 'https:' || location.hostname === 'localhost');
+  const supported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+  add('Peranti menyokong push', supported, supported ? '' : (IS_IOS && !isStandalone() ? 'Di iPhone, push hanya berfungsi selepas SIAGA ditambah ke Home Screen' : 'Pelayar ini tidak menyokong push'));
+  if(IS_IOS) add('Dibuka daripada ikon Home Screen', isStandalone(), isStandalone() ? '' : 'Wajib di iPhone (iOS 16.4+): Kongsi → Tambah ke Skrin Utama, kemudian buka dari ikon');
+  const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
+  add('Kebenaran notifikasi', perm === 'granted', perm === 'granted' ? 'Dibenarkan' : perm === 'denied' ? 'DISEKAT — benarkan dalam tetapan telefon/pelayar' : perm === 'default' ? 'Belum diminta — ketik “Aktifkan sekarang”' : 'Tidak disokong');
+  let sw = false;
+  try{ const regs = await navigator.serviceWorker.getRegistrations(); sw = regs.length > 0; }catch(e){}
+  add('Service worker aktif', sw, sw ? '' : 'Muat semula halaman sekali');
+  add('OneSignal dimulakan', !!window._osReady, window._osReady ? '' : (window._osError || 'Masih memuatkan…'));
+  const sub = window._os && window._os.User && window._os.User.PushSubscription;
+  const subbed = !!(sub && sub.optedIn && sub.id);
+  add('Peranti berdaftar untuk push', subbed, subbed ? 'ID: ' + String(sub.id).slice(0, 8) + '…' : 'Belum berdaftar');
+  return { rows, perm };
+}
+
+async function openNotifDiag(){
+  const body = document.getElementById('notifDiagBody');
+  body.innerHTML = '<div style="text-align:center;padding:16px;color:var(--ink-500);">Menyemak…</div>';
+  document.getElementById('notifDiagOverlay').classList.add('show');
+  const d = await gatherNotifDiagnostics();
+  body.innerHTML = d.rows.map(r =>
+    '<div style="display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13px;">' +
+      '<span style="font-weight:800; color:' + (r.ok ? 'var(--green-500)' : 'var(--red-500)') + '; width:18px;">' + (r.ok ? '✓' : '✕') + '</span>' +
+      '<div><div style="font-weight:600; color:var(--ink-700);">' + r.label + '</div>' +
+      (r.detail ? '<div style="font-size:11.5px; color:var(--ink-500); margin-top:2px;">' + r.detail + '</div>' : '') + '</div>' +
+    '</div>'
+  ).join('');
+  const btn = document.getElementById('notifDiagEnable');
+  btn.style.display = (d.perm === 'default' || (d.perm === 'granted' && !(window._os && window._os.User.PushSubscription.optedIn))) ? 'block' : 'none';
+}
+function closeNotifDiag(){ document.getElementById('notifDiagOverlay').classList.remove('show'); }
+async function enableFromDiag(){ await toggleNotifications(true); openNotifDiag(); }
+
+/* Friendly one-time prompt (needs a tap — browsers refuse to show the permission box on their own) */
+function maybeShowNotifPrompt(){
+  if(!window._os || !('Notification' in window)) return;
+  if(Notification.permission !== 'default') return;
+  if(sessionStorage.getItem('kkah_notif_prompt_seen') === '1') return;
+  if(IS_IOS && !isStandalone()) return;
+  if(window.SiagaGate && !SiagaGate.isOk()){ SiagaGate.onOk(() => setTimeout(maybeShowNotifPrompt, 1200)); return; }
+  setTimeout(() => {
+    sessionStorage.setItem('kkah_notif_prompt_seen', '1');
+    document.getElementById('notifSheet').classList.add('show');
+  }, 2800); // after the welcome animation
+}
+function closeNotifSheet(){ document.getElementById('notifSheet').classList.remove('show'); }
+async function acceptNotifSheet(){ closeNotifSheet(); await toggleNotifications(true); }
 
 /* === Sidebar push-notification row (mirrors the Email Verification pill) === */
 function setNotifPill(text, cls){
@@ -1267,23 +1605,22 @@ function refreshNotifPill(){
   const on = os.User.PushSubscription.optedIn && Notification.permission === 'granted';
   setNotifPill(on ? 'On' : 'Off', on ? 'yes' : 'no');
 }
-async function toggleNotifications(){
+/** forceOn=true → only ever turns ON (used by the prompt sheet). Row tap: any problem opens the diagnosis instead of a vague alert. */
+async function toggleNotifications(forceOn){
   const os = window._os;
-  if(!os){ alert('Notifikasi belum sedia. Sila cuba sebentar lagi atau semak tetapan OneSignal.'); return; }
-  if(!('Notification' in window)){ alert('Peranti/pelayar ini tidak menyokong push notification. Di iPhone, tambah SIAGA ke Home Screen dahulu.'); return; }
-  if(Notification.permission === 'denied'){
-    alert('Notifikasi disekat oleh pelayar. Buka tetapan tapak/aplikasi dan benarkan Notifications, kemudian cuba lagi.');
-    return;
-  }
+  const problem = !os || !('Notification' in window) || Notification.permission === 'denied' || (IS_IOS && !isStandalone());
+  if(problem){ closeSidebar(); openNotifDiag(); return; }
   try{
-    if(os.User.PushSubscription.optedIn){
+    const subscribed = os.User.PushSubscription.optedIn && Notification.permission === 'granted';
+    if(subscribed && !forceOn){
       await os.User.PushSubscription.optOut();
     }else{
       if(Notification.permission !== 'granted') await os.Notifications.requestPermission();
       if(Notification.permission === 'granted') await os.User.PushSubscription.optIn();
     }
-  }catch(err){ console.warn('Notification toggle failed:', err); }
+  }catch(err){ console.warn('Notification toggle failed:', err); window._osError = String((err && err.message) || err); }
   refreshNotifPill();
+  if(Notification.permission === 'denied'){ closeSidebar(); openNotifDiag(); }
 }
 
 /* === Client cache (stale-while-revalidate) for data that doesn't change daily ===
