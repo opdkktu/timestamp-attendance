@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Penyelia — SIAGA</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.1.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.1.0">
+<link rel="manifest" href="./manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84; --bg:#F3F8F6; --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; background:var(--bg); color:var(--ink-700); font-family:'Inter',system-ui,sans-serif; }
+  header{ background:linear-gradient(135deg,var(--teal-900),var(--teal-500)); color:#fff; padding:16px; position:sticky; top:0; z-index:5; }
+  .top{ display:flex; align-items:center; gap:12px; }
+  header a{ color:#fff; text-decoration:none; font-size:22px; }
+  header h1{ margin:0; font-family:'Manrope',sans-serif; font-size:18px; flex:1; }
+  .lvl{ font-size:11px; font-weight:800; background:rgba(255,255,255,.2); padding:4px 10px; border-radius:99px; }
+  .search{ margin-top:12px; width:100%; border:none; border-radius:14px; padding:13px 14px; font:inherit; font-size:15px; }
+  .search:focus{ outline:3px solid rgba(255,255,255,.4); }
+  main{ max-width:640px; margin:0 auto; padding:14px 16px 40px; }
+  .chips{ display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; scrollbar-width:none; }
+  .chip{ flex:none; border:1.5px solid var(--line); background:#fff; color:var(--teal-900); border-radius:99px; padding:7px 14px; font-weight:700; font-size:12.5px; cursor:pointer; }
+  .chip.on{ background:var(--teal-700); border-color:var(--teal-700); color:#fff; }
+  .count{ font-size:12px; color:var(--ink-500); margin:2px 2px 8px; }
+  .person{ width:100%; display:flex; align-items:center; gap:12px; text-align:left; background:#fff; border:1px solid var(--line); border-radius:16px; padding:12px 14px; margin-bottom:9px; cursor:pointer; font:inherit; }
+  .person:active{ transform:scale(.99); }
+  .av{ width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--teal-500),var(--teal-700)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; flex:none; }
+  .nm{ font-weight:700; font-size:14px; color:var(--teal-900); }
+  .un{ font-size:12px; color:var(--ink-500); margin-top:1px; }
+  .go{ margin-left:auto; color:var(--teal-500); font-size:20px; }
+  .empty{ text-align:center; color:var(--ink-500); padding:40px 10px; font-size:14px; }
+  .skel{ height:66px; border-radius:16px; margin-bottom:9px; background:linear-gradient(90deg,#e6efec,#f5faf8,#e6efec); background-size:200% 100%; animation:sh 1.2s infinite; }
+  @keyframes sh{ to{ background-position:-200% 0; } }
+  .note{ font-size:12px; color:var(--ink-500); background:#fff; border:1px dashed var(--line); border-radius:12px; padding:10px 12px; margin-bottom:12px; }
+  .loading{ position:fixed; inset:0; background:rgba(8,20,18,.6); display:none; align-items:center; justify-content:center; color:#fff; font-weight:700; z-index:20; }
+  .loading.show{ display:flex; }
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><a href="./dashboard.html" aria-label="Kembali">←</a><h1>Staf di bawah seliaan</h1><span class="lvl" id="lvl"></span></div>
+  <input class="search" id="q" type="search" placeholder="Cari nama staf…" autocomplete="off">
+</header>
+<main>
+  <div class="note">Paparan baca sahaja. Setiap pemantauan direkodkan dalam Log Aktiviti anda dan staf berkenaan.</div>
+  <div class="chips" id="chips"></div>
+  <div class="count" id="count"></div>
+  <div id="list"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+</main>
+<div class="loading" id="busy">Membuka paparan staf…</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const token = sessionStorage.getItem('kkah_session_token');
+if(!token || sessionStorage.getItem('kkah_view_name')){ location.href = './dashboard.html'; }
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function api(action, extra){
+  const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({ action, token }, extra||{})) });
+  return r.json();
+}
+
+let all = [], unit = '';
+function render(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const list = all.filter(s => (!unit || s.unit === unit) && (!q || s.name.toLowerCase().includes(q)));
+  document.getElementById('count').textContent = list.length + ' staf';
+  document.getElementById('list').innerHTML = list.length ? list.map(s =>
+    '<button class="person" data-ic="' + esc(s.ic) + '" data-name="' + esc(s.name) + '"><div class="av">' + esc(s.name.trim()[0] || '?') + '</div>' +
+    '<div><div class="nm">' + esc(s.name) + '</div><div class="un">' + esc(s.unit || 'Tiada unit') + '</div></div><div class="go">›</div></button>').join('')
+    : '<div class="empty">Tiada staf dijumpai.</div>';
+}
+
+document.getElementById('list').addEventListener('click', async e => {
+  const b = e.target.closest('.person'); if(!b) return;
+  document.getElementById('busy').classList.add('show');
+  let d; try{ d = await api('startViewAs', { targetIc: b.dataset.ic }); }catch(err){ d = { ok:false, error:'Ralat sambungan.' }; }
+  document.getElementById('busy').classList.remove('show');
+  if(!d.ok){ alert(d.error || 'Gagal membuka paparan.'); return; }
+  // keep the supervisor's own session so "Keluar" can restore it; this tab now shows the staff read-only
+  sessionStorage.setItem('kkah_sup_token', token);
+  sessionStorage.setItem('kkah_sup_role', sessionStorage.getItem('kkah_role') || '');
+  sessionStorage.setItem('kkah_sup_ic', sessionStorage.getItem('kkah_ic') || '');
+  sessionStorage.setItem('kkah_session_token', d.token);
+  sessionStorage.setItem('kkah_role', 'staff');
+  sessionStorage.setItem('kkah_ic', d.ic);
+  sessionStorage.setItem('kkah_view_name', d.name);
+  location.href = './dashboard.html';
+});
+document.getElementById('q').addEventListener('input', render);
+
+(async function init(){
+  let d; try{ d = await api('listSupervisedStaff'); }catch(e){ d = { ok:false, error:'Ralat sambungan.' }; }
+  if(!d.ok){ document.getElementById('list').innerHTML = '<div class="empty">' + esc(d.error) + '</div>'; return; }
+  all = d.staff;
+  document.getElementById('lvl').textContent = d.level === 'TOP' ? 'KETUA' : 'PENYELIA UNIT';
+  if(d.units.length > 1){
+    const chips = document.getElementById('chips');
+    chips.innerHTML = '<button class="chip on" data-u="">Semua</button>' + d.units.map(u => '<button class="chip" data-u="' + esc(u) + '">' + esc(u) + '</button>').join('');
+    chips.onclick = e => { const c = e.target.closest('.chip'); if(!c) return; unit = c.dataset.u; chips.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === c)); render(); };
+  }
+  render();
+})();
+</script>
+</body>
+</html>
