@@ -1555,7 +1555,7 @@ async function gatherNotifDiagnostics(){
   add('OneSignal dimulakan', !!window._osReady, window._osReady ? '' : (window._osError || 'Masih memuatkan…'));
   const sub = window._os && window._os.User && window._os.User.PushSubscription;
   const subbed = !!(sub && sub.optedIn && sub.id);
-  add('Peranti berdaftar untuk push', subbed, subbed ? 'ID: ' + String(sub.id).slice(0, 8) + '…' : 'Belum berdaftar');
+  add('Peranti berdaftar untuk push', subbed, subbed ? 'ID: ' + String(sub.id).slice(0, 5) + '…' : 'Belum berdaftar');
   return { rows, perm };
 }
 
