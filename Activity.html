@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log Aktiviti — SIAGA</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.1.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.1.0">
+<link rel="manifest" href="./manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84; --bg:#F3F8F6; --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6; --ok:#16a34a; --bad:#dc2626; --warn:#d97706; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink-700); font-family:'Inter',system-ui,sans-serif; }
+  #viewBar{ background:#7c2d12; color:#fff; padding:9px 14px; font-size:13px; font-weight:600; text-align:center; display:none; }
+  header{ background:linear-gradient(135deg,var(--teal-900),var(--teal-500)); color:#fff; padding:16px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:5; }
+  header a{ color:#fff; text-decoration:none; font-size:22px; }
+  header h1{ margin:0; font-family:'Manrope',sans-serif; font-size:18px; flex:1; }
+  main{ max-width:640px; margin:0 auto; padding:14px 16px 40px; }
+  .tabs{ display:flex; gap:8px; margin-bottom:12px; }
+  .tab{ flex:1; border:1.5px solid var(--line); background:#fff; border-radius:12px; padding:9px; font-weight:700; font-size:13px; color:var(--teal-900); cursor:pointer; }
+  .tab.on{ background:var(--teal-700); color:#fff; border-color:var(--teal-700); }
+  .day{ font-size:12px; font-weight:800; letter-spacing:.5px; color:var(--ink-500); margin:18px 2px 8px; text-transform:uppercase; }
+  .sess{ background:#fff; border:1px solid var(--line); border-radius:18px; padding:14px 14px 6px; margin-bottom:12px; box-shadow:0 2px 10px rgba(11,61,58,.05); }
+  .sh{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .sh b{ font-family:'Manrope',sans-serif; font-size:14px; color:var(--teal-900); flex:1; }
+  .badge{ font-size:11px; font-weight:800; padding:3px 10px; border-radius:99px; }
+  .badge.out{ background:#dcfce7; color:#166534; } .badge.auto{ background:#f1f5f9; color:#64748b; } .badge.live{ background:#fef3c7; color:#92400e; }
+  .dev{ font-size:11.5px; color:var(--ink-500); margin:-4px 0 8px; }
+  .ev{ display:flex; gap:12px; position:relative; padding-bottom:12px; }
+  .ev:not(:last-child)::before{ content:''; position:absolute; left:5px; top:14px; bottom:-2px; width:2px; background:var(--line); }
+  .dot{ width:12px; height:12px; border-radius:50%; background:var(--teal-500); margin-top:4px; flex:none; z-index:1; }
+  .dot.in{ background:var(--ok); } .dot.outd{ background:#64748b; } .dot.bad{ background:var(--bad); } .dot.sup{ background:var(--warn); }
+  .t{ font-size:12px; color:var(--ink-500); width:44px; flex:none; margin-top:1px; font-variant-numeric:tabular-nums; }
+  .tx{ font-size:13.5px; font-weight:600; }
+  .tx small{ display:block; font-weight:400; color:var(--ink-500); font-size:12px; margin-top:1px; word-break:break-word; }
+  .empty{ text-align:center; color:var(--ink-500); padding:50px 10px; font-size:14px; }
+  .skel{ height:120px; border-radius:18px; margin-bottom:12px; background:linear-gradient(90deg,#e6efec,#f5faf8,#e6efec); background-size:200% 100%; animation:sh2 1.2s infinite; }
+  @keyframes sh2{ to{ background-position:-200% 0; } }
+  .foot{ font-size:11.5px; color:var(--ink-500); text-align:center; margin-top:16px; }
+</style>
+</head>
+<body>
+<div id="viewBar"></div>
+<header><a href="./dashboard.html" aria-label="Kembali">←</a><h1>Log Aktiviti</h1></header>
+<main>
+  <div class="tabs"><button class="tab on" data-d="7">7 hari</button><button class="tab" data-d="30">30 hari</button><button class="tab" data-d="90">90 hari</button></div>
+  <div id="out"><div class="skel"></div><div class="skel"></div></div>
+  <div class="foot">Log disimpan 90 hari. Sesi tanpa “Log keluar” bermakna tab ditutup atau sesi tamat sendiri selepas 8 jam.</div>
+</main>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const token = sessionStorage.getItem('kkah_session_token');
+if(!token) location.href = './login.html';
+const vn = sessionStorage.getItem('kkah_view_name');
+if(vn){ const b = document.getElementById('viewBar'); b.style.display = 'block'; b.textContent = '👁 Log aktiviti — ' + vn + ' (baca sahaja)'; }
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MS = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
+const parse = s => new Date(String(s).replace(' ', 'T')); // server time is Asia/Kuala_Lumpur
+
+function dotClass(e){
+  if(/^Log masuk gagal/.test(e)) return 'bad';
+  if(/^Log masuk/.test(e)) return 'in';
+  if(e === 'Log keluar') return 'outd';
+  if(/penyelia|Pantau/.test(e)) return 'sup';
+  return '';
+}
+function fmtDay(d){ return d.getDate() + ' ' + MS[d.getMonth()] + ' ' + d.getFullYear(); }
+function hm(d){ return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+
+function render(events){
+  const out = document.getElementById('out');
+  if(!events.length){ out.innerHTML = '<div class="empty">Tiada aktiviti direkodkan untuk tempoh ini.</div>'; return; }
+  // group by session id (blank sid = standalone events such as failed logins or "viewed by supervisor")
+  const groups = [], bySid = {};
+  events.slice().reverse().forEach(ev => { // oldest → newest
+    const key = ev.sid && ev.sid !== 'view' ? ev.sid : 'solo_' + ev.at + ev.event;
+    if(!bySid[key]){ bySid[key] = { solo: key.indexOf('solo_') === 0, evs: [] }; groups.push(bySid[key]); }
+    bySid[key].evs.push(ev);
+  });
+  groups.sort((a, b) => parse(b.evs[0].at) - parse(a.evs[0].at));
+
+  let html = '', lastDay = '';
+  groups.forEach(g => {
+    const first = parse(g.evs[0].at), lastEv = g.evs[g.evs.length - 1], last = parse(lastEv.at);
+    const day = fmtDay(first);
+    if(day !== lastDay){ html += '<div class="day">' + day + '</div>'; lastDay = day; }
+    let head = '', badge = '', dev = '';
+    if(g.solo){
+      head = g.evs[0].event;
+    }else{
+      const loggedOut = lastEv.event === 'Log keluar';
+      const stale = Date.now() - last.getTime() > 8 * 3600 * 1000;
+      head = 'Sesi ' + hm(first) + (loggedOut ? ' → ' + hm(last) : '');
+      badge = loggedOut ? '<span class="badge out">Log keluar</span>' : stale ? '<span class="badge auto">Tamat sendiri</span>' : '<span class="badge live">Mungkin masih aktif</span>';
+      const d = g.evs.find(x => x.device); dev = d ? d.device : '';
+    }
+    html += '<div class="sess"><div class="sh"><b>' + esc(head) + '</b>' + badge + '</div>' + (dev ? '<div class="dev">📱 ' + esc(dev) + '</div>' : '') +
+      g.evs.map(ev => '<div class="ev"><div class="t">' + hm(parse(ev.at)) + '</div><div class="dot ' + dotClass(ev.event) + '"></div><div class="tx">' + esc(ev.event) +
+        (ev.detail ? '<small>' + esc(ev.detail) + '</small>' : '') + '</div></div>').join('') + '</div>';
+  });
+  out.innerHTML = html;
+}
+
+async function load(days){
+  document.getElementById('out').innerHTML = '<div class="skel"></div><div class="skel"></div>';
+  let d; try{
+    const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getMyActivity', token, days }) });
+    d = await r.json();
+  }catch(e){ d = { ok:false, error:'Ralat sambungan.' }; }
+  if(!d.ok){
+    if(/expired|log in/i.test(d.error || '')){ location.href = './login.html'; return; }
+    document.getElementById('out').innerHTML = '<div class="empty">' + esc(d.error || 'Gagal memuatkan log.') + '</div>'; return;
+  }
+  render(d.events);
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t)); load(+t.dataset.d);
+});
+if(token) load(7);
+</script>
+</body>
+</html>
