@@ -10,131 +10,187 @@
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#0B3D3A">
+<meta name="theme-color" content="#080b18">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
-    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
-    --gold-500:#C9A227; --green-500:#2FAE60; --red-500:#B3311A;
-    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
-  }
-  *{box-sizing:border-box;}
+  :root{ --cyan:#00eaff; --mint:#0fa; --red:#ff5d6c; }
+  *{ margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
   body{
-    margin:0; min-height:100vh;
-    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
-    font-family:'Inter',sans-serif; color:var(--ink-700);
-    display:flex; align-items:center; justify-content:center; padding:24px;
+    min-height:100vh; min-height:100dvh; display:flex; justify-content:center; align-items:center; overflow:hidden; padding:16px;
+    background:radial-gradient(circle at 20% 20%, #00f5ff33, transparent 35%), radial-gradient(circle at 80% 80%, #7b2cff44, transparent 35%), #080b18;
   }
-  .card{
-    width:100%; max-width:420px; background:#fff; border-radius:28px;
-    box-shadow:0 20px 60px -20px rgba(11,61,58,0.25);
-    overflow:hidden; border:1px solid var(--line);
+  .liquid-bg{ position:fixed; inset:0; overflow:hidden; z-index:-1; }
+  .blob{ position:absolute; border-radius:50%; animation:liquidMove 12s infinite ease-in-out; }
+  .blob:first-child{ width:350px; height:350px; background:linear-gradient(135deg,#00f5ff,#06f); top:-100px; left:-80px; }
+  .blob:nth-child(2){ width:300px; height:300px; background:linear-gradient(135deg,#f0c,#7b2cff); right:-70px; bottom:-80px; animation-delay:-4s; }
+  .blob:nth-child(3){ width:180px; height:180px; background:linear-gradient(135deg,#0f9,#0cf); left:45%; top:10%; animation-delay:-7s; }
+  @keyframes liquidMove{
+    0%,100%{ transform:translate(0,0) scale(1); border-radius:50%; }
+    25%{ transform:translate(100px,60px) scale(1.15); border-radius:45% 55% 60% 40%; }
+    50%{ transform:translate(-50px,130px) scale(.9); border-radius:60% 40% 45% 55%; }
+    75%{ transform:translate(80px,-40px) scale(1.1); border-radius:35% 65% 55% 45%; }
   }
-  .head{ padding:24px 28px 20px; background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); color:#fff; position:relative; }
-  .head .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
-  .head h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:4px 0 0; }
-  .gold-dot{ position:absolute; top:24px; right:28px; width:8px;height:8px;border-radius:50%; background:var(--gold-500); box-shadow:0 0 0 4px rgba(201,162,39,0.18); }
-  .stage{ padding:28px; }
+  .login-box{
+    width:400px; max-width:100%; max-height:calc(100dvh - 24px); overflow-y:auto; padding:40px 36px; position:relative; border-radius:30px;
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
+    backdrop-filter:blur(25px); -webkit-backdrop-filter:blur(25px);
+    box-shadow:0 30px 80px rgba(0,0,0,.45), inset 0 0 30px rgba(255,255,255,.04);
+  }
+  .login-box::before{
+    content:""; position:absolute; width:220px; height:220px; border-radius:50%; background:#00eaff; filter:blur(80px);
+    opacity:.15; top:-120px; right:-80px; animation:shine 6s infinite alternate; pointer-events:none;
+  }
+  @keyframes shine{ from{ transform:translate(0,0) scale(1); } to{ transform:translate(-80px,120px) scale(1.5); } }
+  .logo{
+    width:78px; height:78px; margin:auto; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden;
+    color:#fff; font-size:30px; font-weight:700; position:relative;
+    background:linear-gradient(135deg,#00eaff,#06f,#8a2be2); box-shadow:0 0 15px #00eaff, 0 0 40px #0066ff88;
+    animation:logoFloat 3s infinite ease-in-out;
+  }
+  .logo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#0b1226; }
+  @keyframes logoFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-8px); } }
+  h2{ margin-top:18px; text-align:center; color:#fff; font-size:28px; font-weight:700; letter-spacing:.04em; }
+  .subtitle{ text-align:center; color:#aab; font-size:12.5px; margin:6px 0 26px; line-height:1.5; }
 
   .step{ display:none; }
-  .step.show{ display:block; }
+  .step.show{ display:block; animation:stepIn .45s ease both; }
+  @keyframes stepIn{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
 
-  .field{ margin-bottom:16px; }
-  .field label{ font-size:12px; font-weight:600; color:var(--ink-500); display:block; margin-bottom:6px; }
-  input[type=text], input[type=password]{
-    width:100%; padding:12px 14px; border-radius:12px; font-size:14px;
-    border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700);
+  .input-box{ position:relative; margin-bottom:24px; }
+  .input-box input{
+    width:100%; height:55px; padding:0 20px; border:1px solid rgba(255,255,255,.2); border-radius:15px; outline:0;
+    color:#fff; font-size:15px; background:rgba(255,255,255,.06); transition:.4s;
   }
-  input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,0.15); }
-  input.code-input{ text-align:center; letter-spacing:0.4em; font-size:20px; font-weight:700; }
-
-  .btn{
-    width:100%; padding:13px 14px; border-radius:12px; font-size:14px; font-family:'Inter',sans-serif;
-    border:none; background:var(--teal-700); color:#fff; font-weight:700; cursor:pointer;
-    margin-top:6px; transition:background .2s ease;
+  .input-box label{ position:absolute; left:20px; top:17px; color:#aab; font-size:14px; pointer-events:none; transition:.4s; }
+  .input-box input:focus, .input-box input:not(:placeholder-shown){ border-color:var(--cyan); box-shadow:0 0 10px #00eaff55, inset 0 0 15px #00eaff11; }
+  .input-box input:focus + label, .input-box input:not(:placeholder-shown) + label{
+    top:-9px; left:15px; padding:0 8px; border-radius:5px; color:var(--cyan); background:#101525; font-size:12px;
   }
-  .btn:hover{ background:var(--teal-900); }
-  .btn:disabled{ background:var(--line); color:var(--ink-500); cursor:not-allowed; }
-  .btn.secondary{ background:transparent; color:var(--teal-700); border:1.5px solid var(--line); }
-  .btn.secondary:hover{ background:var(--mint-100); }
-  .btn:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
+  .pw-toggle{ position:absolute; right:14px; top:14px; background:none; border:none; color:#aab; font-size:12px; cursor:pointer; padding:4px 6px; }
+  .input-box input.code-input{ text-align:center; letter-spacing:.45em; font-size:22px; font-weight:700; }
 
-  .divider{ display:flex; align-items:center; gap:10px; margin:18px 0; color:var(--ink-500); font-size:12px; }
-  .divider::before, .divider::after{ content:''; flex:1; height:1px; background:var(--line); }
+  .login-btn{
+    width:100%; height:55px; border:none; border-radius:15px; position:relative; overflow:hidden; cursor:pointer;
+    color:#fff; font-size:16px; font-weight:600; letter-spacing:.06em;
+    background:linear-gradient(90deg,#00c6ff,#0072ff,#8a2be2); box-shadow:0 10px 30px #0072ff55; transition:.4s;
+  }
+  .login-btn::after, .login-btn::before{
+    content:""; position:absolute; width:120px; height:120px; border-radius:45%; background:rgba(255,255,255,.25);
+    animation:buttonLiquid 5s infinite linear; pointer-events:none;
+  }
+  .login-btn::before{ left:-30px; bottom:-80px; }
+  .login-btn::after{ right:-30px; top:-80px; animation-delay:-2s; }
+  .login-btn span{ position:relative; z-index:2; }
+  @keyframes buttonLiquid{ 0%{ transform:rotate(0) translateX(0); } 50%{ transform:rotate(180deg) translateX(30px); } 100%{ transform:rotate(360deg) translateX(0); } }
+  .login-btn:hover{ transform:translateY(-3px); box-shadow:0 15px 40px #00c6ff66, 0 0 25px #0072ff88; }
+  .login-btn:disabled{ opacity:.65; cursor:not-allowed; transform:none; }
+  .login-btn.ghost{ background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.22); box-shadow:none; margin-top:12px; }
+  .login-btn.ghost::before, .login-btn.ghost::after{ display:none; }
+  .login-btn:focus-visible, .pw-toggle:focus-visible{ outline:3px solid var(--cyan); outline-offset:2px; }
 
-  .banner{ display:none; padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:16px; }
+  .divider{ display:flex; align-items:center; gap:10px; margin:20px 0 14px; color:#99a; font-size:12px; }
+  .divider::before, .divider::after{ content:''; flex:1; height:1px; background:rgba(255,255,255,.15); }
+  .signup{ text-align:center; margin-top:22px; color:#aab; font-size:13px; }
+  .signup a{ color:var(--cyan); text-decoration:none; font-weight:600; }
+  .hint-text{ font-size:13px; color:#c6cbe0; text-align:center; margin-bottom:20px; line-height:1.6; }
+
+  .banner{ display:none; padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:18px; line-height:1.5; }
   .banner.show{ display:block; }
-  .banner.error{ background:rgba(179,49,26,0.1); color:var(--red-500); }
-  .banner.info{ background:rgba(28,143,132,0.1); color:var(--teal-700); }
+  .banner.error{ background:rgba(255,93,108,.14); color:#ffb3bb; border:1px solid rgba(255,93,108,.3); }
+  .banner.info{ background:rgba(0,234,255,.1); color:#9ff4ff; border:1px solid rgba(0,234,255,.25); }
 
-  .qr-wrap{ text-align:center; margin-bottom:16px; }
-  #qrCanvas{ margin:0 auto 12px; border-radius:12px; overflow:hidden; }
-  .manual-key{
-    font-family:monospace; font-size:13px; background:var(--mint-100); padding:8px 12px;
-    border-radius:10px; word-break:break-all; color:var(--teal-900); margin-bottom:14px;
-  }
-  .hint-text{ font-size:12px; color:var(--ink-500); text-align:center; margin-bottom:14px; line-height:1.5; }
-
-  .spinner-inline{
-    width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,.4);
-    border-top-color:#fff; animation:spin .8s linear infinite; display:inline-block;
-    vertical-align:middle; margin-right:8px;
-  }
+  .spinner-inline{ width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; animation:spin .8s linear infinite; display:inline-block; vertical-align:middle; margin-right:8px; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* === Full-screen success overlay === */
+  .success-overlay{
+    position:fixed; inset:0; z-index:100; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;
+    background:radial-gradient(circle at 50% 40%, rgba(0,255,170,.18), transparent 55%), rgba(8,11,24,.96);
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  }
+  .success-overlay.show{ display:flex; animation:overlayIn .5s ease both; }
+  @keyframes overlayIn{ from{ opacity:0; } to{ opacity:1; } }
+  .success-icon{
+    width:130px; height:130px; border-radius:50%; display:flex; align-items:center; justify-content:center; position:relative;
+    background:rgba(0,255,170,.12); border:2px solid var(--mint); box-shadow:0 0 20px #0fa, 0 0 60px #00ffaa66;
+    animation:successPop .7s cubic-bezier(.17,.67,.3,1.4), successPulse 2s 1s infinite;
+  }
+  .check{ width:38px; height:72px; margin-top:-8px; border-right:7px solid var(--mint); border-bottom:7px solid var(--mint); transform:rotate(45deg) scale(0); animation:checkDraw .5s .45s forwards; filter:drop-shadow(0 0 8px #00ffaa); }
+  @keyframes successPop{ 0%{ transform:scale(0) rotate(-180deg); opacity:0; } 70%{ transform:scale(1.15) rotate(10deg); } 100%{ transform:scale(1) rotate(0); opacity:1; } }
+  @keyframes checkDraw{ to{ transform:rotate(45deg) scale(1); } }
+  @keyframes successPulse{ 0%,100%{ box-shadow:0 0 20px #0fa, 0 0 60px #00ffaa66; } 50%{ box-shadow:0 0 40px #0fa, 0 0 100px #00ffaa88; } }
+  .s-kicker{ margin-top:34px; color:#0fa; font-size:14px; letter-spacing:.18em; text-transform:uppercase; font-weight:600; animation:successText .7s .5s both; }
+  .s-name{ margin-top:8px; color:#fff; font-size:clamp(22px,6vw,32px); font-weight:700; line-height:1.25; max-width:520px; animation:successText .7s .7s both; }
+  .s-sub{ margin-top:10px; color:#aab; font-size:14px; animation:successText .7s .9s both; }
+  @keyframes successText{ from{ opacity:0; transform:translateY(20px); } to{ opacity:1; transform:none; } }
+  .loading{ margin-top:26px; display:flex; gap:6px; }
+  .loading span{ width:7px; height:7px; border-radius:50%; background:#0fa; animation:dots 1s infinite ease-in-out; }
+  .loading span:nth-child(2){ animation-delay:.15s; }
+  .loading span:nth-child(3){ animation-delay:.3s; }
+  @keyframes dots{ 0%,100%{ transform:translateY(0); opacity:.4; } 50%{ transform:translateY(-8px); opacity:1; } }
+
+  @media (max-width:480px){ .login-box{ padding:32px 22px; } }
+  @media (prefers-reduced-motion:reduce){ .blob, .logo, .login-box::before, .login-btn::before, .login-btn::after{ animation:none; } }
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
 </head>
 <body>
 
-<div class="card">
-  <div class="head">
-    <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
-    <h1>SIAGA</h1>
-    <div class="gold-dot"></div>
+<div class="liquid-bg"><div class="blob"></div><div class="blob"></div><div class="blob"></div></div>
+
+<div class="login-box">
+  <div class="logo">S<img src="./siaga-192.png?v=1.1.0" alt="" onerror="this.remove()"></div>
+  <h2>SIAGA</h2>
+  <p class="subtitle">Staff Integration, Attendance &amp; Governance Application<br>Klinik Kesihatan Ayer Hitam</p>
+
+  <div class="banner" id="banner"></div>
+
+  <!-- Step 1: Password -->
+  <form class="step show" id="stepPassword" onsubmit="event.preventDefault(); handlePasswordLogin();" novalidate>
+    <div class="input-box">
+      <input type="text" id="icInput" placeholder=" " autocomplete="username" inputmode="numeric">
+      <label for="icInput">IC Number</label>
+    </div>
+    <div class="input-box">
+      <input type="password" id="passwordInput" placeholder=" " autocomplete="current-password">
+      <label for="passwordInput">Password</label>
+      <button type="button" class="pw-toggle" id="pwToggle" onclick="togglePw()">Show</button>
+    </div>
+    <button class="login-btn" id="loginBtn" type="submit"><span>LOG IN</span></button>
+    <div class="signup">Don't have an account? <a href="./signup.html">Create Account</a></div>
+
+    <div id="biometricArea" style="display:none;">
+      <div class="divider">OR</div>
+      <button type="button" class="login-btn ghost" id="biometricBtn" onclick="handleBiometricLogin()"><span>Log in with Face ID / Touch ID</span></button>
+    </div>
+  </form>
+
+  <!-- Step 2: Verify 2FA (only for staff who opted into 2-Step Verification in Profile > Security) -->
+  <form class="step" id="stepTotp" onsubmit="event.preventDefault(); handleVerifyCode();">
+    <div class="hint-text">Enter the 6-digit code from your authenticator app</div>
+    <div class="input-box">
+      <input type="text" class="code-input" id="totpCodeInput" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder=" ">
+    </div>
+    <button class="login-btn" id="totpBtn" type="submit"><span>VERIFY</span></button>
+  </form>
+
+  <!-- Step 3: Offer biometric enrollment -->
+  <div class="step" id="stepOfferBiometric">
+    <div class="hint-text">Enable Face ID / Touch ID for faster login next time on this device?</div>
+    <button class="login-btn" onclick="handleEnableBiometric()"><span>Enable Face ID / Touch ID</span></button>
+    <button class="login-btn ghost" onclick="goToDashboard()"><span>Skip for now</span></button>
   </div>
-  <div class="stage">
-    <div class="banner" id="banner"></div>
+</div>
 
-    <!-- Step 1: Password -->
-    <div class="step show" id="stepPassword">
-      <div class="field">
-        <label for="icInput">IC Number</label>
-        <input type="text" id="icInput" autocomplete="username">
-      </div>
-      <div class="field">
-        <label for="passwordInput">Password</label>
-        <input type="password" id="passwordInput" autocomplete="current-password">
-      </div>
-      <button class="btn" id="loginBtn" onclick="handlePasswordLogin()">Log In</button>
-      <div style="text-align:center; font-size:13px; color:var(--ink-500); margin-top:14px;">
-        Don't have an account? <a href="./signup.html" style="color:var(--teal-700); font-weight:600; text-decoration:none;">Sign up</a>
-      </div>
-
-      <div id="biometricArea" style="display:none;">
-        <div class="divider">OR</div>
-        <button class="btn secondary" id="biometricBtn" onclick="handleBiometricLogin()">Log in with Face ID / Touch ID</button>
-      </div>
-    </div>
-
-    <!-- Step 2: Verify 2FA (only for staff who opted into 2-Step Verification in Profile > Security) -->
-    <div class="step" id="stepTotp">
-      <div class="hint-text">Enter the 6-digit code from your authenticator app</div>
-      <div class="field">
-        <input type="text" class="code-input" id="totpCodeInput" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
-      </div>
-      <button class="btn" id="totpBtn" onclick="handleVerifyCode()">Verify</button>
-    </div>
-
-    <!-- Step 3: Offer biometric enrollment -->
-    <div class="step" id="stepOfferBiometric">
-      <div class="hint-text">Enable Face ID / Touch ID for faster login next time on this device?</div>
-      <button class="btn" onclick="handleEnableBiometric()">Enable Face ID / Touch ID</button>
-      <button class="btn secondary" onclick="goToDashboard()">Skip for now</button>
-    </div>
-  </div>
+<!-- Full-screen welcome after successful login -->
+<div class="success-overlay" id="successOverlay" role="status" aria-live="polite">
+  <div class="success-icon"><div class="check"></div></div>
+  <div class="s-kicker">Log Masuk Berjaya</div>
+  <div class="s-name" id="successName">Welcome</div>
+  <div class="s-sub">Selamat datang ke SIAGA</div>
+  <div class="loading"><span></span><span></span><span></span></div>
 </div>
 
 <script>
@@ -151,6 +207,13 @@ window.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 });
+
+function togglePw(){
+  const i = document.getElementById('passwordInput'), b = document.getElementById('pwToggle');
+  const show = i.type === 'password';
+  i.type = show ? 'text' : 'password';
+  b.textContent = show ? 'Hide' : 'Show';
+}
 
 function showStep(id){
   document.querySelectorAll('.step').forEach(s => s.classList.remove('show'));
@@ -182,6 +245,31 @@ function showResendOption(ic){
   b.appendChild(link);
 }
 
+/* ---------- Full-screen success + welcome name ---------- */
+async function fetchDisplayName(token, ic){
+  try{
+    const res = await Promise.race([
+      fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'getMyProfile', token }) }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500))
+    ]);
+    const d = await res.json();
+    if(d && d.ok && d.name){
+      try{ sessionStorage.setItem('kkah_name', d.name); }catch(e){}
+      return d.name;
+    }
+  }catch(e){}
+  return ic;
+}
+/** Shows the green-tick overlay with "Welcome <name>" for ~2.4s, then runs next(). */
+async function showSuccess(token, ic, next){
+  const name = await fetchDisplayName(token, ic);
+  document.getElementById('successName').textContent = 'Welcome, ' + name;
+  const ov = document.getElementById('successOverlay');
+  ov.classList.add('show');
+  setTimeout(() => { next(); }, 2400);
+}
+function hideSuccess(){ document.getElementById('successOverlay').classList.remove('show'); }
+
 /* ---------- Password step ---------- */
 async function handlePasswordLogin(){
   const ic = document.getElementById('icInput').value.trim();
@@ -189,7 +277,7 @@ async function handlePasswordLogin(){
   if(!ic || !password){ showBanner('Please enter your IC number and password.'); return; }
 
   const btn = document.getElementById('loginBtn');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Logging in…';
+  btn.disabled = true; btn.innerHTML = '<span><span class="spinner-inline"></span>Logging in…</span>';
   showBanner(null);
 
   try{
@@ -215,7 +303,7 @@ async function handlePasswordLogin(){
     }
   }catch(err){ showBanner('Network error — please try again.'); }
 
-  btn.disabled = false; btn.textContent = 'Log In';
+  btn.disabled = false; btn.innerHTML = '<span>LOG IN</span>';
 }
 
 /* ---------- Optional 2FA verification (only if enabled in Profile > Security) ---------- */
@@ -224,7 +312,7 @@ async function handleVerifyCode(){
   if(!code || code.length !== 6){ showBanner('Please enter the 6-digit code.'); return; }
 
   const btn = document.getElementById('totpBtn');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Verifying…';
+  btn.disabled = true; btn.innerHTML = '<span><span class="spinner-inline"></span>Verifying…</span>';
   showBanner(null);
 
   try{
@@ -238,7 +326,7 @@ async function handleVerifyCode(){
   }catch(err){ showBanner('Network error — please try again.'); }
 
   btn.disabled = false;
-  btn.textContent = 'Verify';
+  btn.innerHTML = '<span>VERIFY</span>';
 }
 
 /** Shared tail end for every successful login path (password-only, 2FA, or biometric). */
@@ -248,15 +336,16 @@ async function finishLogin(data){
   sessionStorage.setItem('kkah_ic', data.ic);
   sessionStorage.setItem('kkah_just_logged_in', '1'); // tells dashboard.html to auto-open the account sidebar once
   if(data.mustChangePassword){
-    window.location.href = './dashboard.html?forcePasswordChange=1';
-    return;
+    return showSuccess(data.token, data.ic, () => { window.location.href = './dashboard.html?forcePasswordChange=1'; });
   }
   if(data.mustCompleteOrientation){
-    window.location.href = './orientation.html';
-    return;
+    return showSuccess(data.token, data.ic, () => { window.location.href = './orientation.html'; });
   }
-  if(await canOfferBiometric()){ showStep('stepOfferBiometric'); }
-  else{ goToDashboard(); }
+  const offer = await canOfferBiometric();
+  await showSuccess(data.token, data.ic, () => {
+    if(offer){ hideSuccess(); showStep('stepOfferBiometric'); }
+    else{ goToDashboard(); }
+  });
 }
 
 function goToDashboard(){ window.location.href = './dashboard.html'; }
@@ -320,7 +409,7 @@ async function handleBiometricLogin(){
   if(!deviceToken || !credentialId){ showBanner('Face ID / Touch ID is not set up on this device yet.'); return; }
 
   const btn = document.getElementById('biometricBtn');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Verifying…';
+  btn.disabled = true; btn.innerHTML = '<span><span class="spinner-inline"></span>Verifying…</span>';
 
   try{
     const challenge = new Uint8Array(32);
@@ -349,13 +438,13 @@ async function handleBiometricLogin(){
       sessionStorage.setItem('kkah_role', data.role);
       sessionStorage.setItem('kkah_ic', data.ic);
       sessionStorage.setItem('kkah_just_logged_in', '1'); // tells dashboard.html to auto-open the account sidebar once
-      goToDashboard();
+      showSuccess(data.token, data.ic, goToDashboard);
     }
   }catch(err){
     showBanner('Face ID / Touch ID was not confirmed. Please use your password.');
   }
 
-  btn.disabled = false; btn.textContent = 'Log in with Face ID / Touch ID';
+  btn.disabled = false; btn.innerHTML = '<span>Log in with Face ID / Touch ID</span>';
 }
 
 function arrayBufferToBase64(buf){
