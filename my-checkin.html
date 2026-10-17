@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KKAH · My Check-In</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.1.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SIAGA">
+
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -93,6 +98,9 @@
   .geofence-box .distance{ font-size:12px; opacity:.75; margin-bottom:18px; }
   .geofence-retry{ padding:10px 22px; border-radius:100px; border:none; background:#fff; color:#4A1010; font-weight:700; cursor:pointer; }
 </style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+<script src="./permission-gate.js"></script>
 </head>
 <body>
 
@@ -161,8 +169,8 @@ const COOLDOWN_MS = 15000;
 
 /* ---------------- Geofence config — Klinik Kesihatan Ayer Hitam ---------------- */
 // Kampung Lubok Ayer, 06150 Ayer Hitam, Kedah — adjust radii after on-site GPS testing.
-const CLINIC_LAT = 6.240404;
-const CLINIC_LNG = 100.246714;
+const CLINIC_LAT = 6.237;
+const CLINIC_LNG = 100.24664;
 const BUILDING_RADIUS_M = 60;   // inside this = OK, no warning
 const AREA_RADIUS_M = 150;      // between building and area radius = "outside building" warning
                                  // beyond this = "outside grounds" warning, both block check-in
