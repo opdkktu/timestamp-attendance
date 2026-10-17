@@ -35,6 +35,26 @@
   .skel{ height:66px; border-radius:16px; margin-bottom:9px; background:linear-gradient(90deg,#e6efec,#f5faf8,#e6efec); background-size:200% 100%; animation:sh 1.2s infinite; }
   @keyframes sh{ to{ background-position:-200% 0; } }
   .note{ font-size:12px; color:var(--ink-500); background:#fff; border:1px dashed var(--line); border-radius:12px; padding:10px 12px; margin-bottom:12px; }
+  .annbtn{ width:100%; height:50px; border:none; border-radius:14px; margin-bottom:12px; background:linear-gradient(90deg,var(--teal-700),var(--teal-500)); color:#fff; font-weight:800; font-size:15px; cursor:pointer; box-shadow:0 6px 16px rgba(15,92,86,.25); }
+  .sheetbg{ position:fixed; inset:0; background:rgba(8,20,18,.55); display:none; align-items:flex-end; justify-content:center; z-index:30; }
+  .sheetbg.show{ display:flex; }
+  .sheet{ background:#fff; width:100%; max-width:560px; border-radius:22px 22px 0 0; padding:18px 18px 24px; max-height:92vh; overflow:auto; animation:up .25s ease; }
+  @keyframes up{ from{ transform:translateY(40px); opacity:0; } }
+  .sheet h3{ margin:0 0 12px; font-family:'Manrope',sans-serif; color:var(--teal-900); }
+  .sheet label{ display:block; font-size:12px; font-weight:700; color:var(--ink-500); margin:12px 0 5px; }
+  .sheet input,.sheet textarea,.sheet select{ width:100%; border:1.5px solid var(--line); border-radius:12px; padding:12px; font:inherit; font-size:15px; background:#fff; }
+  .sheet input:focus,.sheet textarea:focus,.sheet select:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,.15); }
+  .tpl{ display:flex; gap:8px; overflow-x:auto; padding:2px 0 4px; scrollbar-width:none; }
+  .tpl button{ flex:none; border:1.5px solid var(--line); background:var(--bg); border-radius:99px; padding:6px 12px; font-size:12px; font-weight:700; color:var(--teal-900); cursor:pointer; }
+  .cnt{ text-align:right; font-size:11px; color:var(--ink-500); margin-top:3px; }
+  .srow{ display:flex; gap:10px; margin-top:16px; }
+  .srow button{ flex:1; height:48px; border-radius:14px; border:none; font-weight:800; font-size:15px; cursor:pointer; }
+  .srow .cancel{ background:var(--bg); color:var(--ink-700); }
+  .srow .send{ background:var(--teal-700); color:#fff; } .srow .send:disabled{ opacity:.6; }
+  .lim{ font-size:12px; color:var(--ink-500); margin-top:10px; }
+  .recent{ margin-top:14px; font-size:12px; color:var(--ink-500); border-top:1px solid var(--line); padding-top:10px; }
+  .toast{ position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(90px); background:#111; color:#fff; padding:12px 18px; border-radius:12px; font-size:13px; transition:.3s; z-index:60; max-width:90%; text-align:center; }
+  .toast.show{ transform:translateX(-50%) translateY(0); }
   .loading{ position:fixed; inset:0; background:rgba(8,20,18,.6); display:none; align-items:center; justify-content:center; color:#fff; font-weight:700; z-index:20; }
   .loading.show{ display:flex; }
 </style>
@@ -45,12 +65,31 @@
   <input class="search" id="q" type="search" placeholder="Cari nama staf…" autocomplete="off">
 </header>
 <main>
+  <button class="annbtn" id="annOpen">📣 Hantar pengumuman kepada staf</button>
   <div class="note">Paparan baca sahaja. Setiap pemantauan direkodkan dalam Log Aktiviti anda dan staf berkenaan.</div>
   <div class="chips" id="chips"></div>
   <div class="count" id="count"></div>
   <div id="list"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
 </main>
 <div class="loading" id="busy">Membuka paparan staf…</div>
+<div class="toast" id="toast"></div>
+<div class="sheetbg" id="annBg"><div class="sheet" role="dialog" aria-modal="true" aria-label="Hantar pengumuman">
+  <h3>📣 Pengumuman</h3>
+  <label>Kepada</label><select id="annAud"></select>
+  <label>Templat pantas</label>
+  <div class="tpl" id="annTpl">
+    <button data-t="Mesyuarat" data-m="Mesyuarat pada [hari], [masa] di [tempat]. Kehadiran diwajibkan.">Mesyuarat</button>
+    <button data-t="Peringatan" data-m="Sila ambil perhatian: ">Peringatan</button>
+    <button data-t="Perubahan jadual" data-m="Terdapat perubahan jadual bertugas. Sila semak jadual terkini dalam SIAGA.">Jadual</button>
+    <button data-t="Makluman" data-m="">Makluman</button>
+  </div>
+  <label>Tajuk</label><input id="annTitle" maxlength="60" placeholder="cth: Mesyuarat Khamis ini">
+  <label>Mesej</label><textarea id="annMsg" rows="4" maxlength="300" placeholder="Tulis mesej ringkas…"></textarea>
+  <div class="cnt"><span id="annN">0</span>/300</div>
+  <div class="lim" id="annLim"></div>
+  <div class="srow"><button class="cancel" id="annCancel">Batal</button><button class="send" id="annSend">Hantar</button></div>
+  <div class="recent" id="annRecent"></div>
+</div></div>
 
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
@@ -91,6 +130,41 @@ document.getElementById('list').addEventListener('click', async e => {
   location.href = './dashboard.html';
 });
 document.getElementById('q').addEventListener('input', render);
+
+/* ---- announcements ---- */
+function toast(m){ const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+let annOpts = null;
+const $ = id => document.getElementById(id);
+document.getElementById('annOpen').onclick = async () => {
+  $('annBg').classList.add('show');
+  if(!annOpts){
+    let d; try{ d = await api('getAnnounceOptions'); }catch(e){ d = { ok:false, error:'Ralat sambungan.' }; }
+    if(!d.ok){ toast(d.error || 'Gagal'); $('annBg').classList.remove('show'); return; }
+    annOpts = d;
+  }
+  $('annAud').innerHTML = annOpts.audiences.map(a => '<option value="' + esc(a.key) + '">' + esc(a.label) + ' (' + a.count + ' staf)</option>').join('');
+  $('annLim').textContent = 'Dihantar hari ini: ' + annOpts.sentToday + '/' + annOpts.limit;
+  $('annRecent').innerHTML = annOpts.recent.length ? '<b>Terkini dihantar</b>' + annOpts.recent.map(r => '<div style="margin-top:4px">' + esc(r.at.slice(5, 16)) + ' · ' + esc(r.audience) + ' · ' + esc(r.title) + '</div>').join('') : '';
+};
+$('annCancel').onclick = () => $('annBg').classList.remove('show');
+$('annBg').onclick = e => { if(e.target === $('annBg')) $('annBg').classList.remove('show'); };
+$('annMsg').oninput = () => { $('annN').textContent = $('annMsg').value.length; };
+$('annTpl').onclick = e => {
+  const b = e.target.closest('button'); if(!b) return;
+  $('annTitle').value = b.dataset.t; $('annMsg').value = b.dataset.m; $('annN').textContent = b.dataset.m.length; $('annMsg').focus();
+};
+$('annSend').onclick = async function(){
+  const title = $('annTitle').value.trim(), message = $('annMsg').value.trim();
+  if(!title || !message){ toast('Sila isi tajuk dan mesej'); return; }
+  const opt = $('annAud').selectedOptions[0].textContent;
+  if(!confirm('Hantar kepada ' + opt + '?\n\n' + title + '\n' + message)) return;
+  this.disabled = true; this.textContent = 'Menghantar…';
+  let d; try{ d = await api('sendAnnouncement', { audience: $('annAud').value, title, message }); }catch(e){ d = { ok:false, error:'Ralat sambungan.' }; }
+  this.disabled = false; this.textContent = 'Hantar';
+  if(!d.ok){ toast(d.error || 'Gagal menghantar'); return; }
+  $('annBg').classList.remove('show'); $('annTitle').value = ''; $('annMsg').value = ''; $('annN').textContent = '0'; annOpts = null;
+  toast('✓ Dihantar kepada ' + d.count + ' staf (' + d.audience + ')');
+};
 
 (async function init(){
   let d; try{ d = await api('listSupervisedStaff'); }catch(e){ d = { ok:false, error:'Ralat sambungan.' }; }
