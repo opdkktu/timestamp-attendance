@@ -186,6 +186,46 @@
   }
 
   /* === MULTI-BOX STATUS DASHBOARD (boxes 2-7; box 1 is .schedule-card above) === */
+  /* === Kaunter C quick-call box === */
+  .kc-box{
+    position:relative; margin-top:12px; height:92px; border-radius:20px; cursor:pointer; overflow:hidden; color:#fff;
+    background:linear-gradient(135deg,#0B3D3A,#0F5C56 55%,#1C8F84);
+    box-shadow:0 14px 32px -16px rgba(11,61,58,.7); transition:height .45s cubic-bezier(.2,.8,.2,1), box-shadow .3s;
+    -webkit-tap-highlight-color:transparent; user-select:none;
+  }
+  .kc-box::after{ content:''; position:absolute; width:180px; height:180px; border-radius:50%; right:-60px; top:-90px; background:rgba(255,255,255,.08); pointer-events:none; }
+  .kc-box.open{ height:200px; cursor:default; }
+  .kc-box.ok{ background:linear-gradient(135deg,#0c5a37,#1f9a57); }
+  .kc-box.fail{ background:linear-gradient(135deg,#6b1d12,#b3311a); }
+  .kc-label{
+    position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); text-align:center;
+    font-family:'Manrope',sans-serif; font-weight:800; font-size:26px; letter-spacing:.02em;
+    transition:top .45s cubic-bezier(.2,.8,.2,1), transform .45s cubic-bezier(.2,.8,.2,1), font-size .45s, opacity .3s, letter-spacing .45s;
+  }
+  .kc-box.open .kc-label{ top:14px; transform:translateY(0); font-size:12px; letter-spacing:.14em; text-transform:uppercase; opacity:.8; }
+  .kc-hint{ position:absolute; left:0; right:0; bottom:12px; text-align:center; font-size:11px; opacity:.7; transition:opacity .3s; }
+  .kc-box.open .kc-hint{ opacity:0; }
+  .kc-close{
+    position:absolute; top:10px; right:12px; width:30px; height:30px; border-radius:50%; border:none; cursor:pointer; z-index:3;
+    background:rgba(255,255,255,.16); color:#fff; font-size:13px; display:none;
+  }
+  .kc-box.open .kc-close{ display:block; }
+  .kc-body{ position:absolute; left:20px; right:20px; top:48px; opacity:0; pointer-events:none; transform:translateY(10px); transition:opacity .35s .15s, transform .35s .15s; }
+  .kc-box.open .kc-body{ opacity:1; pointer-events:auto; transform:none; }
+  .kc-input{
+    width:100%; height:64px; border-radius:16px; border:2px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff;
+    text-align:center; font-family:'Manrope',sans-serif; font-weight:800; font-size:34px; letter-spacing:.5em; padding-left:.5em; outline:none;
+  }
+  .kc-input::placeholder{ color:rgba(255,255,255,.35); }
+  .kc-input:focus{ border-color:#fff; box-shadow:0 0 0 4px rgba(255,255,255,.15); }
+  .kc-box.busy .kc-input, .kc-box.ok .kc-input, .kc-box.fail .kc-input{ visibility:hidden; }
+  .kc-state{ position:absolute; left:0; right:0; top:0; height:64px; display:none; align-items:center; justify-content:center; }
+  .kc-box.busy .kc-state, .kc-box.ok .kc-state, .kc-box.fail .kc-state{ display:flex; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .kc-spin{ width:34px; height:34px; border-radius:50%; border:4px solid rgba(255,255,255,.3); border-top-color:#fff; animation:spin .8s linear infinite; }
+  .kc-icon{ width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:800; animation:kcPop .5s cubic-bezier(.17,.67,.3,1.4); }
+  @keyframes kcPop{ from{ transform:scale(0) rotate(-120deg); opacity:0; } to{ transform:none; opacity:1; } }
+  .kc-msg{ margin-top:12px; text-align:center; font-size:13px; font-weight:600; min-height:18px; line-height:1.35; padding:0 6px; }
   .status-boxes-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
   .status-box{
     border-radius:18px; padding:16px; color:#fff; min-height:86px;
@@ -417,6 +457,19 @@
     </div>
   </div>
 
+  <div class="kc-box" id="kcBox" onclick="kcOpen()" role="button" aria-label="Kaunter C — panggil nombor giliran">
+    <button class="kc-close" onclick="event.stopPropagation(); kcClose()" aria-label="Tutup">✕</button>
+    <div class="kc-label">Kaunter C</div>
+    <div class="kc-hint">Ketik untuk panggil nombor giliran</div>
+    <div class="kc-body">
+      <div style="position:relative;">
+        <input class="kc-input" id="kcInput" type="text" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off" aria-label="Nombor giliran 4 digit">
+        <div class="kc-state" id="kcState"></div>
+      </div>
+      <div class="kc-msg" id="kcMsg" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
   <div class="status-boxes-grid">
     <div class="status-box loading" id="box_bls"><div class="sb-label">BLS Validity</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_temperature"><div class="sb-label">Temperature</div><div class="sb-main">&nbsp;</div></div>
@@ -497,7 +550,7 @@
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
-const ONESIGNAL_APP_ID = '6aa5fe5d-9596-45ef-a783-da4a81cf9cf6'; // public App ID — safe to expose client-side, unlike the REST API key
+const ONESIGNAL_APP_ID = 'PASTE_YOUR_ONESIGNAL_APP_ID_HERE'; // public App ID — safe to expose client-side, unlike the REST API key
 const MODULES = [
   { id: 'profile', name: 'Update Profile', icon: '👤', status: 'active', href: './profile.html' },
   { id: 'attendance', name: 'Timestamp Attendance', icon: '🕒', status: 'active', href: './my-checkin.html' },
@@ -761,6 +814,73 @@ async function loadLeaveStatBoxes(){
       ' jam</div><div class="sb-sub">Tahun ' + new Date().getFullYear() + '</div>';
   }, { year: new Date().getFullYear() });
 }
+
+/* === KAUNTER C — type 4 digits, it calls automatically (no confirm button) === */
+let kcBusy = false, kcTimer = null, kcIdle = null;
+
+function kcOpen(){
+  const box = document.getElementById('kcBox');
+  if(box.classList.contains('open')) return;
+  box.classList.add('open');
+  setTimeout(() => document.getElementById('kcInput').focus(), 350);
+  kcArmIdle();
+}
+function kcClose(){
+  clearTimeout(kcTimer); clearTimeout(kcIdle);
+  kcBusy = false;
+  const box = document.getElementById('kcBox');
+  box.classList.remove('open', 'busy', 'ok', 'fail');
+  document.getElementById('kcInput').value = '';
+  document.getElementById('kcMsg').textContent = '';
+  document.getElementById('kcInput').blur();
+}
+function kcArmIdle(){ clearTimeout(kcIdle); kcIdle = setTimeout(() => { if(!kcBusy) kcClose(); }, 90 * 1000); } // collapse if left alone
+function kcReset(){
+  const box = document.getElementById('kcBox'), input = document.getElementById('kcInput');
+  box.classList.remove('busy', 'ok', 'fail');
+  input.value = ''; document.getElementById('kcMsg').textContent = '';
+  kcBusy = false; input.focus(); kcArmIdle();
+}
+function kcShow(cls, iconHtml, msg){
+  const box = document.getElementById('kcBox');
+  box.classList.remove('busy', 'ok', 'fail'); box.classList.add(cls);
+  document.getElementById('kcState').innerHTML = iconHtml;
+  document.getElementById('kcMsg').textContent = msg;
+}
+
+async function kcCall(num){
+  if(kcBusy) return;
+  kcBusy = true; clearTimeout(kcIdle);
+  kcShow('busy', '<div class="kc-spin"></div>', 'Mencari ' + num + '…');
+  let data;
+  try{
+    const res = await fetch(API_URL_DASHBOARD, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'callKaunterC', token: sessionStorage.getItem('kkah_session_token'), num: num })
+    });
+    data = await res.json();
+  }catch(err){ data = { ok:false, error:'Ralat sambungan. Cuba lagi.' }; }
+
+  if(data && data.ok){
+    if(navigator.vibrate) navigator.vibrate(60);
+    kcShow('ok', '<div class="kc-icon">✓</div>', num + ' · ' + (data.name || '') + ' — dipanggil');
+    kcTimer = setTimeout(kcReset, 2200); // ready for the next number
+  }else{
+    if(navigator.vibrate) navigator.vibrate([80, 60, 80]);
+    const msg = data && data.notFound ? 'Nama tidak dijumpai — nombor ' + num + ' tidak dapat dipanggil' : ((data && data.error) || 'Panggilan gagal');
+    kcShow('fail', '<div class="kc-icon">✕</div>', msg);
+    kcTimer = setTimeout(kcReset, 2600);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('kcInput');
+  input.addEventListener('input', () => {
+    input.value = input.value.replace(/\D/g, '').slice(0, 4);
+    kcArmIdle();
+    if(input.value.length === 4) kcCall(input.value);
+  });
+});
 
 const CHECKLIST_SOURCES = {
   box_temperature: { name: '🧰 Temperature',       url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTMEGoKlPIt4jm2thHLjEYaSM4iGDlyViBlFoO40_FGqEHNDBHwNIOgIO4rJhAMZEEiawv1oq6n60HT/pub?gid=0&single=true&output=csv' },
