@@ -262,6 +262,16 @@
   .sr-actions{ margin-top:20px; display:flex; gap:10px; width:100%; max-width:340px; }
   .sr-actions button{ flex:1; height:48px; border-radius:14px; border:none; font-weight:700; font-size:14px; cursor:pointer; background:rgba(255,255,255,.14); color:#fff; }
   .sr-actions button.primary{ background:linear-gradient(90deg,#00c6ff,#0072ff); }
+  .sr-post{ margin-top:16px; width:100%; max-width:340px; text-align:center; }
+  .sr-post .q{ font-size:13px; color:#b9bfd6; margin-bottom:6px; }
+  .sr-stars{ display:flex; justify-content:center; gap:6px; }
+  .sr-stars button{ background:none; border:none; font-size:34px; line-height:1; color:rgba(255,255,255,.28); cursor:pointer; padding:2px; transition:transform .15s, color .15s; }
+  .sr-stars button.on{ color:#ffd166; transform:scale(1.08); }
+  .sr-post .thanks{ color:#0fa; font-weight:700; font-size:14px; padding:8px 0; }
+  .sr-slip{ margin-top:10px; width:100%; height:42px; border-radius:12px; border:1px solid rgba(255,255,255,.25); background:transparent; color:#fff; font-weight:600; font-size:13px; cursor:pointer; }
+  .sr-slip:disabled{ opacity:.6; }
+  .cme-row-btns{ display:flex; gap:8px; margin-top:8px; }
+  .cme-row-btns button{ flex:1; height:34px; border-radius:10px; border:1px solid var(--line); background:#fff; color:var(--teal-900); font-weight:700; font-size:12px; cursor:pointer; }
 
   /* === Notification diagnosis + prompt sheet === */
   .notif-sheet{
@@ -668,12 +678,50 @@ const MODULES = [
 ];
 const ADMIN_MODULES = [
   { id: 'addstaff', name: 'Add Staff', icon: '➕', status: 'active', href: './staff-config.html' },
+  { id: 'cmeadmin', name: 'CME Admin', icon: '🎓', status: 'active', href: './cme-admin.html' },
   { id: 'myreport', name: 'My Attendance Report', icon: '📊', status: 'active', href: './report.html' }
 ];
+
+/* === CME QR deep link: dashboard.html?cme=<SESSION_ID> ===
+   The QR printed by ILMU opens SIAGA with the session ID. If not logged in yet we remember it
+   (10 min) through the login redirect, then check in automatically — no IC typing needed. */
+function cmeRememberPending(id){
+  try{ localStorage.setItem('kkah_pending_cme', JSON.stringify({ id: id, t: Date.now() })); }catch(e){}
+}
+function cmeTakePending(){
+  try{
+    const raw = localStorage.getItem('kkah_pending_cme');
+    localStorage.removeItem('kkah_pending_cme');
+    if(!raw) return null;
+    const o = JSON.parse(raw);
+    return (o && o.id && Date.now() - o.t < 10 * 60 * 1000) ? o.id : null;
+  }catch(e){ return null; }
+}
+(function captureCmeParam(){
+  const id = new URLSearchParams(window.location.search).get('cme');
+  if(id && /^[A-Za-z0-9_-]{3,60}$/.test(id)){
+    cmeRememberPending(id);
+    try{ history.replaceState(null, '', window.location.pathname); }catch(e){} // tidy URL, avoid re-scan on refresh
+  }
+})();
+
+function cmeRunPendingCheckIn(){
+  const id = cmeTakePending();
+  if(!id) return;
+  const go = () => {
+    const modal = document.getElementById('scanModal');
+    modal.classList.add('show');
+    document.getElementById('scanTitle').textContent = 'Kehadiran CME';
+    cmeOnCode(id);
+  };
+  if(window.SiagaGate && !SiagaGate.isOk()){ cmeRememberPending(id); SiagaGate.onOk(() => { cmeTakePending(); go(); }); }
+  else go();
+}
 
 window.addEventListener('DOMContentLoaded', () => {
   const token = sessionStorage.getItem('kkah_session_token');
   if(!token){ window.location.href = './login.html'; return; }
+  setTimeout(cmeRunPendingCheckIn, 600);
 
   const role = sessionStorage.getItem('kkah_role') || 'staff';
   const ic = sessionStorage.getItem('kkah_ic') || '—';
@@ -1017,8 +1065,10 @@ async function cmeOnCode(text){
       '<br><span>Masa:</span> ' + cmeEsc(new Date(data.checkedInAt).toLocaleTimeString('ms-MY', { hour:'2-digit', minute:'2-digit', second:'2-digit' })), false);
     try{ localStorage.removeItem(cacheKey('getMyCmeSummary')); }catch(e){}
     loadCmeBox();
+    cmeAddPostPanel(s.id, true);
   }else if(data && data.ok && data.already){
     cmeShowResult('info', 'i', 'Sudah direkodkan', details, false);
+    cmeAddPostPanel(s.id, false);
   }else{
     const code = data && data.code;
     const title = code === 'expired' ? 'QR telah tamat tempoh' : code === 'notstarted' ? 'Sesi belum bermula'
@@ -1044,6 +1094,70 @@ async function loadCmeBox(){
       '</div><div class="sb-sub">' + cur.cpd + ' mata CPD · ' + y + ' · ketik</div>';
   });
 }
+
+/* === After check-in: star rating, e-mail slip; in history: certificate === */
+function cmeAddPostPanel(sessionId, askRating){
+  const actions = document.querySelector('#scanResult .sr-actions');
+  if(!actions || !sessionId) return;
+  const box = document.createElement('div'); box.className = 'sr-post'; box.id = 'srPost';
+  box.innerHTML =
+    (askRating ? '<div class="q">Bagaimana sesi ini? Beri penilaian anda</div><div class="sr-stars" id="srStars">' +
+      [1,2,3,4,5].map(n => '<button data-n="' + n + '" aria-label="' + n + ' bintang">★</button>').join('') + '</div>' : '') +
+    '<button class="sr-slip" id="srSlip">✉ Hantar slip ke e-mel saya</button>';
+  actions.parentNode.insertBefore(box, actions);
+  const stars = box.querySelectorAll('#srStars button');
+  stars.forEach(b => {
+    b.onclick = async () => {
+      const n = +b.dataset.n;
+      stars.forEach(x => x.classList.toggle('on', +x.dataset.n <= n));
+      if(navigator.vibrate) navigator.vibrate(20);
+      const wrap = document.getElementById('srStars');
+      let ok = false;
+      try{ ok = (await cmeApi('cmeSubmitFeedback', { sessionId: sessionId, rating: n })).ok; }catch(e){}
+      wrap.parentNode.innerHTML = ok ? '<div class="thanks">Terima kasih atas maklum balas anda! ★' + n + '</div>' : '<div class="q">Gagal menghantar penilaian. Cuba lagi nanti.</div>';
+    };
+  });
+  document.getElementById('srSlip').onclick = async function(){
+    this.disabled = true; this.textContent = 'Menghantar…';
+    let r; try{ r = await cmeApi('cmeSendSlip', { sessionId: sessionId }); }catch(e){ r = { ok:false, error:'Ralat sambungan.' }; }
+    this.textContent = r.ok ? '✓ Slip dihantar ke ' + r.email : '✕ ' + (r.error || 'Gagal'); this.disabled = !!r.ok;
+    if(!r.ok) setTimeout(() => { this.disabled = false; }, 1500);
+  };
+}
+
+async function cmeApi(action, extra){
+  const res = await fetch(API_URL_DASHBOARD, {
+    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ action: action, token: sessionStorage.getItem('kkah_session_token') }, extra || {}))
+  });
+  return res.json();
+}
+
+async function cmePrintCert(sessionId, btn){
+  const label = btn.textContent; btn.disabled = true; btn.textContent = 'Menyediakan…';
+  const w = window.open('', '_blank'); // open synchronously so the popup is not blocked
+  let c; try{ c = await cmeApi('cmeCertificate', { sessionId: sessionId }); }catch(e){ c = { ok:false, error:'Ralat sambungan.' }; }
+  btn.disabled = false; btn.textContent = label;
+  if(!c.ok){ if(w) w.close(); alert(c.error || 'Gagal menjana sijil.'); return; }
+  if(!w){ alert('Sila benarkan popup untuk mencetak sijil.'); return; }
+  const e = cmeEsc;
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Sijil CME</title><style>' +
+    '@page{size:A4 landscape;margin:0}body{margin:0;font-family:Georgia,serif;color:#1e293b}' +
+    '.c{box-sizing:border-box;width:297mm;height:210mm;padding:14mm;display:flex}' +
+    '.b{flex:1;border:3px double #0f766e;padding:12mm;text-align:center;display:flex;flex-direction:column;justify-content:center}' +
+    'h1{font-size:40px;letter-spacing:6px;color:#0f766e;margin:0 0 6px}.s{font-size:15px;color:#64748b;margin:8px 0}' +
+    '.n{font-size:36px;font-weight:700;margin:14px 0;border-bottom:1px solid #cbd5e1;display:inline-block;padding:0 24px 6px;align-self:center}' +
+    '.t{font-size:24px;font-weight:700;color:#0f766e;margin:10px 0}.f{margin-top:26px;font-size:12px;color:#64748b}' +
+    '@media screen{body{background:#e2e8f0;padding:16px}.c{background:#fff;margin:auto}}</style></head><body>' +
+    '<div class="c"><div class="b"><h1>SIJIL KEHADIRAN</h1><div class="s">Klinik Kesihatan Ayer Hitam · Continuing Medical Education</div>' +
+    '<div class="s">Dengan ini disahkan bahawa</div><div class="n">' + e(c.name) + '</div>' +
+    '<div class="s">telah menghadiri sesi</div><div class="t">' + e(c.topic) + '</div>' +
+    '<div class="s">' + e(c.date) + ' · ' + e(c.location) + '<br>Penyampai: ' + e(c.presenter) + ' · ' + e(c.cpd) + ' mata CPD</div>' +
+    '<div class="f">No. Sijil: ' + e(c.certNo) + ' · Dikeluarkan: ' + e(c.issuedOn) + '</div></div></div>' +
+    '<script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script></body></html>');
+  w.document.close();
+}
+
 function openCmeList(){
   const cy = new Date().getFullYear();
   const years = Object.keys(cmeSummary.byYear || {}).map(Number);
@@ -1075,8 +1189,16 @@ function selectCmeYear(y){
         '<div style="font-weight:700; font-size:13px; color:var(--teal-900);">' + cmeEsc(k.topic) + '</div>' +
         '<div style="font-size:11.5px; color:var(--ink-500); margin-top:2px;">' + cmeEsc(k.date) + (k.time ? ' · ' + cmeEsc(k.time) : '') +
         (k.presenter ? ' · ' + cmeEsc(k.presenter) : '') + ' · ' + cmeEsc(k.cpd) + ' CPD</div>' +
+        '<div class="cme-row-btns"><button onclick="cmePrintCert(\'' + cmeEsc(k.sessionId) + '\', this)">🎓 Sijil</button>' +
+        '<button onclick="cmeSlipFromList(\'' + cmeEsc(k.sessionId) + '\', this)">✉ Slip e-mel</button></div>' +
       '</div>'
     ).join('');
+}
+async function cmeSlipFromList(id, btn){
+  btn.disabled = true; const l = btn.textContent; btn.textContent = 'Menghantar…';
+  let r; try{ r = await cmeApi('cmeSendSlip', { sessionId: id }); }catch(e){ r = { ok:false, error:'Ralat sambungan.' }; }
+  btn.textContent = r.ok ? '✓ Dihantar' : '✕ ' + (r.error || 'Gagal').slice(0, 24);
+  setTimeout(() => { btn.textContent = l; btn.disabled = false; }, 2500);
 }
 function closeCmeList(){ document.getElementById('cmeListOverlay').classList.remove('show'); }
 
@@ -1245,22 +1367,21 @@ function checkSpecialDayPopup(){
   const todayStr = new Date().toISOString().slice(0, 10);
   if(localStorage.getItem('kkah_special_day_shown') === todayStr) return; // already shown today on this device
 
+  // Look ahead 0, 1 and 2 days; the nearest one wins ("Hari ini" / "Esok" / "2 hari lagi")
   const today = new Date();
-  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-  const days = getSpecialDaysForYear(today.getFullYear()).concat(getSpecialDaysForYear(tomorrow.getFullYear())); // handles Dec 31 -> Jan 1
-
-  const todayMatch = days.find(function(d){ return isSameMonthDay(d.date, today); });
-  const tomorrowMatch = !todayMatch && days.find(function(d){ return isSameMonthDay(d.date, tomorrow); });
-
-  if(todayMatch) showFestivalPopup(todayMatch, 'today');
-  else if(tomorrowMatch) showFestivalPopup(tomorrowMatch, 'tomorrow');
+  for(let ahead = 0; ahead <= 2; ahead++){
+    const target = new Date(today.getTime() + ahead * 24 * 60 * 60 * 1000);
+    const days = getSpecialDaysForYear(target.getFullYear());
+    const match = days.find(function(d){ return isSameMonthDay(d.date, target); });
+    if(match){ showFestivalPopup(match, ahead); break; }
+  }
 
   localStorage.setItem('kkah_special_day_shown', todayStr);
 }
 
-function showFestivalPopup(day, when){
+function showFestivalPopup(day, ahead){
   document.getElementById('festivalEmoji').textContent = day.emoji || '🎉';
-  document.getElementById('festivalTitle').textContent = (when === 'today' ? 'Hari ini: ' : 'Esok: ') + day.name;
+  document.getElementById('festivalTitle').textContent = (ahead === 0 ? 'Hari ini: ' : ahead === 1 ? 'Esok: ' : ahead + ' hari lagi: ') + day.name;
   document.getElementById('festivalOverlay').classList.add('show');
 }
 function closeFestivalPopup(){
@@ -1278,11 +1399,9 @@ async function loadBirthdayAlerts(){
     const data = await res.json();
     if(!data.ok) return;
 
+    // Only YOUR own birthday card remains on the dashboard. The "tomorrow is your birthday" banner and the
+    // colleague "send a wish?" boxes were removed (the 8am birthday push still reaches everyone).
     if(data.selfToday) showBirthdayCard();
-    else if(data.selfTomorrow) document.getElementById('birthdayEveBanner').classList.add('show');
-
-    const pending = (data.colleagues || []).filter(function(c){ return !c.alreadySent; });
-    renderColleagueBirthdayToasts(pending);
   }catch(err){
     console.warn('Could not load birthday alerts:', err);
   }
@@ -1555,7 +1674,7 @@ async function gatherNotifDiagnostics(){
   add('OneSignal dimulakan', !!window._osReady, window._osReady ? '' : (window._osError || 'Masih memuatkan…'));
   const sub = window._os && window._os.User && window._os.User.PushSubscription;
   const subbed = !!(sub && sub.optedIn && sub.id);
-  add('Peranti berdaftar untuk push', subbed, subbed ? 'ID: ' + String(sub.id).slice(0, 5) + '…' : 'Belum berdaftar');
+  add('Peranti berdaftar untuk push', subbed, subbed ? 'ID: ' + String(sub.id).slice(0, 8) + '…' : 'Belum berdaftar');
   return { rows, perm };
 }
 
