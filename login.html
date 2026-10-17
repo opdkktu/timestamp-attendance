@@ -283,7 +283,7 @@ async function handlePasswordLogin(){
   try{
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'login', ic, password })
+      body: JSON.stringify({ action: 'login', ic, password, device: navigator.userAgent })
     });
     const data = await res.json();
     if(!data.ok){
@@ -318,7 +318,7 @@ async function handleVerifyCode(){
   try{
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'verifyTotp', pendingToken, code })
+      body: JSON.stringify({ action: 'verifyTotp', pendingToken, code, device: navigator.userAgent })
     });
     const data = await res.json();
     if(!data.ok){ showBanner(data.error || 'Verification failed.'); }
@@ -426,7 +426,7 @@ async function handleBiometricLogin(){
     // Browser confirmed the local biometric prompt — now exchange the device token for a session.
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'biometricLogin', deviceToken })
+      body: JSON.stringify({ action: 'biometricLogin', deviceToken, device: navigator.userAgent })
     });
     const data = await res.json();
     if(!data.ok){
