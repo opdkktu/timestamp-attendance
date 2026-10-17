@@ -442,6 +442,28 @@
   </div>
 </div>
 
+<style>
+  .inbox-badge{ background:#dc2626; color:#fff; font-size:11px; font-weight:800; min-width:20px; height:20px; padding:0 6px; border-radius:99px; display:inline-flex; align-items:center; justify-content:center; }
+  .menu-btn.has-unread{ position:relative; }
+  .menu-btn.has-unread::after{ content:''; position:absolute; top:6px; right:6px; width:10px; height:10px; border-radius:50%; background:#dc2626; border:2px solid #fff; }
+  .inbox-ov{ position:fixed; inset:0; z-index:160; background:var(--bg,#F3F8F6); display:none; flex-direction:column; }
+  .inbox-ov.show{ display:flex; }
+  .inbox-head{ background:linear-gradient(135deg,#0B3D3A,#1C8F84); color:#fff; padding:16px; display:flex; align-items:center; gap:12px; }
+  .inbox-head h2{ margin:0; flex:1; font-family:'Manrope',sans-serif; font-size:18px; }
+  .inbox-head button{ background:rgba(255,255,255,.18); border:none; color:#fff; border-radius:10px; padding:8px 12px; font-weight:700; font-size:12.5px; cursor:pointer; }
+  .inbox-list{ flex:1; overflow:auto; padding:14px 16px 30px; max-width:640px; width:100%; margin:0 auto; }
+  .nitem{ background:#fff; border:1px solid #DCEAE6; border-radius:16px; padding:12px 14px; margin-bottom:10px; position:relative; }
+  .nitem.new{ border-color:#1C8F84; box-shadow:0 0 0 3px rgba(28,143,132,.12); }
+  .nitem.new::before{ content:''; position:absolute; top:14px; right:14px; width:9px; height:9px; border-radius:50%; background:#dc2626; }
+  .nitem .nt{ font-weight:700; font-size:14px; color:#0B3D3A; padding-right:18px; }
+  .nitem .nb{ font-size:13px; color:#1E2B29; margin-top:3px; }
+  .nitem .nm{ font-size:11.5px; color:#5B6B68; margin-top:6px; }
+  .inbox-empty{ text-align:center; color:#5B6B68; padding:60px 10px; font-size:14px; }
+</style>
+<div class="inbox-ov" id="inboxOv" role="dialog" aria-modal="true" aria-label="Notifikasi">
+  <div class="inbox-head"><h2>Notifikasi</h2><button onclick="markInboxRead()">Tandakan dibaca</button><button onclick="closeInbox()">✕</button></div>
+  <div class="inbox-list" id="inboxList"></div>
+</div>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar" onclick="event.stopPropagation()">
   <button class="sidebar-close" onclick="closeSidebar()" aria-label="Close menu">✕</button>
@@ -466,6 +488,11 @@
       <span class="sidebar-item-label">Email Verification</span>
       <span class="sidebar-pill" id="sidebarEmailPill">—</span>
     </div>
+    <button class="sidebar-item" id="sidebarInboxRow" onclick="closeSidebar(); openInbox();">
+      <span class="sidebar-item-icon">📬</span>
+      <span class="sidebar-item-label">Notifikasi</span>
+      <span class="inbox-badge" id="inboxBadge" style="display:none">0</span>
+    </button>
     <button class="sidebar-item" id="sidebarNotifRow" onclick="toggleNotifications()">
       <span class="sidebar-item-icon">🔔</span>
       <span class="sidebar-item-label">Push Notification</span>
@@ -705,7 +732,111 @@ function cmeTakePending(){
   }
 })();
 
+/* === Supervisor read-only view (set by supervisor.html) + activity log hooks === */
+const VIEW_NAME = sessionStorage.getItem('kkah_view_name'); // present only while a supervisor is viewing a staff
+
+function applyViewMode(){
+  document.body.classList.add('view-mode');
+  const bar = document.createElement('div');
+  bar.id = 'viewBar';
+  bar.style.cssText = 'position:sticky;top:0;z-index:200;background:#7c2d12;color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;';
+  bar.innerHTML = '<span style="flex:1">👁 Mod pemantauan — <b></b> (baca sahaja)</span><button style="background:#fff;color:#7c2d12;border:none;border-radius:10px;padding:7px 14px;font-weight:800;cursor:pointer;">Keluar</button>';
+  bar.querySelector('b').textContent = VIEW_NAME;
+  bar.querySelector('button').onclick = exitViewMode;
+  document.body.insertBefore(bar, document.body.firstChild);
+  const st = document.createElement('style');
+  st.textContent = 'body.view-mode #kcBox, body.view-mode .cme-scan-tile, body.view-mode #sidebarNotifRow, body.view-mode #sidebarInboxRow{ display:none !important; }';
+  document.head.appendChild(st);
+}
+
+function exitViewMode(){
+  ['token','role','ic'].forEach(k => {
+    const v = sessionStorage.getItem('kkah_sup_' + k);
+    if(v) sessionStorage.setItem('kkah_' + (k === 'token' ? 'session_token' : k), v);
+  });
+  ['kkah_view_name','kkah_sup_token','kkah_sup_role','kkah_sup_ic'].forEach(k => sessionStorage.removeItem(k));
+  window.location.href = './supervisor.html';
+}
+
+function logAct(event, detail){
+  if(VIEW_NAME) return;
+  try{
+    fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, keepalive:true,
+      body: JSON.stringify({ action:'logActivity', token: sessionStorage.getItem('kkah_session_token'), event: event, detail: detail || '' }) }).catch(() => {});
+  }catch(e){}
+}
+
+function addModuleCard(name, icon, href){
+  const grid = document.getElementById('activeGrid'); if(!grid) return;
+  const card = document.createElement('button');
+  card.className = 'module-card';
+  card.innerHTML = '<div class="module-icon">' + icon + '</div><div class="module-name">' + name + '</div><div class="module-status">Open</div>';
+  card.addEventListener('click', () => { window.location.href = href; });
+  grid.appendChild(card);
+}
+
+/* === Notification inbox (sidebar "Notifikasi") — what the server pushed to me + OneSignal broadcasts === */
+let inboxItems = [];
+const inboxSeenKey = () => 'kkah_notif_seen_' + (sessionStorage.getItem('kkah_ic') || '');
+function inboxSeen(){ try{ return localStorage.getItem(inboxSeenKey()) || ''; }catch(e){ return ''; } }
+
+async function loadInbox(){
+  let d; try{ d = await cmeApi('getMyNotifications'); }catch(e){ return; }
+  if(!d || !d.ok) return;
+  inboxItems = d.items || [];
+  const seen = inboxSeen();
+  if(!seen && inboxItems.length){ // first ever use: don't flood the badge with history
+    try{ localStorage.setItem(inboxSeenKey(), inboxItems[0].at); }catch(e){}
+  }
+  updateInboxBadge();
+}
+function updateInboxBadge(){
+  const seen = inboxSeen();
+  const n = inboxItems.filter(i => i.at > seen).length;
+  const b = document.getElementById('inboxBadge');
+  b.style.display = n ? 'inline-flex' : 'none'; b.textContent = n > 99 ? '99+' : n;
+  document.querySelector('.menu-btn').classList.toggle('has-unread', n > 0);
+}
+function inboxWhen(at){
+  const d = new Date(String(at).replace(' ', 'T')), now = new Date();
+  const hm = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  if(d.toDateString() === now.toDateString()) return 'Hari ini ' + hm;
+  if(new Date(now - 86400000).toDateString() === d.toDateString()) return 'Semalam ' + hm;
+  return d.toLocaleDateString('ms-MY', { day:'numeric', month:'short', year:'numeric' }) + ' ' + hm;
+}
+async function openInbox(){
+  const list = document.getElementById('inboxList');
+  document.getElementById('inboxOv').classList.add('show');
+  if(!inboxItems.length) list.innerHTML = '<div class="inbox-empty">Memuatkan…</div>';
+  await loadInbox();
+  const seen = inboxSeen();
+  list.innerHTML = inboxItems.length ? inboxItems.map(i =>
+    '<div class="nitem' + (i.at > seen ? ' new' : '') + '"><div class="nt">' + cmeEsc(i.title) + '</div><div class="nb">' + cmeEsc(i.body) +
+    '</div><div class="nm">' + (i.type ? cmeEsc(i.type) + ' · ' : '') + inboxWhen(i.at) + '</div></div>').join('')
+    : '<div class="inbox-empty">Tiada notifikasi lagi.<br>Pengumuman, peringatan dan hari istimewa akan muncul di sini.</div>';
+}
+function markInboxRead(){
+  if(inboxItems.length){ try{ localStorage.setItem(inboxSeenKey(), inboxItems[0].at); }catch(e){} }
+  updateInboxBadge();
+  document.querySelectorAll('#inboxList .nitem.new').forEach(x => x.classList.remove('new'));
+}
+function closeInbox(){ markInboxRead(); document.getElementById('inboxOv').classList.remove('show'); }
+
+async function setupSupervisorAndLog(){
+  loadInbox();
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) loadInbox(); });
+  logAct('Buka dashboard');
+  addModuleCard('Log Aktiviti', '🧾', './activity.html');
+  try{
+    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'getSupervisorScope', token: sessionStorage.getItem('kkah_session_token') }) });
+    const d = await res.json();
+    if(d && d.ok && d.isSupervisor) addModuleCard('Penyelia — Staf Saya', '👥', './supervisor.html');
+  }catch(e){}
+}
+
 function cmeRunPendingCheckIn(){
+  if(VIEW_NAME) return;
   const id = cmeTakePending();
   if(!id) return;
   const go = () => {
@@ -721,7 +852,7 @@ function cmeRunPendingCheckIn(){
 window.addEventListener('DOMContentLoaded', () => {
   const token = sessionStorage.getItem('kkah_session_token');
   if(!token){ window.location.href = './login.html'; return; }
-  setTimeout(cmeRunPendingCheckIn, 600);
+  if(VIEW_NAME){ applyViewMode(); } else { setTimeout(cmeRunPendingCheckIn, 600); setupSupervisorAndLog(); }
 
   const role = sessionStorage.getItem('kkah_role') || 'staff';
   const ic = sessionStorage.getItem('kkah_ic') || '—';
@@ -734,7 +865,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if(params.get('forcePasswordChange') === '1'){
     document.getElementById('forcedBanner').classList.add('show');
     openPasswordModal(true);
-  }else{
+  }else if(!VIEW_NAME){
     showWelcomeOverlay(); // skip the overlay when a forced password change needs attention first
   }
 
@@ -751,12 +882,12 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   initLocationBar();
-  initOneSignal(ic);
+  if(!VIEW_NAME) initOneSignal(ic); // never register the supervisor's phone under the staff's identity
   loadTodaySchedule();
   loadTodayAttendance();
   loadOnCallBox();
   checkSpecialDayPopup();
-  loadBirthdayAlerts();
+  if(!VIEW_NAME) loadBirthdayAlerts();
   loadBlsBox();
   loadLeaveStatBoxes();
   loadChecklistBoxes();
@@ -1794,7 +1925,7 @@ function renderModules(role){
       <div class="module-status ${m.status === 'soon' ? 'soon' : ''}">${m.status === 'active' ? 'Open' : 'Coming soon'}</div>
     `;
     if(m.status === 'active'){
-      card.addEventListener('click', () => { window.location.href = m.href; });
+      card.addEventListener('click', () => { logAct('Buka modul', m.name); window.location.href = m.href; });
       activeGrid.appendChild(card);
     }else{
       soonGrid.appendChild(card);
@@ -1803,6 +1934,11 @@ function renderModules(role){
 }
 
 function handleLogout(){
+  if(VIEW_NAME){ exitViewMode(); return; }
+  try{ // record the logout (fire-and-forget; keepalive lets it finish while the page leaves)
+    fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, keepalive:true,
+      body: JSON.stringify({ action:'logout', token: sessionStorage.getItem('kkah_session_token') }) }).catch(() => {});
+  }catch(e){}
   clearAllCaches();
   sessionStorage.removeItem('kkah_session_token');
   sessionStorage.removeItem('kkah_role');
