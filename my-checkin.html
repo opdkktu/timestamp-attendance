@@ -1,448 +1,667 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KKAH · My Check-In</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.1.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.1.0">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="SIAGA">
+/**
+ * KKAH FACE ATTENDANCE — Backend (Google Apps Script)
+ * ----------------------------------------------------
+ * Deploy as Web App:
+ *   Deploy > New deployment > Type: Web app
+ *   Execute as: Me
+ *   Who has access: Anyone
+ * Copy the /exec URL into checkin.html (API_URL constant).
+ *
+ * SETUP REQUIRED BELOW — fill in your real IDs.
+ */
 
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#0B3D3A">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
-    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
-    --gold-500:#C9A227; --green-500:#2FAE60;
-    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+const CONFIG = {
+  DATABASE_SHEET_ID: 'PASTE_YOUR_DATABASE_SHEET_ID_HERE',   // the external Sheet with the DATABASE tab (+ AttendanceLog tab)
+  DATABASE_SHEET_NAME: 'DATABASE',
+  LOG_SHEET_NAME: 'AttendanceLog',                          // created automatically if missing, lives in the same spreadsheet
+  SNAPSHOT_FOLDER_ID: 'PASTE_YOUR_DRIVE_FOLDER_ID_HERE',     // Drive folder to store check-in snapshots
+  STAFF_PHOTO_FOLDER_ID: 'PASTE_YOUR_STAFF_PHOTO_FOLDER_ID_HERE', // Drive folder to store new-staff registration photos
+  APP_BASE_URL: 'https://opdkktu.github.io/timestamp-attendance/', // used to build the email verification link — update if you move to the new HR portal repo
+  ONESIGNAL_APP_ID: 'e6ffc7a0-2572-46da-b664-2a03c6dd210a',
+  ONESIGNAL_REST_API_KEY: 'PASTE_YOUR_ONESIGNAL_REST_API_KEY_HERE',
+  TIMEZONE: 'Asia/Kuala_Lumpur',
+  CHECKOUT_OPEN_HOUR: 13, // Check Out opens at 1:00 PM on weekdays (Mon–Fri). Weekends: no restriction.
+
+  // --- Consolidated in from "Jadual Bertugas" (borang permohonan + jadual) ---
+  // Same Apps Script project now, so these are just two more sheet IDs — no
+  // cross-project token bridge needed anymore; the session token (CONFIG above)
+  // already covers all of it.
+  RECORDS_SHEET_ID: '19F75U1uHuh3o-WwmuKrbYr_Or9X87NHbGkxN_rRPfXw',   // "borang permohonan" submissions (Records tab)
+  RECORDS_SHEET_NAME: 'Records',
+  LEAVE_UPLOAD_FOLDER_ID: 'PASTE_YOUR_LEAVE_UPLOAD_FOLDER_ID_HERE', // Drive folder for leave-request attachments/evidence
+  SCHEDULE_SHEET_ID: '191ZTgpVGen3Y1Ksj7-h8rtdCkuj4U1QIam4A1N6QkuY', // "jadual" — OPD <year> tabs + "today list" tab + "ONCALL TODAY" tab
+  KURSUS_LIST_SHEET_NAME: 'senarai kursus',   // tab inside DATABASE_SHEET_ID (not SCHEDULE_SHEET_ID) — see getMyKursusList in DashboardBoxes.gs
+  ONCALL_SHEET_NAME: 'ONCALL TODAY',          // tab inside SCHEDULE_SHEET_ID — read client-side as published CSV, same as "today list"
+  SUPERVISOR_NAME: 'TAN YI HAO',   // fallback until multi-unit supervisor routing is added
+  SUPERVISOR_PHONE: '60164039350',
+
+  // --- Standby only — wired up once you share the details/files for these ---
+  ILMU_SHEET_ID: '1wcHIUrgZnyOaIpOfXc-2acAwvk0QEjOtV58lWJosr3o',     // CME (dalaman) attendance — QR scan + cert email, separate project incoming
+  // Kaunter C → PRIMA queue system (separate Apps Script project). See KaunterC.gs.
+  PRIMA_URL: 'https://script.google.com/a/macros/moh.gov.my/s/AKfycbxSBGU1I4v_geNAMmQR4wnDdm6SZn8gVV4z0AC608EfOEHw3MyO58MJSffoRGElP-c/exec',
+  PRIMA_SECRET: 'PASTE_A_LONG_RANDOM_SECRET_HERE', // must match Script Property SIAGA_SECRET in the PRIMA project
+  KAUNTER_C_ALLOWED_ICS: [], // empty = every logged-in staff may call; or list ICs e.g. ['900101015555']
+  VEHICLE_SHEET_ID: 'PASTE_YOUR_VEHICLE_SHEET_ID_HERE' // driver module — repair/invoice/petrol logs, 3 vehicles incl. ambulance
+};
+
+/** Entry point for GET requests: ?action=getStaff | getStaffList */
+function doGet(e) {
+  const action = e && e.parameter && e.parameter.action;
+  try {
+    if (action === 'getStaff') {
+      return jsonOut(getStaffPayload());
+    }
+    if (action === 'getStaffList') {
+      return jsonOut(getStaffListPayload());
+    }
+    return jsonOut({ ok: false, error: 'Unknown action' });
+  } catch (err) {
+    return jsonOut({ ok: false, error: String(err) });
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0; min-height:100vh;
-    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
-    font-family:'Inter',sans-serif; color:var(--ink-700);
-    display:flex; align-items:center; justify-content:center; padding:24px;
-  }
-  .kiosk{
-    width:100%; max-width:440px; background:#fff; border-radius:28px;
-    box-shadow:0 20px 60px -20px rgba(11,61,58,0.25); overflow:hidden; border:1px solid var(--line);
-  }
-  .kiosk-header{ padding:20px 26px 16px; background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); color:#fff; position:relative; }
-  .kiosk-header .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
-  .kiosk-header h1{ font-family:'Manrope',sans-serif; font-size:19px; font-weight:800; margin:4px 0 0; }
-  .back-link{ position:absolute; top:20px; right:24px; color:#fff; opacity:.8; text-decoration:none; font-size:13px; }
-  .stage{ padding:26px; }
-
-  .viewfinder{ position:relative; width:240px; height:240px; margin:0 auto 18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
-  .viewfinder video, .viewfinder canvas.snapshot{ width:200px; height:200px; border-radius:50%; object-fit:cover; background:#0B3D3A; }
-  .ring{ position:absolute; inset:0; border-radius:50%; border:3px solid var(--line); transition:border-color .4s ease, box-shadow .4s ease; }
-  .ring.scanning{ border-color:var(--teal-500); animation:pulse 1.6s ease-in-out infinite; }
-  .ring.success{ border-color:var(--green-500); box-shadow:0 0 0 8px rgba(47,174,96,0.15); }
-  @keyframes pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(28,143,132,.25);} 50%{ box-shadow:0 0 0 12px rgba(28,143,132,0);} }
-
-  .check-badge{ position:absolute; bottom:4px; right:4px; width:48px; height:48px; border-radius:50%; background:var(--green-500); display:flex; align-items:center; justify-content:center; transform:scale(0); opacity:0; }
-  .check-badge.show{ animation:pop .5s cubic-bezier(.34,1.56,.64,1) forwards; }
-  @keyframes pop{ 0%{ transform:scale(0); opacity:0; } 60%{ transform:scale(1.15); opacity:1; } 100%{ transform:scale(1); opacity:1; } }
-  .check-badge svg{ width:24px; height:24px; }
-  .check-path{ stroke-dasharray:24; stroke-dashoffset:24; }
-  .check-badge.show .check-path{ animation:draw .35s ease .25s forwards; }
-  @keyframes draw{ to{ stroke-dashoffset:0; } }
-
-  .status-line{ text-align:center; font-size:14px; color:var(--ink-500); min-height:20px; margin-bottom:16px; }
-
-  .result-card{ background:var(--mint-100); border:1px solid var(--line); border-radius:16px; padding:16px 20px; display:none; }
-  .result-card.show{ display:block; }
-  .result-row{ display:flex; justify-content:space-between; padding:5px 0; font-size:14px; }
-  .result-row .label{ color:var(--ink-500); }
-  .result-row .value{ font-weight:600; }
-  .type-pill{ display:inline-block; font-size:11px; font-weight:700; letter-spacing:.05em; padding:3px 10px; border-radius:100px; background:var(--green-500); color:#fff; margin-bottom:8px; }
-  .type-pill.out{ background:var(--gold-500); }
-
-  .location-map{ margin-top:14px; border-radius:14px; overflow:hidden; border:1px solid var(--line); display:none; }
-  .location-map.show{ display:block; }
-  .location-map iframe{ width:100%; height:120px; border:0; display:block; }
-  .geo-coords{ display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--mint-100); font-size:11px; color:var(--ink-500); font-variant-numeric:tabular-nums; }
-  .geo-coords .place-name{ font-weight:600; color:var(--teal-900); max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-
-  .overlay{ position:fixed; inset:0; background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; z-index:50; transition:opacity .5s ease; }
-  .overlay.hide{ opacity:0; pointer-events:none; }
-  .spinner{ width:44px; height:44px; border-radius:50%; border:3px solid rgba(255,255,255,0.25); border-top-color:#fff; animation:spin 0.9s linear infinite; margin-bottom:18px; }
-  @keyframes spin{ to{ transform:rotate(360deg); } }
-  .overlay .msg{ font-family:'Manrope',sans-serif; font-weight:700; font-size:15px; text-align:center; padding:0 20px; }
-  .overlay .sub{ font-size:13px; opacity:.7; margin-top:6px; text-align:center; padding:0 20px; }
-  .progress-track{ width:200px; height:4px; border-radius:4px; background:rgba(255,255,255,0.2); margin-top:16px; overflow:hidden; }
-  .progress-fill{ height:100%; width:0%; background:var(--gold-500); transition:width .3s ease; }
-  .retry-btn{ margin-top:16px; padding:10px 20px; border-radius:100px; border:none; background:var(--gold-500); color:var(--teal-900); font-weight:700; cursor:pointer; display:none; }
-  .overlay.error .spinner{ display:none; }
-  .overlay.error .retry-btn{ display:inline-block; }
-
-  .offline-banner{ position:fixed; top:0; left:0; right:0; z-index:70; background:#B3311A; color:#fff; text-align:center; font-size:13px; font-weight:600; padding:8px 12px; transform:translateY(-100%); transition:transform .3s ease; }
-  .offline-banner.show{ transform:translateY(0); }
-
-  .geofence-blocker{
-    position:fixed; inset:0; z-index:80; background:#4A1010;
-    display:none; align-items:center; justify-content:center; padding:24px; text-align:center; color:#fff;
-  }
-  .geofence-blocker.show{ display:flex; }
-  .geofence-box{ max-width:360px; }
-  .geofence-box .zone-msg{ font-family:'Manrope',sans-serif; font-size:17px; font-weight:700; margin-bottom:10px; }
-  .geofence-box .warning{
-    font-weight:800; font-size:16px; color:#FFD9D9; margin-bottom:16px;
-    animation: blinkWarn 1s step-start infinite;
-  }
-  @keyframes blinkWarn{ 50%{ opacity:0.15; } }
-  .geofence-box .distance{ font-size:12px; opacity:.75; margin-bottom:18px; }
-  .geofence-retry{ padding:10px 22px; border-radius:100px; border:none; background:#fff; color:#4A1010; font-weight:700; cursor:pointer; }
-</style>
-<script src="./version.js"></script>
-<script src="./version-ui.js"></script>
-<script src="./permission-gate.js"></script>
-</head>
-<body>
-
-<div class="offline-banner" id="offlineBanner">No internet connection — check-ins can't be recorded right now</div>
-
-<div class="geofence-blocker" id="geofenceBlocker">
-  <div class="geofence-box">
-    <div class="zone-msg" id="geofenceZoneMsg">Anda berada di luar bangunan klinik</div>
-    <div class="warning" id="geofenceWarning">⚠ AMARAN! ANDA DILARANG UNTUK TERUSKAN FACEPRINT.</div>
-    <div class="distance" id="geofenceDistance">—</div>
-    <button class="geofence-retry" onclick="recheckGeofence()">Semak Semula Lokasi</button>
-  </div>
-</div>
-
-<div class="overlay" id="startScreen">
-  <div class="msg" style="margin-bottom:6px;">My Check-In</div>
-  <div class="sub" style="margin-bottom:20px;">Tap below to start — this lets your phone ask for camera and location access properly.</div>
-  <button class="retry-btn" style="display:inline-block;" onclick="beginStart()">Tap to Start</button>
-</div>
-
-<div class="overlay hide" id="overlay">
-  <div class="spinner"></div>
-  <div class="msg" id="overlayMsg">Preparing your check-in…</div>
-  <div class="sub" id="overlaySub">Loading recognition models</div>
-  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-  <button class="retry-btn" id="overlayRetry" onclick="init()">Try again</button>
-</div>
-
-<div class="kiosk">
-  <div class="kiosk-header">
-    <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
-    <h1 id="headerName">My Check-In</h1>
-    <a class="back-link" href="./dashboard.html">← Dashboard</a>
-  </div>
-  <div class="stage">
-    <div class="viewfinder">
-      <div class="ring" id="ring"></div>
-      <video id="video" autoplay muted playsinline></video>
-      <canvas id="snapshotCanvas" class="snapshot" style="display:none;"></canvas>
-      <div class="check-badge" id="checkBadge">
-        <svg viewBox="0 0 26 26" fill="none"><path class="check-path" d="M5 13l5 5 11-11" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-    </div>
-    <div class="status-line" id="statusLine">Position your face in the frame</div>
-    <div class="result-card" id="resultCard">
-      <span class="type-pill" id="typePill">IN</span>
-      <div class="result-row"><span class="label">Time</span><span class="value" id="resultTime">—</span></div>
-      <div class="result-row"><span class="label">Date</span><span class="value" id="resultDate">—</span></div>
-    </div>
-    <div class="location-map" id="locationMap">
-      <iframe id="mapFrame" loading="lazy" title="Your current location"></iframe>
-      <div class="geo-coords"><span class="place-name" id="placeName">Locating…</span><span id="coordsText">—</span></div>
-    </div>
-  </div>
-</div>
-
-<audio id="successSound" src="https://opdkktu.github.io/trial1/register.mp3" preload="auto"></audio>
-
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-<script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
-const MODEL_URL = './models';
-const MATCH_THRESHOLD = 0.5;
-const RECOGNIZE_STABLE_FRAMES = 3;
-const COOLDOWN_MS = 15000;
-
-/* ---------------- Geofence config — Klinik Kesihatan Ayer Hitam ---------------- */
-// Kampung Lubok Ayer, 06150 Ayer Hitam, Kedah — adjust radii after on-site GPS testing.
-const CLINIC_LAT = 6.240404;
-const CLINIC_LNG = 100.246714;
-const BUILDING_RADIUS_M = 60;   // inside this = OK, no warning
-const AREA_RADIUS_M = 150;      // between building and area radius = "outside building" warning
-                                 // beyond this = "outside grounds" warning, both block check-in
-
-function distanceMeters(lat1, lng1, lat2, lng2){
-  const R = 6371000;
-  const toRad = d => d * Math.PI / 180;
-  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
-  return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-/** Returns null if within the allowed building zone, or a warning object if outside it. */
-function checkGeofence(lat, lng){
-  const dist = Math.round(distanceMeters(lat, lng, CLINIC_LAT, CLINIC_LNG));
-  if(dist <= BUILDING_RADIUS_M) return null;
-  if(dist <= AREA_RADIUS_M){
-    return { zoneMsg: 'Anda berada di luar bangunan klinik', dist };
+/**
+ * Entry point for POST requests.
+ * IMPORTANT: the frontend must send Content-Type: text/plain to avoid a CORS
+ * preflight (Apps Script does not handle OPTIONS). The body is still JSON text;
+ * we parse it manually below.
+ */
+function doPost(e) {
+  try {
+    const body = JSON.parse(e.postData.contents);
+    const blocked = siagaGate_(body.action, body);          // supervisor view tokens are read-only
+    if (blocked) return jsonOut(blocked);
+    const out = doPostCore_(body);
+    try { siagaAfter_(body.action, body, JSON.parse(out.getContent())); } catch (logErr) {} // activity log
+    return out;
+  } catch (err) {
+    return jsonOut({ ok: false, error: String(err) });
   }
-  return { zoneMsg: 'Anda berada di luar kawasan klinik', dist };
 }
 
-let video, ring, statusLine, overlay, overlaySub, progressFill;
-let myDescriptor = null, myName = null, myIc = null;
-let userLocation = null;
-let scanning = true;
-let stableCount = 0;
-let modelsReady = false;
-let lastLoggedAt = 0;
-let isOffline = false;
+function doPostCore_(body) {
+  try {
+    const action = body.action;
 
-window.addEventListener('DOMContentLoaded', () => {
-  overlay = document.getElementById('overlay');
-  const token = sessionStorage.getItem('kkah_session_token');
-  if(!token){ window.location.href = './login.html'; }
-});
-window.addEventListener('online', () => setOffline(false));
-window.addEventListener('offline', () => setOffline(true));
-window.addEventListener('unhandledrejection', (e) => {
-  console.error('Unhandled error:', e.reason);
-  if(!modelsReady) showLoadError(e.reason && e.reason.message ? e.reason.message : 'Something went wrong');
-});
-
-function setOffline(state){
-  isOffline = state;
-  document.getElementById('offlineBanner').classList.toggle('show', state);
+    if (action === 'logout') {
+      return jsonOut({ ok: true });
+    }
+    if (action === 'getMyNotifications') {
+      return jsonOut(getMyNotifications(body));
+    }
+    if (action === 'logActivity') {
+      return jsonOut({ ok: true });
+    }
+    if (action === 'getMyActivity') {
+      return jsonOut(getMyActivity(body));
+    }
+    if (action === 'getSupervisorScope') {
+      return jsonOut(getSupervisorScope(body));
+    }
+    if (action === 'getAnnounceOptions') {
+      return jsonOut(getAnnounceOptions(body));
+    }
+    if (action === 'sendAnnouncement') {
+      return jsonOut(sendAnnouncement(body));
+    }
+    if (action === 'listSupervisedStaff') {
+      return jsonOut(listSupervisedStaff(body));
+    }
+    if (action === 'startViewAs') {
+      return jsonOut(startViewAs(body));
+    }
+    if (action === 'logAttendance') {
+      return jsonOut(logAttendance(body));
+    }
+    if (action === 'attachSnapshot') {
+      return jsonOut(attachSnapshot(body));
+    }
+    if (action === 'addStaff') {
+      return jsonOut(addStaff(body));
+    }
+    if (action === 'generateReport') {
+      return jsonOut(generateReport(body));
+    }
+    if (action === 'login') {
+      return jsonOut(login(body));
+    }
+    if (action === 'verifyTotp') {
+      return jsonOut(verifyTotp(body));
+    }
+    if (action === 'changePassword') {
+      return jsonOut(changePassword(body));
+    }
+    if (action === 'registerBiometric') {
+      return jsonOut(registerBiometric(body));
+    }
+    if (action === 'biometricLogin') {
+      return jsonOut(biometricLogin(body));
+    }
+    if (action === 'getMyPhoto') {
+      return jsonOut(getMyPhoto(body));
+    }
+    if (action === 'cmeCheckIn') {
+      return jsonOut(cmeCheckIn(body));
+    }
+    if (action === 'getMyCmeSummary') {
+      return jsonOut(getMyCmeSummary(body));
+    }
+    if (action === 'cmeSubmitFeedback') { return jsonOut(cmeSubmitFeedback(body)); }
+    if (action === 'cmeSendSlip') { return jsonOut(cmeSendSlip(body)); }
+    if (action === 'cmeCertificate') { return jsonOut(cmeCertificate(body)); }
+    if (action === 'cmeAdminCreate') { return jsonOut(cmeAdminCreate(body)); }
+    if (action === 'cmeAdminOverview') { return jsonOut(cmeAdminOverview(body)); }
+    if (action === 'cmeAdminParticipants') { return jsonOut(cmeAdminParticipants(body)); }
+    if (action === 'sendEmergency') {            // PUBLIC (no login) — see Emergency.gs for the abuse limits
+      return jsonOut(sendEmergency(body));
+    }
+    if (action === 'getActiveEmergency') {       // PUBLIC
+      return jsonOut(getActiveEmergency(body));
+    }
+    if (action === 'callKaunter') {
+      return jsonOut(callKaunter(body));
+    }
+    if (action === 'callKaunterC') {
+      return jsonOut(callKaunterC(body));
+    }
+    if (action === 'getMyProfileFull') {
+      return jsonOut(getMyProfileFull(body));
+    }
+    if (action === 'updateMyProfile') {
+      return jsonOut(updateMyProfile(body));
+    }
+    if (action === 'getMyProfile') {
+      return jsonOut(getMyProfile(body));
+    }
+    if (action === 'signup') {
+      return jsonOut(signup(body));
+    }
+    if (action === 'verifyEmail') {
+      return jsonOut(verifyEmailAction(body));
+    }
+    if (action === 'resendVerification') {
+      return jsonOut(resendVerification(body));
+    }
+    if (action === 'getBirthdayAlerts') {
+      return jsonOut(getBirthdayAlerts(body));
+    }
+    if (action === 'sendBirthdayWish') {
+      return jsonOut(sendBirthdayWish(body));
+    }
+    if (action === 'getBlsStatus') {
+      return jsonOut(getBlsStatus(body));
+    }
+    if (action === 'getLeaveStats') {
+      return jsonOut(getLeaveStats(body));
+    }
+    if (action === 'submitLeaveRequest') {
+      return jsonOut(submitLeaveRequest(body));
+    }
+    if (action === 'getMyLeaveRecords') {
+      return jsonOut(getMyLeaveRecords(body));
+    }
+    if (action === 'getMyScheduleData') {
+      return jsonOut(getMyScheduleData(body));
+    }
+    if (action === 'uploadScheduleProof') {
+      return jsonOut(uploadScheduleProof(body));
+    }
+    if (action === 'uploadRetrospectiveProof') {
+      return jsonOut(uploadRetrospectiveProof(body));
+    }
+    if (action === 'completeOrientation') {
+      return jsonOut(completeOrientation(body));
+    }
+    if (action === 'getMyKursusList') {
+      return jsonOut(getMyKursusList(body));
+    }
+    if (action === 'getHealthScreeningStatus') {
+      return jsonOut(getHealthScreeningStatus(body));
+    }
+    if (action === 'beginEnrollTotp') {
+      return jsonOut(beginEnrollTotp(body));
+    }
+    if (action === 'confirmEnrollTotp') {
+      return jsonOut(confirmEnrollTotp(body));
+    }
+    if (action === 'disableTotp') {
+      return jsonOut(disableTotp(body));
+    }
+    if (action === 'getTodayAttendance') {
+      return jsonOut(getTodayAttendance(body));
+    }
+    return jsonOut({ ok: false, error: 'Unknown action' });
+  } catch (err) {
+    return jsonOut({ ok: false, error: String(err) });
+  }
 }
 
-function beginStart(){
-  document.getElementById('startScreen').classList.add('hide');
-  overlay.classList.remove('hide');
-  init();
+/**
+ * Fast, lightweight staff manifest — just name/IC/photo URL straight from the
+ * sheet, no Drive fetches or base64 conversion. Used by the frontend to check
+ * whether its cached face descriptors are still up to date, without paying
+ * the cost of re-downloading every photo on every page load.
+ */
+function getStaffListPayload() {
+  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
+  const sheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
+  if (!sheet) throw new Error('DATABASE sheet not found');
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { ok: true, staff: [] };
+
+  const nameIc = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+  const photoCol = sheet.getRange(2, 26, lastRow - 1, 1).getValues();
+
+  const staff = [];
+  for (let i = 0; i < nameIc.length; i++) {
+    const name = String(nameIc[i][0] || '').trim();
+    const ic = String(nameIc[i][1] || '').trim();
+    const photoUrl = String(photoCol[i][0] || '').trim();
+    if (!name || !ic || !photoUrl) continue;
+    staff.push({ name: name, ic: ic, photoUrl: photoUrl });
+  }
+  return { ok: true, staff: staff };
 }
 
-async function init(){
-  video = document.getElementById('video');
-  ring = document.getElementById('ring');
-  statusLine = document.getElementById('statusLine');
-  overlaySub = document.getElementById('overlaySub');
-  progressFill = document.getElementById('progressFill');
-  overlay.classList.remove('error', 'hide');
-  setOffline(!navigator.onLine);
-  modelsReady = false;
+/**
+ * Reads DATABASE sheet (A=name, B=IC, Z=photo URL) and returns each staff
+ * member with their photo re-served as a base64 data URL. This sidesteps
+ * Google Drive's inconsistent CORS headers, which otherwise "taint" the
+ * canvas face-api.js needs to read pixel data from for face matching.
+ */
+/**
+ * Fetches only the logged-in person's own photo, for the personal check-in
+ * mode (my-checkin.html). Identity comes from the verified session token,
+ * not a client-supplied IC — a random visitor can't fetch someone else's
+ * photo just by guessing their IC number.
+ */
+/**
+ * Lightweight profile lookup — name + IC only, no Drive photo fetch. Used by
+ * the dashboard's working-zone widget and the profile page, where we don't
+ * need the photo (that's what makes this fast).
+ */
+function getMyProfile(body) {
+  const payload = verifyToken_(body.token);
+  if (!payload) return { ok: false, error: 'Session expired. Please log in again.' };
 
-  try{
-    await requestLocation();
-    await loadModels();
-    await loadMyDescriptor();
-    await startCamera();
-    hideOverlay();
-    detectLoop();
-  }catch(err){
-    console.error(err);
-    if(err.message !== 'Location permission denied' && err.message !== 'Camera permission denied' && err.message !== 'Outside allowed zone'){
-      showLoadError(err.message);
+  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
+  const sheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { ok: false, error: 'Staff not found.' };
+
+  const nameIc = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+  for (let i = 0; i < nameIc.length; i++) {
+    if (String(nameIc[i][1]).trim() === payload.ic) {
+      const user = findUserRow_(payload.ic);
+      return { ok: true, ic: payload.ic, name: String(nameIc[i][0]).trim(), totpEnabled: !!(user && user.totpEnabled), emailVerified: !!(user && user.emailVerified) };
     }
   }
+  return { ok: false, error: 'Staff not found.' };
 }
 
-function showLoadError(message){
-  document.getElementById('overlayMsg').textContent = 'Could not start check-in';
-  overlaySub.textContent = message || 'Please check your connection and try again';
-  overlay.classList.add('error');
-}
+function getMyPhoto(body) {
+  const payload = verifyToken_(body.token);
+  if (!payload) return { ok: false, error: 'Session expired. Please log in again.' };
 
-function setProgress(pct, sub){ progressFill.style.width = pct + '%'; if(sub) overlaySub.textContent = sub; }
+  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
+  const sheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { ok: false, error: 'Staff not found.' };
 
-function requestLocation(){
-  return new Promise((resolve, reject) => {
-    if(!navigator.geolocation) return reject(new Error('Geolocation not supported'));
-    const onSuccess = pos => {
-      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, name: '' };
+  const nameIc = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+  const photoCol = sheet.getRange(2, 26, lastRow - 1, 1).getValues();
 
-      const violation = checkGeofence(userLocation.lat, userLocation.lng);
-      if(violation){
-        document.getElementById('geofenceZoneMsg').textContent = violation.zoneMsg;
-        document.getElementById('geofenceDistance').textContent = `Jarak dari klinik: ~${violation.dist}m`;
-        document.getElementById('geofenceBlocker').classList.add('show');
-        reject(new Error('Outside allowed zone'));
-        return;
-      }
-
-      showLocationMap(userLocation.lat, userLocation.lng);
-      reverseGeocode(userLocation.lat, userLocation.lng);
-      resolve();
-    };
-    const onFail = () => reject(new Error('Location permission denied'));
-    navigator.geolocation.getCurrentPosition(onSuccess, () => {
-      navigator.geolocation.getCurrentPosition(onSuccess, onFail, { enableHighAccuracy:false, timeout:15000, maximumAge:60000 });
-    }, { enableHighAccuracy:false, timeout:8000, maximumAge:60000 });
-  });
-}
-
-function recheckGeofence(){
-  document.getElementById('geofenceBlocker').classList.remove('show');
-  init();
-}
-
-function showLocationMap(lat, lng){
-  const delta = 0.003;
-  const bbox = `${lng-delta},${lat-delta},${lng+delta},${lat+delta}`;
-  document.getElementById('mapFrame').src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&marker=${lat},${lng}&layer=mapnik`;
-  document.getElementById('coordsText').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-  document.getElementById('locationMap').classList.add('show');
-}
-
-async function reverseGeocode(lat, lng){
-  try{
-    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
-    const data = await res.json();
-    const addr = data.address || {};
-    const name = addr.amenity || addr.building || addr.road || addr.suburb || addr.village || addr.town || data.display_name || '';
-    if(userLocation){ userLocation.name = name; const el = document.getElementById('placeName'); if(el && name) el.textContent = name; }
-  }catch(err){ console.warn('Reverse geocoding failed:', err); }
-}
-
-async function loadModels(){
-  setProgress(15, 'Loading face detection model');
-  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-  if(!faceapi.nets.tinyFaceDetector.isLoaded) throw new Error('Face detection model failed to load');
-  setProgress(45, 'Loading landmark model');
-  await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-  if(!faceapi.nets.faceLandmark68Net.isLoaded) throw new Error('Landmark model failed to load');
-  setProgress(70, 'Loading recognition model');
-  await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-  if(!faceapi.nets.faceRecognitionNet.isLoaded) throw new Error('Recognition model failed to load');
-  modelsReady = true;
-  setProgress(80, 'Models ready');
-}
-
-/** Fetches only YOUR photo (not the whole roster) — this is the speed win of being logged in. */
-async function loadMyDescriptor(){
-  setProgress(85, 'Loading your profile');
-  const token = sessionStorage.getItem('kkah_session_token');
-  const res = await fetch(API_URL, {
-    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action: 'getMyPhoto', token })
-  });
-  const data = await res.json();
-  if(!data.ok) throw new Error(data.error || 'Could not load your profile');
-  myName = data.name; myIc = data.ic;
-  document.getElementById('headerName').textContent = 'Hi, ' + myName;
-
-  const img = await faceapi.fetchImage(data.photo);
-  const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-  if(!det) throw new Error('Could not read your profile photo. Contact admin to re-take it.');
-  myDescriptor = det.descriptor;
-  setProgress(100, 'Ready');
-}
-
-async function startCamera(){
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { width:320, height:320 } });
-    video.srcObject = stream;
-    await new Promise(r => video.onloadedmetadata = r);
-  }catch(err){ throw new Error('Camera permission denied'); }
-}
-
-function hideOverlay(){ overlay.classList.add('hide'); }
-
-async function detectLoop(){
-  if(!scanning || isOffline || !modelsReady){ requestAnimationFrame(detectLoop); return; }
-
-  let det = null;
-  try{
-    det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-  }catch(err){ console.warn('Detection frame skipped:', err); requestAnimationFrame(detectLoop); return; }
-
-  if(det){
-    ring.classList.add('scanning');
-    const distance = faceapi.euclideanDistance(det.descriptor, myDescriptor);
-
-    if(distance <= MATCH_THRESHOLD){
-      stableCount++;
-      statusLine.textContent = 'Verifying…';
-      if(stableCount >= RECOGNIZE_STABLE_FRAMES){
-        const now = Date.now();
-        if((now - lastLoggedAt) < COOLDOWN_MS){
-          statusLine.textContent = 'Already recorded — thank you';
-        }else{
-          scanning = false;
-          await handleMatch();
-        }
-        stableCount = 0;
-      }
-    }else{
-      statusLine.textContent = "This doesn't look like you — try repositioning";
-      stableCount = 0;
+  for (let i = 0; i < nameIc.length; i++) {
+    if (String(nameIc[i][1]).trim() === payload.ic) {
+      const dataUrl = urlToDataUrl(String(photoCol[i][0]).trim());
+      if (!dataUrl) return { ok: false, error: 'Could not load your photo. Contact admin.' };
+      return { ok: true, ic: payload.ic, name: String(nameIc[i][0]).trim(), photo: dataUrl };
     }
-  }else{
-    ring.classList.remove('scanning');
-    statusLine.textContent = 'Position your face in the frame';
-    stableCount = 0;
   }
-  requestAnimationFrame(detectLoop);
+  return { ok: false, error: 'Staff not found.' };
 }
 
-async function handleMatch(){
-  if(isOffline){ statusLine.textContent = 'No connection — please try again in a moment'; resetAfterDelay(); return; }
-  statusLine.textContent = 'Checking…';
+function getStaffPayload() {
+  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
+  const sheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
+  if (!sheet) throw new Error('DATABASE sheet not found');
 
-  const canvas = document.getElementById('snapshotCanvas');
-  canvas.width = 240; canvas.height = 240;
-  canvas.getContext('2d').drawImage(video, 0, 0, 240, 240);
-  const imageBase64 = canvas.toDataURL('image/jpeg', 0.7);
-  video.style.display = 'none'; canvas.style.display = 'block';
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { ok: true, staff: [] };
 
-  try{
-    const token = sessionStorage.getItem('kkah_session_token');
-    const res = await fetch(API_URL, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action: 'logAttendance', token, name: myName,
-        lat: userLocation ? userLocation.lat : '', lng: userLocation ? userLocation.lng : '',
-        locName: userLocation ? userLocation.name : ''
-      })
-    });
-    const data = await res.json();
+  // A:B for name/IC, Z for photo URL — read only what we need
+  const nameIc = sheet.getRange(2, 1, lastRow - 1, 2).getValues();   // columns A,B
+  const photoCol = sheet.getRange(2, 26, lastRow - 1, 1).getValues(); // column Z = 26
 
-    if(!data.ok){ statusLine.textContent = data.error || 'Could not record check-in'; resetAfterDelay(); return; }
+  const staff = [];
+  for (let i = 0; i < nameIc.length; i++) {
+    const name = String(nameIc[i][0] || '').trim();
+    const ic = String(nameIc[i][1] || '').trim();
+    const photoUrl = String(photoCol[i][0] || '').trim();
+    if (!name || !ic || !photoUrl) continue;
 
-    ring.classList.remove('scanning'); ring.classList.add('success');
-    document.getElementById('checkBadge').classList.add('show');
-    document.getElementById('successSound').play().catch(()=>{});
-    document.getElementById('resultTime').textContent = data.time;
-    document.getElementById('resultDate').textContent = data.date;
-    const pill = document.getElementById('typePill');
-    pill.textContent = data.type; pill.className = 'type-pill' + (data.type === 'OUT' ? ' out' : '');
-    document.getElementById('resultCard').classList.add('show');
-    statusLine.textContent = `Checked ${data.type} successfully`;
-    lastLoggedAt = Date.now();
-
-    fetch(API_URL, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'attachSnapshot', ic: myIc, date: data.date, type: data.type, imageBase64 })
-    }).catch(err => console.warn('Snapshot upload failed (attendance row still saved):', err));
-
-  }catch(err){ statusLine.textContent = 'Network error — please try again'; }
-  resetAfterDelay();
+    const dataUrl = urlToDataUrl(photoUrl);
+    if (dataUrl) {
+      staff.push({ name: name, ic: ic, photo: dataUrl });
+    }
+  }
+  return { ok: true, staff: staff };
 }
 
-function resetAfterDelay(){
-  setTimeout(() => {
-    document.getElementById('checkBadge').classList.remove('show');
-    document.getElementById('resultCard').classList.remove('show');
-    ring.classList.remove('success');
-    video.style.display = 'block';
-    document.getElementById('snapshotCanvas').style.display = 'none';
-    statusLine.textContent = 'Position your face in the frame';
-    scanning = true;
-  }, 4000);
+/** Converts a Drive-hosted (or any fetchable) photo URL into a base64 data URL. */
+function urlToDataUrl(url) {
+  try {
+    const fileId = extractDriveFileId(url);
+    let blob;
+    if (fileId) {
+      blob = DriveApp.getFileById(fileId).getBlob();
+    } else {
+      blob = UrlFetchApp.fetch(url).getBlob();
+    }
+    const mime = blob.getContentType() || 'image/jpeg';
+    const b64 = Utilities.base64Encode(blob.getBytes());
+    return 'data:' + mime + ';base64,' + b64;
+  } catch (err) {
+    Logger.log('Photo load failed for ' + url + ': ' + err);
+    return null;
+  }
 }
-</script>
-</body>
-</html>
+
+/** Pulls a Drive file ID out of common Drive URL formats. Returns null if not a Drive URL. */
+function extractDriveFileId(url) {
+  let m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);       // .../file/d/FILEID/view
+  if (m) return m[1];
+  m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);          // ...?id=FILEID
+  if (m) return m[1];
+  return null;
+}
+
+/**
+ * Logs a check-in/out: decides IN vs OUT (first scan of the day = IN, next = OUT),
+ * appends a row to AttendanceLog with the photo column left blank.
+ * Deliberately does NOT touch Drive here — that's the slow part, and this call
+ * needs to return fast so the kiosk can confirm + play the success sound quickly.
+ * Expected body: { ic, name, lat, lng }
+ */
+function logAttendance(body) {
+  // If a session token is supplied (personal check-in mode), the IC comes
+  // from the verified, signed token — never from the client-supplied field.
+  // This is what makes personal mode more tamper-resistant than kiosk mode:
+  // kiosk mode has no choice but to trust the client's face-match result,
+  // but a logged-in request's identity is cryptographically confirmed.
+  let ic = body.ic;
+  let name = body.name;
+  if (body.token) {
+    const payload = verifyToken_(body.token);
+    if (!payload) return { ok: false, error: 'Session expired. Please log in again.' };
+    ic = payload.ic;
+    const staffRow = findUserRow_(payload.ic);
+    if (!staffRow) return { ok: false, error: 'Account not found.' };
+    name = body.name || ic; // display name comes from the client (from DATABASE lookup), IC is authoritative
+  }
+
+  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
+  let logSheet = ss.getSheetByName(CONFIG.LOG_SHEET_NAME);
+  if (!logSheet) {
+    logSheet = ss.insertSheet(CONFIG.LOG_SHEET_NAME);
+    logSheet.appendRow(['Date', 'IC', 'Name', 'Type', 'Time', 'Latitude', 'Longitude', 'Location Name', 'Photo URL']);
+  }
+
+  const now = new Date();
+  const dateStr = Utilities.formatDate(now, CONFIG.TIMEZONE, 'yyyy-MM-dd');
+  const timeStr = Utilities.formatDate(now, CONFIG.TIMEZONE, 'HH:mm:ss');
+
+  // Determine IN or OUT: look for an existing IN today with no OUT yet
+  // NOTE: Google Sheets silently turns "2026-10-18" into a Date and "900101015555" into a number when a row is
+  // appended, so a plain === against the string never matched → every scan was written as IN. Compare normalised values.
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  let type;
+  try {
+    const data = logSheet.getDataRange().getValues();
+    const icKey = attIc_(ic);
+    let hasInToday = false, hasOutToday = false;
+    for (let i = 1; i < data.length; i++) {
+      if (attDate_(data[i][0]) === dateStr && attIc_(data[i][1]) === icKey) {
+        const t = String(data[i][3]).trim().toUpperCase();
+        if (t === 'IN') hasInToday = true;
+        if (t === 'OUT') hasOutToday = true;
+      }
+    }
+    if (hasInToday && hasOutToday) {
+      return { ok: false, error: 'Already checked IN and OUT today for this staff.' };
+    }
+    type = hasInToday ? 'OUT' : 'IN';
+
+    // Weekday rule: Check Out only opens from CHECKOUT_OPEN_HOUR (1:00 PM). Enforced here, not just in the app.
+    if (type === 'OUT') {
+      const cw = checkoutWindow_(now);
+      if (!cw.open) {
+        return { ok: false, code: 'CHECKOUT_TOO_EARLY', error: 'Check Out hanya dibuka selepas ' + cw.opensAtLabel + ' pada hari bekerja.', opensAt: cw.opensAtLabel };
+      }
+    }
+
+    // write Date / IC / Time as TEXT so they stay readable and comparable
+    const r = logSheet.getLastRow() + 1;
+    logSheet.getRange(r, 1, 1, 9).setNumberFormats([['@', '@', '@', '@', '@', '@', '@', '@', '@']])
+      .setValues([[dateStr, String(ic), name, type, timeStr, body.lat || '', body.lng || '', body.locName || '', '']]);
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
+  }
+
+  try { notifySupervisorsAttendance_(ic, name, type, timeStr); } catch (e) { Logger.log('Supervisor notify failed: ' + e); }
+
+  return { ok: true, type: type, date: dateStr, time: timeStr };
+}
+
+/**
+ * Saves the check-in snapshot to Drive and links it into the matching
+ * AttendanceLog row. Called separately, after the kiosk has already shown
+ * success — this is the slow step (Drive write) so it must never block the
+ * confirmation the staff member sees.
+ * Expected body: { ic, date, type, imageBase64 }
+ */
+function attachSnapshot(body) {
+  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
+  const logSheet = ss.getSheetByName(CONFIG.LOG_SHEET_NAME);
+  if (!logSheet) return { ok: false, error: 'AttendanceLog sheet not found' };
+
+  let photoUrl = '';
+  try {
+    const folder = DriveApp.getFolderById(CONFIG.SNAPSHOT_FOLDER_ID);
+    const base64 = body.imageBase64.split(',')[1] || body.imageBase64;
+    const blob = Utilities.newBlob(Utilities.base64Decode(base64), 'image/jpeg',
+      body.ic + '_' + body.date + '_' + body.type + '.jpg');
+    const file = folder.createFile(blob);
+    photoUrl = file.getUrl();
+  } catch (err) {
+    Logger.log('Snapshot save failed: ' + err);
+    return { ok: false, error: String(err) };
+  }
+
+  // Find the matching row (same date + IC + type, photo column still blank) and fill it in
+  const data = logSheet.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (attDate_(data[i][0]) === body.date && attIc_(data[i][1]) === attIc_(body.ic) && String(data[i][3]).trim().toUpperCase() === body.type && !data[i][8]) {
+      logSheet.getRange(i + 1, 9).setValue(photoUrl); // column I = Photo URL
+      break;
+    }
+  }
+
+  return { ok: true, photoUrl: photoUrl };
+}
+
+/**
+ * Dashboard "main box": today's own check-in/check-out time, from
+ * AttendanceLog (Date, IC, Name, Type, Time, Lat, Lng, LocName, PhotoURL).
+ * Identity comes from the verified session token, same rule as everywhere
+ * else — a staff member only ever sees their own times.
+ */
+function getTodayAttendance(body) {
+  const payload = verifyToken_(body.token);
+  if (!payload) return { ok: false, error: 'Session expired. Please log in again.' };
+
+  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
+  const logSheet = ss.getSheetByName(CONFIG.LOG_SHEET_NAME);
+  const dateStr = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd');
+
+  let checkIn = '', checkOut = '';
+  if (logSheet) {
+    const data = logSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (attDate_(data[i][0]) === dateStr && attIc_(data[i][1]) === attIc_(payload.ic)) {
+        const t = String(data[i][3]).trim().toUpperCase();
+        const tm = attTime_(data[i][4]);
+        if (t === 'IN' && !checkIn) checkIn = tm;
+        if (t === 'OUT') checkOut = tm;
+      }
+    }
+  }
+  const cw = checkoutWindow_(new Date());
+  return { ok: true, date: dateStr, checkIn: checkIn, checkOut: checkOut,
+           canCheckOut: cw.open, opensAt: cw.opensAtLabel, weekday: cw.weekday, serverTime: Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'HH:mm:ss') };
+}
+
+/** Is Check Out open right now? Weekdays (Mon–Fri) open from CHECKOUT_OPEN_HOUR; weekends are always open. */
+function checkoutWindow_(now) {
+  const dow = Number(Utilities.formatDate(now, CONFIG.TIMEZONE, 'u'));   // 1 = Monday … 7 = Sunday
+  const hour = Number(Utilities.formatDate(now, CONFIG.TIMEZONE, 'H'));
+  const weekday = dow >= 1 && dow <= 5;
+  const openHour = CONFIG.CHECKOUT_OPEN_HOUR || 13;
+  const h12 = openHour % 12 || 12;
+  return { weekday: weekday, open: !weekday || hour >= openHour, opensAtLabel: h12 + ':00 ' + (openHour >= 12 ? 'PM' : 'AM') };
+}
+
+/**
+ * Registers a new staff member: validates the IC isn't already in use,
+ * saves the uploaded photo to Drive, appends a row to DATABASE
+ * (name -> A, IC -> B, photo URL -> Z, leaving C:Y blank).
+ * Expected body: { name, ic, imageBase64 }
+ */
+function addStaff(body) {
+  const name = String(body.name || '').trim();
+  const ic = String(body.ic || '').trim();
+  if (!name || !ic) return { ok: false, error: 'Name and IC are both required.' };
+  if (!body.imageBase64) return { ok: false, error: 'A photo is required.' };
+
+  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
+  const sheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
+  if (!sheet) return { ok: false, error: 'DATABASE sheet not found' };
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow >= 2) {
+    const existingIcs = sheet.getRange(2, 2, lastRow - 1, 1).getValues().flat().map(String);
+    if (existingIcs.indexOf(ic) !== -1) {
+      return { ok: false, error: 'A staff member with this IC number already exists.' };
+    }
+  }
+
+  let photoUrl;
+  try {
+    const folder = DriveApp.getFolderById(CONFIG.STAFF_PHOTO_FOLDER_ID);
+    const base64 = body.imageBase64.split(',')[1] || body.imageBase64;
+    const blob = Utilities.newBlob(Utilities.base64Decode(base64), 'image/jpeg', ic + '_' + name + '.jpg');
+    photoUrl = folder.createFile(blob).getUrl();
+  } catch (err) {
+    return { ok: false, error: 'Could not save photo: ' + err };
+  }
+
+  const newRow = sheet.getLastRow() + 1;
+  sheet.getRange(newRow, 1).setValue(name);   // column A
+  sheet.getRange(newRow, 2).setValue(ic);     // column B
+  sheet.getRange(newRow, 26).setValue(photoUrl); // column Z
+
+  provisionUserForStaff_(ic); // auto-create HR portal login (default password = IC, forced change on first login)
+
+  return { ok: true, name: name, ic: ic };
+}
+
+/**
+ * Builds a monthly attendance PDF for one staff member using a plain
+ * DocumentApp table (no merged cells — that's the part that's been
+ * unreliable before; a simple grid table is well-supported).
+ * Expected body: { ic, year, month }  (month is 1-12)
+ */
+function generateReport(body) {
+  const ic = String(body.ic || '').trim();
+  const year = parseInt(body.year, 10);
+  const month = parseInt(body.month, 10); // 1-12
+  if (!ic || !year || !month) return { ok: false, error: 'Missing ic/year/month' };
+
+  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
+
+  // Look up the staff name
+  const dbSheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
+  const dbData = dbSheet.getRange(2, 1, Math.max(dbSheet.getLastRow() - 1, 0), 2).getValues();
+  let staffName = '';
+  for (let i = 0; i < dbData.length; i++) {
+    if (String(dbData[i][1]).trim() === ic) { staffName = String(dbData[i][0]).trim(); break; }
+  }
+  if (!staffName) return { ok: false, error: 'Staff not found for this IC' };
+
+  const logSheet = ss.getSheetByName(CONFIG.LOG_SHEET_NAME);
+  const monthPrefix = year + '-' + String(month).padStart(2, '0');
+
+  // Group this staff's rows by date -> { in, out }
+  const byDate = {};
+  if (logSheet) {
+    const data = logSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      const [date, rowIc, , type, time] = data[i];
+      if (rowIc !== ic || !String(date).startsWith(monthPrefix)) continue;
+      if (!byDate[date]) byDate[date] = { in: '', out: '' };
+      if (type === 'IN') byDate[date].in = time;
+      if (type === 'OUT') byDate[date].out = time;
+    }
+  }
+
+  const dates = Object.keys(byDate).sort();
+  const tableData = [['Date', 'Time In', 'Time Out', 'Hours Worked']];
+  let totalHours = 0;
+  dates.forEach(date => {
+    const rec = byDate[date];
+    let hours = '';
+    if (rec.in && rec.out) {
+      const diffMs = new Date(date + 'T' + rec.out) - new Date(date + 'T' + rec.in);
+      const h = diffMs / 3600000;
+      if (h > 0) { hours = h.toFixed(2); totalHours += h; }
+    }
+    tableData.push([date, rec.in || '—', rec.out || '—', hours || '—']);
+  });
+
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const doc = DocumentApp.create('temp_report_' + ic + '_' + new Date().getTime());
+  const body_ = doc.getBody();
+  body_.appendParagraph('Klinik Kesihatan Ayer Hitam').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  body_.appendParagraph('Monthly Attendance Report').setHeading(DocumentApp.ParagraphHeading.HEADING1);
+  body_.appendParagraph('Staff: ' + staffName + '  (IC: ' + ic + ')');
+  body_.appendParagraph('Month: ' + monthNames[month - 1] + ' ' + year);
+  body_.appendParagraph('');
+
+  if (tableData.length === 1) {
+    body_.appendParagraph('No attendance records found for this month.');
+  } else {
+    const table = body_.appendTable(tableData);
+    const headerRow = table.getRow(0);
+    for (let c = 0; c < headerRow.getNumCells(); c++) {
+      headerRow.getCell(c).setBackgroundColor('#0F5C56');
+      headerRow.getCell(c).editAsText().setForegroundColor('#FFFFFF').setBold(true);
+    }
+    body_.appendParagraph('');
+    body_.appendParagraph('Total hours recorded: ' + totalHours.toFixed(2)).setBold(true);
+  }
+
+  doc.saveAndClose();
+  const pdfBlob = DriveApp.getFileById(doc.getId()).getAs('application/pdf');
+  const pdfBase64 = Utilities.base64Encode(pdfBlob.getBytes());
+  DriveApp.getFileById(doc.getId()).setTrashed(true); // clean up the temp doc
+
+  const filename = staffName.replace(/[^a-zA-Z0-9]/g, '_') + '_' + monthPrefix + '.pdf';
+  return { ok: true, pdfBase64: pdfBase64, filename: filename };
+}
+
+function jsonOut(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
