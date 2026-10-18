@@ -1,667 +1,671 @@
-/**
- * KKAH FACE ATTENDANCE — Backend (Google Apps Script)
- * ----------------------------------------------------
- * Deploy as Web App:
- *   Deploy > New deployment > Type: Web app
- *   Execute as: Me
- *   Who has access: Anyone
- * Copy the /exec URL into checkin.html (API_URL constant).
- *
- * SETUP REQUIRED BELOW — fill in your real IDs.
- */
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SIAGA · Check In / Out</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.10.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.10.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SIAGA">
 
-const CONFIG = {
-  DATABASE_SHEET_ID: 'PASTE_YOUR_DATABASE_SHEET_ID_HERE',   // the external Sheet with the DATABASE tab (+ AttendanceLog tab)
-  DATABASE_SHEET_NAME: 'DATABASE',
-  LOG_SHEET_NAME: 'AttendanceLog',                          // created automatically if missing, lives in the same spreadsheet
-  SNAPSHOT_FOLDER_ID: 'PASTE_YOUR_DRIVE_FOLDER_ID_HERE',     // Drive folder to store check-in snapshots
-  STAFF_PHOTO_FOLDER_ID: 'PASTE_YOUR_STAFF_PHOTO_FOLDER_ID_HERE', // Drive folder to store new-staff registration photos
-  APP_BASE_URL: 'https://opdkktu.github.io/timestamp-attendance/', // used to build the email verification link — update if you move to the new HR portal repo
-  ONESIGNAL_APP_ID: 'e6ffc7a0-2572-46da-b664-2a03c6dd210a',
-  ONESIGNAL_REST_API_KEY: 'PASTE_YOUR_ONESIGNAL_REST_API_KEY_HERE',
-  TIMEZONE: 'Asia/Kuala_Lumpur',
-  CHECKOUT_OPEN_HOUR: 13, // Check Out opens at 1:00 PM on weekdays (Mon–Fri). Weekends: no restriction.
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
+    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60; --green-700:#0a8f5a; --red-600:#C62839; --red-800:#8f1020;
+    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+    --banner-a:var(--teal-900); --banner-b:var(--teal-700);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; }
+  body{
+    min-height:100vh; min-height:100dvh; font-family:'Inter',sans-serif; color:var(--ink-700);
+    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
+    display:flex; justify-content:center; padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));
+    transition:background .5s ease;
+  }
+  body.st-ok{ background:linear-gradient(180deg,#d6f5e4,#effaf3); }
+  body.st-err{ background:linear-gradient(180deg,#fde0e3,#fff3f4); }
+  body.st-warn{ background:linear-gradient(180deg,#fbf0cc,#fffaf0); }
 
-  // --- Consolidated in from "Jadual Bertugas" (borang permohonan + jadual) ---
-  // Same Apps Script project now, so these are just two more sheet IDs — no
-  // cross-project token bridge needed anymore; the session token (CONFIG above)
-  // already covers all of it.
-  RECORDS_SHEET_ID: '19F75U1uHuh3o-WwmuKrbYr_Or9X87NHbGkxN_rRPfXw',   // "borang permohonan" submissions (Records tab)
-  RECORDS_SHEET_NAME: 'Records',
-  LEAVE_UPLOAD_FOLDER_ID: 'PASTE_YOUR_LEAVE_UPLOAD_FOLDER_ID_HERE', // Drive folder for leave-request attachments/evidence
-  SCHEDULE_SHEET_ID: '191ZTgpVGen3Y1Ksj7-h8rtdCkuj4U1QIam4A1N6QkuY', // "jadual" — OPD <year> tabs + "today list" tab + "ONCALL TODAY" tab
-  KURSUS_LIST_SHEET_NAME: 'senarai kursus',   // tab inside DATABASE_SHEET_ID (not SCHEDULE_SHEET_ID) — see getMyKursusList in DashboardBoxes.gs
-  ONCALL_SHEET_NAME: 'ONCALL TODAY',          // tab inside SCHEDULE_SHEET_ID — read client-side as published CSV, same as "today list"
-  SUPERVISOR_NAME: 'TAN YI HAO',   // fallback until multi-unit supervisor routing is added
-  SUPERVISOR_PHONE: '60164039350',
+  .app{ width:100%; max-width:440px; display:flex; flex-direction:column; gap:14px; }
 
-  // --- Standby only — wired up once you share the details/files for these ---
-  ILMU_SHEET_ID: '1wcHIUrgZnyOaIpOfXc-2acAwvk0QEjOtV58lWJosr3o',     // CME (dalaman) attendance — QR scan + cert email, separate project incoming
-  // Kaunter C → PRIMA queue system (separate Apps Script project). See KaunterC.gs.
-  PRIMA_URL: 'https://script.google.com/a/macros/moh.gov.my/s/AKfycbxSBGU1I4v_geNAMmQR4wnDdm6SZn8gVV4z0AC608EfOEHw3MyO58MJSffoRGElP-c/exec',
-  PRIMA_SECRET: 'PASTE_A_LONG_RANDOM_SECRET_HERE', // must match Script Property SIAGA_SECRET in the PRIMA project
-  KAUNTER_C_ALLOWED_ICS: [], // empty = every logged-in staff may call; or list ICs e.g. ['900101015555']
-  VEHICLE_SHEET_ID: 'PASTE_YOUR_VEHICLE_SHEET_ID_HERE' // driver module — repair/invoice/petrol logs, 3 vehicles incl. ambulance
+  .top{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:2px 4px; }
+  .back-link{ color:var(--teal-900); text-decoration:none; font-weight:700; font-size:13.5px; padding:8px 12px; border-radius:99px; background:#fff; border:1px solid var(--line); }
+  .who{ text-align:right; min-width:0; }
+  .who .eyebrow{ font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-500); font-weight:700; }
+  .who h1{ font-family:'Manrope',sans-serif; font-size:16px; font-weight:800; margin:2px 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mode-pill{ display:inline-block; margin-top:4px; font-size:11px; font-weight:800; letter-spacing:.06em; padding:3px 11px; border-radius:99px; background:var(--green-500); color:#fff; }
+  .mode-pill.out{ background:var(--gold-500); }
+  .mode-pill[hidden]{ display:none; }
+
+  /* ---- big status banner: the one thing to glance at ---- */
+  .banner{
+    border-radius:26px; padding:20px 20px 18px; color:#fff; text-align:center;
+    background:linear-gradient(135deg,var(--banner-a),var(--banner-b)); box-shadow:0 18px 44px -18px rgba(11,61,58,.55);
+    transition:background .4s ease; position:relative; overflow:hidden;
+  }
+  .banner.ok{ --banner-a:var(--green-700); --banner-b:var(--green-500); }
+  .banner.err{ --banner-a:var(--red-800); --banner-b:var(--red-600); }
+  .banner.warn{ --banner-a:#8a6d0a; --banner-b:var(--gold-500); }
+  .b-icon{ font-size:44px; line-height:1; height:50px; display:flex; align-items:center; justify-content:center; }
+  .b-icon .spin{ width:38px; height:38px; border-radius:50%; border:4px solid rgba(255,255,255,.3); border-top-color:#fff; animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .b-title{ font-family:'Manrope',sans-serif; font-size:23px; font-weight:800; margin-top:8px; line-height:1.15; }
+  .b-sub{ font-size:14px; opacity:.92; margin-top:6px; line-height:1.45; min-height:20px; }
+  .banner.pop .b-icon{ animation:pop .5s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes pop{ 0%{ transform:scale(.4); opacity:0; } 100%{ transform:scale(1); opacity:1; } }
+
+  .prep-track{ height:5px; border-radius:5px; background:rgba(255,255,255,.25); margin-top:14px; overflow:hidden; }
+  .prep-track i{ display:block; height:100%; width:0; background:#fff; transition:width .35s ease; }
+  .prep-track.hide{ display:none; }
+
+  /* ---- camera ---- */
+  .stage{ background:#fff; border-radius:26px; border:1px solid var(--line); padding:20px 16px 14px; box-shadow:0 14px 40px -22px rgba(11,61,58,.35); }
+  .viewfinder{ position:relative; width:250px; height:250px; margin:0 auto; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .viewfinder video, .viewfinder canvas.snapshot{ width:218px; height:218px; border-radius:50%; object-fit:cover; background:#0B3D3A; transform:scaleX(-1); }
+  .viewfinder canvas.snapshot{ display:none; }
+  .ring{ position:absolute; inset:0; border-radius:50%; border:4px solid var(--line); transition:border-color .3s ease, box-shadow .3s ease; }
+  .ring.scanning{ border-color:var(--teal-500); animation:pulse 1.4s ease-in-out infinite; }
+  .ring.found{ border-color:var(--gold-500); box-shadow:0 0 0 8px rgba(201,162,39,.18); animation:none; }
+  .ring.success{ border-color:var(--green-500); box-shadow:0 0 0 10px rgba(47,174,96,.18); animation:none; }
+  .ring.error{ border-color:var(--red-600); box-shadow:0 0 0 10px rgba(198,40,57,.15); animation:none; }
+  @keyframes pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(28,143,132,.3);} 50%{ box-shadow:0 0 0 14px rgba(28,143,132,0);} }
+  .check-badge{ position:absolute; bottom:6px; right:6px; width:54px; height:54px; border-radius:50%; background:var(--green-500); display:flex; align-items:center; justify-content:center; transform:scale(0); opacity:0; border:3px solid #fff; }
+  .check-badge.show{ animation:pop .5s cubic-bezier(.34,1.56,.64,1) forwards; }
+  .check-badge svg{ width:26px; height:26px; }
+  .tip{ text-align:center; font-size:13px; color:var(--ink-500); margin:12px 6px 0; min-height:18px; }
+
+  /* ---- 4 step chips ---- */
+  .steps{ list-style:none; display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:14px 0 0; padding:0; }
+  .steps li{ text-align:center; font-size:11px; font-weight:700; color:#9bb0ab; display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .steps .dot{ width:30px; height:30px; border-radius:50%; background:var(--mint-100); border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:13px; transition:all .3s ease; }
+  .steps li.active{ color:var(--teal-700); } .steps li.active .dot{ border-color:var(--teal-500); background:#fff; animation:pulse 1.4s infinite; }
+  .steps li.done{ color:var(--green-700); } .steps li.done .dot{ background:var(--green-500); border-color:var(--green-500); color:#fff; }
+  .steps li.error{ color:var(--red-600); } .steps li.error .dot{ background:var(--red-600); border-color:var(--red-600); color:#fff; }
+
+  /* ---- result + actions ---- */
+  .result-card{ background:#fff; border:1px solid var(--line); border-radius:20px; padding:14px 18px; display:none; }
+  .result-card.show{ display:block; animation:pop .4s ease both; }
+  .result-row{ display:flex; justify-content:space-between; padding:6px 0; font-size:14px; gap:12px; }
+  .result-row .label{ color:var(--ink-500); } .result-row .value{ font-weight:700; text-align:right; }
+  .actions{ display:flex; flex-direction:column; gap:10px; }
+  .btn{ height:54px; border-radius:16px; border:none; font-weight:800; font-size:15px; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; text-decoration:none; }
+  .btn.primary{ background:linear-gradient(135deg,var(--teal-900),var(--teal-500)); color:#fff; box-shadow:0 10px 24px -10px rgba(11,61,58,.6); }
+  .btn.ghost{ background:#fff; color:var(--teal-900); border:1.5px solid var(--line); }
+  .btn[hidden]{ display:none; }
+  .countdown{ text-align:center; font-size:13px; color:var(--ink-500); }
+
+  /* ---- start screen ---- */
+  .start{ position:fixed; inset:0; z-index:60; display:none; flex-direction:column; align-items:center; justify-content:center; padding:28px; text-align:center; color:#fff; background:linear-gradient(135deg,var(--teal-900),var(--teal-700)); }
+  .start.show{ display:flex; }
+  .start h2{ font-family:'Manrope',sans-serif; font-size:24px; margin:0 0 8px; }
+  .start p{ font-size:14px; opacity:.85; margin:0 0 22px; max-width:300px; line-height:1.5; }
+  .start .btn{ width:min(300px,100%); background:#fff; color:var(--teal-900); }
+
+  .flash{ position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:55; }
+  .flash.go{ animation:flash .45s ease-out; }
+  @keyframes flash{ 0%{ opacity:.95; } 100%{ opacity:0; } }
+
+  .offline-banner{ position:fixed; top:0; left:0; right:0; z-index:70; background:#B3311A; color:#fff; text-align:center; font-size:13px; font-weight:600; padding:8px 12px; transform:translateY(-100%); transition:transform .3s ease; }
+  .offline-banner.show{ transform:translateY(0); }
+
+  .geofence-blocker{ position:fixed; inset:0; z-index:80; background:#4A1010; display:none; align-items:center; justify-content:center; padding:24px; text-align:center; color:#fff; }
+  .geofence-blocker.show{ display:flex; }
+  .geofence-box{ max-width:360px; }
+  .geofence-box .zone-msg{ font-family:'Manrope',sans-serif; font-size:17px; font-weight:700; margin-bottom:10px; }
+  .geofence-box .warning{ font-weight:800; font-size:16px; color:#FFD9D9; margin-bottom:16px; animation:blinkWarn 1s step-start infinite; }
+  @keyframes blinkWarn{ 50%{ opacity:.15; } }
+  .geofence-box .distance{ font-size:12px; opacity:.75; margin-bottom:18px; }
+  .geofence-retry{ padding:12px 24px; border-radius:100px; border:none; background:#fff; color:#4A1010; font-weight:700; cursor:pointer; }
+
+  @media (max-height:700px){ .viewfinder{ width:200px; height:200px; } .viewfinder video,.viewfinder canvas.snapshot{ width:174px; height:174px; } .b-icon{ font-size:36px; height:40px; } }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+<script src="./permission-gate.js"></script>
+</head>
+<body>
+
+<div class="offline-banner" id="offlineBanner">Tiada sambungan internet — Check In tidak dapat direkod</div>
+<div class="flash" id="flash"></div>
+
+<div class="geofence-blocker" id="geofenceBlocker">
+  <div class="geofence-box">
+    <div class="zone-msg" id="geofenceZoneMsg">Anda berada di luar bangunan klinik</div>
+    <div class="warning" id="geofenceWarning">⚠ AMARAN! ANDA DILARANG UNTUK TERUSKAN FACEPRINT.</div>
+    <div class="distance" id="geofenceDistance">—</div>
+    <button class="geofence-retry" onclick="recheckGeofence()">Semak Semula Lokasi</button>
+  </div>
+</div>
+
+<div class="start" id="startScreen">
+  <h2 id="startTitle">Check In</h2>
+  <p>Tekan untuk mula. Telefon akan meminta akses kamera &amp; lokasi (sekali sahaja).</p>
+  <button class="btn" onclick="beginStart()">Mula</button>
+</div>
+
+<main class="app">
+  <div class="top">
+    <a class="back-link" href="./dashboard.html">← Dashboard</a>
+    <div class="who">
+      <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
+      <h1 id="headerName">Check In / Out</h1>
+      <span class="mode-pill" id="modePill" hidden>IN</span>
+    </div>
+  </div>
+
+  <!-- The status: big, colour-coded, with a sound/vibration cue at each stage -->
+  <section class="banner" id="banner" role="status" aria-live="polite">
+    <div class="b-icon" id="bIcon"><div class="spin"></div></div>
+    <div class="b-title" id="bTitle">Menyemak status…</div>
+    <div class="b-sub" id="bSub"></div>
+    <div class="prep-track" id="prepTrack"><i id="prepFill"></i></div>
+  </section>
+
+  <section class="stage" id="stage">
+    <div class="viewfinder">
+      <div class="ring" id="ring"></div>
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="snapshotCanvas" class="snapshot"></canvas>
+      <div class="check-badge" id="checkBadge">
+        <svg viewBox="0 0 26 26" fill="none"><path d="M5 13l5 5 11-11" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="tip" id="tip"></div>
+    <ol class="steps" id="steps">
+      <li data-step="loc"><span class="dot">📍</span>Lokasi</li>
+      <li data-step="face"><span class="dot">🙂</span>Muka</li>
+      <li data-step="photo"><span class="dot">📸</span>Gambar</li>
+      <li data-step="save"><span class="dot">💾</span>Rekod</li>
+    </ol>
+  </section>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-row"><span class="label">Jenis</span><span class="value" id="resultType">—</span></div>
+    <div class="result-row"><span class="label">Masa</span><span class="value" id="resultTime">—</span></div>
+    <div class="result-row"><span class="label">Tarikh</span><span class="value" id="resultDate">—</span></div>
+    <div class="result-row"><span class="label">Lokasi</span><span class="value" id="resultPlace">—</span></div>
+  </div>
+
+  <div class="actions" id="actions">
+    <button class="btn primary" id="btnRetry" hidden onclick="onRetry()">Cuba lagi</button>
+    <a class="btn ghost" id="btnDash" href="./dashboard.html" hidden>Kembali ke Dashboard</a>
+    <div class="countdown" id="countdown"></div>
+  </div>
+</main>
+
+<audio id="successSound" src="https://opdkktu.github.io/trial1/register.mp3" preload="auto"></audio>
+
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const MODEL_URL = './models';
+const MATCH_THRESHOLD = 0.5;
+const RECOGNIZE_STABLE_FRAMES = 2;      // was 3 — quicker, still two matching frames in a row
+const DETECTOR_INPUT = 224;              // smaller input = faster detection on phones
+const DESC_CACHE_KEY = 'kkah_my_desc_v1';
+const CHECKOUT_OPEN_HOUR = 13;           // mirrors CONFIG.CHECKOUT_OPEN_HOUR on the server (the server is the real gate)
+
+/* ---------------- Geofence config — Klinik Kesihatan Ayer Hitam ---------------- */
+const CLINIC_LAT = 6.237;
+const CLINIC_LNG = 100.24664;
+const BUILDING_RADIUS_M = 60;
+const AREA_RADIUS_M = 150;
+
+function distanceMeters(lat1, lng1, lat2, lng2){
+  const R = 6371000, toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+function checkGeofence(lat, lng){
+  const dist = Math.round(distanceMeters(lat, lng, CLINIC_LAT, CLINIC_LNG));
+  if(dist <= BUILDING_RADIUS_M) return null;
+  return { zoneMsg: dist <= AREA_RADIUS_M ? 'Anda berada di luar bangunan klinik' : 'Anda berada di luar kawasan klinik', dist };
+}
+
+const $ = id => document.getElementById(id);
+let video, mode = null;                  // mode: 'IN' | 'OUT'
+let myDescriptor = null, myName = null, myIc = null, userLocation = null;
+let stream = null, wake = null;
+let scanning = false, stableCount = 0, modelsReady = false, isOffline = false, runId = 0;
+let capturedImage = '', recording = false, noFaceSince = 0, redirectTimer = null, abortRun = false;
+
+/* ===================== UI helpers ===================== */
+function setBanner(kind, icon, title, sub){
+  const b = $('banner');
+  b.className = 'banner ' + (kind === 'info' ? '' : kind) + ' pop';
+  document.body.className = kind === 'ok' ? 'st-ok' : kind === 'err' ? 'st-err' : kind === 'warn' ? 'st-warn' : '';
+  $('bIcon').innerHTML = icon === 'spin' ? '<div class="spin"></div>' : icon;
+  $('bTitle').textContent = title;
+  $('bSub').textContent = sub || '';
+  void b.offsetWidth; // restart the pop animation
+}
+function setStep(name, state){
+  const li = document.querySelector('#steps li[data-step="' + name + '"]');
+  if(li) li.className = state || '';
+}
+function resetSteps(){ ['loc','face','photo','save'].forEach(s => setStep(s, '')); }
+function setProgress(p){ $('prepFill').style.width = Math.min(100, p) + '%'; }
+function showButtons(retry, dash){ $('btnRetry').hidden = !retry; $('btnDash').hidden = !dash; }
+function setMode(m){
+  mode = m;
+  const pill = $('modePill'); pill.hidden = false; pill.textContent = m === 'OUT' ? 'CHECK OUT' : 'CHECK IN'; pill.className = 'mode-pill' + (m === 'OUT' ? ' out' : '');
+  $('startTitle').textContent = m === 'OUT' ? 'Check Out' : 'Check In';
+}
+function setOffline(state){ isOffline = state; $('offlineBanner').classList.toggle('show', state); }
+
+/* ===================== sound / vibration cues (so you don't have to watch the screen) ===================== */
+let actx = null;
+function audioCtx(){ try{ const AC = window.AudioContext || window.webkitAudioContext; if(!actx && AC) actx = new AC(); if(actx && actx.state === 'suspended') actx.resume(); }catch(e){} return actx; }
+function tones(list, vol){ // list of [freq, ms]
+  const c = audioCtx(); if(!c || c.state !== 'running') return;
+  let t = c.currentTime;
+  list.forEach(([f, ms]) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(vol || .25, t); g.gain.exponentialRampToValueAtTime(.001, t + ms/1000);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + ms/1000 + .02); t += ms/1000;
+  });
+}
+function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+function speak(text){
+  try{
+    if(!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text); u.lang = 'ms-MY'; u.rate = 1.05; u.volume = 1;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+const cue = {
+  found(){ tones([[880, 90]], .18); buzz(30); },
+  shutter(){ tones([[1500, 40], [700, 70]], .3); buzz(80); },
+  success(){ tones([[660, 120], [880, 120], [1175, 220]], .3); buzz([70, 50, 70]); },
+  fail(){ tones([[300, 280], [220, 360]], .3); buzz([300, 100, 300]); }
 };
+document.addEventListener('pointerdown', () => audioCtx(), { once: true, passive: true });
 
-/** Entry point for GET requests: ?action=getStaff | getStaffList */
-function doGet(e) {
-  const action = e && e.parameter && e.parameter.action;
-  try {
-    if (action === 'getStaff') {
-      return jsonOut(getStaffPayload());
-    }
-    if (action === 'getStaffList') {
-      return jsonOut(getStaffListPayload());
-    }
-    return jsonOut({ ok: false, error: 'Unknown action' });
-  } catch (err) {
-    return jsonOut({ ok: false, error: String(err) });
+/* ===================== boot ===================== */
+window.addEventListener('online', () => setOffline(false));
+window.addEventListener('offline', () => setOffline(true));
+window.addEventListener('unhandledrejection', (e) => { console.error('Unhandled error:', e.reason); });
+
+window.addEventListener('DOMContentLoaded', boot);
+
+async function boot(){
+  const token = sessionStorage.getItem('kkah_session_token');
+  if(!token){ window.location.href = './login.html'; return; }
+  video = $('video');
+  setOffline(!navigator.onLine);
+  setBanner('info', 'spin', 'Menyemak status hari ini…', '');
+  $('prepTrack').classList.add('hide');
+
+  // 1) What are we doing today — Check In, Check Out, locked until 1 PM, or already complete?
+  const today = await fetchToday();
+  if(today){
+    if(today.checkIn && today.checkOut){ return showComplete(today); }
+    if(today.checkIn){
+      setMode('OUT');
+      if(today.canCheckOut === false || (today.canCheckOut === undefined && !openNowLocal())){ return showLocked(today.opensAt || '1:00 PM'); }
+    }else{ setMode('IN'); }
+  }
+
+  // 2) Start straight away when the phone already allowed camera + location; otherwise one friendly tap.
+  if(await permissionsGranted()) beginStart();
+  else $('startScreen').classList.add('show');
+}
+
+async function fetchToday(){
+  try{
+    const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action:'getTodayAttendance', token: sessionStorage.getItem('kkah_session_token') }) });
+    const d = await res.json();
+    if(d && d.ok) return d;
+    if(d && /expired/i.test(d.error || '')){ window.location.href = './login.html'; }
+  }catch(e){ console.warn('Could not read today status:', e); }
+  return null; // carry on — the server still decides IN/OUT and enforces the rules
+}
+
+function openNowLocal(){ const d = new Date(), dow = d.getDay(); return !(dow >= 1 && dow <= 5) || d.getHours() >= CHECKOUT_OPEN_HOUR; }
+
+async function permissionsGranted(){
+  try{
+    if(!navigator.permissions) return false;
+    const [cam, geo] = await Promise.all([navigator.permissions.query({ name:'camera' }), navigator.permissions.query({ name:'geolocation' })]);
+    return cam.state === 'granted' && geo.state === 'granted';
+  }catch(e){ return false; }
+}
+
+function showComplete(t){
+  setBanner('ok', '🎉', 'Kehadiran hari ini lengkap', 'Masuk ' + fmt12(t.checkIn) + '  ·  Keluar ' + fmt12(t.checkOut));
+  $('stage').style.display = 'none'; showButtons(false, true);
+}
+let lockTimer = null;
+function showLocked(opensAt){
+  $('stage').style.display = 'none';
+  showButtons(false, true);
+  const tick = () => {
+    if(openNowLocal()){ clearInterval(lockTimer); location.reload(); return; }
+    const d = new Date(), t = new Date(); t.setHours(CHECKOUT_OPEN_HOUR, 0, 0, 0);
+    const mins = Math.max(1, Math.ceil((t - d) / 60000));
+    const h = Math.floor(mins / 60), m = mins % 60;
+    setBanner('warn', '⏳', 'Check Out belum dibuka', 'Dibuka jam ' + opensAt + ' pada hari bekerja — ' + (h ? h + ' jam ' : '') + m + ' minit lagi.');
+  };
+  tick(); lockTimer = setInterval(tick, 30000);
+}
+function fmt12(hms){
+  const p = String(hms || '').split(':').map(Number); let h = p[0] || 0; const m = p[1] || 0;
+  const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + ':' + String(m).padStart(2, '0') + ' ' + ap;
+}
+
+/* ===================== prepare (everything in parallel) ===================== */
+function beginStart(){
+  audioCtx(); // this tap unlocks sound for the cues below
+  $('startScreen').classList.remove('show');
+  init();
+}
+
+async function init(){
+  const my = ++runId;
+  resetSteps(); showButtons(false, false);
+  $('resultCard').classList.remove('show'); $('checkBadge').classList.remove('show');
+  $('ring').className = 'ring'; $('tip').textContent = '';
+  video.style.display = 'block'; $('snapshotCanvas').style.display = 'none';
+  $('countdown').textContent = '';
+  capturedImage = ''; recording = false; scanning = false; stableCount = 0; abortRun = false;
+  setOffline(!navigator.onLine);
+
+  setBanner('info', 'spin', 'Menyediakan…', 'Sila tunggu sebentar — kamera, lokasi & pengecam muka');
+  $('prepTrack').classList.remove('hide'); setProgress(5);
+  setStep('loc', 'active');
+  requestWake();
+
+  let done = 0; const bump = (w) => { done += w; setProgress(5 + done); };
+  try{
+    const modelsP = loadModels().then(() => { bump(35); });
+    const locP    = requestLocation().then(() => { setStep('loc', 'done'); bump(15); });
+    const camP    = startCamera().then(() => { bump(15); });
+    const descP   = loadMyDescriptor(modelsP).then(() => { bump(25); });
+    await Promise.all([modelsP, locP, camP, descP]);
+    if(my !== runId) return;
+
+    setBanner('info', 'spin', 'Hampir siap…', 'Memanaskan pengecam muka');
+    await warmUp();
+    if(my !== runId) return;
+
+    $('prepTrack').classList.add('hide');
+    setStep('face', 'active');
+    setBanner('info', '🙂', 'Pandang kamera', 'Kekalkan muka dalam bulatan — ia akan mengambil gambar secara automatik');
+    scanning = true; noFaceSince = Date.now();
+    detectLoop(my);
+  }catch(err){
+    console.error(err);
+    abortRun = true; stopCamera(); releaseWake();
+    $('prepTrack').classList.add('hide');
+    const m = err && err.message;
+    if(m === 'Outside allowed zone') return;        // the red geofence screen is already showing
+    if(m === 'Camera permission denied'){ setStep('face', 'error'); setBanner('err', '📷', 'Kamera tidak dibenarkan', 'Benarkan akses kamera dalam tetapan pelayar/telefon, kemudian cuba lagi.'); }
+    else if(m === 'Location permission denied'){ setStep('loc', 'error'); setBanner('err', '📍', 'Lokasi tidak dibenarkan', 'Hidupkan lokasi & benarkan akses, kemudian cuba lagi.'); }
+    else setBanner('err', '⚠️', 'Tidak dapat memulakan', m || 'Sila semak sambungan dan cuba lagi.');
+    cue.fail(); showButtons(true, true);
   }
 }
 
-/**
- * Entry point for POST requests.
- * IMPORTANT: the frontend must send Content-Type: text/plain to avoid a CORS
- * preflight (Apps Script does not handle OPTIONS). The body is still JSON text;
- * we parse it manually below.
- */
-function doPost(e) {
-  try {
-    const body = JSON.parse(e.postData.contents);
-    const blocked = siagaGate_(body.action, body);          // supervisor view tokens are read-only
-    if (blocked) return jsonOut(blocked);
-    const out = doPostCore_(body);
-    try { siagaAfter_(body.action, body, JSON.parse(out.getContent())); } catch (logErr) {} // activity log
-    return out;
-  } catch (err) {
-    return jsonOut({ ok: false, error: String(err) });
-  }
+function requestLocation(){
+  return new Promise((resolve, reject) => {
+    if(!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+    const onSuccess = pos => {
+      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, name: '' };
+      const violation = checkGeofence(userLocation.lat, userLocation.lng);
+      if(violation){
+        $('geofenceZoneMsg').textContent = violation.zoneMsg;
+        $('geofenceDistance').textContent = 'Jarak dari klinik: ~' + violation.dist + 'm';
+        $('geofenceBlocker').classList.add('show');
+        cue.fail();
+        return reject(new Error('Outside allowed zone'));
+      }
+      reverseGeocode(userLocation.lat, userLocation.lng); // background — never holds anything up
+      resolve();
+    };
+    const onFail = () => reject(new Error('Location permission denied'));
+    navigator.geolocation.getCurrentPosition(onSuccess, () => {
+      navigator.geolocation.getCurrentPosition(onSuccess, onFail, { enableHighAccuracy:false, timeout:12000, maximumAge:120000 });
+    }, { enableHighAccuracy:false, timeout:6000, maximumAge:120000 });
+  });
+}
+function recheckGeofence(){ $('geofenceBlocker').classList.remove('show'); init(); }
+
+async function reverseGeocode(lat, lng){
+  try{
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 4000);
+    const res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lng, { signal: ctl.signal });
+    clearTimeout(to);
+    const data = await res.json(); const a = data.address || {};
+    const name = a.amenity || a.building || a.road || a.suburb || a.village || a.town || data.display_name || '';
+    if(userLocation) userLocation.name = name;
+  }catch(err){ /* optional */ }
 }
 
-function doPostCore_(body) {
-  try {
-    const action = body.action;
-
-    if (action === 'logout') {
-      return jsonOut({ ok: true });
-    }
-    if (action === 'getMyNotifications') {
-      return jsonOut(getMyNotifications(body));
-    }
-    if (action === 'logActivity') {
-      return jsonOut({ ok: true });
-    }
-    if (action === 'getMyActivity') {
-      return jsonOut(getMyActivity(body));
-    }
-    if (action === 'getSupervisorScope') {
-      return jsonOut(getSupervisorScope(body));
-    }
-    if (action === 'getAnnounceOptions') {
-      return jsonOut(getAnnounceOptions(body));
-    }
-    if (action === 'sendAnnouncement') {
-      return jsonOut(sendAnnouncement(body));
-    }
-    if (action === 'listSupervisedStaff') {
-      return jsonOut(listSupervisedStaff(body));
-    }
-    if (action === 'startViewAs') {
-      return jsonOut(startViewAs(body));
-    }
-    if (action === 'logAttendance') {
-      return jsonOut(logAttendance(body));
-    }
-    if (action === 'attachSnapshot') {
-      return jsonOut(attachSnapshot(body));
-    }
-    if (action === 'addStaff') {
-      return jsonOut(addStaff(body));
-    }
-    if (action === 'generateReport') {
-      return jsonOut(generateReport(body));
-    }
-    if (action === 'login') {
-      return jsonOut(login(body));
-    }
-    if (action === 'verifyTotp') {
-      return jsonOut(verifyTotp(body));
-    }
-    if (action === 'changePassword') {
-      return jsonOut(changePassword(body));
-    }
-    if (action === 'registerBiometric') {
-      return jsonOut(registerBiometric(body));
-    }
-    if (action === 'biometricLogin') {
-      return jsonOut(biometricLogin(body));
-    }
-    if (action === 'getMyPhoto') {
-      return jsonOut(getMyPhoto(body));
-    }
-    if (action === 'cmeCheckIn') {
-      return jsonOut(cmeCheckIn(body));
-    }
-    if (action === 'getMyCmeSummary') {
-      return jsonOut(getMyCmeSummary(body));
-    }
-    if (action === 'cmeSubmitFeedback') { return jsonOut(cmeSubmitFeedback(body)); }
-    if (action === 'cmeSendSlip') { return jsonOut(cmeSendSlip(body)); }
-    if (action === 'cmeCertificate') { return jsonOut(cmeCertificate(body)); }
-    if (action === 'cmeAdminCreate') { return jsonOut(cmeAdminCreate(body)); }
-    if (action === 'cmeAdminOverview') { return jsonOut(cmeAdminOverview(body)); }
-    if (action === 'cmeAdminParticipants') { return jsonOut(cmeAdminParticipants(body)); }
-    if (action === 'sendEmergency') {            // PUBLIC (no login) — see Emergency.gs for the abuse limits
-      return jsonOut(sendEmergency(body));
-    }
-    if (action === 'getActiveEmergency') {       // PUBLIC
-      return jsonOut(getActiveEmergency(body));
-    }
-    if (action === 'callKaunter') {
-      return jsonOut(callKaunter(body));
-    }
-    if (action === 'callKaunterC') {
-      return jsonOut(callKaunterC(body));
-    }
-    if (action === 'getMyProfileFull') {
-      return jsonOut(getMyProfileFull(body));
-    }
-    if (action === 'updateMyProfile') {
-      return jsonOut(updateMyProfile(body));
-    }
-    if (action === 'getMyProfile') {
-      return jsonOut(getMyProfile(body));
-    }
-    if (action === 'signup') {
-      return jsonOut(signup(body));
-    }
-    if (action === 'verifyEmail') {
-      return jsonOut(verifyEmailAction(body));
-    }
-    if (action === 'resendVerification') {
-      return jsonOut(resendVerification(body));
-    }
-    if (action === 'getBirthdayAlerts') {
-      return jsonOut(getBirthdayAlerts(body));
-    }
-    if (action === 'sendBirthdayWish') {
-      return jsonOut(sendBirthdayWish(body));
-    }
-    if (action === 'getBlsStatus') {
-      return jsonOut(getBlsStatus(body));
-    }
-    if (action === 'getLeaveStats') {
-      return jsonOut(getLeaveStats(body));
-    }
-    if (action === 'submitLeaveRequest') {
-      return jsonOut(submitLeaveRequest(body));
-    }
-    if (action === 'getMyLeaveRecords') {
-      return jsonOut(getMyLeaveRecords(body));
-    }
-    if (action === 'getMyScheduleData') {
-      return jsonOut(getMyScheduleData(body));
-    }
-    if (action === 'uploadScheduleProof') {
-      return jsonOut(uploadScheduleProof(body));
-    }
-    if (action === 'uploadRetrospectiveProof') {
-      return jsonOut(uploadRetrospectiveProof(body));
-    }
-    if (action === 'completeOrientation') {
-      return jsonOut(completeOrientation(body));
-    }
-    if (action === 'getMyKursusList') {
-      return jsonOut(getMyKursusList(body));
-    }
-    if (action === 'getHealthScreeningStatus') {
-      return jsonOut(getHealthScreeningStatus(body));
-    }
-    if (action === 'beginEnrollTotp') {
-      return jsonOut(beginEnrollTotp(body));
-    }
-    if (action === 'confirmEnrollTotp') {
-      return jsonOut(confirmEnrollTotp(body));
-    }
-    if (action === 'disableTotp') {
-      return jsonOut(disableTotp(body));
-    }
-    if (action === 'getTodayAttendance') {
-      return jsonOut(getTodayAttendance(body));
-    }
-    return jsonOut({ ok: false, error: 'Unknown action' });
-  } catch (err) {
-    return jsonOut({ ok: false, error: String(err) });
-  }
+/* The three models load at the same time (they used to load one after another). */
+function loadModels(){
+  if(modelsReady) return Promise.resolve();
+  const wait = () => new Promise(r => { (function poll(){ if(window.faceapi) r(); else setTimeout(poll, 50); })(); }); // face-api.js is deferred
+  return wait().then(() => Promise.all([
+    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+  ])).then(() => {
+    if(!faceapi.nets.tinyFaceDetector.isLoaded || !faceapi.nets.faceLandmark68Net.isLoaded || !faceapi.nets.faceRecognitionNet.isLoaded) throw new Error('Model pengecam muka gagal dimuatkan');
+    modelsReady = true;
+  });
 }
 
-/**
- * Fast, lightweight staff manifest — just name/IC/photo URL straight from the
- * sheet, no Drive fetches or base64 conversion. Used by the frontend to check
- * whether its cached face descriptors are still up to date, without paying
- * the cost of re-downloading every photo on every page load.
- */
-function getStaffListPayload() {
-  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
-  const sheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
-  if (!sheet) throw new Error('DATABASE sheet not found');
-
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return { ok: true, staff: [] };
-
-  const nameIc = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
-  const photoCol = sheet.getRange(2, 26, lastRow - 1, 1).getValues();
-
-  const staff = [];
-  for (let i = 0; i < nameIc.length; i++) {
-    const name = String(nameIc[i][0] || '').trim();
-    const ic = String(nameIc[i][1] || '').trim();
-    const photoUrl = String(photoCol[i][0] || '').trim();
-    if (!name || !ic || !photoUrl) continue;
-    staff.push({ name: name, ic: ic, photoUrl: photoUrl });
-  }
-  return { ok: true, staff: staff };
-}
-
-/**
- * Reads DATABASE sheet (A=name, B=IC, Z=photo URL) and returns each staff
- * member with their photo re-served as a base64 data URL. This sidesteps
- * Google Drive's inconsistent CORS headers, which otherwise "taint" the
- * canvas face-api.js needs to read pixel data from for face matching.
- */
-/**
- * Fetches only the logged-in person's own photo, for the personal check-in
- * mode (my-checkin.html). Identity comes from the verified session token,
- * not a client-supplied IC — a random visitor can't fetch someone else's
- * photo just by guessing their IC number.
- */
-/**
- * Lightweight profile lookup — name + IC only, no Drive photo fetch. Used by
- * the dashboard's working-zone widget and the profile page, where we don't
- * need the photo (that's what makes this fast).
- */
-function getMyProfile(body) {
-  const payload = verifyToken_(body.token);
-  if (!payload) return { ok: false, error: 'Session expired. Please log in again.' };
-
-  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
-  const sheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return { ok: false, error: 'Staff not found.' };
-
-  const nameIc = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
-  for (let i = 0; i < nameIc.length; i++) {
-    if (String(nameIc[i][1]).trim() === payload.ic) {
-      const user = findUserRow_(payload.ic);
-      return { ok: true, ic: payload.ic, name: String(nameIc[i][0]).trim(), totpEnabled: !!(user && user.totpEnabled), emailVerified: !!(user && user.emailVerified) };
-    }
-  }
-  return { ok: false, error: 'Staff not found.' };
-}
-
-function getMyPhoto(body) {
-  const payload = verifyToken_(body.token);
-  if (!payload) return { ok: false, error: 'Session expired. Please log in again.' };
-
-  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
-  const sheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return { ok: false, error: 'Staff not found.' };
-
-  const nameIc = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
-  const photoCol = sheet.getRange(2, 26, lastRow - 1, 1).getValues();
-
-  for (let i = 0; i < nameIc.length; i++) {
-    if (String(nameIc[i][1]).trim() === payload.ic) {
-      const dataUrl = urlToDataUrl(String(photoCol[i][0]).trim());
-      if (!dataUrl) return { ok: false, error: 'Could not load your photo. Contact admin.' };
-      return { ok: true, ic: payload.ic, name: String(nameIc[i][0]).trim(), photo: dataUrl };
-    }
-  }
-  return { ok: false, error: 'Staff not found.' };
-}
-
-function getStaffPayload() {
-  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
-  const sheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
-  if (!sheet) throw new Error('DATABASE sheet not found');
-
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return { ok: true, staff: [] };
-
-  // A:B for name/IC, Z for photo URL — read only what we need
-  const nameIc = sheet.getRange(2, 1, lastRow - 1, 2).getValues();   // columns A,B
-  const photoCol = sheet.getRange(2, 26, lastRow - 1, 1).getValues(); // column Z = 26
-
-  const staff = [];
-  for (let i = 0; i < nameIc.length; i++) {
-    const name = String(nameIc[i][0] || '').trim();
-    const ic = String(nameIc[i][1] || '').trim();
-    const photoUrl = String(photoCol[i][0] || '').trim();
-    if (!name || !ic || !photoUrl) continue;
-
-    const dataUrl = urlToDataUrl(photoUrl);
-    if (dataUrl) {
-      staff.push({ name: name, ic: ic, photo: dataUrl });
-    }
-  }
-  return { ok: true, staff: staff };
-}
-
-/** Converts a Drive-hosted (or any fetchable) photo URL into a base64 data URL. */
-function urlToDataUrl(url) {
-  try {
-    const fileId = extractDriveFileId(url);
-    let blob;
-    if (fileId) {
-      blob = DriveApp.getFileById(fileId).getBlob();
-    } else {
-      blob = UrlFetchApp.fetch(url).getBlob();
-    }
-    const mime = blob.getContentType() || 'image/jpeg';
-    const b64 = Utilities.base64Encode(blob.getBytes());
-    return 'data:' + mime + ';base64,' + b64;
-  } catch (err) {
-    Logger.log('Photo load failed for ' + url + ': ' + err);
-    return null;
-  }
-}
-
-/** Pulls a Drive file ID out of common Drive URL formats. Returns null if not a Drive URL. */
-function extractDriveFileId(url) {
-  let m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);       // .../file/d/FILEID/view
-  if (m) return m[1];
-  m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);          // ...?id=FILEID
-  if (m) return m[1];
+function photoHash(s){ s = String(s || ''); let h = 0; for(let i = 0; i < s.length; i += Math.max(1, Math.floor(s.length / 200))) h = (h * 31 + s.charCodeAt(i)) | 0; return s.length + ':' + h; }
+function readDescCache(){
+  try{
+    const c = JSON.parse(localStorage.getItem(DESC_CACHE_KEY) || 'null');
+    const ic = sessionStorage.getItem('kkah_ic') || '';
+    if(c && c.ic === ic && c.desc && c.desc.length === 128 && (Date.now() - c.at) < 30 * 86400000) return c;
+  }catch(e){}
   return null;
 }
-
-/**
- * Logs a check-in/out: decides IN vs OUT (first scan of the day = IN, next = OUT),
- * appends a row to AttendanceLog with the photo column left blank.
- * Deliberately does NOT touch Drive here — that's the slow part, and this call
- * needs to return fast so the kiosk can confirm + play the success sound quickly.
- * Expected body: { ic, name, lat, lng }
- */
-function logAttendance(body) {
-  // If a session token is supplied (personal check-in mode), the IC comes
-  // from the verified, signed token — never from the client-supplied field.
-  // This is what makes personal mode more tamper-resistant than kiosk mode:
-  // kiosk mode has no choice but to trust the client's face-match result,
-  // but a logged-in request's identity is cryptographically confirmed.
-  let ic = body.ic;
-  let name = body.name;
-  if (body.token) {
-    const payload = verifyToken_(body.token);
-    if (!payload) return { ok: false, error: 'Session expired. Please log in again.' };
-    ic = payload.ic;
-    const staffRow = findUserRow_(payload.ic);
-    if (!staffRow) return { ok: false, error: 'Account not found.' };
-    name = body.name || ic; // display name comes from the client (from DATABASE lookup), IC is authoritative
-  }
-
-  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
-  let logSheet = ss.getSheetByName(CONFIG.LOG_SHEET_NAME);
-  if (!logSheet) {
-    logSheet = ss.insertSheet(CONFIG.LOG_SHEET_NAME);
-    logSheet.appendRow(['Date', 'IC', 'Name', 'Type', 'Time', 'Latitude', 'Longitude', 'Location Name', 'Photo URL']);
-  }
-
-  const now = new Date();
-  const dateStr = Utilities.formatDate(now, CONFIG.TIMEZONE, 'yyyy-MM-dd');
-  const timeStr = Utilities.formatDate(now, CONFIG.TIMEZONE, 'HH:mm:ss');
-
-  // Determine IN or OUT: look for an existing IN today with no OUT yet
-  // NOTE: Google Sheets silently turns "2026-10-18" into a Date and "900101015555" into a number when a row is
-  // appended, so a plain === against the string never matched → every scan was written as IN. Compare normalised values.
-  const lock = LockService.getScriptLock();
-  lock.waitLock(15000);
-  let type;
-  try {
-    const data = logSheet.getDataRange().getValues();
-    const icKey = attIc_(ic);
-    let hasInToday = false, hasOutToday = false;
-    for (let i = 1; i < data.length; i++) {
-      if (attDate_(data[i][0]) === dateStr && attIc_(data[i][1]) === icKey) {
-        const t = String(data[i][3]).trim().toUpperCase();
-        if (t === 'IN') hasInToday = true;
-        if (t === 'OUT') hasOutToday = true;
-      }
-    }
-    if (hasInToday && hasOutToday) {
-      return { ok: false, error: 'Already checked IN and OUT today for this staff.' };
-    }
-    type = hasInToday ? 'OUT' : 'IN';
-
-    // Weekday rule: Check Out only opens from CHECKOUT_OPEN_HOUR (1:00 PM). Enforced here, not just in the app.
-    if (type === 'OUT') {
-      const cw = checkoutWindow_(now);
-      if (!cw.open) {
-        return { ok: false, code: 'CHECKOUT_TOO_EARLY', error: 'Check Out hanya dibuka selepas ' + cw.opensAtLabel + ' pada hari bekerja.', opensAt: cw.opensAtLabel };
-      }
-    }
-
-    // write Date / IC / Time as TEXT so they stay readable and comparable
-    const r = logSheet.getLastRow() + 1;
-    logSheet.getRange(r, 1, 1, 9).setNumberFormats([['@', '@', '@', '@', '@', '@', '@', '@', '@']])
-      .setValues([[dateStr, String(ic), name, type, timeStr, body.lat || '', body.lng || '', body.locName || '', '']]);
-  } finally {
-    try { lock.releaseLock(); } catch (e) {}
-  }
-
-  try { notifySupervisorsAttendance_(ic, name, type, timeStr); } catch (e) { Logger.log('Supervisor notify failed: ' + e); }
-
-  return { ok: true, type: type, date: dateStr, time: timeStr };
+function writeDescCache(ic, name, hash, desc){
+  try{ localStorage.setItem(DESC_CACHE_KEY, JSON.stringify({ ic: sessionStorage.getItem('kkah_ic') || ic, name, hash, at: Date.now(), desc: Array.from(desc) })); }catch(e){}
 }
 
-/**
- * Saves the check-in snapshot to Drive and links it into the matching
- * AttendanceLog row. Called separately, after the kiosk has already shown
- * success — this is the slow step (Drive write) so it must never block the
- * confirmation the staff member sees.
- * Expected body: { ic, date, type, imageBase64 }
- */
-function attachSnapshot(body) {
-  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
-  const logSheet = ss.getSheetByName(CONFIG.LOG_SHEET_NAME);
-  if (!logSheet) return { ok: false, error: 'AttendanceLog sheet not found' };
-
-  let photoUrl = '';
-  try {
-    const folder = DriveApp.getFolderById(CONFIG.SNAPSHOT_FOLDER_ID);
-    const base64 = body.imageBase64.split(',')[1] || body.imageBase64;
-    const blob = Utilities.newBlob(Utilities.base64Decode(base64), 'image/jpeg',
-      body.ic + '_' + body.date + '_' + body.type + '.jpg');
-    const file = folder.createFile(blob);
-    photoUrl = file.getUrl();
-  } catch (err) {
-    Logger.log('Snapshot save failed: ' + err);
-    return { ok: false, error: String(err) };
-  }
-
-  // Find the matching row (same date + IC + type, photo column still blank) and fill it in
-  const data = logSheet.getDataRange().getValues();
-  for (let i = data.length - 1; i >= 1; i--) {
-    if (attDate_(data[i][0]) === body.date && attIc_(data[i][1]) === attIc_(body.ic) && String(data[i][3]).trim().toUpperCase() === body.type && !data[i][8]) {
-      logSheet.getRange(i + 1, 9).setValue(photoUrl); // column I = Photo URL
-      break;
-    }
-  }
-
-  return { ok: true, photoUrl: photoUrl };
+async function fetchMyPhoto(){
+  const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action:'getMyPhoto', token: sessionStorage.getItem('kkah_session_token') }) });
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error || 'Tidak dapat memuatkan profil anda');
+  return data;
+}
+async function computeDescriptor(photoUrl){
+  const img = await faceapi.fetchImage(photoUrl);
+  const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+  if(!det) throw new Error('Gambar profil tidak dapat dibaca. Hubungi admin untuk mengambil semula gambar.');
+  return det.descriptor;
 }
 
-/**
- * Dashboard "main box": today's own check-in/check-out time, from
- * AttendanceLog (Date, IC, Name, Type, Time, Lat, Lng, LocName, PhotoURL).
- * Identity comes from the verified session token, same rule as everywhere
- * else — a staff member only ever sees their own times.
- */
-function getTodayAttendance(body) {
-  const payload = verifyToken_(body.token);
-  if (!payload) return { ok: false, error: 'Session expired. Please log in again.' };
-
-  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
-  const logSheet = ss.getSheetByName(CONFIG.LOG_SHEET_NAME);
-  const dateStr = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd');
-
-  let checkIn = '', checkOut = '';
-  if (logSheet) {
-    const data = logSheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
-      if (attDate_(data[i][0]) === dateStr && attIc_(data[i][1]) === attIc_(payload.ic)) {
-        const t = String(data[i][3]).trim().toUpperCase();
-        const tm = attTime_(data[i][4]);
-        if (t === 'IN' && !checkIn) checkIn = tm;
-        if (t === 'OUT') checkOut = tm;
-      }
-    }
+/** Speed win: your face "fingerprint" is saved on this phone, so the profile photo isn't re-analysed on every check-in.
+ *  The photo is still re-checked quietly in the background — if it changed, the saved copy is replaced. */
+async function loadMyDescriptor(modelsP){
+  const cached = readDescCache();
+  if(cached){
+    myDescriptor = new Float32Array(cached.desc); myName = cached.name; myIc = cached.ic;
+    $('headerName').textContent = 'Hai, ' + myName;
+    refreshDescriptorInBackground(modelsP, cached.hash);
+    return;
   }
-  const cw = checkoutWindow_(new Date());
-  return { ok: true, date: dateStr, checkIn: checkIn, checkOut: checkOut,
-           canCheckOut: cw.open, opensAt: cw.opensAtLabel, weekday: cw.weekday, serverTime: Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'HH:mm:ss') };
+  const data = await fetchMyPhoto();
+  myName = data.name; myIc = data.ic;
+  $('headerName').textContent = 'Hai, ' + myName;
+  await modelsP;
+  myDescriptor = await computeDescriptor(data.photo);
+  writeDescCache(data.ic, data.name, photoHash(data.photo), myDescriptor);
+}
+async function refreshDescriptorInBackground(modelsP, oldHash){
+  try{
+    const data = await fetchMyPhoto();
+    myName = data.name; myIc = data.ic;
+    const h = photoHash(data.photo);
+    if(h === oldHash) return;
+    await modelsP;
+    const d = await computeDescriptor(data.photo);
+    myDescriptor = d; writeDescCache(data.ic, data.name, h, d);
+  }catch(e){ console.warn('Background profile refresh skipped:', e); }
 }
 
-/** Is Check Out open right now? Weekdays (Mon–Fri) open from CHECKOUT_OPEN_HOUR; weekends are always open. */
-function checkoutWindow_(now) {
-  const dow = Number(Utilities.formatDate(now, CONFIG.TIMEZONE, 'u'));   // 1 = Monday … 7 = Sunday
-  const hour = Number(Utilities.formatDate(now, CONFIG.TIMEZONE, 'H'));
-  const weekday = dow >= 1 && dow <= 5;
-  const openHour = CONFIG.CHECKOUT_OPEN_HOUR || 13;
-  const h12 = openHour % 12 || 12;
-  return { weekday: weekday, open: !weekday || hour >= openHour, opensAtLabel: h12 + ':00 ' + (openHour >= 12 ? 'PM' : 'AM') };
+async function startCamera(){
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:{ ideal:320 }, height:{ ideal:320 } }, audio:false });
+    if(abortRun){ stopCamera(); throw new Error('aborted'); }
+    video.srcObject = stream;
+    await new Promise(r => { if(video.readyState >= 2) r(); else video.onloadedmetadata = r; });
+    try{ await video.play(); }catch(e){}
+  }catch(err){ throw new Error('Camera permission denied'); }
+}
+function stopCamera(){ try{ if(stream) stream.getTracks().forEach(t => t.stop()); }catch(e){} stream = null; }
+
+async function warmUp(){ // the very first neural-net run is the slowest — do it now, not while you're waiting to be recognised
+  try{ await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: DETECTOR_INPUT })).withFaceLandmarks().withFaceDescriptor(); }catch(e){}
 }
 
-/**
- * Registers a new staff member: validates the IC isn't already in use,
- * saves the uploaded photo to Drive, appends a row to DATABASE
- * (name -> A, IC -> B, photo URL -> Z, leaving C:Y blank).
- * Expected body: { name, ic, imageBase64 }
- */
-function addStaff(body) {
-  const name = String(body.name || '').trim();
-  const ic = String(body.ic || '').trim();
-  if (!name || !ic) return { ok: false, error: 'Name and IC are both required.' };
-  if (!body.imageBase64) return { ok: false, error: 'A photo is required.' };
+async function requestWake(){ try{ if(navigator.wakeLock && !wake) wake = await navigator.wakeLock.request('screen'); }catch(e){} }
+function releaseWake(){ try{ if(wake){ wake.release(); wake = null; } }catch(e){} }
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && scanning) requestWake(); });
 
-  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
-  const sheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
-  if (!sheet) return { ok: false, error: 'DATABASE sheet not found' };
+/* ===================== recognise ===================== */
+async function detectLoop(my){
+  if(my !== runId || !scanning) return;
+  if(isOffline){ setTimeout(() => detectLoop(my), 400); return; }
 
-  const lastRow = sheet.getLastRow();
-  if (lastRow >= 2) {
-    const existingIcs = sheet.getRange(2, 2, lastRow - 1, 1).getValues().flat().map(String);
-    if (existingIcs.indexOf(ic) !== -1) {
-      return { ok: false, error: 'A staff member with this IC number already exists.' };
+  let det = null;
+  try{
+    det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: DETECTOR_INPUT, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptor();
+  }catch(err){ setTimeout(() => detectLoop(my), 100); return; }
+  if(my !== runId || !scanning) return;
+
+  const ring = $('ring');
+  if(det){
+    noFaceSince = Date.now();
+    const distance = faceapi.euclideanDistance(det.descriptor, myDescriptor);
+    if(distance <= MATCH_THRESHOLD){
+      stableCount++;
+      if(stableCount === 1){ ring.className = 'ring found'; setBanner('info', '👀', 'Muka dikesan', 'Tahan sebentar…'); cue.found(); }
+      if(stableCount >= RECOGNIZE_STABLE_FRAMES){ scanning = false; return captureAndRecord(); }
+    }else{
+      stableCount = 0; ring.className = 'ring scanning';
+      $('tip').textContent = 'Muka ini tidak sepadan dengan profil anda — cuba betulkan kedudukan';
     }
+  }else{
+    stableCount = 0; ring.className = 'ring scanning';
+    if(Date.now() - noFaceSince > 6000) $('tip').textContent = 'Dekatkan muka dan pastikan cahaya mencukupi';
   }
-
-  let photoUrl;
-  try {
-    const folder = DriveApp.getFolderById(CONFIG.STAFF_PHOTO_FOLDER_ID);
-    const base64 = body.imageBase64.split(',')[1] || body.imageBase64;
-    const blob = Utilities.newBlob(Utilities.base64Decode(base64), 'image/jpeg', ic + '_' + name + '.jpg');
-    photoUrl = folder.createFile(blob).getUrl();
-  } catch (err) {
-    return { ok: false, error: 'Could not save photo: ' + err };
-  }
-
-  const newRow = sheet.getLastRow() + 1;
-  sheet.getRange(newRow, 1).setValue(name);   // column A
-  sheet.getRange(newRow, 2).setValue(ic);     // column B
-  sheet.getRange(newRow, 26).setValue(photoUrl); // column Z
-
-  provisionUserForStaff_(ic); // auto-create HR portal login (default password = IC, forced change on first login)
-
-  return { ok: true, name: name, ic: ic };
+  setTimeout(() => detectLoop(my), 0);
 }
 
-/**
- * Builds a monthly attendance PDF for one staff member using a plain
- * DocumentApp table (no merged cells — that's the part that's been
- * unreliable before; a simple grid table is well-supported).
- * Expected body: { ic, year, month }  (month is 1-12)
- */
-function generateReport(body) {
-  const ic = String(body.ic || '').trim();
-  const year = parseInt(body.year, 10);
-  const month = parseInt(body.month, 10); // 1-12
-  if (!ic || !year || !month) return { ok: false, error: 'Missing ic/year/month' };
-
-  const ss = SpreadsheetApp.openById(CONFIG.DATABASE_SHEET_ID);
-
-  // Look up the staff name
-  const dbSheet = ss.getSheetByName(CONFIG.DATABASE_SHEET_NAME);
-  const dbData = dbSheet.getRange(2, 1, Math.max(dbSheet.getLastRow() - 1, 0), 2).getValues();
-  let staffName = '';
-  for (let i = 0; i < dbData.length; i++) {
-    if (String(dbData[i][1]).trim() === ic) { staffName = String(dbData[i][0]).trim(); break; }
-  }
-  if (!staffName) return { ok: false, error: 'Staff not found for this IC' };
-
-  const logSheet = ss.getSheetByName(CONFIG.LOG_SHEET_NAME);
-  const monthPrefix = year + '-' + String(month).padStart(2, '0');
-
-  // Group this staff's rows by date -> { in, out }
-  const byDate = {};
-  if (logSheet) {
-    const data = logSheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
-      const [date, rowIc, , type, time] = data[i];
-      if (rowIc !== ic || !String(date).startsWith(monthPrefix)) continue;
-      if (!byDate[date]) byDate[date] = { in: '', out: '' };
-      if (type === 'IN') byDate[date].in = time;
-      if (type === 'OUT') byDate[date].out = time;
-    }
-  }
-
-  const dates = Object.keys(byDate).sort();
-  const tableData = [['Date', 'Time In', 'Time Out', 'Hours Worked']];
-  let totalHours = 0;
-  dates.forEach(date => {
-    const rec = byDate[date];
-    let hours = '';
-    if (rec.in && rec.out) {
-      const diffMs = new Date(date + 'T' + rec.out) - new Date(date + 'T' + rec.in);
-      const h = diffMs / 3600000;
-      if (h > 0) { hours = h.toFixed(2); totalHours += h; }
-    }
-    tableData.push([date, rec.in || '—', rec.out || '—', hours || '—']);
-  });
-
-  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const doc = DocumentApp.create('temp_report_' + ic + '_' + new Date().getTime());
-  const body_ = doc.getBody();
-  body_.appendParagraph('Klinik Kesihatan Ayer Hitam').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  body_.appendParagraph('Monthly Attendance Report').setHeading(DocumentApp.ParagraphHeading.HEADING1);
-  body_.appendParagraph('Staff: ' + staffName + '  (IC: ' + ic + ')');
-  body_.appendParagraph('Month: ' + monthNames[month - 1] + ' ' + year);
-  body_.appendParagraph('');
-
-  if (tableData.length === 1) {
-    body_.appendParagraph('No attendance records found for this month.');
-  } else {
-    const table = body_.appendTable(tableData);
-    const headerRow = table.getRow(0);
-    for (let c = 0; c < headerRow.getNumCells(); c++) {
-      headerRow.getCell(c).setBackgroundColor('#0F5C56');
-      headerRow.getCell(c).editAsText().setForegroundColor('#FFFFFF').setBold(true);
-    }
-    body_.appendParagraph('');
-    body_.appendParagraph('Total hours recorded: ' + totalHours.toFixed(2)).setBold(true);
-  }
-
-  doc.saveAndClose();
-  const pdfBlob = DriveApp.getFileById(doc.getId()).getAs('application/pdf');
-  const pdfBase64 = Utilities.base64Encode(pdfBlob.getBytes());
-  DriveApp.getFileById(doc.getId()).setTrashed(true); // clean up the temp doc
-
-  const filename = staffName.replace(/[^a-zA-Z0-9]/g, '_') + '_' + monthPrefix + '.pdf';
-  return { ok: true, pdfBase64: pdfBase64, filename: filename };
+/* ===================== photo + record ===================== */
+async function captureAndRecord(){
+  // 1) the photo is taken the instant you are recognised — flash + shutter + buzz, then the phone can be put away
+  const canvas = $('snapshotCanvas');
+  canvas.width = 240; canvas.height = 240;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, 240, 240);
+  capturedImage = canvas.toDataURL('image/jpeg', 0.7);
+  const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  cue.shutter();
+  video.style.display = 'none'; canvas.style.display = 'block';
+  stopCamera();
+  setStep('face', 'done'); setStep('photo', 'done');
+  $('ring').className = 'ring success';
+  $('tip').textContent = '';
+  setBanner('info', '📸', 'Gambar telah diambil', 'Anda boleh simpan telefon — sedang merekod…');
+  await recordAttendance();
 }
 
-function jsonOut(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+async function recordAttendance(){
+  if(recording) return; recording = true;
+  setStep('save', 'active'); showButtons(false, false);
+  if(isOffline){ return failRecord('Tiada sambungan internet. Sambungkan semula dan tekan Cuba lagi.', true); }
+
+  try{
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 25000);
+    const res = await fetch(API_URL, {
+      method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, signal: ctl.signal,
+      body: JSON.stringify({
+        action:'logAttendance', token: sessionStorage.getItem('kkah_session_token'), name: myName,
+        lat: userLocation ? userLocation.lat : '', lng: userLocation ? userLocation.lng : '',
+        locName: userLocation ? userLocation.name : ''
+      })
+    });
+    clearTimeout(to);
+    const data = await res.json();
+
+    if(!data.ok){
+      if(data.code === 'CHECKOUT_TOO_EARLY'){ recording = false; setStep('save', 'error'); cue.fail(); return showLockedAfter(data); }
+      return failRecord(data.error || 'Tidak dapat merekod kehadiran.', false);
+    }
+    onSuccess(data);
+  }catch(err){
+    failRecord(err && err.name === 'AbortError' ? 'Sambungan terlalu perlahan. Gambar anda telah diambil — tekan Cuba lagi.' : 'Ralat rangkaian. Gambar anda telah diambil — tekan Cuba lagi.', true);
+  }
 }
+
+function showLockedAfter(data){
+  setBanner('warn', '⏳', 'Check Out belum dibuka', data.error || 'Check Out dibuka jam 1:00 PM pada hari bekerja.');
+  $('ring').className = 'ring'; showButtons(false, true);
+}
+
+function failRecord(msg, canRetry){
+  recording = false;
+  setStep('save', 'error');
+  $('ring').className = 'ring error';
+  setBanner('err', '⚠️', 'Tidak berjaya direkod', msg);
+  cue.fail();
+  showButtons(canRetry, true);
+}
+function onRetry(){
+  if(capturedImage){ recordAttendance(); }   // photo already taken & face verified — only the save step is repeated
+  else init();
+}
+
+function onSuccess(data){
+  recording = false; releaseWake();
+  setStep('save', 'done');
+  const isOut = data.type === 'OUT';
+  $('checkBadge').classList.add('show');
+  $('ring').className = 'ring success';
+  setBanner('ok', '✅', isOut ? 'CHECK OUT BERJAYA' : 'CHECK IN BERJAYA', 'Terima kasih, ' + (myName || '').split(' ')[0] + '. Anda boleh simpan telefon.');
+  cue.success();
+  try{ $('successSound').play().catch(() => {}); }catch(e){}
+  speak(isOut ? 'Check out berjaya' : 'Check in berjaya');
+
+  setMode(isOut ? 'OUT' : 'IN');
+  $('resultType').textContent = isOut ? 'Check Out' : 'Check In';
+  $('resultTime').textContent = fmt12(data.time);
+  $('resultDate').textContent = data.date;
+  $('resultPlace').textContent = (userLocation && userLocation.name) ? userLocation.name : 'Klinik Kesihatan Ayer Hitam';
+  $('resultCard').classList.add('show');
+
+  // Snapshot goes to Drive in the background; keepalive lets it finish even while we return to the dashboard.
+  try{
+    fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, keepalive: true,
+      body: JSON.stringify({ action:'attachSnapshot', ic: myIc, date: data.date, type: data.type, imageBase64: capturedImage }) }
+    ).catch(err => console.warn('Snapshot upload failed (attendance row still saved):', err));
+  }catch(e){}
+
+  showButtons(false, true);
+  $('btnDash').textContent = 'Ke Dashboard sekarang';
+  let n = 5;
+  const tick = () => { $('countdown').textContent = 'Kembali ke Dashboard dalam ' + n + ' saat…'; if(n-- <= 0){ clearInterval(redirectTimer); window.location.href = './dashboard.html'; } };
+  tick(); redirectTimer = setInterval(tick, 1000);
+}
+</script>
+</body>
+</html>
