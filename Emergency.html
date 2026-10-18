@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Kecemasan</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.10.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.10.0">
+<meta name="theme-color" content="#b3001b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ min-height:100vh; min-height:100dvh; background:#b3001b; font-family:'Poppins',sans-serif; }
+  .home{ position:fixed; left:0; right:0; bottom:18px; text-align:center; z-index:100000; }
+  .home a{ color:#fff; font-size:13px; font-weight:600; opacity:.85; text-decoration:none; padding:10px 18px; border-radius:99px; background:rgba(0,0,0,.25); }
+</style>
+</head>
+<body>
+<!-- Opened from the emergency push notification. Public page: no login needed. -->
+<div class="home"><a href="./login.html">Ke SIAGA →</a></div>
+<script src="./emergency-alert.js"></script>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+SiagaEmergency.page(API_URL);
+</script>
+</body>
+</html>
