@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Log In</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.1.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.1.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.10.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.10.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -130,6 +130,22 @@
   .loading span:nth-child(3){ animation-delay:.3s; }
   @keyframes dots{ 0%,100%{ transform:translateY(0); opacity:.4; } 50%{ transform:translateY(-8px); opacity:1; } }
 
+  /* Emergency button + confirm sheet */
+  .sos-open{ width:100%; margin-top:14px; height:46px; border-radius:14px; border:1px solid rgba(255,93,108,.55); background:rgba(255,40,70,.16); color:#ffd9de; font-weight:700; font-size:13.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; letter-spacing:.01em; }
+  .sos-open:active{ transform:scale(.98); }
+  .sos-dot{ width:8px; height:8px; border-radius:50%; background:#ff3b52; box-shadow:0 0 0 0 rgba(255,59,82,.7); animation:sosDot 1.6s infinite; }
+  @keyframes sosDot{ 0%{ box-shadow:0 0 0 0 rgba(255,59,82,.7);} 100%{ box-shadow:0 0 0 10px rgba(255,59,82,0);} }
+  .sos-sheet{ position:fixed; inset:0; z-index:200; display:none; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); padding:16px; }
+  .sos-sheet.show{ display:flex; }
+  .sos-card{ width:min(420px,100%); background:#1a0b10; border:1px solid rgba(255,93,108,.5); border-radius:26px; padding:26px 22px 20px; text-align:center; color:#fff; animation:sosUp .3s ease both; }
+  @keyframes sosUp{ from{ transform:translateY(40px); opacity:0; } to{ transform:none; opacity:1; } }
+  .sos-ic{ width:76px; height:76px; margin:0 auto 12px; border-radius:50%; background:rgba(255,59,82,.18); display:flex; align-items:center; justify-content:center; font-size:38px; }
+  .sos-q{ font-size:20px; font-weight:700; }
+  .sos-d{ margin:8px 0 18px; font-size:13px; line-height:1.55; color:#e2c3c9; }
+  .sos-go{ width:100%; height:56px; border:none; border-radius:16px; background:linear-gradient(135deg,#ff2d4a,#c40020); color:#fff; font-weight:800; font-size:16px; letter-spacing:.04em; cursor:pointer; box-shadow:0 10px 28px rgba(255,45,74,.4); }
+  .sos-go:disabled{ opacity:.6; }
+  .sos-cancel{ width:100%; height:46px; margin-top:10px; border:none; background:transparent; color:#c9aab0; font-size:14px; font-weight:600; cursor:pointer; }
+  .sos-card.done .sos-go{ background:#0a8f5a; box-shadow:none; }
   @media (max-width:480px){ .login-box{ padding:32px 22px; } }
   @media (prefers-reduced-motion:reduce){ .blob, .logo, .login-box::before, .login-btn::before, .login-btn::after{ animation:none; } }
 </style>
@@ -141,7 +157,7 @@
 <div class="liquid-bg"><div class="blob"></div><div class="blob"></div><div class="blob"></div></div>
 
 <div class="login-box">
-  <div class="logo">S<img src="./siaga-192.png?v=1.1.0" alt="" onerror="this.remove()"></div>
+  <div class="logo">S<img src="./siaga-192.png?v=1.10.0" alt="" onerror="this.remove()"></div>
   <h2>SIAGA</h2>
   <p class="subtitle">Staff Integration, Attendance &amp; Governance Application<br>Klinik Kesihatan Ayer Hitam</p>
 
@@ -184,6 +200,19 @@
   </div>
 
   <div id="verLine" style="margin-top:22px;text-align:center;font-size:12px;color:rgba(255,255,255,.7);letter-spacing:.02em;min-height:18px;"></div>
+
+  <!-- Emergency: works without logging in -->
+  <button type="button" class="sos-open" id="sosOpen" onclick="sosOpen()"><span class="sos-dot"></span>🚨 KECEMASAN — Minta bantuan</button>
+</div>
+
+<div class="sos-sheet" id="sosSheet" role="dialog" aria-modal="true" aria-labelledby="sosQ">
+  <div class="sos-card" id="sosCard">
+    <div class="sos-ic" id="sosIc">🚨</div>
+    <div class="sos-q" id="sosQ">Hantar isyarat kecemasan?</div>
+    <div class="sos-d" id="sosD">Semua kakitangan akan menerima notifikasi <b>“Urgent! Someone needs help!”</b> dan siren akan berbunyi di telefon mereka.</div>
+    <button type="button" class="sos-go" id="sosGo" onclick="sosSend()">HANTAR SEKARANG</button>
+    <button type="button" class="sos-cancel" id="sosCancel" onclick="sosCloseSheet()">Batal — salah tekan</button>
+  </div>
 </div>
 
 <!-- Full-screen welcome after successful login -->
@@ -225,6 +254,50 @@
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
 let pendingToken = null;
+
+/* === Emergency (no login): confirm → one push to every staff device === */
+function sosDeviceId(){
+  try{
+    let id = localStorage.getItem('kkah_device_id');
+    if(!id){ id = 'd' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem('kkah_device_id', id); }
+    return id;
+  }catch(e){ return 'nostorage'; }
+}
+function sosOpen(){
+  const card = document.getElementById('sosCard');
+  card.classList.remove('done');
+  document.getElementById('sosIc').textContent = '🚨';
+  document.getElementById('sosQ').textContent = 'Hantar isyarat kecemasan?';
+  document.getElementById('sosD').innerHTML = 'Semua kakitangan akan menerima notifikasi <b>“Urgent! Someone needs help!”</b> dan siren akan berbunyi di telefon mereka.';
+  const go = document.getElementById('sosGo'); go.disabled = false; go.textContent = 'HANTAR SEKARANG'; go.onclick = sosSend;
+  document.getElementById('sosCancel').style.display = '';
+  document.getElementById('sosCancel').textContent = 'Batal — salah tekan';
+  document.getElementById('sosSheet').classList.add('show');
+}
+function sosCloseSheet(){ document.getElementById('sosSheet').classList.remove('show'); }
+async function sosSend(){
+  const go = document.getElementById('sosGo'), q = document.getElementById('sosQ'), d = document.getElementById('sosD'), card = document.getElementById('sosCard');
+  go.disabled = true; go.textContent = 'Menghantar…';
+  document.getElementById('sosCancel').style.display = 'none';
+  try{
+    const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action:'sendEmergency', deviceId: sosDeviceId(), device: navigator.userAgent }) });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || 'Gagal menghantar');
+    card.classList.add('done');
+    document.getElementById('sosIc').textContent = '✅';
+    q.textContent = data.duplicate ? 'Isyarat sudah dihantar' : 'Isyarat dihantar!';
+    d.textContent = data.duplicate ? (data.message || 'Rakan sekerja telah memaklumkan kecemasan ini.') : 'Semua kakitangan telah dimaklumkan. Kekal di tempat anda dan tunggu bantuan.';
+    go.textContent = 'Tutup'; go.disabled = false; go.onclick = sosCloseSheet;
+    if(navigator.vibrate){ try{ navigator.vibrate([120,60,120]); }catch(e){} }
+  }catch(err){
+    document.getElementById('sosIc').textContent = '⚠️';
+    q.textContent = 'Isyarat belum dihantar';
+    d.textContent = (err && err.message ? err.message : 'Sambungan gagal') + ' — tekan semula, atau hubungi rakan sekerja terus.';
+    go.disabled = false; go.textContent = 'CUBA LAGI';
+    document.getElementById('sosCancel').style.display = ''; document.getElementById('sosCancel').textContent = 'Tutup';
+  }
+}
 
 window.addEventListener('DOMContentLoaded', () => {
   if (sessionStorage.getItem('kkah_session_token')) {
