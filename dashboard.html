@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.9.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.9.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.10.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.10.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -714,6 +714,7 @@
 </div>
 
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script src="./emergency-alert.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
 const ONESIGNAL_APP_ID = 'e6ffc7a0-2572-46da-b664-2a03c6dd210a'; // public App ID — safe to expose client-side, unlike the REST API key
@@ -916,7 +917,68 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(loadChecklistBoxes, 5 * 60 * 1000); // refresh temperature/trolley/bag/ambulance every 5 min
   setInterval(loadOnCallBox, 5 * 60 * 1000); // on-call crew can change during the day
   setInterval(loadTodayAttendance, 5 * 60 * 1000); // pick up a check-in/out made elsewhere (e.g. kiosk) without a refresh
+  setInterval(() => { if(window._coLocked && coOpenNowLocal_()) loadTodayAttendance(); }, 30 * 1000); // Check Out unlocks by itself at 1:00 PM
+
+  // Emergency: if an alert is live when the dashboard opens or comes back to the foreground, show it + siren.
+  if(!VIEW_NAME && window.SiagaEmergency){
+    SiagaEmergency.check(API_URL_DASHBOARD);
+    document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') SiagaEmergency.check(API_URL_DASHBOARD); });
+  }
+  warmFaceAssets_(); // pre-download the face models in the background so Check In starts fast
 });
+
+/** Quietly fetch the face-recognition files once the dashboard is idle, so my-checkin.html finds them in cache. */
+function warmFaceAssets_(){
+  const go = () => {
+    ['face_landmark_68_model-weights_manifest.json','face_landmark_68_model-shard1','face_recognition_model-weights_manifest.json',
+     'face_recognition_model-shard1','face_recognition_model-shard2','tiny_face_detector_model-weights_manifest.json','tiny_face_detector_model-shard1']
+      .forEach(f => fetch('./models/' + f).catch(() => {}));
+    fetch('https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js', { mode: 'no-cors' }).catch(() => {});
+  };
+  if(navigator.connection && navigator.connection.saveData) return;
+  if('requestIdleCallback' in window) requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 5000);
+}
+
+/* === Weekday rule: Check Out opens at 1:00 PM Mon–Fri (the server enforces it too) === */
+function coOpenNowLocal_(){
+  const d = new Date(), dow = d.getDay(); // 0 Sun … 6 Sat
+  const weekday = dow >= 1 && dow <= 5;
+  return !weekday || d.getHours() >= 13;
+}
+
+/* === Check In first: someone who opens the dashboard without today's Check In is taken straight there (3s, can cancel) === */
+function maybeCheckInPrompt_(){
+  if(VIEW_NAME) return;
+  try{ if(sessionStorage.getItem('kkah_checkin_prompted') === '1') return; sessionStorage.setItem('kkah_checkin_prompted', '1'); }catch(e){}
+  const wait = () => {
+    if(document.getElementById('welcomeOverlay')) return setTimeout(wait, 400); // let the welcome greeting finish first
+    if(document.getElementById('forcedBanner') && document.getElementById('forcedBanner').classList.contains('show')) return; // password change first
+    const st = document.createElement('style');
+    st.textContent = '.ci-ov{position:fixed;inset:0;z-index:9000;background:rgba(6,30,28,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:ciIn .3s ease both}@keyframes ciIn{from{opacity:0}to{opacity:1}}' +
+      '.ci-card{width:min(360px,100%);background:#fff;border-radius:26px;padding:28px 22px 20px;text-align:center;color:#0B3D3A;box-shadow:0 30px 70px rgba(0,0,0,.4)}' +
+      '.ci-ic{width:76px;height:76px;margin:0 auto 12px;border-radius:50%;background:#EAF6F2;display:flex;align-items:center;justify-content:center;font-size:36px}' +
+      '.ci-t{font-family:Manrope,sans-serif;font-size:20px;font-weight:800}.ci-s{margin:6px 0 18px;font-size:13.5px;color:#5B6B68;line-height:1.5}' +
+      '.ci-go{display:block;width:100%;height:54px;border-radius:16px;border:none;background:linear-gradient(135deg,#0B3D3A,#1C8F84);color:#fff;font-weight:800;font-size:15px;cursor:pointer}' +
+      '.ci-later{width:100%;height:44px;margin-top:8px;border:none;background:transparent;color:#5B6B68;font-weight:600;font-size:13.5px;cursor:pointer}' +
+      '.ci-bar{height:4px;border-radius:4px;background:#DCEAE6;margin-top:14px;overflow:hidden}.ci-bar i{display:block;height:100%;width:0;background:#C9A227;transition:width 3s linear}';
+    document.head.appendChild(st);
+    const ov = document.createElement('div');
+    ov.className = 'ci-ov'; ov.setAttribute('role', 'alertdialog');
+    ov.innerHTML = '<div class="ci-card"><div class="ci-ic">📍</div><div class="ci-t">Check In dahulu</div>' +
+      '<div class="ci-s">Anda belum Check In hari ini.<br>Membuka Check In dalam <b id="ciCount">3</b> saat…</div>' +
+      '<button class="ci-go" id="ciGo">Check In sekarang</button><button class="ci-later" id="ciLater">Bukan sekarang</button>' +
+      '<div class="ci-bar"><i id="ciBar"></i></div></div>';
+    document.body.appendChild(ov);
+    let n = 3, done = false;
+    const go = () => { if(done) return; done = true; clearInterval(iv); location.href = './my-checkin.html'; };
+    const cancel = () => { if(done) return; done = true; clearInterval(iv); ov.remove(); st.remove(); };
+    document.getElementById('ciGo').onclick = go;
+    document.getElementById('ciLater').onclick = cancel;
+    requestAnimationFrame(() => { document.getElementById('ciBar').style.width = '100%'; });
+    const iv = setInterval(() => { n--; const c = document.getElementById('ciCount'); if(c) c.textContent = Math.max(n, 0); if(n <= 0) go(); }, 1000);
+  };
+  wait();
+}
 
 /* === Animated welcome, shown once each time the dashboard is entered === */
 async function showWelcomeOverlay(){
@@ -1734,7 +1796,8 @@ async function loadTodayAttendance(){
     if(!data.ok) throw new Error(data.error);
     renderAttTime(inEl, data.checkIn);
     renderAttTime(outEl, data.checkOut);
-    setAttButtons(!!data.checkIn, !!data.checkOut);
+    setAttButtons(!!data.checkIn, !!data.checkOut, (data.canCheckOut !== undefined ? data.canCheckOut : coOpenNowLocal_()), data.opensAt || '1:00 PM');
+    if(!data.checkIn && !data.checkOut) maybeCheckInPrompt_();
   }catch(err){
     renderAttTime(inEl, '');
     renderAttTime(outEl, '');
@@ -1743,11 +1806,16 @@ async function loadTodayAttendance(){
 }
 
 /** Check In is the highlighted action until you've checked in; then Check Out; when both are done the day is complete. */
-function setAttButtons(hasIn, hasOut){
+function setAttButtons(hasIn, hasOut, canOut, opensAt){
   const bi = document.getElementById('attBtnIn'), bo = document.getElementById('attBtnOut');
   if(!bi || !bo) return;
+  if(canOut === undefined) canOut = coOpenNowLocal_();
+  const label = bo.querySelector('span:last-child');
+  const waiting = hasIn && !hasOut && !canOut;           // checked in, but it is before 1:00 PM on a weekday
+  window._coLocked = waiting;
   bi.className = 'att-btn' + (hasIn ? ' done' : ' primary');
-  bo.className = 'att-btn' + (hasOut ? ' done' : hasIn ? ' primary' : ' locked');
+  bo.className = 'att-btn' + (hasOut ? ' done' : (hasIn && canOut) ? ' primary' : ' locked');
+  if(label) label.textContent = waiting ? 'Check Out · ' + (opensAt || '1:00 PM') : 'Check Out';
 }
 
 function renderAttTime(el, timeStr){
@@ -1872,6 +1940,13 @@ function initOneSignal(ic){
       window._osError = null;
       refreshNotifPill();
       OneSignal.User.PushSubscription.addEventListener('change', refreshNotifPill);
+      // An emergency push that arrives while SIAGA is open → full-screen alert + siren immediately.
+      try{
+        OneSignal.Notifications.addEventListener('foregroundWillDisplay', (ev) => {
+          const d = (ev && ev.notification && ev.notification.additionalData) || {};
+          if(d.type === 'emergency' && window.SiagaEmergency) SiagaEmergency.fromPush(d);
+        });
+      }catch(e){ console.warn('Emergency listener not attached:', e); }
       try{ await OneSignal.login(ic); }catch(e){ console.warn('OneSignal login failed:', e); }
       maybeShowNotifPrompt();
     }catch(err){
