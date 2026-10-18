@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.1.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.1.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.9.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.9.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -234,6 +234,15 @@
   .kc-spin{ width:34px; height:34px; border-radius:50%; border:4px solid rgba(255,255,255,.3); border-top-color:#fff; animation:spin .8s linear infinite; }
   .kc-icon{ width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:800; animation:kcPop .5s cubic-bezier(.17,.67,.3,1.4); }
   @keyframes kcPop{ from{ transform:scale(0) rotate(-120deg); opacity:0; } to{ transform:none; opacity:1; } }
+  .kc-pick{ position:absolute; top:10px; left:12px; z-index:4; height:30px; padding:0 12px; border-radius:99px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.14); color:#fff; font-weight:700; font-size:12px; cursor:pointer; }
+  .kc-menu{ position:absolute; inset:0; z-index:5; background:rgba(6,30,28,.96); padding:44px 12px 10px; display:none; overflow:auto; }
+  .kc-box.menu .kc-menu{ display:block; }
+  .kc-box.menu{ height:230px; cursor:default; }
+  .kc-opt{ width:100%; display:flex; align-items:center; gap:10px; text-align:left; height:42px; border-radius:12px; border:none; background:rgba(255,255,255,.08); color:#fff; font-weight:700; font-size:14px; padding:0 14px; margin-bottom:6px; cursor:pointer; }
+  .kc-opt.sel{ background:rgba(255,255,255,.22); }
+  .kc-opt.sel::after{ content:'✓'; margin-left:auto; }
+  .kc-opt small{ font-weight:600; opacity:.75; font-size:11px; }
+  .kc-opt.soon{ opacity:.4; cursor:default; }
   .kc-msg{ margin-top:12px; text-align:center; font-size:13px; font-weight:600; min-height:18px; line-height:1.35; padding:0 6px; }
   /* === CME scan tile + scanner === */
   .cme-scan-tile{
@@ -564,10 +573,12 @@
     </div>
   </div>
 
-  <div class="kc-box" id="kcBox" onclick="kcOpen()" role="button" aria-label="Kaunter C — panggil nombor giliran">
+  <div class="kc-box" id="kcBox" onclick="kcOpen()" role="button" aria-label="Panggil nombor giliran">
     <button class="kc-close" onclick="event.stopPropagation(); kcClose()" aria-label="Tutup">✕</button>
-    <div class="kc-label">Kaunter C</div>
-    <div class="kc-hint">Ketik untuk panggil nombor giliran</div>
+    <button class="kc-pick" id="kcPick" onclick="event.stopPropagation(); kcToggleMenu()" aria-haspopup="listbox" aria-label="Tukar kaunter"><span id="kcPickText">Tukar</span> ▾</button>
+    <div class="kc-label" id="kcLabel">Kaunter C</div>
+    <div class="kc-hint" id="kcHint">Ketik untuk panggil nombor giliran</div>
+    <div class="kc-menu" id="kcMenu" role="listbox" onclick="event.stopPropagation()"></div>
     <div class="kc-body">
       <div style="position:relative;">
         <input class="kc-input" id="kcInput" type="text" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off" aria-label="Nombor giliran 4 digit">
@@ -882,10 +893,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // The sidebar only auto-opens the very first time someone lands on the
   // dashboard right after logging in (set by login.html). Coming back here
   // from another page (profile, borang, jadual, etc.) never triggers it.
-  if(sessionStorage.getItem('kkah_just_logged_in') === '1'){
-    sessionStorage.removeItem('kkah_just_logged_in');
-    setTimeout(openSidebar, 900); // let the welcome animation lead first
-  }
+  // (The sidebar no longer opens by itself — it only opens when the ⋯ button is tapped.)
+  sessionStorage.removeItem('kkah_just_logged_in');
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
@@ -1365,8 +1374,53 @@ async function cmeSlipFromList(id, btn){
 }
 function closeCmeList(){ document.getElementById('cmeListOverlay').classList.remove('show'); }
 
-/* === KAUNTER C — type 4 digits, it calls automatically (no confirm button) === */
+/* === PANGGILAN (Kaunter A / B / C …) — type 4 digits, it calls automatically (no confirm button) ===
+   To add a room or counter later, add ONE line to CALL_TARGETS (and nothing else on this page).
+   zones = patterns matched against today's Working Zone to preselect it. */
+const CALL_TARGETS = [
+  { id: 'A', label: 'Kaunter A', action: 'kaunter', zones: [/kaunter\s*a\b/i] },
+  { id: 'B', label: 'Kaunter B', action: 'kaunter', zones: [/kaunter\s*b\b/i] },
+  { id: 'C', label: 'Kaunter C', action: 'kaunter', zones: [/kaunter\s*c\b/i, /runner/i] }
+  // coming next: { id:'R1', label:'Bilik Doktor 1', action:'room', zones:[/bilik\s*1\b/i] } …
+];
+let kcTarget = (function(){ try{ return localStorage.getItem('kkah_call_target') || 'C'; }catch(e){ return 'C'; } })();
+let kcZoneMatched = false;
 let kcBusy = false, kcTimer = null, kcIdle = null;
+
+function kcTargetObj(){ return CALL_TARGETS.find(t => t.id === kcTarget) || CALL_TARGETS[CALL_TARGETS.length - 1]; }
+function kcRenderTarget(){
+  const t = kcTargetObj();
+  document.getElementById('kcLabel').textContent = t.label;
+  document.getElementById('kcPickText').textContent = kcZoneMatched ? 'Zon anda' : 'Tukar';
+  document.getElementById('kcBox').setAttribute('aria-label', 'Panggil nombor giliran — ' + t.label);
+}
+function kcSetTarget(id, remember){
+  kcTarget = id;
+  if(remember){ try{ localStorage.setItem('kkah_call_target', id); }catch(e){} }
+  kcRenderTarget();
+}
+function kcPreselectFromZone(zoneText){
+  const z = String(zoneText || '');
+  const hit = CALL_TARGETS.find(t => t.zones.some(rx => rx.test(z)));
+  if(hit){ kcZoneMatched = true; kcSetTarget(hit.id, false); }
+}
+function kcToggleMenu(){
+  const box = document.getElementById('kcBox');
+  if(box.classList.contains('menu')){ box.classList.remove('menu'); return; }
+  const menu = document.getElementById('kcMenu');
+  menu.innerHTML = CALL_TARGETS.map(t =>
+    '<button class="kc-opt' + (t.id === kcTarget ? ' sel' : '') + '" role="option" onclick="kcPickTarget(\'' + t.id + '\')">' + t.label +
+    (kcZoneMatched && t.id === kcTarget ? ' <small>zon anda hari ini</small>' : '') + '</button>').join('');
+  box.classList.add('menu');
+  kcArmIdle();
+}
+function kcPickTarget(id){
+  kcZoneMatched = false; // manual choice overrides the zone preselection
+  kcSetTarget(id, true);
+  const box = document.getElementById('kcBox');
+  box.classList.remove('menu');
+  if(!box.classList.contains('open')) kcOpen();
+}
 
 function kcOpen(){
   const box = document.getElementById('kcBox');
@@ -1379,7 +1433,7 @@ function kcClose(){
   clearTimeout(kcTimer); clearTimeout(kcIdle);
   kcBusy = false;
   const box = document.getElementById('kcBox');
-  box.classList.remove('open', 'busy', 'ok', 'fail');
+  box.classList.remove('open', 'busy', 'ok', 'fail', 'menu');
   document.getElementById('kcInput').value = '';
   document.getElementById('kcMsg').textContent = '';
   document.getElementById('kcInput').blur();
@@ -1406,14 +1460,14 @@ async function kcCall(num){
   try{
     const res = await fetch(API_URL_DASHBOARD, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'callKaunterC', token: sessionStorage.getItem('kkah_session_token'), num: num })
+      body: JSON.stringify({ action: 'callKaunter', kaunter: kcTarget, token: sessionStorage.getItem('kkah_session_token'), num: num })
     });
     data = await res.json();
   }catch(err){ data = { ok:false, error:'Ralat sambungan. Cuba lagi.' }; }
 
   if(data && data.ok){
     if(navigator.vibrate) navigator.vibrate(60);
-    kcShow('ok', '<div class="kc-icon">✓</div>', num + ' · ' + (data.name || '') + ' — dipanggil');
+    kcShow('ok', '<div class="kc-icon">✓</div>', num + ' · ' + (data.name || '') + ' — dipanggil (' + kcTargetObj().label + ')');
     kcTimer = setTimeout(kcReset, 2200); // ready for the next number
   }else{
     if(navigator.vibrate) navigator.vibrate([80, 60, 80]);
@@ -1424,6 +1478,7 @@ async function kcCall(num){
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  kcRenderTarget();
   const input = document.getElementById('kcInput');
   input.addEventListener('input', () => {
     input.value = input.value.replace(/\D/g, '').slice(0, 4);
@@ -1652,6 +1707,7 @@ async function loadTodaySchedule(){
     if(match && match[1]){
       zoneEl.textContent = match[1].trim();
       zoneEl.classList.remove('zone-empty');
+      kcPreselectFromZone(match[1]); // e.g. zone "Kaunter A" → the call box opens on Kaunter A
     }else{
       zoneEl.textContent = 'Tiada rekod zon hari ini';
       zoneEl.classList.add('zone-empty');
