@@ -110,7 +110,7 @@
 
   function succeed(pos){
     var wasOk = ok;
-    ok = true; lastPos = pos; hide();
+    ok = true; lastPos = pos; softFails = 0; markGood(); hide();
     if(!wasOk){ listeners.splice(0).forEach(function(fn){ try{ fn(pos); }catch(e){} }); }
   }
 
@@ -124,37 +124,76 @@
     return 'unknown';
   }
 
+  var softFails = 0;          // consecutive transient failures while location was already working
+  var detectTimer = null;
+
+  function markGood(){ try{ sessionStorage.setItem('siaga_loc_ok_at', String(Date.now())); }catch(e){} }
+  function recentlyGood(){
+    try{ return Date.now() - Number(sessionStorage.getItem('siaga_loc_ok_at') || 0) < 10 * 60 * 1000; }catch(e){ return false; }
+  }
+
+  /** "Detecting…" card — shown only if the check takes longer than ~0.8s, so there is no flash of a scary error. */
+  function showDetecting(){
+    build();
+    elIcon.className = 'pg-icon ask'; elIcon.textContent = '🛰️';
+    elTitle.textContent = 'Mengesan lokasi…';
+    elBody.textContent = 'Sila tunggu sebentar. Kali pertama biasanya mengambil beberapa saat.';
+    elSteps.style.display = 'none';
+    elBtn.textContent = 'Mengesan…'; elBtn.disabled = true;
+    overlay.classList.add('show');
+    document.documentElement.style.overflow = 'hidden';
+  }
+
   async function check(userGesture){
     if(checking) return;
     if(!navigator.geolocation){ fail('unsupported'); return; }
     checking = true;
+    clearTimeout(detectTimer);
+    // while we're verifying and location isn't confirmed yet, show "detecting" (not an error)
+    if(!ok) detectTimer = setTimeout(function(){ if(!ok && checking) showDetecting(); }, 800);
     try{
       var st = await permState();
       if(st === 'denied'){ fail('denied'); return; }
-      // 'prompt'/'unknown' and not a tap → ask the person to tap first (many browsers block silent prompts)
-      if((st === 'prompt' || st === 'unknown') && !userGesture && !ok){
-        // try a silent fix once; if the browser holds the prompt back, fall to the tap-to-allow card
-        var silent = await getPos(4000);
+
+      // Browser will ask (permission 'prompt') and this isn't a tap → try quickly, else show the tap-to-allow card
+      if(st === 'prompt' && !userGesture && !ok){
+        var silent = await getPos(false, 3500, 120000);
         if(silent.pos){ succeed(silent.pos); return; }
         if(silent.err && silent.err.code === 1){ fail('denied'); return; }
         fail('ask'); return;
       }
-      if(elBtn) { elBtn.disabled = true; }
-      var res = await getPos(12000);
+
+      // Normal path: fast low-accuracy/cached fix first, then one high-accuracy retry before giving up
+      var res = await getPos(false, 15000, 120000);
+      if(!res.pos && res.err && res.err.code !== 1) res = await getPos(true, 15000, 0);
       if(res.pos){ succeed(res.pos); return; }
+
       var code = res.err && res.err.code;
-      if(code === 1) fail('denied');
-      else if(code === 2) fail('off');
-      else fail('timeout');
-    } finally { checking = false; }
+      if(code === 1){ fail('denied'); return; }
+
+      // Transient trouble (weak signal / slow GPS). If it was working a moment ago, don't block the person:
+      // only block after repeated failures; otherwise keep retrying quietly in the background.
+      if(ok || recentlyGood()){
+        softFails++;
+        if(softFails < 3){
+          if(ok){ hide(); }
+          else { var n = softFails; succeed(lastPos); softFails = n; } // unblock + notify waiting code, but keep counting
+          return;
+        }
+      }
+      fail(code === 2 ? 'off' : 'timeout');
+    } finally {
+      checking = false; clearTimeout(detectTimer);
+      if(elBtn && overlay && overlay.classList.contains('show')) elBtn.disabled = false;
+    }
   }
 
-  function getPos(timeout){
+  function getPos(highAccuracy, timeout, maxAge){
     return new Promise(function(resolve){
       navigator.geolocation.getCurrentPosition(
         function(p){ resolve({ pos: p }); },
         function(e){ resolve({ err: e }); },
-        { enableHighAccuracy: false, timeout: timeout, maximumAge: 30000 }
+        { enableHighAccuracy: !!highAccuracy, timeout: timeout, maximumAge: maxAge }
       );
     });
   }
