@@ -1164,7 +1164,7 @@ function cmeShowResult(kind, icon, title, cardHtml, retry){
     '<div class="sr-title">' + title + '</div>' +
     (cardHtml ? '<div class="sr-card">' + cardHtml + '</div>' : '') +
     '<div class="sr-actions">' + (retry ? '<button class="primary" onclick="openCmeScanner()">Imbas semula</button>' : '') +
-    '<button onclick="closeCmeScanner()">Tutup</button></div>';
+    '<button' + (kind === 'ok' || kind === 'info' ? ' class="primary"' : '') + ' onclick="closeCmeScanner()">Selesai</button></div>';
 }
 
 async function cmeOnCode(text){
