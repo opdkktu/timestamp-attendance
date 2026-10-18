@@ -73,6 +73,15 @@
   .att-time{ font-family:'Manrope',sans-serif; font-size:19px; font-weight:800; margin-top:6px; transition:opacity .3s ease; }
   .att-time.loading{ opacity:.5; }
   .att-time.empty{ font-size:13px; font-weight:700; color:#FFC9C0; }
+  .att-actions{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+  .att-btn{ display:flex; align-items:center; justify-content:center; gap:8px; height:46px; border-radius:14px; text-decoration:none; color:#fff; font-weight:800; font-size:13.5px;
+    background:rgba(255,255,255,.18); border:1.5px solid rgba(255,255,255,.35); backdrop-filter:blur(6px); transition:transform .15s, background .2s; }
+  .att-btn:active{ transform:scale(.97); }
+  .att-btn.primary{ background:#fff; color:#0B3D3A; border-color:#fff; box-shadow:0 6px 16px rgba(0,0,0,.18); }
+  .att-btn.done{ opacity:.55; pointer-events:none; }
+  .att-btn.done::after{ content:'✓'; font-weight:900; }
+  .att-btn.locked{ opacity:.35; pointer-events:none; }
+  body.view-mode .att-actions{ display:none; }
   .att-dot{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
   .att-dot.in{ background:#7FE3B4; }
   .att-dot.out{ background:#FFC9C0; }
@@ -548,6 +557,11 @@
         <div class="att-time loading" id="attOutTime">&nbsp;</div>
       </div>
     </div>
+
+    <div class="att-actions" id="attActions">
+      <a class="att-btn" id="attBtnIn" href="./my-checkin.html"><span class="att-btn-ic">📍</span><span>Check In</span></a>
+      <a class="att-btn" id="attBtnOut" href="./my-checkin.html"><span class="att-btn-ic">🏁</span><span>Check Out</span></a>
+    </div>
   </div>
 
   <div class="kc-box" id="kcBox" onclick="kcOpen()" role="button" aria-label="Kaunter C — panggil nombor giliran">
@@ -694,14 +708,10 @@
 const ONESIGNAL_APP_ID = 'e6ffc7a0-2572-46da-b664-2a03c6dd210a'; // public App ID — safe to expose client-side, unlike the REST API key
 const MODULES = [
   { id: 'profile', name: 'Update Profile', icon: '👤', status: 'active', href: './profile.html' },
-  { id: 'attendance', name: 'Timestamp Attendance', icon: '🕒', status: 'active', href: './my-checkin.html' },
   { id: 'borang', name: 'Borang Permohonan', icon: '📝', status: 'active', href: './borang.html' },
   { id: 'jadual', name: 'Jadual & Rekod Saya', icon: '📅', status: 'active', href: './jadual.html' },
   { id: 'trolley', name: 'Emergency Trolley Checklist', icon: '🧰', status: 'soon' },
-  { id: 'ambulance', name: 'Ambulance Checklist', icon: '🚑', status: 'soon' },
-  { id: 'birthday', name: 'Birthday Notifications', icon: '🎂', status: 'soon' },
-  { id: 'kursus', name: 'Kursus Reminders', icon: '📚', status: 'soon' },
-  { id: 'cme', name: 'CME Records', icon: '📄', status: 'soon' }
+  { id: 'ambulance', name: 'Ambulance Checklist', icon: '🚑', status: 'soon' }
 ];
 const ADMIN_MODULES = [
   { id: 'addstaff', name: 'Add Staff', icon: '➕', status: 'active', href: './staff-config.html' },
@@ -1104,7 +1114,12 @@ let cmeStream = null, cmeScanTimer = null, cmeScanning = false, cmeDetector = nu
 const cmeEsc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 async function openCmeScanner(){
-  if(window.SiagaGate && !SiagaGate.isOk()) return; // location gate is still blocking
+  if(window.SiagaGate && !SiagaGate.isOk()){ // location gate is still blocking — say so instead of doing nothing
+    const m = document.getElementById('scanModal'); m.classList.add('show');
+    cmeShowResult('bad', '📍', 'Lokasi belum disahkan', '<span>Imbasan memerlukan lokasi. Tunggu sebentar sehingga lokasi dikesan, atau hidupkan Lokasi pada telefon, kemudian cuba lagi.</span>', true);
+    if(SiagaGate.recheck) SiagaGate.recheck();
+    return;
+  }
   const modal = document.getElementById('scanModal');
   modal.classList.remove('res'); modal.classList.add('show');
   document.getElementById('scanTitle').textContent = 'Imbas QR CME';
@@ -1122,7 +1137,8 @@ async function openCmeScanner(){
     cmeShowResult('bad', '✕', denied ? 'Kamera tidak dibenarkan' : 'Kamera tidak dapat dibuka',
       '<span>' + (denied
         ? 'Benarkan akses Kamera untuk SIAGA dalam tetapan telefon/pelayar, kemudian cuba lagi.'
-        : 'Pastikan tiada aplikasi lain sedang menggunakan kamera.') + '</span>', true);
+        : 'Pastikan tiada aplikasi lain sedang menggunakan kamera.') + '</span>' +
+      '<pre style="margin:10px 0 0;padding:8px;border-radius:8px;background:rgba(0,0,0,.35);color:#9fe8ff;font-size:11px;white-space:pre-wrap;">' + cmeEsc((err && (err.name + ': ' + err.message)) || String(err)) + '</pre>', true);
   }
 }
 
@@ -1144,7 +1160,10 @@ function cmeScanLoop(){
     }).catch(next);
     return;
   }
-  if(typeof jsQR !== 'function'){ next(); return; }
+  if(typeof jsQR !== 'function'){
+    cmeShowResult('bad', '⚠️', 'Pengimbas tidak dimuatkan', '<span>Komponen pengimbas QR gagal dimuat turun (internet lemah?). Muat semula halaman dan cuba lagi.</span>', false);
+    return;
+  }
   const w = 480, h = Math.round(480 * (video.videoHeight / video.videoWidth)) || 360;
   cmeCanvas = cmeCanvas || document.createElement('canvas');
   cmeCanvas.width = w; cmeCanvas.height = h;
@@ -1175,14 +1194,25 @@ async function cmeOnCode(text){
   document.getElementById('scanResult').innerHTML =
     '<div class="kc-spin" style="width:54px;height:54px;border-width:5px;"></div><div class="sr-title" style="font-size:17px;">Merekod kehadiran…</div>';
 
-  let data;
+  let data, debug = '';
   try{
     const res = await fetch(API_URL_DASHBOARD, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'cmeCheckIn', token: sessionStorage.getItem('kkah_session_token'), qr: text })
     });
-    data = await res.json();
-  }catch(err){ data = { ok:false, error:'Ralat sambungan. Cuba lagi.' }; }
+    const raw = await res.text();
+    try{ data = JSON.parse(raw); }
+    catch(pe){ data = { ok:false, error:'Pelayan memberi jawapan yang tidak dijangka.' }; debug = 'HTTP ' + res.status + ' · ' + raw.replace(/\s+/g, ' ').slice(0, 220); }
+  }catch(err){
+    data = { ok:false, error:'Tiada sambungan ke pelayan. Semak internet anda.' };
+    debug = (err && (err.name + ': ' + err.message)) || String(err);
+  }
+  if(data && data.error === 'Unknown action'){
+    data.error = 'Pelayan belum dikemas kini. Admin perlu tampal CME.gs + Code.gs terkini dan buat “New deployment version” di Apps Script.';
+  }
+  if(data && !data.ok && data.code === 'auth'){ data.error = 'Sesi tamat. Sila log masuk semula.'; }
+  const scanned = String(text).slice(0, 80);
+  if(!data.ok) debug = (debug ? debug + '\n' : '') + 'kod=' + (data.code || '-') + ' · imbasan=' + scanned;
 
   const s = (data && data.session) || {};
   const details = s.topic ?
@@ -1204,7 +1234,9 @@ async function cmeOnCode(text){
     const code = data && data.code;
     const title = code === 'expired' ? 'QR telah tamat tempoh' : code === 'notstarted' ? 'Sesi belum bermula'
       : code === 'badqr' ? 'Bukan kod CME' : code === 'notfound' ? 'Sesi tidak dijumpai' : 'Kehadiran gagal';
-    cmeShowResult('bad', '✕', title, (details ? details + '<br><br>' : '') + '<span>' + cmeEsc((data && data.error) || 'Sila cuba lagi.') + '</span>', code !== 'expired' && code !== 'notstarted');
+    cmeShowResult('bad', '✕', title, (details ? details + '<br><br>' : '') + '<span>' + cmeEsc((data && data.error) || 'Sila cuba lagi.') + '</span>' +
+      (debug ? '<pre style="margin:10px 0 0;padding:8px;border-radius:8px;background:rgba(0,0,0,.35);color:#9fe8ff;font-size:11px;white-space:pre-wrap;word-break:break-all;">' + cmeEsc(debug) + '</pre>' : ''),
+      code !== 'expired' && code !== 'notstarted');
   }
 }
 
@@ -1646,10 +1678,20 @@ async function loadTodayAttendance(){
     if(!data.ok) throw new Error(data.error);
     renderAttTime(inEl, data.checkIn);
     renderAttTime(outEl, data.checkOut);
+    setAttButtons(!!data.checkIn, !!data.checkOut);
   }catch(err){
     renderAttTime(inEl, '');
     renderAttTime(outEl, '');
+    setAttButtons(false, false);
   }
+}
+
+/** Check In is the highlighted action until you've checked in; then Check Out; when both are done the day is complete. */
+function setAttButtons(hasIn, hasOut){
+  const bi = document.getElementById('attBtnIn'), bo = document.getElementById('attBtnOut');
+  if(!bi || !bo) return;
+  bi.className = 'att-btn' + (hasIn ? ' done' : ' primary');
+  bo.className = 'att-btn' + (hasOut ? ' done' : hasIn ? ' primary' : ' locked');
 }
 
 function renderAttTime(el, timeStr){
