@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Pengangkutan</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.11.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.11.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SIAGA">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84; --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60; --green-700:#0a8f5a; --red-600:#C62839; --amber:#B7791F;
+    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; min-height:100vh; background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050)); font-family:'Inter',sans-serif; color:var(--ink-700); padding:14px 14px 90px; }
+  .wrap{ max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .head{ border-radius:24px; padding:18px 20px; color:#fff; background:linear-gradient(135deg,var(--teal-900),var(--teal-700)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .head .eyebrow{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:700; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:3px 0 0; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
+
+  .tabs{ display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:6px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:5px; position:sticky; top:8px; z-index:5; box-shadow:0 8px 24px -16px rgba(11,61,58,.4); }
+  .tab{ height:44px; border:none; border-radius:12px; background:transparent; font:inherit; font-weight:700; font-size:13.5px; color:var(--ink-500); cursor:pointer; position:relative; }
+  .tab.on{ background:linear-gradient(135deg,var(--teal-900),var(--teal-500)); color:#fff; }
+  .tab .dot{ position:absolute; top:6px; right:14px; min-width:18px; height:18px; border-radius:99px; background:var(--red-600); color:#fff; font-size:11px; font-weight:800; display:none; align-items:center; justify-content:center; padding:0 5px; }
+  .tab .dot.show{ display:flex; }
+
+  .panel{ background:#fff; border:1px solid var(--line); border-radius:22px; padding:16px; box-shadow:0 14px 40px -26px rgba(11,61,58,.4); }
+  .hide{ display:none !important; }
+  label{ display:block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-500); margin:14px 0 6px; }
+  label:first-child{ margin-top:0; }
+  input[type=text],input[type=date],input[type=time],textarea{ width:100%; height:48px; border-radius:12px; border:1.5px solid var(--line); background:#fff; padding:0 13px; font:inherit; font-size:15px; color:var(--ink-700); }
+  textarea{ height:84px; padding:11px 13px; resize:vertical; }
+  input:focus,textarea:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,.15); }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .chip{ border:1px solid var(--line); background:var(--mint-100); color:var(--teal-700); font:inherit; font-size:12.5px; font-weight:700; padding:7px 12px; border-radius:99px; cursor:pointer; }
+  .stepper{ display:flex; align-items:center; gap:10px; }
+  .stepper button{ width:48px; height:48px; border-radius:12px; border:1.5px solid var(--line); background:#fff; font-size:22px; font-weight:800; color:var(--teal-700); cursor:pointer; }
+  .stepper input{ text-align:center; font-weight:800; font-size:18px; }
+  .hint{ font-size:12.5px; line-height:1.5; color:var(--ink-500); background:var(--mint-100); border-radius:12px; padding:10px 12px; margin-top:14px; }
+  .hint b{ color:var(--teal-900); }
+  .btn{ width:100%; height:54px; border:none; border-radius:16px; font-weight:800; font-size:15px; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:16px; }
+  .btn.primary{ background:linear-gradient(135deg,var(--teal-900),var(--teal-500)); color:#fff; box-shadow:0 10px 24px -10px rgba(11,61,58,.6); }
+  .btn:disabled{ opacity:.55; }
+
+  .filters{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
+  .filters .chip{ white-space:nowrap; }
+  .filters .chip.on{ background:var(--teal-700); color:#fff; border-color:var(--teal-700); }
+
+  .card{ background:#fff; border:1px solid var(--line); border-radius:20px; padding:14px 14px 12px; box-shadow:0 12px 30px -24px rgba(11,61,58,.5); }
+  .card + .card{ margin-top:10px; }
+  .card.focus{ animation:focus 1.6s ease 1; border-color:var(--teal-500); }
+  @keyframes focus{ 0%,60%{ box-shadow:0 0 0 5px rgba(28,143,132,.35);} 100%{ box-shadow:0 12px 30px -24px rgba(11,61,58,.5);} }
+  .card.mytask{ border-color:var(--green-500); background:linear-gradient(180deg,#F1FBF5,#fff); }
+  .c-top{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+  .c-purpose{ font-family:'Manrope',sans-serif; font-weight:800; font-size:16px; line-height:1.25; }
+  .c-when{ font-size:13px; font-weight:700; color:var(--teal-700); margin-top:3px; }
+  .c-meta{ font-size:12.5px; color:var(--ink-500); margin-top:6px; line-height:1.55; }
+  .badge{ font-size:10.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; padding:5px 10px; border-radius:99px; white-space:nowrap; }
+  .b-wait{ background:#FFF3D6; color:#8a6d0a; } .b-appr{ background:#E0F5E8; color:var(--green-700); } .b-need{ background:#FDE9C8; color:#9a5b00; }
+  .b-bad{ background:#FDE0E3; color:var(--red-600); } .b-done{ background:#eef1f0; color:#5B6B68; }
+  .resp{ display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+  .rp{ font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:99px; }
+  .rp.y{ background:#E0F5E8; color:var(--green-700); } .rp.n{ background:#f1f1f1; color:#777; }
+  .acts{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+  .acts.one{ grid-template-columns:1fr; }
+  .a{ height:46px; border-radius:13px; border:1.5px solid var(--line); background:#fff; font:inherit; font-weight:800; font-size:13.5px; cursor:pointer; color:var(--ink-700); }
+  .a.yes{ background:var(--green-700); color:#fff; border-color:var(--green-700); }
+  .a.no{ color:var(--red-600); }
+  .a.small{ height:40px; font-size:12.5px; color:var(--ink-500); }
+  .a:disabled{ opacity:.5; }
+  .note-box{ margin-top:8px; font-size:12.5px; background:var(--mint-100); border-radius:10px; padding:8px 10px; color:var(--ink-700); }
+
+  .today{ border-radius:22px; padding:14px 16px; color:#fff; background:linear-gradient(135deg,var(--green-700),var(--green-500)); }
+  .today b{ font-family:'Manrope',sans-serif; font-size:15px; }
+  .today .t{ margin-top:8px; background:rgba(255,255,255,.16); border-radius:12px; padding:9px 12px; font-size:13.5px; }
+  .empty{ text-align:center; padding:34px 12px; color:var(--ink-500); font-size:14px; line-height:1.6; }
+  .empty .big{ font-size:38px; margin-bottom:6px; }
+  .spin{ width:30px; height:30px; margin:0 auto 10px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--teal-500); animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .toast{ position:fixed; left:50%; bottom:22px; transform:translate(-50%,30px); background:var(--teal-900); color:#fff; font-weight:700; font-size:14px; padding:13px 20px; border-radius:99px; box-shadow:0 14px 34px rgba(0,0,0,.3); opacity:0; pointer-events:none; transition:all .3s ease; z-index:50; max-width:92vw; text-align:center; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+  .toast.err{ background:var(--red-600); }
+  .sheet{ position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.5); display:none; align-items:flex-end; justify-content:center; padding:14px; }
+  .sheet.show{ display:flex; }
+  .sheet .box{ width:min(520px,100%); background:#fff; border-radius:24px; padding:20px 18px; }
+  .sheet h3{ margin:0 0 4px; font-family:'Manrope',sans-serif; }
+  .sheet p{ margin:0 0 12px; font-size:13px; color:var(--ink-500); }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>Pengangkutan</h1></div>
+    <a class="back" href="./dashboard.html">← Dashboard</a>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab on" id="tabList" onclick="showTab('list')">Senarai<span class="dot" id="dotList"></span></button>
+    <button class="tab" id="tabNew" onclick="showTab('new')">+ Minta Kenderaan</button>
+  </div>
+
+  <!-- LIST -->
+  <section id="viewList">
+    <div id="todayBox"></div>
+    <div class="filters" id="filters" style="margin:12px 0 10px"></div>
+    <div id="list"><div class="empty"><div class="spin"></div>Memuatkan…</div></div>
+  </section>
+
+  <!-- NEW REQUEST -->
+  <section id="viewNew" class="hide">
+    <div class="panel">
+      <label for="fPurpose">Tujuan penggunaan</label>
+      <input type="text" id="fPurpose" maxlength="120" placeholder="cth. Hantar spesimen ke hospital" autocomplete="off">
+      <div class="chips" id="purposeChips">
+        <button type="button" class="chip">Hantar pesakit</button><button type="button" class="chip">Hantar spesimen</button><button type="button" class="chip">Mesyuarat / kursus</button><button type="button" class="chip">Lawatan rumah</button><button type="button" class="chip">Ambil bekalan</button>
+      </div>
+
+      <div class="row2">
+        <div><label for="fDate">Tarikh</label><input type="date" id="fDate"></div>
+        <div><label for="fTime">Masa</label><input type="time" id="fTime" value="08:00"></div>
+      </div>
+
+      <label for="fPax">Jumlah penumpang</label>
+      <div class="stepper">
+        <button type="button" onclick="pax(-1)" aria-label="Kurang">−</button>
+        <input type="text" id="fPax" inputmode="numeric" value="1" maxlength="2" aria-label="Jumlah penumpang">
+        <button type="button" onclick="pax(1)" aria-label="Tambah">+</button>
+      </div>
+
+      <label for="fNotes">Catatan (pilihan)</label>
+      <textarea id="fNotes" maxlength="300" placeholder="Destinasi, barang dibawa, keperluan khas…"></textarea>
+
+      <div class="hint" id="newHint">Permintaan dihantar kepada <b>semua pemandu</b> dan penyelia. Pemandu yang bersedia akan dihantar kepada <b>penyelia PIC untuk kelulusan</b>.</div>
+      <button class="btn primary" id="btnSubmit" onclick="submitRequest()">Hantar permintaan</button>
+    </div>
+  </section>
+</div>
+
+<div class="sheet" id="sheet"><div class="box">
+  <h3 id="shTitle">Tolak permintaan</h3><p id="shSub">Nyatakan sebab (pilihan) supaya pemohon faham.</p>
+  <input type="text" id="shReason" maxlength="120" placeholder="Sebab (pilihan)">
+  <div class="acts" style="margin-top:14px"><button class="a" onclick="closeSheet()">Batal</button><button class="a no" id="shGo">Tolak</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const token = sessionStorage.getItem('kkah_session_token');
+if(!token) location.href = './login.html';
+const focusId = new URLSearchParams(location.search).get('req');
+let data = null, filter = 'all', busy = false, rejectId = null;
+
+async function api(body){
+  const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)) });
+  return res.json();
+}
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function toast(msg, err){ const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(toast._t); toast._t = setTimeout(() => t.className = 'toast', 3200); }
+function when(d, t){
+  const mo = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'], dw = ['Ahd','Isn','Sel','Rab','Kha','Jum','Sab'];
+  const p = d.split('-').map(Number), dt = new Date(p[0], p[1] - 1, p[2]);
+  const h = Number(t.slice(0, 2));
+  return dw[dt.getDay()] + ' ' + p[2] + ' ' + mo[p[1] - 1] + ' · ' + (h % 12 || 12) + ':' + t.slice(3, 5) + (h >= 12 ? ' PM' : ' AM');
+}
+
+/* ---------- tabs / form ---------- */
+function showTab(n){
+  $('viewList').classList.toggle('hide', n !== 'list'); $('viewNew').classList.toggle('hide', n !== 'new');
+  $('tabList').classList.toggle('on', n === 'list'); $('tabNew').classList.toggle('on', n === 'new');
+  if(n === 'list') load();
+}
+(function initForm(){
+  const now = new Date();
+  const d = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  $('fDate').min = d; $('fDate').value = d;
+  document.querySelectorAll('#purposeChips .chip').forEach(c => c.onclick = () => { $('fPurpose').value = c.textContent; });
+  $('fPax').addEventListener('input', () => { $('fPax').value = $('fPax').value.replace(/\D/g, '').slice(0, 2); });
+})();
+function pax(n){ const v = Math.min(60, Math.max(1, (parseInt($('fPax').value, 10) || 1) + n)); $('fPax').value = v; }
+
+async function submitRequest(){
+  if(busy) return;
+  const body = { action:'createTransportRequest', purpose: $('fPurpose').value.trim(), date: $('fDate').value, time: $('fTime').value, passengers: parseInt($('fPax').value, 10) || 0, notes: $('fNotes').value.trim() };
+  if(body.purpose.length < 3){ toast('Sila nyatakan tujuan penggunaan', true); $('fPurpose').focus(); return; }
+  if(!body.date || !body.time){ toast('Sila pilih tarikh dan masa', true); return; }
+  busy = true; const b = $('btnSubmit'); b.disabled = true; b.textContent = 'Menghantar…';
+  try{
+    const r = await api(body);
+    if(!r.ok){ toast(r.error || 'Tidak dapat menghantar', true); return; }
+    $('fPurpose').value = ''; $('fNotes').value = ''; $('fPax').value = 1;
+    toast(r.noDrivers ? 'Permintaan direkod — tiada pemandu berdaftar lagi' : '✅ Permintaan dihantar kepada pemandu');
+    if(navigator.vibrate) try{ navigator.vibrate(40); }catch(e){}
+    showTab('list');
+  }catch(e){ toast('Sambungan gagal. Cuba lagi.', true); }
+  finally{ busy = false; b.disabled = false; b.textContent = 'Hantar permintaan'; }
+}
+
+/* ---------- list ---------- */
+async function load(silent){
+  if(!silent) $('list').innerHTML = '<div class="empty"><div class="spin"></div>Memuatkan…</div>';
+  try{
+    const d = await api({ action:'listTransport' });
+    if(!d.ok){
+      if(/expired/i.test(d.error || '')){ location.href = './login.html'; return; }
+      $('list').innerHTML = '<div class="empty">' + esc(d.error || 'Tidak dapat memuatkan') + '</div>'; return;
+    }
+    data = d; renderFilters(); render();
+    if(d.role.isPic && !d._pn) $('newHint').innerHTML = 'Anda penyelia PIC: permintaan anda <b>terus disahkan</b> sebaik sahaja seorang pemandu bersedia.';
+  }catch(e){ if(!silent) $('list').innerHTML = '<div class="empty">Sambungan gagal.<br><br><button class="a" style="padding:0 22px" onclick="load()">Cuba lagi</button></div>'; }
+}
+
+const STATUS = {
+  PENDING_DRIVER: ['b-wait', 'Menunggu pemandu'], PENDING_APPROVAL: ['b-need', 'Menunggu kelulusan'], APPROVED: ['b-appr', 'Diluluskan'],
+  REJECTED: ['b-bad', 'Ditolak'], CANCELLED: ['b-done', 'Dibatalkan'], NO_DRIVER: ['b-bad', 'Tiada pemandu'], EXPIRED: ['b-done', 'Luput'], DONE: ['b-done', 'Selesai']
+};
+function actionable(i){ return i.canRespond || i.canApprove; }
+
+function renderFilters(){
+  const r = data.role, items = data.items;
+  const defs = [['all', 'Semua'], ['act', 'Perlu tindakan (' + items.filter(actionable).length + ')'], ['today', 'Hari ini'], ['mine', 'Permintaan saya']];
+  $('filters').innerHTML = defs.map(f => '<button class="chip' + (filter === f[0] ? ' on' : '') + '" onclick="setFilter(\'' + f[0] + '\')">' + f[1] + '</button>').join('');
+  const n = items.filter(actionable).length;
+  $('dotList').textContent = n; $('dotList').classList.toggle('show', n > 0);
+  const tasks = items.filter(i => i.isMyTask && i.isToday);
+  $('todayBox').innerHTML = tasks.length ? '<div class="today"><b>🚐 Tugasan anda hari ini</b>' + tasks.map(t => '<div class="t"><b>' + esc(when(t.date, t.time).split('·')[1].trim()) + '</b> — ' + esc(t.purpose) + ' · ' + t.pax + ' orang<br><small>Pemohon: ' + esc(t.requester) + (t.notes ? ' · ' + esc(t.notes) : '') + '</small></div>').join('') + '</div>' : '';
+}
+function setFilter(f){ filter = f; renderFilters(); render(); }
+
+function render(){
+  let items = data.items;
+  if(filter === 'act') items = items.filter(actionable);
+  else if(filter === 'today') items = items.filter(i => i.isToday);
+  else if(filter === 'mine') items = items.filter(i => i.mine);
+  if(!items.length){
+    $('list').innerHTML = '<div class="empty"><div class="big">' + (filter === 'act' ? '🎉' : '🚐') + '</div>' + (filter === 'act' ? 'Tiada yang perlu ditindak sekarang.' : 'Tiada permintaan kenderaan.<br>Tekan “+ Minta Kenderaan” untuk membuat permintaan.') + '</div>'; return;
+  }
+  $('list').innerHTML = items.map(card).join('');
+  if(focusId){ const el = document.getElementById('c_' + focusId); if(el && !render._f){ render._f = 1; el.classList.add('focus'); el.scrollIntoView({ behavior:'smooth', block:'center' }); } }
+}
+
+function card(i){
+  const st = STATUS[i.status] || ['b-done', i.status];
+  let acts = '';
+  if(i.canRespond){
+    acts += '<div class="acts"><button class="a yes" onclick="respond(\'' + i.id + '\', true)">✅ Bersedia</button><button class="a no" onclick="respond(\'' + i.id + '\', false)"' + (i.myResponse === 'NO' ? ' disabled' : '') + '>' + (i.myResponse === 'NO' ? 'Anda: tidak dapat' : '✖ Tidak dapat') + '</button></div>';
+  }
+  if(i.canApprove){
+    acts += '<div class="acts"><button class="a yes" onclick="decide(\'' + i.id + '\', true)">👍 Luluskan</button><button class="a no" onclick="openReject(\'' + i.id + '\')">Tolak</button></div>';
+  }
+  if(i.canCancel){ acts += '<div class="acts one"><button class="a small" onclick="cancelReq(\'' + i.id + '\')">Batalkan permintaan</button></div>'; }
+  const resp = i.responses.length ? '<div class="resp">' + i.responses.map(r => '<span class="rp ' + (r.available ? 'y' : 'n') + '">' + (r.available ? '✓ ' : '✖ ') + esc(r.name) + '</span>').join('') + '</div>' : '';
+  const meta = [i.pax + ' penumpang', 'Pemohon: ' + esc(i.requester) + (i.unit ? ' (' + esc(i.unit) + ')' : '')];
+  if(i.driver && (i.status === 'APPROVED' || i.status === 'DONE')) meta.push('Pemandu: <b>' + esc(i.driver) + '</b>');
+  else if(i.driver && i.status === 'PENDING_APPROVAL') meta.push('Pemandu bersedia: <b>' + esc(i.driver) + '</b>');
+  if(i.auto && i.status !== 'REJECTED') meta.push('Pemohon penyelia PIC — tanpa kelulusan');
+  return '<div class="card' + (i.isMyTask ? ' mytask' : '') + '" id="c_' + i.id + '"><div class="c-top"><div><div class="c-purpose">' + esc(i.purpose) + '</div><div class="c-when">' + esc(when(i.date, i.time)) + (i.isToday ? ' · HARI INI' : '') + '</div></div><span class="badge ' + st[0] + '">' + st[1] + '</span></div>' +
+    '<div class="c-meta">' + meta.join('<br>') + '</div>' + (i.notes ? '<div class="note-box">📝 ' + esc(i.notes) + '</div>' : '') +
+    (i.reason ? '<div class="note-box">Sebab: ' + esc(i.reason) + '</div>' : '') + resp + acts + '</div>';
+}
+
+async function act(body, okMsg){
+  if(busy) return; busy = true;
+  document.querySelectorAll('.a').forEach(b => b.disabled = true);
+  try{
+    const r = await api(body);
+    if(!r.ok) toast(r.error || 'Tidak berjaya', true); else { toast(okMsg); if(navigator.vibrate) try{ navigator.vibrate(30); }catch(e){} }
+  }catch(e){ toast('Sambungan gagal. Cuba lagi.', true); }
+  busy = false; load(true);
+}
+function respond(id, yes){ act({ action:'respondTransport', id, available: yes }, yes ? '✅ Anda bersedia — menunggu kelulusan' : 'Dijawab: tidak dapat'); }
+function decide(id, yes){ act({ action:'decideTransport', id, approve: yes }, '👍 Diluluskan — pemandu & pemohon dimaklumkan'); }
+function cancelReq(id){ if(confirm('Batalkan permintaan ini?')) act({ action:'cancelTransport', id }, 'Permintaan dibatalkan'); }
+function openReject(id){ rejectId = id; $('shReason').value = ''; $('sheet').classList.add('show'); $('shGo').onclick = () => { const reason = $('shReason').value; closeSheet(); act({ action:'decideTransport', id: rejectId, approve:false, reason }, 'Permintaan ditolak'); }; }
+function closeSheet(){ $('sheet').classList.remove('show'); }
+
+load();
+setInterval(() => { if(document.visibilityState === 'visible' && !$('viewList').classList.contains('hide')) load(true); }, 45000);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') load(true); });
+</script>
+</body>
+</html>
