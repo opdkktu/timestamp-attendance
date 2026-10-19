@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.11.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.11.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.11.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.11.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -250,6 +250,12 @@
   .tr-docs{ display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 4px; }
   .tr-chip{ font-size:11.5px; font-weight:700; padding:6px 10px; border-radius:99px; background:#EAF6F2; color:#0F5C56; text-decoration:none; }
   .tr-chip.month{ background:#FFF3D6; color:#8a6d0a; } .tr-chip.week{ background:#FDE0E3; color:#C62839; } .tr-chip.expired{ background:#C62839; color:#fff; } .tr-chip.none{ background:#eef1f0; color:#6b7b78; }
+  .kc-pin{ position:absolute; top:10px; right:50px; z-index:4; height:30px; padding:0 11px; border-radius:99px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff; font-weight:700; font-size:11.5px; cursor:pointer; display:none; white-space:nowrap; }
+  .kc-box.open .kc-pin{ display:block; }
+  .kc-box.pinned .kc-pin{ background:#fff; color:#0B3D3A; border-color:#fff; }
+  .kc-box.pinned{ position:sticky; top:8px; z-index:20; box-shadow:0 0 0 3px rgba(255,255,255,.55), 0 14px 32px -12px rgba(11,61,58,.8); }
+  .kc-box.pinned::before{ content:''; position:absolute; top:16px; left:calc(50% + 62px); width:8px; height:8px; border-radius:50%; background:#5CFF9D; box-shadow:0 0 0 0 rgba(92,255,157,.8); animation:kcLive 1.8s infinite; z-index:4; }
+  @keyframes kcLive{ 0%{ box-shadow:0 0 0 0 rgba(92,255,157,.8);} 100%{ box-shadow:0 0 0 9px rgba(92,255,157,0);} }
   .kc-pick{ position:absolute; top:10px; left:12px; z-index:4; height:30px; padding:0 12px; border-radius:99px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.14); color:#fff; font-weight:700; font-size:12px; cursor:pointer; }
   .kc-menu{ position:absolute; inset:0; z-index:5; background:rgba(6,30,28,.96); padding:44px 12px 10px; display:none; overflow:auto; }
   .kc-box.menu .kc-menu{ display:block; }
@@ -590,7 +596,8 @@
   </div>
 
   <div class="kc-box" id="kcBox" onclick="kcOpen()" role="button" aria-label="Panggil nombor giliran">
-    <button class="kc-close" onclick="event.stopPropagation(); kcClose()" aria-label="Tutup">✕</button>
+    <button class="kc-close" onclick="event.stopPropagation(); kcDismiss()" aria-label="Tutup">✕</button>
+    <button class="kc-pin" id="kcPin" onclick="event.stopPropagation(); kcTogglePin()" aria-pressed="false" aria-label="Kekalkan kaunter aktif">📌 Kekal aktif</button>
     <button class="kc-pick" id="kcPick" onclick="event.stopPropagation(); kcToggleMenu()" aria-haspopup="listbox" aria-label="Tukar kaunter"><span id="kcPickText">Tukar</span> ▾</button>
     <div class="kc-label" id="kcLabel">Kaunter C</div>
     <div class="kc-hint" id="kcHint">Ketik untuk panggil nombor giliran</div>
@@ -1503,6 +1510,63 @@ const CALL_TARGETS = [
 let kcTarget = (function(){ try{ return localStorage.getItem('kkah_call_target') || 'C'; }catch(e){ return 'C'; } })();
 let kcZoneMatched = false;
 let kcBusy = false, kcTimer = null, kcIdle = null;
+let kcPinned = false, kcWake = null, kcRefreshTimer = null;
+
+/* === Mod Kaunter (pinned): the call box stays open, the screen stays awake and the session is renewed ===
+   Set up for people at a counter: type a number → call → patient → type the next, without reopening anything. */
+function kcPinPref(){ try{ return localStorage.getItem('kkah_kc_pin'); }catch(e){ return null; } }
+function kcIdleMsg(){
+  if(!kcPinned) return '';
+  return ('wakeLock' in navigator) ? '📌 Kekal aktif — skrin tidak akan tertutup' : '📌 Kekal aktif — tetapkan Auto-Lock telefon kepada “Never”';
+}
+function kcSetPinned(on, save){
+  kcPinned = !!on;
+  const box = document.getElementById('kcBox'), pin = document.getElementById('kcPin');
+  box.classList.toggle('pinned', kcPinned);
+  pin.setAttribute('aria-pressed', kcPinned ? 'true' : 'false');
+  pin.textContent = kcPinned ? '📌 Aktif' : '📌 Kekal aktif';
+  if(save){ try{ localStorage.setItem('kkah_kc_pin', kcPinned ? '1' : '0'); }catch(e){} }
+  if(kcPinned){
+    clearTimeout(kcIdle);
+    kcOpen();
+    kcAcquireWake();
+    clearInterval(kcRefreshTimer);
+    kcRefreshTimer = setInterval(kcRenewSession, 25 * 60 * 1000);
+    if(!kcBusy) document.getElementById('kcMsg').textContent = kcIdleMsg();
+  }else{
+    clearInterval(kcRefreshTimer);
+    try{ if(kcWake){ kcWake.release(); kcWake = null; } }catch(e){}
+    kcArmIdle();
+    if(!kcBusy) document.getElementById('kcMsg').textContent = '';
+  }
+}
+function kcTogglePin(){ kcSetPinned(!kcPinned, true); }
+function kcDismiss(){ kcSetPinned(false, true); kcClose(); } // the ✕ turns Mod Kaunter off as well as closing the box
+
+async function kcAcquireWake(){
+  try{
+    if(!navigator.wakeLock || kcWake || document.visibilityState !== 'visible') return;
+    kcWake = await navigator.wakeLock.request('screen');
+    kcWake.addEventListener('release', () => { kcWake = null; });
+  }catch(e){ /* device/browser refused — the on-screen hint tells them to use Auto-Lock: Never */ }
+}
+/** A fresh 8-hour session token, so a long shift never ends with "log in again" in the middle of calling. */
+async function kcRenewSession(){
+  try{
+    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'refreshSession', token: sessionStorage.getItem('kkah_session_token') }) });
+    const d = await res.json();
+    if(d && d.ok && d.token) sessionStorage.setItem('kkah_session_token', d.token);
+  }catch(e){ /* offline for a moment — try again at the next interval */ }
+}
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && kcPinned){
+    kcAcquireWake(); kcRenewSession();
+    const box = document.getElementById('kcBox');
+    if(!box.classList.contains('menu') && !kcBusy) setTimeout(() => document.getElementById('kcInput').focus(), 200);
+  }
+});
+document.addEventListener('pointerdown', () => { if(kcPinned && !kcWake) kcAcquireWake(); }, { passive: true }); // some phones only allow it after a touch
 
 function kcTargetObj(){ return CALL_TARGETS.find(t => t.id === kcTarget) || CALL_TARGETS[CALL_TARGETS.length - 1]; }
 function kcRenderTarget(){
@@ -1519,7 +1583,7 @@ function kcSetTarget(id, remember){
 function kcPreselectFromZone(zoneText){
   const z = String(zoneText || '');
   const hit = CALL_TARGETS.find(t => t.zones.some(rx => rx.test(z)));
-  if(hit){ kcZoneMatched = true; kcSetTarget(hit.id, false); }
+  if(hit){ kcZoneMatched = true; kcSetTarget(hit.id, false); if(!VIEW_NAME && kcPinPref() === null && !kcPinned) kcSetPinned(true, false); } // first time on a kaunter: Mod Kaunter turns itself on
 }
 function kcToggleMenu(){
   const box = document.getElementById('kcBox');
@@ -1555,11 +1619,11 @@ function kcClose(){
   document.getElementById('kcMsg').textContent = '';
   document.getElementById('kcInput').blur();
 }
-function kcArmIdle(){ clearTimeout(kcIdle); kcIdle = setTimeout(() => { if(!kcBusy) kcClose(); }, 90 * 1000); } // collapse if left alone
+function kcArmIdle(){ clearTimeout(kcIdle); if(kcPinned) return; kcIdle = setTimeout(() => { if(!kcBusy) kcClose(); }, 90 * 1000); } // collapse if left alone
 function kcReset(){
   const box = document.getElementById('kcBox'), input = document.getElementById('kcInput');
   box.classList.remove('busy', 'ok', 'fail');
-  input.value = ''; document.getElementById('kcMsg').textContent = '';
+  input.value = ''; document.getElementById('kcMsg').textContent = kcIdleMsg();
   kcBusy = false; input.focus(); kcArmIdle();
 }
 function kcShow(cls, iconHtml, msg){
@@ -1596,6 +1660,7 @@ async function kcCall(num){
 
 window.addEventListener('DOMContentLoaded', () => {
   kcRenderTarget();
+  if(!VIEW_NAME && kcPinPref() === '1') kcSetPinned(true, false);
   const input = document.getElementById('kcInput');
   input.addEventListener('input', () => {
     input.value = input.value.replace(/\D/g, '').slice(0, 4);
