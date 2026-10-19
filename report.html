@@ -1,337 +1,241 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ms">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KKAH · My Attendance Report</title>
+<title>SIAGA · Laporan Kehadiran Bulanan</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.11.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.11.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SIAGA">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
-    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
-    --gold-500:#C9A227; --green-500:#2FAE60;
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84; --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60; --red-600:#C62839; --amber:#B7791F;
     --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0; min-height:100vh;
-    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
-    font-family:'Inter',sans-serif; color:var(--ink-700);
-    display:flex; align-items:center; justify-content:center; padding:24px;
-  }
-  .card{
-    width:100%; max-width:440px; background:#fff; border-radius:28px;
-    box-shadow:0 20px 60px -20px rgba(11,61,58,0.25);
-    overflow:hidden; border:1px solid var(--line);
-  }
-  .head{
-    padding:22px 28px 18px;
-    background:linear-gradient(135deg, var(--teal-900), var(--teal-700));
-    color:#fff; position:relative;
-  }
-  .head .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
-  .head h1{ font-family:'Manrope',sans-serif; font-size:20px; font-weight:800; margin:4px 0 0; }
-  .gold-dot{ position:absolute; top:22px; right:26px; width:8px;height:8px;border-radius:50%; background:var(--gold-500); box-shadow:0 0 0 4px rgba(201,162,39,0.18); }
-  .stage{ padding:28px; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; min-height:100vh; background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050)); font-family:'Inter',sans-serif; color:var(--ink-700); padding:14px; }
+  .wrap{ max-width:760px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .head{ border-radius:24px; padding:18px 20px; color:#fff; background:linear-gradient(135deg,var(--teal-900),var(--teal-700)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .head .eyebrow{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:700; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:20px; font-weight:800; margin:3px 0 0; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
 
-  .viewfinder{ position:relative; width:200px; height:200px; margin:0 auto 18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
-  .viewfinder video{ width:170px; height:170px; border-radius:50%; object-fit:cover; background:#0B3D3A; }
-  .ring{ position:absolute; inset:0; border-radius:50%; border:3px solid var(--line); transition:border-color .4s ease; }
-  .ring.scanning{ border-color:var(--teal-500); animation:pulse 1.6s ease-in-out infinite; }
-  .ring.success{ border-color:var(--green-500); box-shadow:0 0 0 8px rgba(47,174,96,0.15); }
-  @keyframes pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(28,143,132,.25);} 50%{ box-shadow:0 0 0 12px rgba(28,143,132,0);} }
+  .panel{ background:#fff; border:1px solid var(--line); border-radius:22px; padding:16px; box-shadow:0 14px 40px -26px rgba(11,61,58,.4); }
+  .controls{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .controls .full{ grid-column:1 / -1; }
+  label{ display:block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-500); margin-bottom:5px; }
+  select{ width:100%; height:46px; border-radius:12px; border:1.5px solid var(--line); background:#fff; padding:0 12px; font:inherit; font-size:14.5px; color:var(--ink-700); }
+  .btn{ height:50px; border:none; border-radius:14px; font-weight:800; font-size:14.5px; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn.primary{ background:linear-gradient(135deg,var(--teal-900),var(--teal-500)); color:#fff; }
+  .btn.ghost{ background:#fff; color:var(--teal-900); border:1.5px solid var(--line); }
+  .btn:disabled{ opacity:.55; }
+  .actions{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
-  .status-line{ text-align:center; font-size:14px; color:var(--ink-500); min-height:20px; margin-bottom:6px; }
+  .cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .stat{ background:var(--mint-100); border:1px solid var(--line); border-radius:16px; padding:12px 6px; text-align:center; }
+  .stat b{ display:block; font-family:'Manrope',sans-serif; font-size:22px; font-weight:800; color:var(--teal-900); }
+  .stat span{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-500); }
+  .stat.warn b{ color:var(--amber); } .stat.bad b{ color:var(--red-600); }
 
-  .welcome{ display:none; text-align:center; }
-  .welcome.show{ display:block; }
-  .welcome h2{ font-family:'Manrope',sans-serif; font-size:20px; color:var(--teal-900); margin:0 0 4px; }
-  .welcome .ic{ font-size:13px; color:var(--ink-500); margin-bottom:20px; }
+  .who{ font-size:13px; color:var(--ink-500); line-height:1.6; }
+  .who b{ color:var(--ink-700); font-size:15px; }
+  .tbl-wrap{ overflow-x:auto; border-radius:14px; border:1px solid var(--line); }
+  table{ width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums; }
+  th{ background:var(--teal-700); color:#fff; text-align:left; padding:9px 10px; font-size:11px; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+  td{ padding:8px 10px; border-top:1px solid var(--line); white-space:nowrap; }
+  tr.wk td{ background:#f4f7f6; color:#93a29f; }
+  td.st{ font-weight:700; }
+  .ok{ color:var(--green-500); } .late{ color:var(--amber); } .bad{ color:var(--red-600); } .dim{ color:#93a29f; }
+  tfoot td{ font-weight:800; background:var(--mint-100); }
 
-  .field{ margin-bottom:14px; text-align:left; }
-  .field label{ font-size:12px; font-weight:600; color:var(--ink-500); display:block; margin-bottom:6px; }
-  select, .btn{
-    width:100%; padding:12px 14px; border-radius:12px; font-size:14px; font-family:'Inter',sans-serif;
+  .empty{ text-align:center; padding:30px 10px; color:var(--ink-500); font-size:14px; }
+  .spin{ width:30px; height:30px; margin:0 auto 10px; border-radius:50%; border:3px solid var(--line); border-top-color:var(--teal-500); animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .note{ font-size:11.5px; color:var(--ink-500); line-height:1.5; }
+  .sign{ display:none; }
+
+  @media (max-width:480px){ .cards{ grid-template-columns:repeat(2,1fr); } }
+  @media print{
+    body{ background:#fff; padding:0; }
+    .head,.controls-panel,.actions,.note.no-print,.back{ display:none !important; }
+    .panel{ border:none; box-shadow:none; padding:0; border-radius:0; }
+    .wrap{ max-width:none; gap:10px; }
+    .print-title{ display:block !important; }
+    th{ background:#0F5C56 !important; color:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    tr.wk td,.stat,tfoot td{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .tbl-wrap{ overflow:visible; border:none; }
+    td,th{ padding:5px 7px; font-size:11px; }
+    .sign{ display:flex; justify-content:space-between; gap:40px; margin-top:44px; font-size:12px; }
+    .sign div{ flex:1; border-top:1px solid #333; padding-top:6px; text-align:center; }
   }
-  select{ border:1px solid var(--line); background:#fff; color:var(--ink-700); }
-  .btn{
-    border:none; background:var(--teal-700); color:#fff; font-weight:700; cursor:pointer;
-    margin-top:6px; transition:background .2s ease;
-  }
-  .btn:hover{ background:var(--teal-900); }
-  .btn:disabled{ background:var(--line); color:var(--ink-500); cursor:not-allowed; }
-  .btn.secondary{ background:transparent; color:var(--ink-500); font-weight:600; margin-top:10px; }
-  .btn:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
-
-  .overlay{
-    position:fixed; inset:0; background:linear-gradient(135deg, var(--teal-900), var(--teal-700));
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    color:#fff; z-index:50; transition:opacity .5s ease;
-  }
-  .overlay.hide{ opacity:0; pointer-events:none; }
-  .spinner{ width:40px; height:40px; border-radius:50%; border:3px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin .9s linear infinite; margin-bottom:16px; }
-  @keyframes spin{ to{ transform:rotate(360deg);} }
-  .overlay .msg{ font-family:'Manrope',sans-serif; font-weight:700; font-size:15px; }
-  .overlay .sub{ font-size:13px; opacity:.7; margin-top:6px; }
-  .progress-track{ width:180px; height:4px; border-radius:4px; background:rgba(255,255,255,.2); margin-top:14px; overflow:hidden; }
-  .progress-fill{ height:100%; width:0%; background:var(--gold-500); transition:width .3s ease; }
-  .retry-btn{ margin-top:16px; padding:10px 20px; border-radius:100px; border:none; background:var(--gold-500); color:var(--teal-900); font-weight:700; cursor:pointer; display:none; }
-  .overlay.error .spinner{ display:none; }
-  .overlay.error .retry-btn{ display:inline-block; }
+  .print-title{ display:none; text-align:center; margin-bottom:6px; }
+  .print-title h2{ margin:0; font-family:'Manrope',sans-serif; font-size:16px; }
+  .print-title p{ margin:2px 0 0; font-size:12px; color:#444; }
 </style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
 </head>
 <body>
-
-<div class="overlay" id="overlay">
-  <div class="spinner"></div>
-  <div class="msg" id="overlayMsg">Preparing report portal…</div>
-  <div class="sub" id="overlaySub">Loading recognition models</div>
-  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-  <button class="retry-btn" onclick="init()">Try again</button>
-</div>
-
-<div class="card">
+<div class="wrap">
   <div class="head">
-    <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
-    <h1>My Attendance Report</h1>
-    <div class="gold-dot"></div>
+    <div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>Laporan Kehadiran Bulanan</h1></div>
+    <a class="back" href="./dashboard.html">← Dashboard</a>
   </div>
-  <div class="stage">
 
-    <div id="loginStep">
-      <div class="viewfinder">
-        <div class="ring" id="ring"></div>
-        <video id="video" autoplay muted playsinline></video>
+  <div class="panel controls-panel">
+    <div class="controls">
+      <div class="full" id="whoWrap" style="display:none;">
+        <label for="whoSel">Laporan untuk</label>
+        <select id="whoSel"></select>
       </div>
-      <div class="status-line" id="statusLine">Look at the camera to log in</div>
-    </div>
-
-    <div class="welcome" id="welcomeStep">
-      <h2 id="welcomeName">—</h2>
-      <div class="ic" id="welcomeIc">—</div>
-
-      <div class="field">
-        <label for="monthSelect">Month</label>
-        <select id="monthSelect"></select>
+      <div class="full">
+        <label for="monthSel">Bulan</label>
+        <select id="monthSel"></select>
       </div>
-
-      <button class="btn" id="generateBtn" onclick="handleGenerate()">Generate PDF Report</button>
-      <button class="btn secondary" onclick="location.reload()">Switch user</button>
     </div>
-
   </div>
+
+  <div class="panel" id="out">
+    <div class="empty"><div class="spin"></div>Menyediakan laporan…</div>
+  </div>
+
+  <div class="actions" id="actions" style="display:none;">
+    <button class="btn primary" onclick="window.print()">🖨 Cetak / Simpan PDF</button>
+    <button class="btn ghost" onclick="downloadCsv()">⬇ Muat turun CSV</button>
+  </div>
+  <div class="note no-print">Hari bekerja tanpa rekod ditandakan “Tiada rekod” — cuti, kursus dan hari kelepasan am belum ditolak secara automatik. Masuk selepas <span id="lateTxt">08:00</span> ditandakan “Lewat”.</div>
 </div>
 
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
-const MODEL_URL = './models';
-const MATCH_THRESHOLD = 0.5;
-const AMBIGUITY_MARGIN = 0.07;
-const RECOGNIZE_STABLE_FRAMES = 3;
+const $ = id => document.getElementById(id);
+const token = sessionStorage.getItem('kkah_session_token');
+if(!token) location.href = './login.html';
+let last = null, reqId = 0;
+const MONTHS = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
 
-let video, ring, statusLine, overlay, overlaySub, progressFill;
-let labeledDescriptors = [];
-let modelsReady = false;
-let scanning = true;
-let stableCount = 0;
-let lastCandidate = null;
-let loggedInIc = null, loggedInName = null;
-
-window.addEventListener('DOMContentLoaded', init);
-window.addEventListener('unhandledrejection', (e) => {
-  console.error('Unhandled error:', e.reason);
-  if(!modelsReady) showLoadError(e.reason && e.reason.message ? e.reason.message : 'Failed to load recognition models');
-});
-
-async function init(){
-  video = document.getElementById('video');
-  ring = document.getElementById('ring');
-  statusLine = document.getElementById('statusLine');
-  overlay = document.getElementById('overlay');
-  overlaySub = document.getElementById('overlaySub');
-  progressFill = document.getElementById('progressFill');
-  overlay.classList.remove('error', 'hide');
-  modelsReady = false;
-  populateMonths();
-
-  try{
-    await loadModels();
-    const staff = await fetchStaff();
-    await buildDescriptors(staff);
-    await startCamera();
-    hideOverlay();
-    detectLoop();
-  }catch(err){
-    console.error(err);
-    showLoadError(err.message);
-  }
+async function api(body){
+  const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)) });
+  return res.json();
 }
 
-function showLoadError(message){
-  document.getElementById('overlayMsg').textContent = 'Could not start portal';
-  overlaySub.textContent = message || 'Please check your connection and try again';
-  overlay.classList.add('error');
+function fmt12(hms){
+  if(!hms) return '—';
+  const p = String(hms).split(':').map(Number); let h = p[0] || 0; const m = p[1] || 0;
+  const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + ':' + String(m).padStart(2,'0') + ' ' + ap;
 }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-function setProgress(pct, sub){ progressFill.style.width = pct + '%'; if(sub) overlaySub.textContent = sub; }
-
-async function loadModels(){
-  setProgress(10, 'Loading face detection model');
-  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-  if(!faceapi.nets.tinyFaceDetector.isLoaded) throw new Error('Face detection model failed to load');
-  setProgress(30, 'Loading landmark model');
-  await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-  if(!faceapi.nets.faceLandmark68Net.isLoaded) throw new Error('Landmark model failed to load');
-  setProgress(50, 'Loading recognition model');
-  await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-  if(!faceapi.nets.faceRecognitionNet.isLoaded) throw new Error('Recognition model failed to load');
-  modelsReady = true;
-  setProgress(60, 'Models ready');
-}
-
-async function fetchStaff(){
-  setProgress(65, 'Loading staff database');
-  const res = await fetch(API_URL + '?action=getStaff');
-  const data = await res.json();
-  if(!data.ok) throw new Error(data.error || 'Failed to load staff');
-  return data.staff;
-}
-
-async function buildDescriptors(staff){
-  labeledDescriptors = [];
-  const total = staff.length;
-  for(let i = 0; i < total; i++){
-    const s = staff[i];
-    try{
-      const img = await faceapi.fetchImage(s.photo);
-      const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks().withFaceDescriptor();
-      if(det) labeledDescriptors.push({ ic: s.ic, name: s.name, descriptor: det.descriptor });
-    }catch(e){ console.warn('Skipping staff photo', s.name, e); }
-    setProgress(65 + Math.round((i / total) * 30), `Indexing staff faces (${i+1}/${total})`);
-  }
-  if(labeledDescriptors.length === 0) throw new Error('No usable staff photos found');
-  setProgress(100, 'Ready');
-}
-
-function matchFace(descriptor){
-  const distances = labeledDescriptors
-    .map(s => ({ ic: s.ic, name: s.name, distance: faceapi.euclideanDistance(descriptor, s.descriptor) }))
-    .sort((a, b) => a.distance - b.distance);
-  if(distances.length === 0 || distances[0].distance > MATCH_THRESHOLD) return { label: 'unknown' };
-  if(distances.length > 1 && (distances[1].distance - distances[0].distance) < AMBIGUITY_MARGIN) return { label: 'ambiguous' };
-  return { label: distances[0].ic + '|' + distances[0].name };
-}
-
-async function startCamera(){
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { width:280, height:280 } });
-    video.srcObject = stream;
-    await new Promise(r => video.onloadedmetadata = r);
-  }catch(err){
-    throw new Error('Camera permission denied');
-  }
-}
-
-function hideOverlay(){ overlay.classList.add('hide'); }
-
-async function detectLoop(){
-  if(!scanning || !modelsReady){ requestAnimationFrame(detectLoop); return; }
-
-  let det = null;
-  try{
-    det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks().withFaceDescriptor();
-  }catch(err){
-    console.warn('Detection frame skipped:', err);
-    requestAnimationFrame(detectLoop);
-    return;
-  }
-
-  if(det){
-    ring.classList.add('scanning');
-    const best = matchFace(det.descriptor);
-    if(best.label === 'ambiguous'){
-      statusLine.textContent = 'Not clear enough — move closer';
-      lastCandidate = null; stableCount = 0;
-    }else if(best.label !== 'unknown'){
-      if(lastCandidate === best.label){ stableCount++; } else { lastCandidate = best.label; stableCount = 1; }
-      statusLine.textContent = 'Recognizing…';
-      if(stableCount >= RECOGNIZE_STABLE_FRAMES){
-        const [ic, name] = best.label.split('|');
-        scanning = false;
-        loggedInIc = ic; loggedInName = name;
-        onLoggedIn(name, ic);
-        return;
-      }
-    }else{
-      statusLine.textContent = 'Face not recognized';
-      lastCandidate = null; stableCount = 0;
-    }
-  }else{
-    ring.classList.remove('scanning');
-    statusLine.textContent = 'Look at the camera to log in';
-    lastCandidate = null; stableCount = 0;
-  }
-  requestAnimationFrame(detectLoop);
-}
-
-function onLoggedIn(name, ic){
-  ring.classList.remove('scanning');
-  ring.classList.add('success');
-  if(video.srcObject){ video.srcObject.getTracks().forEach(t => t.stop()); }
-  document.getElementById('loginStep').style.display = 'none';
-  document.getElementById('welcomeName').textContent = name;
-  document.getElementById('welcomeIc').textContent = 'IC: ' + ic;
-  document.getElementById('welcomeStep').classList.add('show');
-}
-
-function populateMonths(){
-  const sel = document.getElementById('monthSelect');
-  const names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const now = new Date();
-  sel.innerHTML = '';
+(function fillMonths(){
+  const now = new Date(), sel = $('monthSel');
   for(let i = 0; i < 12; i++){
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const opt = document.createElement('option');
-    opt.value = (d.getMonth()+1) + '-' + d.getFullYear();
-    opt.textContent = names[d.getMonth()] + ' ' + d.getFullYear();
-    sel.appendChild(opt);
+    const o = document.createElement('option');
+    o.value = d.getFullYear() + '-' + (d.getMonth() + 1);
+    o.textContent = MONTHS[d.getMonth()] + ' ' + d.getFullYear() + (i === 0 ? ' (bulan ini)' : '');
+    sel.appendChild(o);
   }
-}
+  sel.onchange = load;
+})();
 
-async function handleGenerate(){
-  const btn = document.getElementById('generateBtn');
-  const [month, year] = document.getElementById('monthSelect').value.split('-');
-  btn.disabled = true;
-  btn.textContent = 'Generating…';
-
+async function setupSupervisor(){
   try{
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'generateReport', ic: loggedInIc, year, month })
-    });
-    const data = await res.json();
-    if(!data.ok){
-      alert(data.error || 'Could not generate report');
-    }else{
-      const link = document.createElement('a');
-      link.href = 'data:application/pdf;base64,' + data.pdfBase64;
-      link.download = data.filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+    const sc = await api({ action:'getSupervisorScope' });
+    if(!sc.ok || !sc.isSupervisor) return;
+    const list = await api({ action:'listSupervisedStaff' });
+    if(!list.ok) return;
+    const sel = $('whoSel');
+    let html = '<option value="me">Saya sendiri</option>';
+    if(list.units && list.units.length){
+      html += '<optgroup label="Ringkasan unit">' + list.units.map(u => '<option value="unit:' + esc(u) + '">Unit: ' + esc(u) + '</option>').join('') + '</optgroup>';
     }
-  }catch(err){
-    alert('Network error — please try again');
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Generate PDF Report';
+    html += '<optgroup label="Staf">' + list.staff.map(s => '<option value="ic:' + esc(s.ic) + '">' + esc(s.name) + (s.unit ? ' · ' + esc(s.unit) : '') + '</option>').join('') + '</optgroup>';
+    sel.innerHTML = html;
+    sel.onchange = load;
+    $('whoWrap').style.display = '';
+  }catch(e){ /* not a supervisor, or offline — own report still works */ }
 }
+
+async function load(){
+  const my = ++reqId;
+  $('actions').style.display = 'none';
+  $('out').innerHTML = '<div class="empty"><div class="spin"></div>Menyediakan laporan…</div>';
+  const [y, m] = $('monthSel').value.split('-').map(Number);
+  const who = $('whoWrap').style.display === 'none' ? 'me' : $('whoSel').value;
+  const body = { action:'getMonthlyReport', year:y, month:m };
+  if(who.indexOf('unit:') === 0) body.unit = who.slice(5);
+  else if(who.indexOf('ic:') === 0) body.targetIc = who.slice(3);
+  try{
+    const d = await api(body);
+    if(my !== reqId) return;
+    if(!d.ok){
+      if(/expired/i.test(d.error || '')){ location.href = './login.html'; return; }
+      $('out').innerHTML = '<div class="empty">' + esc(d.error || 'Tidak dapat menjana laporan.') + '</div>'; return;
+    }
+    last = d; $('lateTxt').textContent = d.lateAfter || '08:00';
+    render(d);
+    $('actions').style.display = 'grid';
+  }catch(e){
+    if(my === reqId) $('out').innerHTML = '<div class="empty">Sambungan gagal. Semak internet dan cuba lagi.<br><br><button class="btn primary" style="margin:auto;padding:0 22px" onclick="load()">Cuba lagi</button></div>';
+  }
+}
+
+function render(d){
+  const title = '<div class="print-title"><h2>Klinik Kesihatan Ayer Hitam</h2><p>Laporan Kehadiran Bulanan — ' + esc(d.monthLabel) + '</p></div>';
+  if(d.kind === 'unit'){
+    let tp = 0, tl = 0, tm = 0, th = 0;
+    const rows = d.lines.map(l => { tp += l.present; tl += l.late; tm += l.missingOut; th += l.hours;
+      return '<tr><td>' + esc(l.name) + '</td><td>' + l.present + '</td><td class="' + (l.late ? 'late' : 'dim') + '">' + l.late + '</td><td class="' + (l.missingOut ? 'bad' : 'dim') + '">' + l.missingOut + '</td><td class="' + (l.noRecord ? 'bad' : 'dim') + '">' + l.noRecord + '</td><td>' + l.hours.toFixed(1) + '</td></tr>'; }).join('');
+    $('out').innerHTML = title +
+      '<div class="who"><b>Unit: ' + esc(d.unit) + '</b><br>' + esc(d.monthLabel) + ' · ' + d.lines.length + ' staf · ' + d.weekdays + ' hari bekerja setakat ini</div><br>' +
+      (d.lines.length ? '<div class="tbl-wrap"><table><thead><tr><th>Nama</th><th>Hadir</th><th>Lewat</th><th>Tiada Out</th><th>Tiada rekod</th><th>Jam</th></tr></thead><tbody>' + rows +
+        '</tbody><tfoot><tr><td>Jumlah</td><td>' + tp + '</td><td>' + tl + '</td><td>' + tm + '</td><td></td><td>' + th.toFixed(1) + '</td></tr></tfoot></table></div>' : '<div class="empty">Tiada staf dalam unit ini.</div>') +
+      '<div class="sign"><div>Disediakan oleh</div><div>Disahkan oleh</div></div>';
+    return;
+  }
+  const s = d.summary;
+  const rows = d.rows.map(r => {
+    const cls = r.status === 'Hadir' ? 'ok' : r.status === 'Lewat' ? 'late' : (r.status === 'Tiada rekod' || r.status === 'Tiada Check Out') ? 'bad' : 'dim';
+    return '<tr class="' + (r.weekend ? 'wk' : '') + '"><td>' + r.date.slice(8) + ' ' + r.day + '</td><td>' + fmt12(r.in) + '</td><td>' + fmt12(r.out) + '</td><td>' + (r.hours ? r.hours.toFixed(2) : '—') + '</td><td class="st ' + cls + '">' + esc(r.status) + '</td></tr>';
+  }).join('');
+  $('out').innerHTML = title +
+    '<div class="who"><b>' + esc(d.name) + '</b><br>IC ' + esc(d.ic) + (d.unit ? ' · ' + esc(d.unit) : '') + ' · ' + esc(d.monthLabel) + '</div><br>' +
+    '<div class="cards">' +
+      '<div class="stat"><b>' + s.present + '</b><span>Hari hadir</span></div>' +
+      '<div class="stat ' + (s.late ? 'warn' : '') + '"><b>' + s.late + '</b><span>Lewat</span></div>' +
+      '<div class="stat ' + (s.missingOut ? 'bad' : '') + '"><b>' + s.missingOut + '</b><span>Tiada Check Out</span></div>' +
+      '<div class="stat"><b>' + s.avgHours.toFixed(1) + '</b><span>Purata jam/hari</span></div>' +
+    '</div><br>' +
+    '<div class="tbl-wrap"><table><thead><tr><th>Tarikh</th><th>Masuk</th><th>Keluar</th><th>Jam</th><th>Status</th></tr></thead><tbody>' + rows +
+    '</tbody><tfoot><tr><td>Jumlah</td><td></td><td></td><td>' + s.hours.toFixed(2) + '</td><td>' + s.present + ' hari</td></tr></tfoot></table></div>' +
+    '<div class="sign"><div>Tandatangan staf</div><div>Disahkan oleh penyelia</div></div>';
+}
+
+function csvCell(v){ v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function downloadCsv(){
+  if(!last) return;
+  let lines, name;
+  if(last.kind === 'unit'){
+    lines = [['Nama','IC','Hadir','Lewat','Tiada Check Out','Tiada rekod','Jam']].concat(last.lines.map(l => [l.name, "'" + l.ic, l.present, l.late, l.missingOut, l.noRecord, l.hours]));
+    name = 'Kehadiran_Unit_' + last.unit + '_' + last.year + '-' + String(last.month).padStart(2,'0') + '.csv';
+  }else{
+    lines = [['Tarikh','Hari','Masuk','Keluar','Jam','Status','Lokasi']].concat(last.rows.map(r => [r.date, r.day, r.in, r.out, r.hours || '', r.status, r.place]));
+    name = 'Kehadiran_' + last.name.replace(/[^A-Za-z0-9]+/g, '_') + '_' + last.year + '-' + String(last.month).padStart(2,'0') + '.csv';
+  }
+  const csv = '﻿' + lines.map(r => r.map(csvCell).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+
+setupSupervisor();
+load();
 </script>
 </body>
 </html>
