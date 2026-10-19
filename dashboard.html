@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.10.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.10.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.11.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.11.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -234,6 +234,22 @@
   .kc-spin{ width:34px; height:34px; border-radius:50%; border:4px solid rgba(255,255,255,.3); border-top-color:#fff; animation:spin .8s linear infinite; }
   .kc-icon{ width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:800; animation:kcPop .5s cubic-bezier(.17,.67,.3,1.4); }
   @keyframes kcPop{ from{ transform:scale(0) rotate(-120deg); opacity:0; } to{ transform:none; opacity:1; } }
+  /* Pengangkutan box */
+  .tr-box{ display:none; margin:12px 0; background:#fff; border:1px solid #DCEAE6; border-radius:22px; padding:14px 14px 10px; box-shadow:0 12px 34px -22px rgba(11,61,58,.45); }
+  .tr-box.show{ display:block; animation:trIn .35s ease both; } @keyframes trIn{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none;} }
+  .tr-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .tr-head b{ font-family:'Manrope',sans-serif; font-size:15px; color:#0B3D3A; }
+  .tr-head a{ font-size:12px; font-weight:700; color:#1C8F84; text-decoration:none; }
+  .tr-line{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; background:#EAF6F2; margin-bottom:8px; text-decoration:none; color:#1E2B29; font-size:13.5px; font-weight:600; }
+  .tr-line .n{ min-width:26px; height:26px; border-radius:99px; background:#0F5C56; color:#fff; font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center; padding:0 7px; }
+  .tr-line.alert{ background:#FFF3D6; } .tr-line.alert .n{ background:#C9A227; }
+  .tr-task{ display:flex; gap:10px; align-items:flex-start; padding:9px 12px; border-radius:14px; border:1px solid #DCEAE6; margin-bottom:8px; font-size:13px; }
+  .tr-task .t{ font-weight:800; color:#0F5C56; white-space:nowrap; }
+  .tr-task small{ display:block; color:#5B6B68; margin-top:2px; }
+  .tr-task.mine{ border-color:#2FAE60; background:#F1FBF5; }
+  .tr-docs{ display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 4px; }
+  .tr-chip{ font-size:11.5px; font-weight:700; padding:6px 10px; border-radius:99px; background:#EAF6F2; color:#0F5C56; text-decoration:none; }
+  .tr-chip.month{ background:#FFF3D6; color:#8a6d0a; } .tr-chip.week{ background:#FDE0E3; color:#C62839; } .tr-chip.expired{ background:#C62839; color:#fff; } .tr-chip.none{ background:#eef1f0; color:#6b7b78; }
   .kc-pick{ position:absolute; top:10px; left:12px; z-index:4; height:30px; padding:0 12px; border-radius:99px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.14); color:#fff; font-weight:700; font-size:12px; cursor:pointer; }
   .kc-menu{ position:absolute; inset:0; z-index:5; background:rgba(6,30,28,.96); padding:44px 12px 10px; display:none; overflow:auto; }
   .kc-box.menu .kc-menu{ display:block; }
@@ -588,6 +604,8 @@
     </div>
   </div>
 
+  <div class="tr-box" id="trBox" aria-live="polite"></div>
+
   <button class="cme-scan-tile" onclick="openCmeScanner()" aria-label="Imbas QR kehadiran CME">
     <span class="cme-scan-ic">📷</span>
     <span><b>Imbas QR Kehadiran CME</b><small>Rekod kehadiran CME / mesyuarat dengan kamera</small></span>
@@ -722,13 +740,14 @@ const MODULES = [
   { id: 'profile', name: 'Update Profile', icon: '👤', status: 'active', href: './profile.html' },
   { id: 'borang', name: 'Borang Permohonan', icon: '📝', status: 'active', href: './borang.html' },
   { id: 'jadual', name: 'Jadual & Rekod Saya', icon: '📅', status: 'active', href: './jadual.html' },
+  { id: 'myreport', name: 'Laporan Kehadiran Bulanan', icon: '📊', status: 'active', href: './report.html' },
+  { id: 'transport', name: 'Minta Kenderaan', icon: '🚐', status: 'active', href: './transport.html' },
   { id: 'trolley', name: 'Emergency Trolley Checklist', icon: '🧰', status: 'soon' },
   { id: 'ambulance', name: 'Ambulance Checklist', icon: '🚑', status: 'soon' }
 ];
 const ADMIN_MODULES = [
   { id: 'addstaff', name: 'Add Staff', icon: '➕', status: 'active', href: './staff-config.html' },
-  { id: 'cmeadmin', name: 'CME Admin', icon: '🎓', status: 'active', href: './cme-admin.html' },
-  { id: 'myreport', name: 'My Attendance Report', icon: '📊', status: 'active', href: './report.html' }
+  { id: 'cmeadmin', name: 'CME Admin', icon: '🎓', status: 'active', href: './cme-admin.html' }
 ];
 
 /* === CME QR deep link: dashboard.html?cme=<SESSION_ID> ===
@@ -914,6 +933,8 @@ window.addEventListener('DOMContentLoaded', () => {
   loadKursusBox();
   loadHealthBox();
   loadCmeBox();
+  loadTransportBox();
+  setInterval(loadTransportBox, 3 * 60 * 1000);
   setInterval(loadChecklistBoxes, 5 * 60 * 1000); // refresh temperature/trolley/bag/ambulance every 5 min
   setInterval(loadOnCallBox, 5 * 60 * 1000); // on-call crew can change during the day
   setInterval(loadTodayAttendance, 5 * 60 * 1000); // pick up a check-in/out made elsewhere (e.g. kiosk) without a refresh
@@ -926,6 +947,40 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   warmFaceAssets_(); // pre-download the face models in the background so Check In starts fast
 });
+
+/* === Pengangkutan: replies waiting, approvals waiting, today's tasks, road-tax / licence expiry === */
+let trDocCardAdded = false;
+async function loadTransportBox(){
+  const box = document.getElementById('trBox'); if(!box) return;
+  try{
+    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'getTransportSummary', token: sessionStorage.getItem('kkah_session_token') }) });
+    const d = await res.json();
+    if(!d || !d.ok) return;
+    const r = d.role || {};
+    if(!trDocCardAdded && (r.isDriver || r.isPic || r.isTop)){ trDocCardAdded = true; addModuleCard('Dokumen Kenderaan', '🪪', './vehicles.html'); }
+
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const t12 = hm => { const p = String(hm).split(':').map(Number); const h = p[0] || 0; return (h % 12 || 12) + ':' + String(p[1] || 0).padStart(2,'0') + (h >= 12 ? ' PM' : ' AM'); };
+    let html = '';
+    if(r.isDriver && d.needReply > 0) html += '<a class="tr-line alert" href="./transport.html"><span class="n">' + d.needReply + '</span>permintaan kenderaan menunggu balasan anda</a>';
+    if(d.awaiting > 0) html += '<a class="tr-line alert" href="./transport.html"><span class="n">' + d.awaiting + '</span>menunggu kelulusan anda (pemandu telah bersedia)</a>';
+    if(d.myOpen > 0) html += '<a class="tr-line" href="./transport.html"><span class="n">' + d.myOpen + '</span>permintaan kenderaan saya masih aktif</a>';
+    if(d.tasks && d.tasks.length){
+      html += '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#5B6B68;margin:4px 2px 6px">Tugasan kenderaan hari ini</div>' +
+        d.tasks.map(t => '<a class="tr-task' + (t.mine ? ' mine' : '') + '" href="./transport.html?req=' + esc(t.id) + '" style="text-decoration:none;color:inherit"><span class="t">' + t12(t.time) + '</span><span><b>' + esc(t.purpose) + '</b><small>' +
+          t.pax + ' orang · Pemandu: ' + esc(t.driver) + ' · ' + esc(t.requester) + '</small></span></a>').join('');
+    }
+    if(d.docs && d.docs.items && d.docs.items.length){
+      const lbl = i => i.level === 'none' ? 'belum diisi' : (i.days < 0 ? 'TAMAT' : i.days + ' hari');
+      html += '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#5B6B68;margin:6px 2px">Cukai jalan &amp; lesen</div><div class="tr-docs">' +
+        d.docs.items.map(i => '<a class="tr-chip ' + i.level + '" href="./vehicles.html">' + (i.kind === 'veh' ? '🚐 ' : '🪪 ') + esc(i.label) + ' · ' + lbl(i) + '</a>').join('') + '</div>';
+    }
+    if(!html){ box.classList.remove('show'); return; }
+    box.innerHTML = '<div class="tr-head"><b>🚐 Pengangkutan</b><a href="./transport.html">Buka →</a></div>' + html;
+    box.classList.add('show');
+  }catch(e){ /* optional box — stays hidden */ }
+}
 
 /** Quietly fetch the face-recognition files once the dashboard is idle, so my-checkin.html finds them in cache. */
 function warmFaceAssets_(){
