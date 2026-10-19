@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>SIAGA · Check In / Out</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.10.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.10.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.12.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.12.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -130,6 +130,7 @@
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
 <script src="./permission-gate.js"></script>
+<script src="./photo-stamp.js"></script>
 </head>
 <body>
 
@@ -214,8 +215,8 @@ const DESC_CACHE_KEY = 'kkah_my_desc_v1';
 const CHECKOUT_OPEN_HOUR = 13;           // mirrors CONFIG.CHECKOUT_OPEN_HOUR on the server (the server is the real gate)
 
 /* ---------------- Geofence config — Klinik Kesihatan Ayer Hitam ---------------- */
-const CLINIC_LAT = 6.240404;
-const CLINIC_LNG = 100.246714;
+const CLINIC_LAT = 6.237;
+const CLINIC_LNG = 100.24664;
 const BUILDING_RADIUS_M = 60;
 const AREA_RADIUS_M = 150;
 
@@ -420,7 +421,7 @@ function requestLocation(){
   return new Promise((resolve, reject) => {
     if(!navigator.geolocation) return reject(new Error('Geolocation not supported'));
     const onSuccess = pos => {
-      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, name: '' };
+      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy, name: '' };
       const violation = checkGeofence(userLocation.lat, userLocation.lng);
       if(violation){
         $('geofenceZoneMsg').textContent = violation.zoneMsg;
@@ -574,10 +575,7 @@ async function detectLoop(my){
 async function captureAndRecord(){
   // 1) the photo is taken the instant you are recognised — flash + shutter + buzz, then the phone can be put away
   const canvas = $('snapshotCanvas');
-  canvas.width = 240; canvas.height = 240;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, 240, 240);
-  capturedImage = canvas.toDataURL('image/jpeg', 0.7);
+  capturedImage = SiagaStamp.capture(video, userLocation, canvas);   // stamped upload copy (date/time + lat/long); canvas = small preview
   const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
   cue.shutter();
   video.style.display = 'none'; canvas.style.display = 'block';
