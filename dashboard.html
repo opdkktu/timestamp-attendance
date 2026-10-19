@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.11.1">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.11.1">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.12.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.12.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -344,6 +344,17 @@
     70%{ box-shadow:0 0 0 14px rgba(179,49,26,0); }
     100%{ box-shadow:0 0 0 0 rgba(179,49,26,0); }
   }
+  .sb-btn{ display:inline-flex; align-items:center; gap:6px; margin-top:10px; padding:8px 14px; min-height:36px; border-radius:99px; border:0; cursor:pointer;
+    background:#fff; color:#8a1f10; font:700 12.5px 'Manrope',sans-serif; box-shadow:0 4px 12px -6px rgba(0,0,0,.35); -webkit-tap-highlight-color:transparent; }
+  .sb-btn:active{ transform:scale(.97); }
+  .sb-btn.soft{ background:rgba(255,255,255,.9); color:#334155; }
+  .pf-chips{ display:flex; flex-wrap:wrap; gap:7px; margin-top:9px; }
+  .pf-chip{ background:rgba(255,255,255,.22); border:1px solid rgba(255,255,255,.45); padding:5px 11px; border-radius:99px; font-size:12.5px; font-weight:700; line-height:1.25; }
+  .push-warn{ display:none; align-items:center; gap:10px; margin:12px 0 0; padding:11px 14px; border-radius:14px; background:#fff3cd; color:#664d03; border:1px solid #f1d98a;
+    font-size:12.5px; font-weight:600; cursor:pointer; }
+  .push-warn.show{ display:flex; }
+  .push-warn b{ font-weight:800; }
+  .push-warn .pw-x{ margin-left:auto; background:none; border:0; font-size:18px; line-height:1; color:inherit; cursor:pointer; padding:4px 6px; }
   .status-box.loading{ background:var(--mint-100); color:var(--ink-500); }
   .status-box.loading .sb-main{
     background:linear-gradient(90deg,#DCEAE6 25%,#EAF6F2 50%,#DCEAE6 75%);
@@ -618,6 +629,12 @@
     <span><b>Imbas QR Kehadiran CME</b><small>Rekod kehadiran CME / mesyuarat dengan kamera</small></span>
   </button>
 
+  <div class="push-warn" id="pushWarn" role="alert" onclick="openNotifDiag()">
+    <span style="font-size:20px;">🔕</span>
+    <span><b>Notifikasi tidak aktif</b> — anda tidak akan terima amaran/kelulusan. Ketik untuk baiki.</span>
+    <button class="pw-x" aria-label="Tutup" onclick="event.stopPropagation(); dismissPushWarn()">✕</button>
+  </div>
+
   <div class="status-boxes-grid">
     <div class="status-box loading" id="box_bls"><div class="sb-label">BLS Validity</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_temperature"><div class="sb-label">Temperature</div><div class="sb-main">&nbsp;</div></div>
@@ -625,6 +642,7 @@
     <div class="status-box loading" id="box_bag"><div class="sb-label">Ambulance Bag</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_ambulance"><div class="sb-label">Ambulance</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_oncall" style="grid-column:1 / -1;"><div class="sb-label">🚑 On-Call Ambulance Crew</div><div class="sb-main">&nbsp;</div></div>
+    <div class="status-box loading" id="box_portfolio" style="grid-column:1 / -1;"><div class="sb-label">Portfolio Saya</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_apps"><div class="sb-label">Jumlah Permohonan</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_hours"><div class="sb-label">Jumlah Jam</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_kursus" onclick="openKursusModal()" style="cursor:pointer;"><div class="sb-label">Jumlah Hari Kursus</div><div class="sb-main">&nbsp;</div></div>
@@ -635,7 +653,7 @@
   <div class="section-title">Available</div>
   <div class="grid" id="activeGrid"></div>
 
-  <div class="section-title">Coming Soon</div>
+  <div class="section-title" id="soonTitle" style="display:none;">Coming Soon</div>
   <div class="grid" id="soonGrid"></div>
 
 </div>
@@ -686,8 +704,21 @@
   <div class="modal">
     <h2>Semakan Notifikasi</h2>
     <div class="sub">Sebab notifikasi mungkin tidak berfungsi pada peranti ini</div>
-    <div id="notifDiagBody" style="max-height:48vh; overflow-y:auto; margin-bottom:12px;"></div>
+    <div id="notifDiagBody" style="max-height:44vh; overflow-y:auto; margin-bottom:12px;"></div>
+    <details style="margin:0 0 12px; font-size:12px; color:var(--ink-500); line-height:1.55;">
+      <summary style="cursor:pointer; font-weight:700; color:var(--ink-700); padding:6px 0;">Kenapa notifikasi berhenti selepas lama tidak guna?</summary>
+      <div style="padding:4px 2px 2px;">
+        Notifikasi web bergantung pada pelayar, bukan aplikasi asli seperti WhatsApp. Telefon yang “menidurkan” pelayar boleh menghalangnya. Untuk lebih stabil:
+        <ul style="margin:6px 0 0 18px;">
+          <li><b>Android:</b> pasang SIAGA ke Skrin Utama (menu ⋮ → Pasang aplikasi), kemudian Tetapan → Apl → Chrome/SIAGA → Bateri → <b>Tidak terhad</b>. Matikan “Alih keluar kebenaran jika apl tidak digunakan”.</li>
+          <li><b>iPhone:</b> mesti dibuka dari ikon Skrin Utama. Matikan Mod Kuasa Rendah dan semak mod Fokus tidak menyekat SIAGA.</li>
+          <li>Buka SIAGA sekurang-kurangnya sekali seminggu supaya peranti kekal berdaftar.</li>
+        </ul>
+      </div>
+    </details>
+    <div id="notifTestMsg" style="display:none; font-size:12.5px; font-weight:600; margin:0 0 10px; padding:9px 12px; border-radius:10px;"></div>
     <button class="modal-btn" id="notifDiagEnable" onclick="enableFromDiag()" style="display:none;">Aktifkan sekarang</button>
+    <button class="modal-btn" id="notifTestBtn" onclick="sendTestNotif()" style="background:var(--teal-700);">🔔 Hantar notifikasi ujian</button>
     <button class="modal-btn modal-cancel" onclick="closeNotifDiag()">Tutup</button>
   </div>
 </div>
@@ -748,9 +779,7 @@ const MODULES = [
   { id: 'borang', name: 'Borang Permohonan', icon: '📝', status: 'active', href: './borang.html' },
   { id: 'jadual', name: 'Jadual & Rekod Saya', icon: '📅', status: 'active', href: './jadual.html' },
   { id: 'myreport', name: 'Laporan Kehadiran Bulanan', icon: '📊', status: 'active', href: './report.html' },
-  { id: 'transport', name: 'Minta Kenderaan', icon: '🚐', status: 'active', href: './transport.html' },
-  { id: 'trolley', name: 'Emergency Trolley Checklist', icon: '🧰', status: 'soon' },
-  { id: 'ambulance', name: 'Ambulance Checklist', icon: '🚑', status: 'soon' }
+  { id: 'transport', name: 'Minta Kenderaan', icon: '🚐', status: 'active', href: './transport.html' }
 ];
 const ADMIN_MODULES = [
   { id: 'addstaff', name: 'Add Staff', icon: '➕', status: 'active', href: './staff-config.html' },
@@ -937,12 +966,18 @@ window.addEventListener('DOMContentLoaded', () => {
   loadBlsBox();
   loadLeaveStatBoxes();
   loadChecklistBoxes();
+  loadPortfolioBox();
   loadKursusBox();
   loadHealthBox();
   loadCmeBox();
   loadTransportBox();
   setInterval(loadTransportBox, 3 * 60 * 1000);
-  setInterval(loadChecklistBoxes, 5 * 60 * 1000); // refresh temperature/trolley/bag/ambulance every 5 min
+  setInterval(loadChecklistBoxes, 3 * 60 * 1000); // refresh temperature/trolley/bag/ambulance every 3 min
+  // Coming back from a checklist tab (or after the phone slept): refresh straight away, skipping the server's 45 s cache if we just opened one.
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState !== 'visible') return;
+    if(Date.now() - chkLastLoad > 20 * 1000) loadChecklistBoxes(chkOpenedAt && Date.now() - chkOpenedAt < 30 * 60 * 1000);
+  });
   setInterval(loadOnCallBox, 5 * 60 * 1000); // on-call crew can change during the day
   setInterval(loadTodayAttendance, 5 * 60 * 1000); // pick up a check-in/out made elsewhere (e.g. kiosk) without a refresh
   setInterval(() => { if(window._coLocked && coOpenNowLocal_()) loadTodayAttendance(); }, 30 * 1000); // Check Out unlocks by itself at 1:00 PM
@@ -1676,29 +1711,103 @@ const CHECKLIST_SOURCES = {
   box_ambulance:   { name: '🚑 Ambulance',         url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQl68jBOD7vc2cGKj5c3flwt48f_tjIqsBIBnRoqqNZF4bKrsxrdrkPM0QYgdBA4axnMksu0uwoLFF0/pub?gid=619976719&single=true&output=csv' }
 };
 
-function loadChecklistBoxes(){
-  Object.keys(CHECKLIST_SOURCES).forEach(function(boxId){
-    const cfg = CHECKLIST_SOURCES[boxId];
-    const el = document.getElementById(boxId);
-    if(!cfg.url || cfg.url.indexOf('PASTE_') === 0){ renderBoxError(el, cfg.name); return; }
+/* --- Checklists: live status from SIAGA's backend (reads each checklist's LOGS sheet); CSV is only the fallback --- */
+const CHK_ORDER = ['trolley', 'bag', 'ambulance'];
+const CHK_BOX = { trolley: 'box_trolley', bag: 'box_bag', ambulance: 'box_ambulance' };
+const CHK_URL = {   // fallback copy of the links (the backend also returns them)
+  trolley:   'https://script.google.com/macros/s/AKfycbwj634nbrqJzMJyK8y33BTXHgc_HbVjiv56a7X6xM6yZVpsIfIKQs4UWiW6iIsfw1QvEw/exec',
+  bag:       'https://script.google.com/macros/s/AKfycbw-o5cHk5NyfsPRGmB7KjGcTmSiUxBQGb-byiH2XYMNQVTc1F68mLEqjvrmT-ztDkO_/exec',
+  ambulance: 'https://script.google.com/macros/s/AKfycbwYhOAPrNBkp4qypwd0I8Fi1bpUa09dinQAPyOx6D6W8p9fyVJAIOjvCyGYfiL1WA4oow/exec'
+};
+let chkLastLoad = 0, chkOpenedAt = 0, chkData = {};
 
-    Papa.parse(cfg.url, {
-      download: true, header: true,
-      complete: function(res){
-        const today = new Date().toLocaleDateString('en-CA');
-        const rows = (res.data || []).filter(function(r){ return r.Date === today; });
-        if(!rows.length){
-          el.className = 'status-box sb-alert';
-          el.innerHTML = '<div class="sb-label">' + cfg.name + '</div><div class="sb-main">BELUM DISEMAK</div><div class="sb-sub">Sila semak sekarang</div>';
-        }else{
-          const last = rows[rows.length - 1];
-          el.className = 'status-box sb-ok';
-          el.innerHTML = '<div class="sb-label">' + cfg.name + '</div><div class="sb-main">Disemak ✓</div>' +
-            '<div class="sb-sub">' + (last['Checked By'] || '') + '<br>' + (last['Timestamp'] || '') + '</div>';
-        }
-      },
-      error: function(){ renderBoxError(el, cfg.name); }
-    });
+/** Opens a checklist in a new tab with the logged-in person's name preselected (?name=…). */
+function openChecklist(key){
+  if(VIEW_NAME) return;                                   // a supervisor viewing a staff member must not check on their behalf
+  const base = (chkData[key] && chkData[key].url) || CHK_URL[key];
+  const name = sessionStorage.getItem('kkah_name') || '';
+  chkOpenedAt = Date.now();
+  try{ logAct('Buka checklist', key); }catch(e){}
+  window.open(base + (name ? '?name=' + encodeURIComponent(name) : ''), '_blank', 'noopener');
+}
+
+function escHtml_(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderChecklistBox(item){
+  const el = document.getElementById(CHK_BOX[item.key]); if(!el) return;
+  const name = item.icon + ' ' + item.label;
+  const btn = (txt, soft) => VIEW_NAME ? '' :
+    '<button class="sb-btn' + (soft ? ' soft' : '') + '" onclick="openChecklist(\'' + item.key + '\')">' + txt + ' →</button>';
+  if(item.error){
+    el.className = 'status-box sb-neutral';
+    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">Tiada data</div><div class="sb-sub">Status tidak dapat dibaca</div>' + btn('Buka checklist', true);
+  }else if(item.done){
+    el.className = 'status-box sb-ok';
+    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">Disemak ✓</div>' +
+      '<div class="sb-sub">' + escHtml_(item.by) + '<br>' + escHtml_(item.time) + '</div>';
+  }else if(item.offDay){
+    el.className = 'status-box sb-neutral';
+    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">Hari cuti</div><div class="sb-sub">Tidak diwajibkan hari ini</div>' + btn('Semak juga', true);
+  }else{
+    el.className = 'status-box sb-alert';
+    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">BELUM DISEMAK</div><div class="sb-sub">Sila semak sekarang</div>' + btn('Semak sekarang');
+  }
+}
+
+async function loadChecklistBoxes(fresh){
+  csvLoadBox_('box_temperature');   // temperature checklist still comes from its published sheet
+  chkLastLoad = Date.now();
+  try{
+    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'getChecklistStatus', token: sessionStorage.getItem('kkah_session_token'), fresh: fresh === true }) });
+    const data = await res.json();
+    if(!data.ok || !data.lists) throw new Error(data.error || 'no data');
+    data.lists.forEach(it => { chkData[it.key] = it; renderChecklistBox(it); });
+  }catch(err){
+    CHK_ORDER.forEach(key => csvLoadBox_(CHK_BOX[key]));   // backend unreachable → old published-CSV method
+  }
+}
+
+/* Published-CSV reader (used for Temperature, and as a fallback for the other three) */
+function csvLoadBox_(boxId){
+  const cfg = CHECKLIST_SOURCES[boxId];
+  const el = document.getElementById(boxId);
+  if(!cfg || !el) return;
+  if(!cfg.url || cfg.url.indexOf('PASTE_') === 0){ renderBoxError(el, cfg.name); return; }
+  const key = Object.keys(CHK_BOX).find(k => CHK_BOX[k] === boxId);
+  Papa.parse(cfg.url, {
+    download: true, header: true,
+    complete: function(res){
+      const today = new Date().toLocaleDateString('en-CA');
+      const rows = (res.data || []).filter(function(r){ return r.Date === today; });
+      if(!rows.length){
+        el.className = 'status-box sb-alert';
+        el.innerHTML = '<div class="sb-label">' + cfg.name + '</div><div class="sb-main">BELUM DISEMAK</div><div class="sb-sub">Sila semak sekarang</div>' +
+          (key && !VIEW_NAME ? '<button class="sb-btn" onclick="openChecklist(\'' + key + '\')">Semak sekarang →</button>' : '');
+      }else{
+        const last = rows[rows.length - 1];
+        el.className = 'status-box sb-ok';
+        el.innerHTML = '<div class="sb-label">' + cfg.name + '</div><div class="sb-main">Disemak ✓</div>' +
+          '<div class="sb-sub">' + (last['Checked By'] || '') + '<br>' + (last['Timestamp'] || '') + '</div>';
+      }
+    },
+    error: function(){ renderBoxError(el, cfg.name); }
+  });
+}
+
+/* --- Portfolio box (DATABASE column AA / "Portfolio" header) --- */
+async function loadPortfolioBox(){
+  const el = document.getElementById('box_portfolio'); if(!el) return;
+  await cachedApi('getMyPortfolio', TTL.portfolio, (data) => {
+    if(!data.ok){ renderBoxError(el, 'Portfolio Saya'); return; }
+    if(!data.items || !data.items.length){
+      el.className = 'status-box sb-neutral';
+      el.innerHTML = '<div class="sb-label">🗂️ Portfolio Saya</div><div class="sb-main">Belum ditetapkan</div><div class="sb-sub">Hubungi penyelia untuk dikemas kini</div>';
+      return;
+    }
+    el.className = 'status-box sb-info';
+    el.innerHTML = '<div class="sb-label">🗂️ Portfolio Saya</div><div class="pf-chips">' +
+      data.items.map(t => '<span class="pf-chip">' + escHtml_(t) + '</span>').join('') + '</div>';
   });
 }
 
@@ -2068,6 +2177,13 @@ function initOneSignal(ic){
         });
       }catch(e){ console.warn('Emergency listener not attached:', e); }
       try{ await OneSignal.login(ic); }catch(e){ console.warn('OneSignal login failed:', e); }
+      // After hours in the background the browser may have dropped the link between this device and the person:
+      // every time SIAGA comes back to the foreground, re-attach it and refresh the On/Off state.
+      document.addEventListener('visibilitychange', async () => {
+        if(document.visibilityState !== 'visible') return;
+        try{ if(OneSignal.User.externalId !== ic) await OneSignal.login(ic); }catch(e){}
+        refreshNotifPill();
+      });
       maybeShowNotifPrompt();
     }catch(err){
       console.warn('OneSignal setup failed:', err);
@@ -2139,6 +2255,29 @@ async function acceptNotifSheet(){ closeNotifSheet(); await toggleNotifications(
 function setNotifPill(text, cls){
   const p = document.getElementById('sidebarNotifPill');
   if(p){ p.textContent = text; p.className = 'sidebar-pill ' + cls; }
+  const w = document.getElementById('pushWarn');   // visible nudge whenever this device would NOT receive alerts
+  if(w){
+    let hidden = false; try{ hidden = sessionStorage.getItem('kkah_pushwarn_x') === '1'; }catch(e){}
+    w.classList.toggle('show', cls === 'no' && !hidden && !VIEW_NAME);
+  }
+}
+function dismissPushWarn(){
+  try{ sessionStorage.setItem('kkah_pushwarn_x', '1'); }catch(e){}
+  const w = document.getElementById('pushWarn'); if(w) w.classList.remove('show');
+}
+
+/** Diagnosis sheet → "Hantar notifikasi ujian": the server sends one real push to THIS person's devices. */
+async function sendTestNotif(){
+  const btn = document.getElementById('notifTestBtn'), msg = document.getElementById('notifTestMsg');
+  const show = (ok, t) => { msg.style.display = 'block'; msg.style.background = ok ? '#d1e7dd' : '#f8d7da'; msg.style.color = ok ? '#0f5132' : '#842029'; msg.textContent = t; };
+  btn.disabled = true; btn.textContent = 'Menghantar…';
+  try{
+    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'sendTestPush', token: sessionStorage.getItem('kkah_session_token') }) });
+    const d = await res.json();
+    show(!!d.ok, d.ok ? 'Dihantar ✓ — notifikasi patut muncul dalam beberapa saat. Jika tidak, ikut panduan di atas.' : (d.error || 'Gagal dihantar.'));
+  }catch(e){ show(false, 'Tiada sambungan ke pelayan. Cuba lagi.'); }
+  btn.disabled = false; btn.textContent = '🔔 Hantar notifikasi ujian';
 }
 function refreshNotifPill(){
   const os = window._os;
@@ -2170,7 +2309,7 @@ async function toggleNotifications(forceOn){
  * Shows the cached copy instantly, then refreshes in the background only when older than ttlMs.
  * Keyed by IC so a shared device never shows another person's data; wiped on logout. */
 const CACHE_PREFIX = 'kkah_cache_';
-const TTL = { profile: 12*60*60*1000, photo: 24*60*60*1000, bls: 12*60*60*1000, kursus: 6*60*60*1000, health: 12*60*60*1000, leave: 60*60*1000 };
+const TTL = { profile: 12*60*60*1000, photo: 24*60*60*1000, bls: 12*60*60*1000, kursus: 6*60*60*1000, health: 12*60*60*1000, leave: 60*60*1000, portfolio: 6*60*60*1000 };
 function cacheKey(action){ return CACHE_PREFIX + (sessionStorage.getItem('kkah_ic') || '') + '_' + action; }
 function cacheGet(action){
   try{ const v = JSON.parse(localStorage.getItem(cacheKey(action)) || 'null'); return v && v.data ? v : null; }catch(e){ return null; }
@@ -2224,6 +2363,8 @@ function renderModules(role){
       soonGrid.appendChild(card);
     }
   });
+  const st = document.getElementById('soonTitle');
+  if(st) st.style.display = soonGrid.children.length ? '' : 'none';
 }
 
 function handleLogout(){
