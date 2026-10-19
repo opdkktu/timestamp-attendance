@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KKAH · Staff Check-In</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.12.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.12.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SIAGA">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -290,6 +295,9 @@
   .geofence-box .distance{ font-size:12px; opacity:.75; margin-bottom:18px; }
   .geofence-retry{ padding:10px 22px; border-radius:100px; border:none; background:#fff; color:#4A1010; font-weight:700; cursor:pointer; }
 </style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+<script src="./photo-stamp.js"></script>
 </head>
 <body>
 
@@ -533,7 +541,7 @@ function requestLocation(){
     }
 
     const onSuccess = pos => {
-      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, name: '' };
+      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy, name: '' };
 
       const violation = checkGeofence(userLocation.lat, userLocation.lng);
       if(violation){
@@ -766,10 +774,7 @@ async function handleMatch(ic, name){
 
   // Snapshot — captured now, but uploaded separately in the background
   const canvas = document.getElementById('snapshotCanvas');
-  canvas.width = 240; canvas.height = 240;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, 240, 240);
-  const imageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+  const imageBase64 = SiagaStamp.capture(video, userLocation, canvas);   // stamped upload copy (date/time + lat/long)
   video.style.display = 'none';
   canvas.style.display = 'block';
 
