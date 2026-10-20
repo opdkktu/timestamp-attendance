@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Terma & Syarat</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.15.0">
+<meta name="theme-color" content="#0B3D3A">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84; --mint-100:#EAF6F2; --mint-050:#F6FBF9; --ink:#1E2B29; --ink2:#5B6B68; --line:#DCEAE6; --gold:#C9A227; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:radial-gradient(1200px 800px at 50% -10%,var(--mint-100),var(--mint-050)); font-family:'Inter',sans-serif; color:var(--ink); padding:14px 14px 60px; line-height:1.65; }
+  .wrap{ max-width:680px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .head{ border-radius:24px; padding:18px 20px; color:#fff; background:linear-gradient(135deg,var(--teal-900),var(--teal-700)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .head .eyebrow{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:700; } .head h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:3px 0 0; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:22px; padding:18px; }
+  .card h2{ font-family:'Manrope',sans-serif; font-size:16px; font-weight:800; margin:0 0 6px; color:var(--teal-900); }
+  .card p,.card li{ font-size:14px; margin:6px 0; } .card ul{ padding-left:20px; margin:6px 0; }
+  .sum{ background:var(--mint-100); border:1px solid #cfe7df; } .meta{ font-size:12.5px; color:var(--ink2); }
+  .todo{ background:#FFF3D6; border-radius:6px; padding:0 5px; font-weight:600; }
+  a{ color:var(--teal-700); } .links{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; font-size:13px; }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>📄 Terma &amp; Syarat</h1></div><a class="back" href="javascript:history.length>1?history.back():location.href='./dashboard.html'">← Kembali</a></div>
+  <div class="card sum"><h2>Ringkasan</h2><p>SIAGA ialah sistem dalaman KKAH untuk kehadiran, jadual, cuti, pengangkutan dan komunikasi staf. Dengan menggunakan SIAGA anda bersetuju dengan terma di bawah. <i>(English: SIAGA is KKAH's internal staff system. By using it you agree to these terms.)</i></p><p class="meta">Berkuat kuasa: 20 Oktober 2026</p></div>
+  <div class="card"><h2>1. Siapa boleh menggunakan</h2><p>Hanya kakitangan KKAH yang dibenarkan. Akaun adalah peribadi dan terikat dengan no. kad pengenalan anda.</p></div>
+  <div class="card"><h2>2. Tanggungjawab anda</h2><ul><li>Menjaga kerahsiaan kata laluan; jangan benarkan orang lain menggunakan akaun anda.</li><li>Mendaftar masuk / keluar <b>sendiri</b>, di lokasi sebenar, dengan gambar muka sendiri. <b>Daftar kehadiran bagi pihak orang lain, gambar palsu atau lokasi dimanipulasi adalah dilarang</b> dan boleh dikenakan tindakan tatatertib.</li><li>Memberi maklumat yang betul (cuti, resit minyak, odometer, dokumen kenderaan).</li><li>Tidak cuba mengakses data atau fungsi yang bukan hak anda, atau mengganggu sistem.</li><li>Menggunakan SIAGA mengikut peraturan dan arahan Kementerian Kesihatan Malaysia.</li></ul></div>
+  <div class="card"><h2>3. Kehadiran, lokasi &amp; mata</h2><ul><li>Rekod daftar masuk / keluar termasuk gambar, lokasi dan masa telefon anda digunakan sebagai bukti kehadiran.</li><li>Semasa tempoh semakan lokasi yang ditetapkan, SIAGA menyemak jarak anda dari klinik; penyelia dimaklumkan jika anda di luar kawasan. Tugas di luar klinik boleh ditandakan melalui butang <i>Tugas luar</i>.</li><li>Sistem mata &amp; ranking ialah alat galakan. Peraturan dan nilai mata boleh dilaraskan oleh pentadbir; ia <b>tidak menggantikan</b> penilaian prestasi rasmi.</li></ul></div>
+  <div class="card"><h2>4. Ketersediaan &amp; had tanggungan</h2><p>SIAGA disediakan “seadanya”. Gangguan rangkaian, GPS atau perkhidmatan pihak ketiga (Google, OneSignal) boleh berlaku. Jika daftar kehadiran gagal, sila maklumkan penyelia supaya rekod boleh disahkan secara manual. Fungsi kecemasan tidak menggantikan prosedur kecemasan rasmi klinik.</p></div>
+  <div class="card"><h2>5. Penutupan akaun</h2><p>Anda boleh menetapkan tarikh penutupan akaun di menu <a href="./account-closure.html">Penutupan Akaun</a> (tarikh ini sama dengan <i>tarikh berpindah keluar / berhenti</i> dalam rekod staf). Selepas tarikh itu akaun tidak boleh log masuk. Pentadbir boleh menutup atau menggantung akaun jika terma dilanggar atau staf tidak lagi bertugas di KKAH. Rekod dikekalkan mengikut <a href="./privacy.html">Dasar Privasi</a>.</p></div>
+  <div class="card"><h2>6. Perubahan terma</h2><p>Terma ini boleh dikemas kini. Penggunaan SIAGA selepas perubahan bermaksud anda menerima terma terkini.</p></div>
+  <div class="card"><h2>7. Hubungi</h2><p><span class="todo">[nama pegawai &amp; e-mel / no. telefon KKAH — isi sebelum dilancarkan]</span></p></div>
+  <div class="links"><a href="./privacy.html">Dasar Privasi</a><a href="./terms.html">Terma &amp; Syarat</a><a href="./account-closure.html">Penutupan Akaun</a></div>
+</div>
+</body>
+</html>
