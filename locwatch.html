@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Papan Lokasi</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.14.0">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84; --mint-100:#EAF6F2; --mint-050:#F6FBF9; --gold:#C9A227; --green:#0a8f5a; --red:#C62839; --amber:#B7791F; --ink:#1E2B29; --ink2:#5B6B68; --line:#DCEAE6; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; min-height:100vh; background:radial-gradient(1200px 800px at 50% -10%,var(--mint-100),var(--mint-050)); font-family:'Inter',sans-serif; color:var(--ink); padding:14px 14px 40px; }
+  .wrap{ max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .head{ border-radius:24px; padding:18px 20px; color:#fff; background:linear-gradient(135deg,var(--teal-900),var(--teal-700)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .head .eyebrow{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:700; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:3px 0 0; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
+  .banner{ border-radius:16px; padding:12px 14px; font-size:13.5px; line-height:1.5; background:#fff; border:1.5px solid var(--line); display:flex; gap:10px; align-items:center; }
+  .banner.live{ border-color:#9ad5be; background:#F2FBF8; } .banner.idle{ background:#F4F6F5; color:var(--ink2); }
+  .dot{ width:10px; height:10px; border-radius:50%; background:var(--green); flex-shrink:0; animation:pulse 1.8s infinite; } .idle .dot{ background:#aab6b3; animation:none; }
+  @keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(10,143,90,.5); } 100%{ box-shadow:0 0 0 10px rgba(10,143,90,0); } }
+  .tiles{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .tile{ border:1.5px solid var(--line); background:#fff; border-radius:16px; padding:10px 6px; text-align:center; font:inherit; cursor:pointer; min-height:68px; }
+  .tile b{ display:block; font-family:'Manrope',sans-serif; font-size:22px; font-weight:800; } .tile span{ font-size:10.5px; font-weight:700; color:var(--ink2); letter-spacing:.03em; text-transform:uppercase; }
+  .tile[aria-pressed="true"]{ border-color:var(--teal-500); background:var(--mint-100); }
+  .tile.t-out b{ color:var(--red); } .tile.t-no b{ color:var(--amber); } .tile.t-in b{ color:var(--green); }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:20px; padding:6px 16px; box-shadow:0 12px 30px -24px rgba(11,61,58,.5); }
+  .row{ display:flex; gap:12px; align-items:center; padding:13px 0; border-bottom:1px solid var(--line); }
+  .row:last-child{ border-bottom:none; }
+  .av{ width:42px; height:42px; border-radius:50%; background:var(--mint-100); display:flex; align-items:center; justify-content:center; font-family:'Manrope',sans-serif; font-weight:800; color:var(--teal-700); flex-shrink:0; }
+  .row .mid{ flex:1; min-width:0; } .row .nm{ font-weight:700; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .row .mt{ font-size:12.5px; color:var(--ink2); margin-top:2px; line-height:1.4; }
+  .badge{ font-size:11.5px; font-weight:800; padding:5px 11px; border-radius:99px; white-space:nowrap; }
+  .b-INSIDE{ background:#E0F5E8; color:var(--green); } .b-OUTSIDE{ background:#FDE0E3; color:var(--red); } .b-NOREPLY{ background:#FFF3D6; color:#8a6d0a; }
+  .b-DENIED{ background:#FFF3D6; color:#8a6d0a; } .b-OUTDUTY{ background:#E8F1FB; color:#1c4f8f; } .b-WAIT{ background:#eef1f0; color:var(--ink2); } .b-EXEMPT{ background:#eef1f0; color:var(--ink2); }
+  .empty{ text-align:center; padding:30px 12px; color:var(--ink2); font-size:14px; line-height:1.6; }
+  .hint{ font-size:12px; color:var(--ink2); line-height:1.55; }
+  .btn{ min-height:50px; border-radius:15px; border:none; font:800 15px 'Manrope',sans-serif; cursor:pointer; padding:0 20px; background:linear-gradient(135deg,var(--teal-900),var(--teal-500)); color:#fff; }
+  .btn.ghost{ background:#fff; color:var(--ink); border:1.5px solid var(--line); }
+  .btn:disabled{ opacity:.5; }
+  .sheet{ position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.5); display:none; align-items:flex-end; justify-content:center; padding:14px; overflow:auto; }
+  .sheet.show{ display:flex; } .box{ width:min(520px,100%); background:#fff; border-radius:24px; padding:20px 18px 16px; margin:auto 0 0; }
+  .box h3{ margin:0 0 4px; font-family:'Manrope',sans-serif; font-size:19px; }
+  label{ display:block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink2); margin:13px 0 6px; }
+  input[type=text],input[type=time],input[type=number]{ width:100%; height:50px; border-radius:12px; border:1.5px solid var(--line); padding:0 13px; font:inherit; font-size:16px; }
+  input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,.15); }
+  .g2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .sw{ display:flex; align-items:center; gap:10px; margin-top:6px; font-size:14px; font-weight:600; } .sw input{ width:22px; height:22px; accent-color:var(--teal-700); }
+  .btns{ display:grid; grid-template-columns:1fr 1.5fr; gap:10px; margin-top:16px; }
+  .toast{ position:fixed; left:50%; bottom:28px; transform:translate(-50%,30px); background:var(--teal-900); color:#fff; font-weight:700; font-size:14px; padding:13px 20px; border-radius:99px; opacity:0; pointer-events:none; transition:all .3s; z-index:80; max-width:92vw; text-align:center; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); } .toast.err{ background:var(--red); }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+  @media (max-width:420px){ .tiles{ grid-template-columns:repeat(2,1fr); } }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>📍 Papan Lokasi</h1></div><a class="back" href="./dashboard.html">← Dashboard</a></div>
+  <div class="banner idle" id="banner"><span class="dot"></span><span id="bannerTx">Memuatkan…</span></div>
+  <div class="tiles" id="tiles" role="group" aria-label="Tapis status"></div>
+  <div class="card" id="list"><div class="empty">Memuatkan…</div></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" id="refresh" type="button">↻ Muat semula</button><button class="btn ghost" id="setBtn" type="button" style="display:none">⚙️ Tetapan</button></div>
+  <div class="hint">Staf yang telah daftar masuk dan belum daftar keluar sahaja dipaparkan. “Di luar” = beberapa bacaan berturut-turut di luar jejari klinik. “Tiada respons” = aplikasi ditutup atau lokasi dimatikan — <b>tidak semestinya di luar klinik</b>. Setiap kali papan ini dibuka, ia direkod dalam log aktiviti anda.</div>
+</div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="stT"><div class="box">
+  <h3 id="stT">Tetapan semakan lokasi</h3><div class="hint">Hanya penyelia TOP boleh menukar. Perubahan berkuat kuasa dalam seminit.</div>
+  <label class="sw" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)"><input type="checkbox" id="sEn"> Aktifkan semakan lokasi</label>
+  <div class="g2"><div><label for="sStart">Mula</label><input type="time" id="sStart"></div><div><label for="sEnd">Tamat</label><input type="time" id="sEnd"></div></div>
+  <div class="g2"><div><label for="sInt">Setiap (minit)</label><input type="number" id="sInt" min="5" max="30" step="5" inputmode="numeric"></div><div><label for="sRad">Jejari klinik (m)</label><input type="number" id="sRad" min="50" max="1000" step="10" inputmode="numeric"></div></div>
+  <div class="g2"><div><label for="sOut">Amaran selepas (bacaan di luar)</label><input type="number" id="sOut" min="1" max="6" inputmode="numeric"></div><div><label for="sMiss">“Tiada respons” selepas (pusingan)</label><input type="number" id="sMiss" min="1" max="10" inputmode="numeric"></div></div>
+  <label for="sEx">Unit dikecualikan (pisah dengan koma)</label><input type="text" id="sEx" placeholder="Pemandu">
+  <div class="hint" style="margin-top:8px">Cadangan: setiap 10 minit, jejari 150 m, amaran selepas 2 bacaan (≈ 20 minit di luar).</div>
+  <div class="btns"><button class="btn ghost" id="sCancel" type="button">Batal</button><button class="btn" id="sSave" type="button">Simpan</button></div>
+</div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const token = sessionStorage.getItem('kkah_session_token');
+if(!token) location.href = './login.html';
+const LABEL = { OUTSIDE:'Di luar', NOREPLY:'Tiada respons', DENIED:'Lokasi dimatikan', WAIT:'Menunggu', OUTDUTY:'Tugas luar', INSIDE:'Di klinik', EXEMPT:'Dikecualikan' };
+let data = null, filter = 'ALL', timer = null;
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(m, err){ const t = $('toast'); t.textContent = m; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(toast._t); toast._t = setTimeout(() => t.className = 'toast', 3200); }
+async function api(body){ const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({ token }, body)) }); return r.json(); }
+
+async function load(){
+  try{
+    const d = await api({ action:'getLocWatchBoard' });
+    if(!d.ok){ if(/expired/i.test(d.error || '')){ location.href = './login.html'; return; } $('list').innerHTML = '<div class="empty">' + esc(d.error) + '</div>'; $('banner').className = 'banner idle'; $('bannerTx').textContent = d.error; return; }
+    data = d; render();
+  }catch(e){ $('list').innerHTML = '<div class="empty">Sambungan gagal. <br><br><button class="btn ghost" onclick="load()">Cuba lagi</button></div>'; }
+}
+function render(){
+  const s = data.settings, c = data.counts;
+  $('banner').className = 'banner ' + (data.inWindow && s.enabled ? 'live' : 'idle');
+  $('bannerTx').innerHTML = !s.enabled ? 'Semakan lokasi <b>dimatikan</b>.' : data.inWindow
+    ? '<b>Semakan sedang berjalan</b> · ' + s.start + ' – ' + s.end + ' · setiap ' + s.intervalMin + ' minit · jejari ' + s.radiusM + ' m'
+    : 'Di luar waktu semakan (<b>' + s.start + ' – ' + s.end + '</b>). Papan dikemas kini semasa waktu semakan.';
+  const tiles = [['ALL','Semua',data.rows.length,''],['OUTSIDE','Di luar',c.OUTSIDE,'t-out'],['NOREPLY','Tiada respons',c.NOREPLY + c.DENIED,'t-no'],['INSIDE','Di klinik',c.INSIDE,'t-in']];
+  $('tiles').innerHTML = tiles.map(t => '<button class="tile ' + t[3] + '" data-f="' + t[0] + '" aria-pressed="' + (filter === t[0]) + '"><b>' + t[2] + '</b><span>' + t[1] + '</span></button>').join('');
+  let rows = data.rows;
+  if(filter === 'NOREPLY') rows = rows.filter(r => r.status === 'NOREPLY' || r.status === 'DENIED'); else if(filter !== 'ALL') rows = rows.filter(r => r.status === filter);
+  $('list').innerHTML = rows.length ? rows.map(r => {
+    const ini = r.name.split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    let meta = 'Masuk ' + esc(r.checkIn) + (r.unit ? ' · ' + esc(r.unit) : '');
+    if(r.lastTime) meta += '<br>Semakan ' + esc(r.lastTime) + (r.ago !== null ? ' (' + r.ago + ' min lalu)' : '') + (r.dist !== null && r.status !== 'DENIED' ? ' · ±' + r.dist + ' m dari klinik' : '');
+    else if(r.status === 'WAIT') meta += '<br>Belum ada bacaan';
+    if(r.status === 'OUTSIDE') meta += '<br><b>' + r.consec + ' bacaan berturut-turut di luar</b>' + (r.alerted ? ' · penyelia dimaklumkan' : '');
+    return '<div class="row"><div class="av">' + esc(ini) + '</div><div class="mid"><div class="nm">' + esc(r.name) + '</div><div class="mt">' + meta + '</div></div><span class="badge b-' + r.status + '">' + LABEL[r.status] + '</span></div>';
+  }).join('') : '<div class="empty">' + (data.rows.length ? 'Tiada staf dalam kategori ini.' : 'Tiada staf di bawah seliaan anda yang sedang daftar masuk.') + '</div>';
+  $('setBtn').style.display = data.canEdit ? '' : 'none';
+}
+$('tiles').addEventListener('click', e => { const b = e.target.closest('.tile'); if(!b) return; filter = b.dataset.f; render(); });
+$('refresh').onclick = () => { load(); toast('Dikemas kini'); };
+
+$('setBtn').onclick = () => {
+  const s = data.settings; $('sEn').checked = s.enabled; $('sStart').value = s.start; $('sEnd').value = s.end; $('sInt').value = s.intervalMin; $('sRad').value = s.radiusM;
+  $('sOut').value = s.outsideCount; $('sMiss').value = s.missedCount; $('sEx').value = s.exemptUnits; $('sheet').classList.add('show');
+};
+$('sCancel').onclick = () => $('sheet').classList.remove('show');
+$('sheet').addEventListener('pointerdown', e => { if(e.target === $('sheet')) $('sheet').classList.remove('show'); });
+$('sSave').onclick = async () => {
+  $('sSave').disabled = true;
+  try{
+    const d = await api({ action:'setLocWatchSettings', settings:{ enabled: $('sEn').checked, start: $('sStart').value, end: $('sEnd').value, intervalMin: $('sInt').value, radiusM: $('sRad').value, outsideCount: $('sOut').value, missedCount: $('sMiss').value, exemptUnits: $('sEx').value } });
+    if(d.ok){ $('sheet').classList.remove('show'); toast('Tetapan disimpan ✓'); load(); } else toast(d.error || 'Gagal menyimpan', true);
+  }catch(e){ toast('Sambungan gagal', true); }
+  $('sSave').disabled = false;
+};
+document.addEventListener('visibilitychange', () => { if(!document.hidden) load(); });
+load(); timer = setInterval(() => { if(!document.hidden) load(); }, 60000);
+</script>
+</body>
+</html>
