@@ -2,97 +2,162 @@
 <html lang="ms">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>SIAGA · Mata &amp; Ranking</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.15.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.16.0">
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{ --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84; --mint-100:#EAF6F2; --mint-050:#F6FBF9; --gold:#C9A227; --gold-bg:#FFF6D6; --silver:#9AA7A9; --bronze:#B87333; --green:#0a8f5a; --red:#C62839; --amber:#B7791F; --ink:#1E2B29; --ink2:#5B6B68; --line:#DCEAE6; }
+  :root{ --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84; --mint-100:#EAF6F2; --mint-050:#F6FBF9; --gold:#C9A227; --green:#0a8f5a; --red:#D12B3D; --amber:#B7791F; --ink:#1E2B29; --ink2:#5B6B68; --line:#DCEAE6; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body{ margin:0; min-height:100vh; background:radial-gradient(1200px 800px at 50% -10%,var(--mint-100),var(--mint-050)); font-family:'Inter',sans-serif; color:var(--ink); padding:14px 14px 48px; }
-  .wrap{ max-width:600px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
-  .head{ border-radius:24px; padding:18px 20px; color:#fff; background:linear-gradient(135deg,var(--teal-900),var(--teal-700)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .head .eyebrow{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:700; }
-  .head h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:3px 0 0; }
-  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
-  .month{ display:flex; align-items:center; justify-content:space-between; background:#fff; border:1px solid var(--line); border-radius:18px; padding:6px; }
-  .month button{ width:46px; height:46px; border-radius:14px; border:none; background:var(--mint-100); font-size:20px; font-weight:800; color:var(--teal-700); cursor:pointer; }
-  .month button:disabled{ opacity:.35; cursor:default; }
-  .month .mt{ font-family:'Manrope',sans-serif; font-weight:800; font-size:17px; text-align:center; } .month .mt small{ display:block; font-family:'Inter',sans-serif; font-weight:600; font-size:11.5px; color:var(--ink2); }
-  .card{ background:#fff; border:1px solid var(--line); border-radius:22px; padding:16px; box-shadow:0 12px 30px -24px rgba(11,61,58,.5); }
-  .card h3{ margin:0 0 2px; font-family:'Manrope',sans-serif; font-size:16px; font-weight:800; } .card .sub{ font-size:12.5px; color:var(--ink2); margin:0 0 12px; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; min-height:100vh; background:var(--mint-050); font-family:'Inter',sans-serif; color:var(--ink); padding-bottom:120px; }
+  .app{ max-width:520px; margin:0 auto; position:relative; }
 
-  /* podium */
-  .podium-card{ background:linear-gradient(180deg,#fff 0%,#F2FBF8 100%); padding-bottom:0; overflow:hidden; }
-  .podium{ display:grid; grid-template-columns:1fr 1.12fr 1fr; gap:8px; align-items:end; margin-top:6px; }
-  .pcol{ display:flex; flex-direction:column; align-items:center; text-align:center; min-width:0; }
-  .pav{ width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center; font:800 20px 'Manrope',sans-serif; color:#fff; border:3px solid #fff; box-shadow:0 8px 18px -8px rgba(0,0,0,.4); position:relative; }
-  .p1 .pav{ width:70px; height:70px; font-size:25px; background:linear-gradient(135deg,#E3B93A,#B8901C); }
-  .p2 .pav{ background:linear-gradient(135deg,#B7C2C4,#8A9899); } .p3 .pav{ background:linear-gradient(135deg,#D79B62,#A8662D); }
-  .crown{ position:absolute; top:-22px; left:50%; transform:translateX(-50%) rotate(-6deg); font-size:24px; }
-  .pname{ font-weight:700; font-size:13px; margin-top:8px; line-height:1.25; max-width:100%; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-  .punit{ font-size:11px; color:var(--ink2); margin-top:1px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ppts{ font:800 18px 'Manrope',sans-serif; margin:6px 0 8px; } .ppts small{ font-size:11px; font-weight:700; color:var(--ink2); }
-  .block{ width:100%; border-radius:14px 14px 0 0; display:flex; align-items:flex-start; justify-content:center; padding-top:8px; font:800 26px 'Manrope',sans-serif; color:rgba(255,255,255,.95); transform-origin:bottom; animation:rise .8s cubic-bezier(.2,.8,.2,1) both; }
-  .p1 .block{ height:104px; background:linear-gradient(180deg,#E3B93A,#B8901C); animation-delay:.1s; } .p2 .block{ height:76px; background:linear-gradient(180deg,#B7C2C4,#8A9899); animation-delay:.25s; } .p3 .block{ height:58px; background:linear-gradient(180deg,#D79B62,#A8662D); animation-delay:.4s; }
+  /* ===== hero (photo ring on a soft gradient, like a digital ID) ===== */
+  .hero{ position:relative; height:196px; background:linear-gradient(180deg,#0B3D3A 0%,#0F5C56 55%,#1C8F84 100%); overflow:hidden; border-radius:0 0 34px 34px; }
+  .hero::before{ content:''; position:absolute; inset:0; opacity:.22; background:
+      linear-gradient(#fff,#fff) 0 46px/46% 2px no-repeat, linear-gradient(#fff,#fff) 0 64px/34% 2px no-repeat, linear-gradient(#fff,#fff) 0 82px/52% 2px no-repeat,
+      linear-gradient(#fff,#fff) 100% 58px/40% 2px no-repeat, linear-gradient(#fff,#fff) 100% 76px/30% 2px no-repeat; }
+  .hero::after{ content:''; position:absolute; right:-40px; top:18px; width:230px; height:230px; border-radius:50%; border:2px solid rgba(255,255,255,.14); box-shadow:inset 0 0 0 26px rgba(255,255,255,.05); }
+  .hbtn{ position:absolute; top:max(14px, env(safe-area-inset-top)); width:44px; height:44px; border-radius:50%; border:none; background:rgba(255,255,255,.94); color:var(--teal-700); font-size:20px; display:flex; align-items:center; justify-content:center; text-decoration:none; box-shadow:0 8px 20px -8px rgba(0,0,0,.4); cursor:pointer; z-index:2; }
+  .hbtn.l{ left:16px; } .hbtn.r{ right:16px; }
+  .idwrap{ margin-top:-70px; text-align:center; position:relative; z-index:3; padding:0 16px; }
+  .avatar{ width:128px; height:128px; border-radius:50%; margin:0 auto; background:#fff; padding:6px; box-shadow:0 18px 36px -14px rgba(11,61,58,.55), 0 0 0 1px rgba(0,0,0,.06); }
+  .avatar > div{ width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg,#1C8F84,#0F5C56) center/cover no-repeat; color:#fff; display:flex; align-items:center; justify-content:center; font:800 40px 'Manrope',sans-serif; }
+  .nick{ font:800 24px 'Manrope',sans-serif; margin:14px 0 2px; letter-spacing:-.01em; }
+  .real{ font-size:12.5px; color:var(--ink2); }
+  .rank-chips{ display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+  .rchip{ padding:7px 14px; border-radius:99px; background:#fff; border:1.5px solid var(--line); font:700 13px 'Manrope',sans-serif; } .rchip b{ color:var(--teal-700); }
+  .rchip.gold{ background:linear-gradient(135deg,#FFF3C4,#FBE08A); border-color:#E9CB62; }
+  .divider{ height:2px; background:var(--line); margin:20px 16px 0; border-radius:2px; }
+
+  /* ===== tiles with corner ribbons ===== */
+  .tiles{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px 6px; padding:20px 14px 6px; }
+  .tile{ text-align:center; position:relative; padding:0 2px; }
+  .ti{ width:62px; height:62px; margin:0 auto; border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:28px; position:relative; background:#fff; border:1.5px solid var(--line); box-shadow:0 10px 22px -16px rgba(11,61,58,.6); }
+  .tile.good .ti{ background:linear-gradient(180deg,#F1FBF6,#DDF3E8); border-color:#BFE6D2; } .tile.bad .ti{ background:linear-gradient(180deg,#FFF6F7,#FDE3E6); border-color:#F3C0C6; }
+  .tile.neu .ti{ background:linear-gradient(180deg,#F3F8FF,#E3EEFB); border-color:#C9DBF2; }
+  .ribbon{ position:absolute; top:-8px; right:-12px; min-width:34px; padding:3px 7px 3px 8px; background:var(--red); color:#fff; font:800 10.5px 'Manrope',sans-serif; border-radius:6px 6px 0 6px; box-shadow:0 4px 10px -4px rgba(209,43,61,.7); }
+  .ribbon::after{ content:''; position:absolute; right:0; bottom:-5px; border-top:5px solid #8f1b29; border-left:6px solid transparent; }
+  .ribbon.ok{ background:var(--green); } .ribbon.ok::after{ border-top-color:#066b43; }
+  .tl{ font:600 12.5px 'Inter',sans-serif; margin-top:9px; line-height:1.25; } .tl b{ display:block; font:800 15px 'Manrope',sans-serif; margin-top:1px; }
+
+  /* ===== month pill + sections ===== */
+  .month{ display:flex; align-items:center; justify-content:space-between; margin:18px 16px 0; background:#fff; border:1px solid var(--line); border-radius:18px; padding:6px; }
+  .month button{ width:44px; height:44px; border-radius:14px; border:none; background:var(--mint-100); font-size:20px; font-weight:800; color:var(--teal-700); cursor:pointer; } .month button:disabled{ opacity:.35; cursor:default; }
+  .month .mt{ font:800 16px 'Manrope',sans-serif; text-align:center; } .month .mt small{ display:block; font:600 11.5px 'Inter',sans-serif; color:var(--ink2); }
+  .view{ display:none; padding:16px 16px 0; animation:fade .35s ease both; } .view.on{ display:block; } @keyframes fade{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:24px; padding:18px 16px; box-shadow:0 14px 34px -26px rgba(11,61,58,.55); margin-bottom:14px; }
+  .card h3{ margin:0 0 2px; font:800 17px 'Manrope',sans-serif; } .card .sub{ font-size:12.5px; color:var(--ink2); margin:0 0 14px; }
+
+  /* ===== podium ===== */
+  .podium-card{ background:radial-gradient(120% 90% at 50% 0%,#F2FBF8 0%,#fff 70%); padding-bottom:0; overflow:hidden; }
+  .podium{ display:grid; grid-template-columns:1fr 1.14fr 1fr; gap:8px; align-items:end; padding-top:26px; }
+  .pcol{ display:flex; flex-direction:column; align-items:center; text-align:center; min-width:0; position:relative; }
+  .pav{ width:62px; height:62px; border-radius:50%; background:#fff; padding:3px; box-shadow:0 10px 22px -10px rgba(0,0,0,.5); position:relative; flex-shrink:0; }
+  .pav > div{ width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg,#B7C2C4,#8A9899) center/cover no-repeat; color:#fff; display:flex; align-items:center; justify-content:center; font:800 20px 'Manrope',sans-serif; }
+  .p1 .pav{ width:82px; height:82px; padding:4px; background:linear-gradient(135deg,#F2D56B,#C9A227); } .p1 .pav > div{ background-color:#C9A227; font-size:26px; }
+  .p2 .pav{ background:linear-gradient(135deg,#DCE3E4,#9AA7A9); } .p3 .pav{ background:linear-gradient(135deg,#E9B98A,#B87333); } .p3 .pav > div{ background-color:#B87333; }
+  .crown{ position:absolute; top:-26px; left:50%; transform:translateX(-50%) rotate(-6deg); font-size:26px; filter:drop-shadow(0 4px 6px rgba(0,0,0,.25)); }
+  .pn{ font:800 14px 'Manrope',sans-serif; margin-top:10px; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
+  .pu{ font-size:11px; color:var(--ink2); margin-top:1px; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-height:15px; }
+  .pp{ font:800 20px 'Manrope',sans-serif; margin:6px 0 10px; line-height:1; } .pp small{ font-size:11px; font-weight:700; color:var(--ink2); }
+  .block{ width:100%; border-radius:16px 16px 0 0; display:flex; align-items:flex-start; justify-content:center; padding-top:10px; font-size:26px; transform-origin:bottom; animation:rise .8s cubic-bezier(.2,.8,.2,1) both; }
+  .p1 .block{ height:112px; background:linear-gradient(180deg,#F0CF62,#BD9420); animation-delay:.05s; } .p2 .block{ height:80px; background:linear-gradient(180deg,#C9D2D3,#8D9A9C); animation-delay:.2s; } .p3 .block{ height:60px; background:linear-gradient(180deg,#DDA574,#A8662D); animation-delay:.35s; }
   @keyframes rise{ from{ transform:scaleY(0); } to{ transform:scaleY(1); } }
   .pcol.me .pav{ outline:3px solid var(--teal-500); outline-offset:2px; }
-  .last{ margin-top:0; padding:12px 14px; border-radius:16px; background:var(--gold-bg); border:1px solid #F0DC9A; font-size:13px; line-height:1.5; }
-  .last b{ font-weight:800; }
+  .gapmsg{ display:flex; gap:12px; align-items:center; } .gapmsg .ic{ width:46px; height:46px; border-radius:15px; background:var(--mint-100); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; } .gapmsg div{ font-size:14px; line-height:1.5; }
 
-  /* me */
-  .me{ display:grid; grid-template-columns:132px 1fr; gap:14px; align-items:center; }
-  .ring{ position:relative; width:132px; height:132px; }
-  .ring svg{ width:100%; height:100%; transform:rotate(-90deg); }
-  .ring .bg{ stroke:#E4EFEB; } .ring .fg{ stroke:url(#rg); stroke-linecap:round; transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1); }
-  .ring .mid{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .ring .mid b{ font:800 30px 'Manrope',sans-serif; line-height:1; } .ring .mid span{ font-size:11px; font-weight:700; color:var(--ink2); margin-top:3px; letter-spacing:.04em; text-transform:uppercase; }
-  .rk{ font:800 24px 'Manrope',sans-serif; } .rk small{ font-size:13px; font-weight:600; color:var(--ink2); }
-  .msg{ font-size:13.5px; line-height:1.5; margin-top:6px; color:var(--ink); }
-  .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:14px; }
-  .st{ background:var(--mint-100); border-radius:14px; padding:10px 4px; text-align:center; } .st b{ display:block; font:800 20px 'Manrope',sans-serif; } .st span{ font-size:10.5px; font-weight:700; color:var(--ink2); text-transform:uppercase; letter-spacing:.03em; }
-  .st.bad b{ color:var(--red); } .st.good b{ color:var(--green); }
+  /* banner carousel (last month's champions) */
+  .rail{ display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; padding:2px 16px 14px; margin:0 -16px; scrollbar-width:none; } .rail::-webkit-scrollbar{ display:none; }
+  .ban{ flex:0 0 74%; max-width:290px; scroll-snap-align:center; border-radius:24px; padding:16px; color:#fff; display:flex; gap:14px; align-items:center; min-height:112px; box-shadow:0 16px 30px -18px rgba(0,0,0,.55); position:relative; overflow:hidden; }
+  .ban::after{ content:''; position:absolute; right:-34px; top:-34px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,.14); }
+  .ban.g1{ background:linear-gradient(135deg,#C9A227,#8d6e0f); } .ban.g2{ background:linear-gradient(135deg,#8E9CA0,#566366); } .ban.g3{ background:linear-gradient(135deg,#B87333,#7a4519); }
+  .ban .bav{ width:64px; height:64px; border-radius:50%; border:3px solid rgba(255,255,255,.85); background:rgba(255,255,255,.2) center/cover no-repeat; display:flex; align-items:center; justify-content:center; font:800 22px 'Manrope',sans-serif; flex-shrink:0; }
+  .ban small{ display:block; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; opacity:.9; } .ban b{ display:block; font:800 18px 'Manrope',sans-serif; margin:3px 0; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ban span{ font-size:13px; font-weight:600; opacity:.95; }
 
   /* lists */
-  .row{ display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line); }
-  .row:last-child{ border-bottom:none; } .row.me{ background:linear-gradient(90deg,rgba(28,143,132,.1),transparent); margin:0 -16px; padding-left:16px; padding-right:16px; }
-  .rn{ width:30px; text-align:center; font:800 15px 'Manrope',sans-serif; color:var(--ink2); }
-  .av{ width:38px; height:38px; border-radius:50%; background:var(--mint-100); display:flex; align-items:center; justify-content:center; font:800 14px 'Manrope',sans-serif; color:var(--teal-700); flex-shrink:0; }
-  .row .mid{ flex:1; min-width:0; } .row .nm{ font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .row .un{ font-size:11.5px; color:var(--ink2); }
-  .row .pt{ font:800 16px 'Manrope',sans-serif; } .row .pt small{ font-size:10.5px; font-weight:700; color:var(--ink2); }
-  .day{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); font-size:13px; } .day:last-child{ border-bottom:none; }
-  .day .d{ width:46px; text-align:center; background:var(--mint-100); border-radius:11px; padding:5px 0; } .day .d b{ display:block; font:800 16px 'Manrope',sans-serif; line-height:1.1; } .day .d span{ font-size:10px; font-weight:700; color:var(--ink2); text-transform:uppercase; }
+  .row{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); } .row:last-child{ border-bottom:none; }
+  .row.me{ background:linear-gradient(90deg,rgba(28,143,132,.12),transparent); margin:0 -16px; padding-left:16px; padding-right:16px; }
+  .rn{ width:28px; text-align:center; font:800 15px 'Manrope',sans-serif; color:var(--ink2); }
+  .av{ width:40px; height:40px; border-radius:50%; background:var(--mint-100) center/cover no-repeat; display:flex; align-items:center; justify-content:center; font:800 14px 'Manrope',sans-serif; color:var(--teal-700); flex-shrink:0; }
+  .row .mid{ flex:1; min-width:0; } .row .nm{ font-weight:700; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .row .un{ font-size:11.5px; color:var(--ink2); }
+  .row .pt{ font:800 17px 'Manrope',sans-serif; } .row .pt small{ font-size:10.5px; font-weight:700; color:var(--ink2); }
+  [data-full]{ cursor:help; }
+  .day{ display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line); font-size:13.5px; } .day:last-child{ border-bottom:none; }
+  .day .d{ width:48px; text-align:center; background:var(--mint-100); border-radius:12px; padding:6px 0; } .day .d b{ display:block; font:800 17px 'Manrope',sans-serif; line-height:1.1; } .day .d span{ font-size:10px; font-weight:700; color:var(--ink2); text-transform:uppercase; }
   .day .t{ flex:1; line-height:1.4; } .day .t em{ font-style:normal; font-size:11.5px; color:var(--ink2); display:block; }
-  .chip{ font:800 13px 'Manrope',sans-serif; padding:5px 11px; border-radius:99px; } .chip.pos{ background:#E0F5E8; color:var(--green); } .chip.neg{ background:#FDE0E3; color:var(--red); } .chip.mid{ background:#FFF3D6; color:#8a6d0a; }
-  .empty{ text-align:center; padding:26px 12px; color:var(--ink2); font-size:14px; line-height:1.6; }
-  .btn{ min-height:48px; border-radius:14px; border:1.5px solid var(--line); background:#fff; font:700 14px 'Manrope',sans-serif; color:var(--teal-700); cursor:pointer; padding:0 18px; width:100%; }
-  .rules{ display:none; margin-top:12px; font-size:13.5px; line-height:1.6; } .rules.show{ display:block; } .rules table{ width:100%; border-collapse:collapse; } .rules td{ padding:8px 4px; border-bottom:1px solid var(--line); } .rules td:last-child{ text-align:right; font-weight:800; font-family:'Manrope',sans-serif; }
-  .sk{ background:linear-gradient(90deg,#E4EFEB 25%,#F3F9F7 50%,#E4EFEB 75%); background-size:200% 100%; animation:sh 1.4s infinite; border-radius:12px; } @keyframes sh{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
-  .toast{ position:fixed; left:50%; bottom:28px; transform:translate(-50%,30px); background:var(--teal-900); color:#fff; font-weight:700; font-size:14px; padding:13px 20px; border-radius:99px; opacity:0; pointer-events:none; transition:all .3s; z-index:80; }
-  .toast.show{ opacity:1; transform:translate(-50%,0); }
+  .chip{ font:800 13px 'Manrope',sans-serif; padding:5px 12px; border-radius:99px; } .chip.pos{ background:#E0F5E8; color:var(--green); } .chip.neg{ background:#FDE0E3; color:var(--red); } .chip.zero{ background:#FFF3D6; color:#8a6d0a; }
+  .empty{ text-align:center; padding:28px 12px; color:var(--ink2); font-size:14px; line-height:1.6; }
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; } td{ padding:11px 4px; border-bottom:1px solid var(--line); } td:last-child{ text-align:right; font:800 15px 'Manrope',sans-serif; white-space:nowrap; } tr:last-child td{ border-bottom:none; }
+  .fine{ font-size:12.5px; color:var(--ink2); line-height:1.6; margin:10px 0 0; }
+  .sk{ background:linear-gradient(90deg,#E4EFEB 25%,#F3F9F7 50%,#E4EFEB 75%); background-size:200% 100%; animation:sh 1.4s infinite; border-radius:16px; } @keyframes sh{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
+
+  /* ===== floating pill nav with centre emblem ===== */
+  .nav{ position:fixed; left:50%; transform:translateX(-50%); bottom:max(14px, env(safe-area-inset-bottom)); width:min(492px, calc(100% - 28px)); height:74px; background:#fff; border-radius:38px; display:grid; grid-template-columns:1fr 1fr 84px 1fr 1fr; align-items:center; box-shadow:0 18px 40px -12px rgba(11,61,58,.5), 0 0 0 1px rgba(0,0,0,.05); z-index:30; }
+  .nav button.it{ background:none; border:none; font:700 10.5px 'Inter',sans-serif; letter-spacing:.04em; text-transform:uppercase; color:#9aa7a4; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; padding:6px 0; min-height:56px; }
+  .nav button.it svg{ width:26px; height:26px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; } .nav button.it.on{ color:var(--teal-700); }
+  .emb{ text-decoration:none; position:relative; width:78px; height:78px; margin:-30px auto 0; border-radius:50%; background:#fff; padding:5px; box-shadow:0 14px 28px -10px rgba(11,61,58,.6); display:block; } .emb span{ width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg,#0B3D3A,#1C8F84); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; font:800 22px 'Manrope',sans-serif; line-height:1; } .emb small{ font-size:9px; font-weight:700; letter-spacing:.08em; opacity:.85; margin-top:2px; }
+
+  /* sheets, tooltip, toast */
+  .sheet{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.5); display:none; align-items:flex-end; justify-content:center; padding:14px; } .sheet.show{ display:flex; }
+  .box{ width:min(500px,100%); background:#fff; border-radius:26px; padding:22px 18px 16px; } .box h3{ margin:0 0 4px; font:800 19px 'Manrope',sans-serif; } .box p{ margin:0 0 4px; font-size:13px; color:var(--ink2); line-height:1.55; }
+  .box input{ width:100%; height:54px; border-radius:14px; border:1.5px solid var(--line); padding:0 14px; font:600 17px 'Inter',sans-serif; margin-top:12px; } .box input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,.15); }
+  .err{ color:var(--red); font-size:13px; margin-top:8px; min-height:18px; }
+  .btns{ display:grid; grid-template-columns:1fr 1.5fr; gap:10px; margin-top:10px; } .btn{ min-height:52px; border-radius:15px; border:none; font:800 15px 'Manrope',sans-serif; cursor:pointer; } .btn.ghost{ background:#fff; border:1.5px solid var(--line); color:var(--ink); } .btn.pri{ background:linear-gradient(135deg,#0B3D3A,#1C8F84); color:#fff; } .btn:disabled{ opacity:.5; }
+  .tip{ position:fixed; z-index:90; pointer-events:none; background:#10201e; color:#fff; font-size:12.5px; font-weight:600; padding:8px 12px; border-radius:10px; opacity:0; transition:opacity .12s; max-width:240px; box-shadow:0 10px 24px rgba(0,0,0,.3); } .tip.show{ opacity:1; }
+  .toast{ position:fixed; left:50%; bottom:112px; transform:translate(-50%,30px); background:var(--teal-900); color:#fff; font-weight:700; font-size:14px; padding:13px 20px; border-radius:99px; opacity:0; pointer-events:none; transition:all .3s; z-index:95; } .toast.show{ opacity:1; transform:translate(-50%,0); }
   :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
-  @media (max-width:380px){ .me{ grid-template-columns:1fr; justify-items:center; text-align:center; } .stats{ grid-template-columns:repeat(2,1fr); } }
-  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+  @media (max-width:360px){ .tiles{ gap:12px 2px; } .ti{ width:56px; height:56px; } .pn{ font-size:13px; } }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } html{ scroll-behavior:auto; } }
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
 </head>
 <body>
-<div class="wrap">
-  <div class="head"><div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>🏆 Mata &amp; Ranking</h1></div><a class="back" href="./dashboard.html">← Dashboard</a></div>
+<div class="app">
+  <div class="hero">
+    <a class="hbtn l" href="./dashboard.html" aria-label="Kembali ke dashboard">‹</a>
+    <button class="hbtn r" id="editNick" type="button" aria-label="Tukar nama panggilan">✎</button>
+  </div>
+  <div class="idwrap">
+    <div class="avatar"><div id="meAv" data-pid="">·</div></div>
+    <div class="nick" id="meNick">&nbsp;</div>
+    <div class="real" id="meReal"></div>
+    <div class="rank-chips" id="chips"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="tiles" id="tiles"></div>
+
   <div class="month"><button id="mPrev" aria-label="Bulan sebelum">‹</button><div class="mt" id="mTitle">…<small id="mSub"></small></div><button id="mNext" aria-label="Bulan seterusnya">›</button></div>
 
-  <div class="card podium-card"><h3>Podium bulan ini</h3><p class="sub" id="podSub">Tiga mata tertinggi</p><div id="podium"><div class="sk" style="height:210px"></div></div></div>
-  <div id="last"></div>
-
-  <div class="card" id="meCard"><div class="sk" style="height:170px"></div></div>
-  <div class="card" id="dayCard" style="display:none"><h3>Mata harian saya</h3><p class="sub">Hanya anda yang nampak butiran ini.</p><div id="days"></div></div>
-  <div class="card"><h3>Ranking</h3><p class="sub" id="rankSub">10 teratas</p><div id="rank"><div class="sk" style="height:120px"></div></div></div>
-
-  <div class="card"><button class="btn" id="rulesBtn" type="button" aria-expanded="false">ℹ️ Cara mata dikira</button><div class="rules" id="rules"></div></div>
+  <section class="view on" id="v-podium">
+    <div class="card podium-card"><h3 id="podTitle">Podium bulan ini</h3><p class="sub" id="podSub">&nbsp;</p><div id="podium"><div class="sk" style="height:240px"></div></div></div>
+    <div class="card" id="gapCard" style="display:none"></div>
+    <div id="lastWrap" style="display:none"><h3 style="font:800 16px 'Manrope',sans-serif;margin:6px 4px 10px">Juara bulan lepas</h3><div class="rail" id="rail"></div></div>
+  </section>
+  <section class="view" id="v-rank"><div class="card"><h3>Ranking</h3><p class="sub" id="rankSub"></p><div id="rank"></div></div></section>
+  <section class="view" id="v-days"><div class="card"><h3>Mata harian saya</h3><p class="sub">Hanya anda yang nampak butiran ini.</p><div id="days"></div></div></section>
+  <section class="view" id="v-rules"><div class="card"><h3>Cara mata dikira</h3><p class="sub">Dikira semula daripada rekod kehadiran, jadi sentiasa tepat.</p><div id="rules"></div></div></section>
 </div>
+
+<nav class="nav" aria-label="Bahagian">
+  <button class="it on" data-v="podium" type="button"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Podium</button>
+  <button class="it" data-v="rank" type="button"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Ranking</button>
+  <a class="emb" href="./dashboard.html" aria-label="Ke dashboard"><span><b id="embRank">–</b><small>SIAGA</small></span></a>
+  <button class="it" data-v="days" type="button"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Harian</button>
+  <button class="it" data-v="rules" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>Cara</button>
+</nav>
+
+<div class="sheet" id="nickSheet" role="dialog" aria-modal="true" aria-labelledby="nsT"><div class="box">
+  <h3 id="nsT">Nama panggilan</h3><p>Dipaparkan pada podium dan ranking. Nama penuh anda hanya dilihat oleh penyelia.</p>
+  <input id="nickIn" type="text" maxlength="16" autocomplete="off" placeholder="cth. Kak Nur, Dr Ali" aria-label="Nama panggilan">
+  <div class="err" id="nickErr" role="alert"></div>
+  <div class="btns"><button class="btn ghost" id="nickCancel" type="button">Kemudian</button><button class="btn pri" id="nickSave" type="button">Simpan</button></div>
+</div></div>
+<div class="tip" id="tip" role="tooltip"></div>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -105,90 +170,157 @@ const MONTHS = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','S
 const DOW = ['Ahd','Isn','Sel','Rab','Kha','Jum','Sab'];
 let Y = 0, M = 0, data = null;
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const ini = n => String(n).trim().split(/\s+/).filter(w => /^[A-Za-z]/.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+const ini = n => String(n).trim().split(/\s+/).filter(w => /^[A-Za-z0-9]/.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
 const sgn = n => (n > 0 ? '+' : '') + n;
 function toast(m){ const t = $('toast'); t.textContent = m; t.className = 'toast show'; clearTimeout(toast._t); toast._t = setTimeout(() => t.className = 'toast', 3000); }
+async function api(body){ const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({ token }, body)) }); return r.json(); }
 
-/* stale-while-revalidate cache (cleared by the dashboard at logout: prefix kkah_cache_) */
+/* ---------- cache (cleared by the dashboard at logout: prefix kkah_cache_) ---------- */
 const ck = k => 'kkah_cache_' + IC + '_pts_' + k;
 const cget = k => { try{ return JSON.parse(localStorage.getItem(ck(k)) || 'null'); }catch(e){ return null; } };
 const cset = (k, d) => { try{ localStorage.setItem(ck(k), JSON.stringify({ t: Date.now(), d })); }catch(e){} };
+
+/* ---------- full-name tooltip (supervisors only: the server sends `full` only to them) ---------- */
+const tip = $('tip');
+function showTip(el){
+  const f = el.getAttribute('data-full'); if(!f) return;
+  tip.textContent = f; tip.classList.add('show');
+  const r = el.getBoundingClientRect(), w = tip.offsetWidth;
+  tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px'; tip.style.top = Math.max(8, r.top - tip.offsetHeight - 8) + 'px';
+}
+document.addEventListener('pointerover', e => { const el = e.target.closest('[data-full]'); if(el) showTip(el); });
+document.addEventListener('pointerout', e => { if(e.target.closest('[data-full]')) tip.classList.remove('show'); });
+document.addEventListener('pointerdown', e => { const el = e.target.closest('[data-full]'); if(el) showTip(el); else tip.classList.remove('show'); });
+window.addEventListener('scroll', () => tip.classList.remove('show'), { passive:true });
+const fullAttr = p => (data && data.canSeeFull && p.full) ? ' data-full="' + esc(p.full) + '" title="' + esc(p.full) + '"' : '';
+
+/* ---------- photos: paint first, fetch podium + me afterwards, remember them for a day ---------- */
+const photoMem = {};
+function photoGet(pid){
+  if(photoMem[pid]) return photoMem[pid];
+  const c = cget('ph_' + pid); if(c && Date.now() - c.t < 864e5 && c.d){ photoMem[pid] = c.d; return c.d; }
+  return '';
+}
+function paintPhotos(){
+  document.querySelectorAll('[data-pid]').forEach(el => {
+    const u = photoGet(el.getAttribute('data-pid')); if(!u || el.dataset.done === u.length + '') return;
+    el.style.backgroundImage = 'url(' + u + ')'; el.textContent = ''; el.dataset.done = u.length + '';
+  });
+}
+async function loadPhotos(){
+  const pids = {}; (data.podium || []).forEach(p => pids[p.pid] = 1); if(data.last) data.last.podium.forEach(p => pids[p.pid] = 1); if(data.myPid) pids[data.myPid] = 1;
+  const need = Object.keys(pids).filter(p => !photoGet(p)).slice(0, 8);
+  paintPhotos();
+  if(!need.length) return;
+  try{
+    const d = await api({ action:'getPointsPhotos', year: Y, month: M, pids: need });
+    if(d.ok && d.photos){ Object.keys(d.photos).forEach(pid => { photoMem[pid] = d.photos[pid]; cset('ph_' + pid, d.photos[pid]); }); paintPhotos(); }
+  }catch(e){}
+}
+
+/* ---------- load ---------- */
 async function load(){
   const key = 'b_' + (Y || 0) + '_' + (M || 0), hit = cget(key);
-  if(hit){ data = hit.d; render(); if(Date.now() - hit.t < 90000) return; }
+  if(hit && hit.d){ data = hit.d; render(); if(Date.now() - hit.t < 90000) return; }
   try{
-    const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getPointsBoard', token, year: Y, month: M }) });
-    const d = await r.json();
+    const d = await api({ action:'getPointsBoard', year: Y, month: M });
     if(!d.ok){ if(/expired/i.test(d.error || '')){ location.href = './login.html'; return; } if(!hit) fail(d.error); return; }
     cset(key, d); data = d; render();
   }catch(e){ if(!hit) fail('Sambungan gagal. Semak internet anda.'); }
 }
-function fail(msg){ $('podium').innerHTML = '<div class="empty">' + esc(msg) + '<br><br><button class="btn" onclick="load()">Cuba lagi</button></div>'; $('meCard').innerHTML = ''; $('rank').innerHTML = ''; }
+function fail(msg){ $('podium').innerHTML = '<div class="empty">' + esc(msg) + '<br><br><button class="btn ghost" style="width:100%" onclick="load()">Cuba lagi</button></div>'; }
 
+/* ---------- render ---------- */
 function render(){
-  const d = data; Y = d.year; M = d.month;
-  $('mTitle').childNodes[0].nodeValue = MONTHS[M - 1] + ' ' + Y; $('mSub').textContent = d.isCurrent ? 'Bulan semasa · dikemas kini setiap beberapa minit' : 'Keputusan akhir';
+  const d = data, me = d.me, r = d.rules; Y = d.year; M = d.month;
+  $('mTitle').childNodes[0].nodeValue = MONTHS[M - 1] + ' ' + Y; $('mSub').textContent = d.isCurrent ? 'Bulan semasa' : 'Keputusan akhir';
   $('mNext').disabled = d.isCurrent; $('mPrev').disabled = (Y === 2025 && M === 1);
-  $('podSub').textContent = d.isCurrent ? 'Siapa di puncak setakat ini?' : 'Juara ' + MONTHS[M - 1] + ' ' + Y;
-  const myName = d.me ? d.me.name : '';
 
-  // podium (visual order 2 · 1 · 3)
-  if(!d.podium.length){ $('podium').innerHTML = '<div class="empty">Belum ada mata untuk bulan ini.<br>Mata bermula bila staf daftar masuk &amp; keluar.</div>'; }
+  // hero + tiles
+  const nick = d.nickname || (me ? me.name.split(/\s+/).slice(0, 2).join(' ') : 'Staf');
+  $('meNick').textContent = nick; $('meReal').textContent = d.nickname && me ? me.name : (d.nickname ? '' : 'Tetapkan nama panggilan anda ✎');
+  const av = $('meAv'); av.setAttribute('data-pid', d.myPid || ''); if(!av.dataset.done) av.textContent = ini(nick);
+  $('chips').innerHTML = me ? '<span class="rchip' + (me.rank <= 3 ? ' gold' : '') + '">' + (me.rank <= 3 ? ['🥇','🥈','🥉'][me.rank - 1] + ' ' : '') + 'Kedudukan <b>#' + me.rank + '</b> / ' + d.total + '</span><span class="rchip"><b>' + me.points + '</b> mata</span>' : '<span class="rchip">Belum ada rekod bulan ini</span>';
+  $('embRank').textContent = me ? '#' + me.rank : '–';
+  const T = (cls, ico, label, val, rib, ribOk) => '<div class="tile ' + cls + '"><div class="ti" aria-hidden="true">' + ico + (rib ? '<span class="ribbon' + (ribOk ? ' ok' : '') + '">' + rib + '</span>' : '') + '</div><div class="tl">' + label + '<b>' + val + '</b></div></div>';
+  $('tiles').innerHTML = me ? T('good', '✅', 'Tepat masa', me.onTime, me.onTime ? sgn(me.onTime * r.checkIn) : '', true) + T(me.late ? 'bad' : 'neu', '⏰', 'Lewat', me.late, me.late ? sgn(me.late * r.lateIn) : '') +
+    T('neu', '🚪', 'Check-out', me.outs, me.outs ? sgn(me.outs * r.checkOut) : '', true) + T(me.el ? 'bad' : 'neu', '🚨', 'EL', me.el, me.el ? sgn(me.el * r.el) : '') : '';
+
+  // podium
+  $('podTitle').textContent = d.isCurrent ? 'Podium bulan ini' : 'Juara ' + MONTHS[M - 1] + ' ' + Y;
+  $('podSub').textContent = d.isCurrent ? 'Siapa di puncak setakat ini?' : 'Keputusan akhir bulan';
+  if(!d.podium.length) $('podium').innerHTML = '<div class="empty">Belum ada mata untuk bulan ini.<br>Mata bermula bila staf daftar masuk &amp; keluar.</div>';
   else{
-    const slot = (i, cls, medal) => {
-      const p = d.podium[i]; if(!p) return '<div class="pcol"></div>';
-      return '<div class="pcol ' + cls + (p.name === myName ? ' me' : '') + '"><div class="pav">' + (i === 0 ? '<span class="crown" aria-hidden="true">👑</span>' : '') + esc(ini(p.name)) + '</div>' +
-        '<div class="pname">' + esc(p.name) + '</div><div class="punit">' + esc(p.unit || '') + '</div><div class="ppts">' + p.points + ' <small>mata</small></div>' +
-        '<div class="block" aria-label="Kedudukan ' + (i + 1) + '">' + medal + '</div></div>';
-    };
-    $('podium').innerHTML = '<div class="podium" role="list">' + slot(1, 'p2', '🥈') + slot(0, 'p1', '🥇') + slot(2, 'p3', '🥉') + '</div>';
+    const slot = (i, cls, medal) => { const p = d.podium[i]; if(!p) return '<div class="pcol"></div>';
+      return '<div class="pcol ' + cls + (me && p.pid === d.myPid ? ' me' : '') + '"><div class="pav">' + (i === 0 ? '<span class="crown" aria-hidden="true">👑</span>' : '') + '<div data-pid="' + esc(p.pid) + '">' + esc(ini(p.nick)) + '</div></div>' +
+        '<div class="pn"' + fullAttr(p) + '>' + esc(p.nick) + '</div><div class="pu">' + esc(p.unit || '') + '</div><div class="pp">' + p.points + ' <small>mata</small></div><div class="block" aria-label="Kedudukan ' + (i + 1) + '">' + medal + '</div></div>'; };
+    $('podium').innerHTML = '<div class="podium">' + slot(1, 'p2', '🥈') + slot(0, 'p1', '🥇') + slot(2, 'p3', '🥉') + '</div>';
   }
-  // last month's champions
-  $('last').innerHTML = d.last ? '<div class="last">🎖️ <b>Juara ' + MONTHS[d.last.month - 1] + ':</b> ' + d.last.podium.map((p, i) => ['🥇','🥈','🥉'][i] + ' ' + esc(p.name) + ' (' + p.points + ')').join(' &nbsp;·&nbsp; ') + '</div>' : '';
+  // gap message
+  const gc = $('gapCard');
+  if(me){
+    let ico = '🎯', msg;
+    if(me.rank === 1){ ico = '👑'; msg = 'Anda di <b>tempat pertama</b>! Kekalkan daftar masuk tepat masa.'; }
+    else if(me.rank <= 3){ ico = '🎉'; msg = 'Anda dalam <b>podium</b>!' + (me.toNext ? ' ' + me.toNext + ' mata lagi untuk naik satu tangga.' : ''); }
+    else msg = me.toPodium ? '<b>' + me.toPodium + ' mata</b> lagi untuk masuk podium. Daftar masuk sebelum ' + r.lateAfter + ' dan jangan lupa daftar keluar.' : 'Teruskan usaha!';
+    gc.style.display = ''; gc.innerHTML = '<div class="gapmsg"><div class="ic">' + ico + '</div><div>' + msg + (me.streak >= 3 ? '<br>🔥 Rentetan tepat masa terbaik: <b>' + me.streak + ' hari</b>' : '') + '</div></div>';
+  }else gc.style.display = 'none';
+  // last month banners
+  if(d.last){
+    $('lastWrap').style.display = '';
+    $('rail').innerHTML = d.last.podium.map((p, i) => '<div class="ban g' + (i + 1) + '"><div class="bav" data-pid="' + esc(p.pid) + '">' + esc(ini(p.nick)) + '</div><div><small>' + ['🥇 Juara','🥈 Naib juara','🥉 Tempat ketiga'][i] + ' · ' + MONTHS[d.last.month - 1] + '</small><b' + fullAttr(p) + '>' + esc(p.nick) + '</b><span>' + p.points + ' mata</span></div></div>').join('');
+  }else $('lastWrap').style.display = 'none';
 
-  // me
-  const me = d.me, best = d.podium[0] ? Math.max(d.podium[0].points, 1) : 1;
-  if(!me){
-    $('meCard').innerHTML = '<h3>Kedudukan saya</h3><div class="empty">Tiada rekod kehadiran anda untuk ' + MONTHS[M - 1] + ' lagi.<br>Daftar masuk &amp; keluar untuk mula mengumpul mata.</div>'; $('dayCard').style.display = 'none';
-  }else{
-    const pct = Math.max(0, Math.min(1, me.points / best)), C = 2 * Math.PI * 54;
-    let msg;
-    if(me.rank === 1) msg = '👑 Anda di <b>tempat pertama</b>! Kekalkan daftar masuk tepat masa.';
-    else if(me.rank <= 3) msg = '🎉 Anda dalam <b>podium</b>! ' + (me.toNext ? me.toNext + ' mata lagi untuk naik satu tangga.' : '');
-    else msg = me.toPodium ? '<b>' + me.toPodium + ' mata</b> lagi untuk masuk podium. Daftar masuk sebelum ' + d.rules.lateAfter + ' dan jangan lupa daftar keluar.' : 'Teruskan usaha!';
-    $('meCard').innerHTML = '<h3>Kedudukan saya</h3><p class="sub">' + esc(me.name) + '</p>' +
-      '<div class="me"><div class="ring"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1C8F84"/><stop offset="1" stop-color="#C9A227"/></linearGradient></defs>' +
-      '<circle class="bg" cx="60" cy="60" r="54" fill="none" stroke-width="11"/><circle class="fg" id="ringFg" cx="60" cy="60" r="54" fill="none" stroke-width="11" stroke-dasharray="' + C + '" stroke-dashoffset="' + C + '"/></svg>' +
-      '<div class="mid"><b>' + me.points + '</b><span>mata</span></div></div>' +
-      '<div><div class="rk">#' + me.rank + ' <small>daripada ' + d.total + '</small></div><div class="msg">' + msg + '</div></div></div>' +
-      '<div class="stats"><div class="st good"><b>' + me.onTime + '</b><span>Tepat masa</span></div><div class="st ' + (me.late ? 'bad' : '') + '"><b>' + me.late + '</b><span>Lewat</span></div><div class="st"><b>' + me.outs + '</b><span>Check-out</span></div><div class="st ' + (me.el ? 'bad' : '') + '"><b>' + me.el + '</b><span>EL</span></div></div>' +
-      (me.streak >= 3 ? '<div class="msg" style="margin-top:12px">🔥 Rentetan tepat masa terbaik: <b>' + me.streak + ' hari</b></div>' : '');
-    requestAnimationFrame(() => setTimeout(() => { const f = $('ringFg'); if(f) f.style.strokeDashoffset = C * (1 - pct); }, 60));
-    // daily
-    $('dayCard').style.display = '';
-    $('days').innerHTML = me.daily.length ? me.daily.slice().reverse().map(x => {
-      const p = x.d.split('-').map(Number), dow = DOW[new Date(p[0], p[1] - 1, p[2]).getDay()];
-      const label = x.tag === 'el' ? 'Cuti kecemasan (EL)' : (x.in + ' masuk' + (x.out ? ' · ' + x.out + ' keluar' : ' · <span style="color:var(--amber);font-weight:600">tiada check-out</span>'));
-      const sub = x.tag === 'late' ? 'Lewat selepas ' + d.rules.lateAfter : x.tag === 'ok' ? 'Tepat masa' : '';
-      return '<div class="day"><div class="d"><b>' + p[2] + '</b><span>' + dow + '</span></div><div class="t">' + label + (sub ? '<em>' + sub + '</em>' : '') + '</div><span class="chip ' + (x.pts > 0 ? 'pos' : x.pts < 0 ? 'neg' : 'mid') + '">' + sgn(x.pts) + '</span></div>';
-    }).join('') : '<div class="empty">Tiada rekod.</div>';
-  }
-
-  // ranking list
-  const rowH = p => '<div class="row' + (p.name === myName ? ' me' : '') + '"><div class="rn">' + p.rank + '</div><div class="av">' + esc(ini(p.name)) + '</div><div class="mid"><div class="nm">' + esc(p.name) + (p.name === myName ? ' <span style="color:var(--teal-500)">(Anda)</span>' : '') + '</div><div class="un">' + esc(p.unit || '') + '</div></div><div class="pt">' + p.points + ' <small>mata</small></div></div>';
+  // ranking
+  const rowH = p => '<div class="row' + (d.me && p.pid === d.myPid ? ' me' : '') + '"><div class="rn">' + p.rank + '</div><div class="av" data-pid="' + esc(p.pid) + '">' + esc(ini(p.nick)) + '</div><div class="mid"><div class="nm"' + fullAttr(p) + '>' + esc(p.nick) + (d.me && p.pid === d.myPid ? ' <span style="color:var(--teal-500)">(Anda)</span>' : '') + '</div><div class="un">' + esc(p.unit || '') + '</div></div><div class="pt">' + p.points + ' <small>mata</small></div></div>';
   let list = d.top.map(rowH).join('');
-  if(me && !me.inTop10 && me.around.length) list += '<div style="text-align:center;color:var(--ink2);padding:4px 0;letter-spacing:.3em">⋮</div>' + me.around.map(rowH).join('');
+  if(me && !me.inTop10 && me.around.length) list += '<div style="text-align:center;color:var(--ink2);letter-spacing:.3em;padding:2px 0">⋮</div>' + me.around.map(rowH).join('');
   $('rank').innerHTML = list || '<div class="empty">Belum ada ranking.</div>';
-  $('rankSub').textContent = d.total + ' staf dalam ranking' + (d.total > 10 ? ' · 10 teratas' : '');
+  $('rankSub').textContent = d.total + ' staf' + (d.total > 10 ? ' · 10 teratas' : '') + (d.canSeeFull ? ' · lalukan kursor / ketik nama untuk nama penuh' : '');
 
-  const r = d.rules;
-  $('rules').innerHTML = '<table><tr><td>✅ Daftar masuk tepat masa (sebelum / pada ' + r.lateAfter + ')</td><td>' + sgn(r.checkIn) + '</td></tr><tr><td>⏰ Daftar masuk lewat (selepas ' + r.lateAfter + ')</td><td>' + sgn(r.lateIn) + '</td></tr><tr><td>🚪 Daftar keluar pada hari yang sama</td><td>' + sgn(r.checkOut) + '</td></tr><tr><td>🚨 Cuti kecemasan (EL), setiap hari</td><td>' + sgn(r.el) + '</td></tr></table>' +
-    '<p style="color:var(--ink2);font-size:12.5px;margin:10px 0 0">Jika mata sama: lebih banyak hari tepat masa, kemudian purata masa masuk lebih awal. Mata dikira semula daripada rekod kehadiran, jadi sentiasa tepat. Butiran lewat dan EL hanya dilihat oleh anda sendiri.</p>';
+  // daily
+  $('days').innerHTML = me && me.daily.length ? me.daily.slice().reverse().map(x => {
+    const p = x.d.split('-').map(Number), dow = DOW[new Date(p[0], p[1] - 1, p[2]).getDay()];
+    const label = x.tag === 'el' ? 'Cuti kecemasan (EL)' : (x.in + ' masuk' + (x.out ? ' · ' + x.out + ' keluar' : ' · <span style="color:var(--amber);font-weight:600">tiada check-out</span>'));
+    const sub = x.tag === 'late' ? 'Lewat selepas ' + r.lateAfter : x.tag === 'ok' ? 'Tepat masa' : '';
+    return '<div class="day"><div class="d"><b>' + p[2] + '</b><span>' + dow + '</span></div><div class="t">' + label + (sub ? '<em>' + sub + '</em>' : '') + '</div><span class="chip ' + (x.pts > 0 ? 'pos' : x.pts < 0 ? 'neg' : 'zero') + '">' + sgn(x.pts) + '</span></div>';
+  }).join('') : '<div class="empty">Tiada rekod anda untuk bulan ini.</div>';
+
+  // rules
+  $('rules').innerHTML = '<table><tr><td>✅ Daftar masuk tepat masa (pada / sebelum ' + r.lateAfter + ')</td><td>' + sgn(r.checkIn) + '</td></tr><tr><td>⏰ Daftar masuk lewat (selepas ' + r.lateAfter + ')</td><td>' + sgn(r.lateIn) + '</td></tr><tr><td>🚪 Daftar keluar pada hari yang sama</td><td>' + sgn(r.checkOut) + '</td></tr><tr><td>🚨 Cuti kecemasan (EL), setiap hari</td><td>' + sgn(r.el) + '</td></tr></table>' +
+    '<p class="fine">Jika mata sama: lebih banyak hari tepat masa, kemudian purata masa masuk lebih awal. Butiran lewat dan EL hanya dilihat oleh anda sendiri. Nama panggilan dipaparkan kepada semua; nama penuh hanya kepada penyelia.</p>';
+
+  paintPhotos(); loadPhotos();
+  if(!d.nickname && me && !sessionStorage.getItem('pts_nick_asked')){ sessionStorage.setItem('pts_nick_asked', '1'); setTimeout(openNick, 700); }
 }
 
+/* ---------- tabs ---------- */
+function show(v){
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
+  document.querySelectorAll('.nav .it').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  try{ history.replaceState(null, '', '#' + v); }catch(e){}
+}
+document.querySelectorAll('.nav .it').forEach(b => b.addEventListener('click', () => { show(b.dataset.v); window.scrollTo({ top: document.querySelector('.month').offsetTop - 12, behavior:'smooth' }); }));
+if(['podium','rank','days','rules'].indexOf(location.hash.slice(1)) !== -1) show(location.hash.slice(1));
 $('mPrev').onclick = () => { M--; if(M < 1){ M = 12; Y--; } load(); };
 $('mNext').onclick = () => { M++; if(M > 12){ M = 1; Y++; } load(); };
-$('rulesBtn').onclick = () => { const r = $('rules'), on = r.classList.toggle('show'); $('rulesBtn').setAttribute('aria-expanded', on); };
+
+/* ---------- nickname ---------- */
+function openNick(){ $('nickIn').value = (data && data.nickname) || ''; $('nickErr').textContent = ''; $('nickSheet').classList.add('show'); setTimeout(() => $('nickIn').focus(), 120); }
+function closeNick(){ $('nickSheet').classList.remove('show'); }
+$('editNick').onclick = openNick; $('meReal').onclick = () => { if(!(data && data.nickname)) openNick(); };
+$('nickCancel').onclick = closeNick; $('nickSheet').addEventListener('pointerdown', e => { if(e.target === $('nickSheet')) closeNick(); });
+$('nickIn').addEventListener('keydown', e => { if(e.key === 'Enter') $('nickSave').click(); });
+$('nickSave').onclick = async () => {
+  const v = $('nickIn').value.trim(); if(v.length < 2){ $('nickErr').textContent = 'Sekurang-kurangnya 2 aksara.'; return; }
+  $('nickSave').disabled = true;
+  try{
+    const d = await api({ action:'setNickname', nickname: v });
+    if(d.ok){ closeNick(); toast('Nama panggilan disimpan ✓'); try{ Object.keys(localStorage).filter(k => k.indexOf(ck('b_')) === 0).forEach(k => localStorage.removeItem(k)); }catch(e){} load(); }
+    else $('nickErr').textContent = d.error || 'Gagal menyimpan.';
+  }catch(e){ $('nickErr').textContent = 'Sambungan gagal.'; }
+  $('nickSave').disabled = false;
+};
 load();
 </script>
 </body>
