@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dokumen Kenderaan</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.11.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.11.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.14.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.14.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 <link rel="manifest" href="./manifest.json">
@@ -92,8 +92,12 @@
   <label>Gambar dokumen (pilihan)</label>
   <div class="photo">
     <img id="shPreview" alt="">
-    <button type="button" class="pbtn" onclick="document.getElementById('shFile').click()">📷 Ambil / pilih gambar</button>
+    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button type="button" class="pbtn" onclick="document.getElementById('shFile').click()">📷 Kamera</button>
+      <button type="button" class="pbtn" onclick="document.getElementById('shFileG').click()">🖼️ Galeri</button>
+    </div>
     <input type="file" id="shFile" accept="image/*" capture="environment" hidden>
+    <input type="file" id="shFileG" accept="image/*" hidden>
   </div>
   <div class="hint">Gambar disimpan dalam folder “Dokumen Pemandu” bersama gambar staf.</div>
   <div class="acts"><button class="btn ghost" onclick="closeSheet()">Batal</button><button class="btn primary" id="shSave" onclick="save()">Simpan</button></div>
@@ -151,7 +155,7 @@ function render(){
 }
 
 function openSheet(title, sub, expiry, extra){
-  imageB64 = ''; $('shFile').value = ''; $('shPreview').className = ''; $('shPreview').removeAttribute('src');
+  imageB64 = ''; $('shFile').value = ''; $('shFileG').value = ''; $('shPreview').className = ''; $('shPreview').removeAttribute('src');
   $('shTitle').textContent = title; $('shSub').textContent = sub; $('shExtra').innerHTML = extra || '';
   $('shExpiry').value = expiry || ''; $('shSave').disabled = false; $('shSave').textContent = 'Simpan';
   $('sheet').classList.add('show');
@@ -169,7 +173,7 @@ function editLic(i){
 }
 
 /* Photos are shrunk on the phone first (1280px, JPEG) so uploads are quick on mobile data. */
-$('shFile').addEventListener('change', e => {
+const onDocPicked = e => {
   const f = e.target.files && e.target.files[0]; if(!f) return;
   const img = new Image();
   img.onload = () => {
@@ -181,8 +185,10 @@ $('shFile').addEventListener('change', e => {
     URL.revokeObjectURL(img.src);
   };
   img.onerror = () => toast('Gambar tidak dapat dibaca', true);
-  img.src = URL.createObjectURL(f);
-});
+  img.src = URL.createObjectURL(f); e.target.value = '';
+};
+$('shFile').addEventListener('change', onDocPicked);
+$('shFileG').addEventListener('change', onDocPicked);
 
 async function save(){
   if(saving || !editing) return;
