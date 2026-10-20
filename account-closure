@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Penutupan Akaun</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.15.0">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84; --mint-100:#EAF6F2; --mint-050:#F6FBF9; --red:#C62839; --amber:#B7791F; --ink:#1E2B29; --ink2:#5B6B68; --line:#DCEAE6; --gold:#C9A227; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; min-height:100vh; background:radial-gradient(1200px 800px at 50% -10%,var(--mint-100),var(--mint-050)); font-family:'Inter',sans-serif; color:var(--ink); padding:14px 14px 60px; }
+  .wrap{ max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .head{ border-radius:24px; padding:18px 20px; color:#fff; background:linear-gradient(135deg,var(--teal-900),var(--teal-700)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .head .eyebrow{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:700; } .head h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:3px 0 0; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:22px; padding:18px; }
+  .card h2{ font-family:'Manrope',sans-serif; font-size:16px; font-weight:800; margin:0 0 6px; }
+  .state{ display:flex; gap:14px; align-items:center; }
+  .state .ic{ width:54px; height:54px; border-radius:18px; background:var(--mint-100); display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; }
+  .state b{ font:800 18px 'Manrope',sans-serif; display:block; } .state span{ font-size:13.5px; color:var(--ink2); line-height:1.5; }
+  .state.warn .ic{ background:#FFF3D6; } .state.warn b{ color:#8a6d0a; }
+  ul{ margin:8px 0 2px; padding-left:20px; font-size:13.5px; line-height:1.65; } li{ margin:4px 0; }
+  label{ display:block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink2); margin:14px 0 6px; }
+  input[type=date],input[type=password]{ width:100%; height:52px; border-radius:12px; border:1.5px solid var(--line); padding:0 13px; font:inherit; font-size:16px; background:#fff; }
+  input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,.15); }
+  .ack{ display:flex; gap:11px; align-items:flex-start; margin-top:16px; padding:13px; border:1.5px solid var(--line); border-radius:14px; font-size:13.5px; line-height:1.5; cursor:pointer; }
+  .ack input{ width:22px; height:22px; margin:1px 0 0; flex-shrink:0; accent-color:var(--red); }
+  .btn{ width:100%; min-height:54px; border-radius:15px; border:none; font:800 15px 'Manrope',sans-serif; cursor:pointer; margin-top:16px; }
+  .btn.danger{ background:var(--red); color:#fff; } .btn.ghost{ background:#fff; border:1.5px solid var(--line); color:var(--ink); }
+  .btn:disabled{ opacity:.45; cursor:default; }
+  .hint{ font-size:12.5px; color:var(--ink2); line-height:1.55; margin-top:10px; } .hint a{ color:var(--teal-700); }
+  .msg{ border-radius:12px; padding:11px 13px; font-size:13.5px; margin-top:12px; display:none; } .msg.show{ display:block; } .msg.err{ background:#FDE0E3; color:var(--red); } .msg.ok{ background:#E0F5E8; color:#0a8f5a; }
+  .sk{ height:70px; border-radius:14px; background:linear-gradient(90deg,#E4EFEB 25%,#F3F9F7 50%,#E4EFEB 75%); background-size:200% 100%; animation:sh 1.4s infinite; } @keyframes sh{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>🔒 Penutupan Akaun</h1></div><a class="back" href="./dashboard.html">← Dashboard</a></div>
+  <div class="card" id="stateCard"><div class="sk"></div></div>
+  <div class="card" id="formCard" style="display:none"></div>
+  <div class="card"><h2>Apa yang berlaku bila akaun ditutup?</h2>
+    <ul><li>Selepas tarikh penutupan, anda <b>tidak boleh log masuk</b> ke SIAGA lagi.</li>
+    <li>Tarikh ini sama dengan <b>tarikh berpindah keluar / berhenti</b> dalam rekod staf anda; penyelia akan dimaklumkan.</li>
+    <li>Rekod kehadiran, cuti dan bukti <b>tidak dipadam serta-merta</b> — ia dikekalkan mengikut <a href="./privacy.html">Dasar Privasi</a> (cth. gambar bukti 7 tahun).</li>
+    <li>Sebelum tarikh itu tiba, anda boleh membatalkannya.</li></ul>
+    <div class="hint">Perlu akses data anda atau pembetulan rekod? Hubungi penyelia atau pegawai yang tertera dalam Dasar Privasi.</div></div>
+</div>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id), token = sessionStorage.getItem('kkah_session_token');
+if(!token) location.href = './login.html';
+const fmt = iso => iso ? iso.split('-').reverse().join('/') : '';
+let st = null, busy = false;
+async function api(body){ const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({ token }, body)) }); return r.json(); }
+function msg(t, cls){ const m = $('msg'); if(!m) return; m.className = 'msg show ' + cls; m.textContent = t; }
+async function load(){
+  try{
+    const d = await api({ action:'getAccountStatus' });
+    if(!d.ok){ if(/expired/i.test(d.error || '')){ location.href = './login.html'; return; } $('stateCard').innerHTML = '<div class="hint">' + d.error + '</div>'; return; }
+    st = d; render();
+  }catch(e){ $('stateCard').innerHTML = '<div class="hint">Sambungan gagal. <a href="#" onclick="load();return false">Cuba lagi</a></div>'; }
+}
+function render(){
+  const sc = $('stateCard'), fc = $('formCard'), today = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
+  if(st.status === 'SCHEDULED'){
+    sc.innerHTML = '<div class="state warn"><div class="ic">⏳</div><div><b>Penutupan dijadualkan: ' + fmt(st.date) + '</b><span>' + (st.daysLeft === 0 ? 'Hari ini ialah hari terakhir anda boleh log masuk.' : st.daysLeft + ' hari lagi. Selepas tarikh ini akaun tidak boleh log masuk.') + '</span></div></div>';
+    fc.style.display = ''; fc.innerHTML = '<h2>Batalkan penutupan</h2><div class="hint" style="margin-top:0">Masukkan kata laluan untuk membatalkan tarikh penutupan.</div><label for="pw">Kata laluan</label><input type="password" id="pw" autocomplete="current-password"><button class="btn ghost" id="go" type="button">Batalkan penutupan akaun</button><div class="msg" id="msg" role="status"></div>';
+    $('go').onclick = () => submit('cancelAccountClosure', {});
+  }else{
+    sc.innerHTML = '<div class="state"><div class="ic">✅</div><div><b>Akaun aktif</b><span>Tiada tarikh penutupan ditetapkan.</span></div></div>';
+    if(st.readOnly){ fc.style.display = 'none'; return; }
+    fc.style.display = ''; fc.innerHTML = '<h2>Tetapkan tarikh penutupan</h2><div class="hint" style="margin-top:0">Gunakan jika anda akan berpindah keluar atau berhenti daripada KKAH.</div>' +
+      '<label for="dt">Tarikh penutupan (hari terakhir log masuk)</label><input type="date" id="dt" min="' + today + '">' +
+      '<label for="pw">Kata laluan (untuk pengesahan)</label><input type="password" id="pw" autocomplete="current-password">' +
+      '<label class="ack" for="ok"><input type="checkbox" id="ok"><span>Saya faham akaun saya <b>tidak boleh log masuk</b> selepas tarikh ini dan penyelia akan dimaklumkan.</span></label>' +
+      '<button class="btn danger" id="go" type="button" disabled>Tetapkan penutupan akaun</button><div class="msg" id="msg" role="status"></div>';
+    const upd = () => { $('go').disabled = busy || !($('dt').value && $('pw').value && $('ok').checked); };
+    ['dt','pw','ok'].forEach(i => $(i).addEventListener('input', upd)); $('ok').addEventListener('change', upd);
+    $('go').onclick = () => { if(confirm('Tetapkan penutupan akaun pada ' + fmt($('dt').value) + '?')) submit('requestAccountClosure', { date: $('dt').value }); };
+  }
+}
+async function submit(action, extra){
+  if(busy) return; busy = true; $('go').disabled = true;
+  try{
+    const d = await api(Object.assign({ action, password: $('pw').value }, extra));
+    if(d.ok){ st = d; render(); const m = $('msg'); if(m) msg(action === 'cancelAccountClosure' ? 'Penutupan dibatalkan.' : 'Tarikh penutupan disimpan.', 'ok'); }
+    else msg(d.error || 'Gagal. Cuba lagi.', 'err');
+  }catch(e){ msg('Sambungan gagal. Cuba lagi.', 'err'); }
+  busy = false; if($('go')) $('go').disabled = false;
+}
+load();
+</script>
+</body>
+</html>
