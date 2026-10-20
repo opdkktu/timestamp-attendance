@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Dasar Privasi</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.15.0">
+<meta name="theme-color" content="#0B3D3A">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84; --mint-100:#EAF6F2; --mint-050:#F6FBF9; --ink:#1E2B29; --ink2:#5B6B68; --line:#DCEAE6; --gold:#C9A227; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:radial-gradient(1200px 800px at 50% -10%,var(--mint-100),var(--mint-050)); font-family:'Inter',sans-serif; color:var(--ink); padding:14px 14px 60px; line-height:1.65; }
+  .wrap{ max-width:680px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .head{ border-radius:24px; padding:18px 20px; color:#fff; background:linear-gradient(135deg,var(--teal-900),var(--teal-700)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .head .eyebrow{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:700; } .head h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:3px 0 0; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:22px; padding:18px; }
+  .card h2{ font-family:'Manrope',sans-serif; font-size:16px; font-weight:800; margin:0 0 6px; color:var(--teal-900); }
+  .card p,.card li{ font-size:14px; margin:6px 0; } .card ul{ padding-left:20px; margin:6px 0; }
+  .sum{ background:var(--mint-100); border:1px solid #cfe7df; } .meta{ font-size:12.5px; color:var(--ink2); }
+  .todo{ background:#FFF3D6; border-radius:6px; padding:0 5px; font-weight:600; }
+  a{ color:var(--teal-700); } .links{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; font-size:13px; }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>🔒 Dasar Privasi</h1></div><a class="back" href="javascript:history.length>1?history.back():location.href='./dashboard.html'">← Kembali</a></div>
+  <div class="card sum"><h2>Ringkasan</h2><p>SIAGA hanya mengumpul data yang diperlukan untuk kehadiran, jadual, cuti, pengangkutan dan keselamatan staf KKAH. Data <b>tidak dijual</b> dan tidak digunakan untuk pengiklanan. <i>(English: SIAGA collects only what is needed to run attendance, leave, transport and safety at KKAH. Data is never sold or used for advertising.)</i></p><p class="meta">Berkuat kuasa: 20 Oktober 2026</p></div>
+  <div class="card"><h2>1. Data yang dikumpul</h2><ul>
+    <li><b>Identiti &amp; perkhidmatan:</b> nama, no. kad pengenalan, e-mel, unit, tarikh lapor diri / keluar, status perkhidmatan (daripada fail rujukan staf KKAH).</li>
+    <li><b>Kehadiran:</b> tarikh dan masa daftar masuk / keluar, <b>gambar muka (snapshot)</b> semasa daftar, serta <b>lokasi GPS (latitud / longitud)</b> dan cap masa yang dicetak pada gambar.</li>
+    <li><b>Semakan lokasi waktu bertugas:</b> pada tempoh yang ditetapkan pentadbir (lalai 12:00–15:00), selepas anda daftar masuk dan sebelum daftar keluar, jarak anda dari klinik direkod setiap beberapa minit apabila aplikasi dibuka. Laluan perjalanan <b>tidak</b> disimpan.</li>
+    <li><b>Cuti &amp; permohonan:</b> jenis, tarikh, jam, status dan lampiran yang anda muat naik.</li>
+    <li><b>Pengangkutan (pemandu / PIC):</b> permintaan kenderaan, resit minyak (gambar, amaun, liter), dokumen cukai jalan dan lesen memandu, bacaan odometer.</li>
+    <li><b>Peranti &amp; aktiviti:</b> ID notifikasi push (OneSignal), jenis peranti, log aktiviti akaun (log masuk, paparan oleh penyelia, perubahan tetapan). Pengesahan biometrik (Face ID / cap jari) berlaku <b>pada peranti anda</b>; SIAGA tidak menerima data biometrik.</li>
+    <li><b>Mata &amp; ranking:</b> dikira daripada rekod kehadiran dan cuti EL; tiada data tambahan dikumpul.</li></ul></div>
+  <div class="card"><h2>2. Tujuan penggunaan</h2><ul><li>Merekod dan mengesahkan kehadiran serta mengurus jadual, cuti dan kursus.</li><li>Menghantar notifikasi (jadual, pengumuman, amaran keselamatan, hari jadi).</li><li>Mengurus pengangkutan, perbelanjaan minyak dan dokumen kenderaan.</li><li>Memaklumkan penyelia jika anda berada di luar kawasan klinik semasa tempoh semakan lokasi (selepas beberapa bacaan berturut-turut).</li><li>Audit, keselamatan sistem dan penambahbaikan perkhidmatan.</li></ul></div>
+  <div class="card"><h2>3. Siapa boleh melihat data anda</h2><ul><li><b>Anda</b> — semua data anda sendiri.</li><li><b>Penyelia unit / penyelia TOP</b> — paparan <i>baca sahaja</i> staf di bawah seliaan. Setiap paparan direkod dalam log aktiviti kedua-dua pihak (anda boleh melihatnya).</li><li><b>Pentadbir sistem</b> — untuk penyelenggaraan dan sokongan teknikal.</li><li><b>Pembekal perkhidmatan teknikal:</b> Google (Apps Script, Sheets, Drive — penyimpanan data) dan OneSignal (penghantaran notifikasi push).</li></ul><p>Kami tidak menjual atau berkongsi data dengan pihak ketiga untuk tujuan pemasaran.</p></div>
+  <div class="card"><h2>4. Tempoh simpanan</h2><ul><li>Gambar bukti daftar masuk / keluar dan resit minyak: disimpan mengikut Tahun / Bulan dan <b>dilupuskan selepas 7 tahun</b>.</li><li>Rekod semakan lokasi terperinci: dipadam secara automatik selepas <b>90 hari</b>.</li><li>Rekod kehadiran, cuti dan pengangkutan: dikekalkan sepanjang tempoh perkhidmatan dan seterusnya mengikut keperluan audit / peraturan jabatan.</li><li>Selepas akaun ditutup, log masuk dihentikan tetapi rekod di atas <b>tidak dipadam serta-merta</b>; ia dikekalkan mengikut tempoh ini.</li></ul></div>
+  <div class="card"><h2>5. Keselamatan</h2><ul><li>Kata laluan disimpan dalam bentuk cincang (hash) bersama salt; tiada sesiapa dapat melihat kata laluan anda.</li><li>Sesi log masuk tamat secara automatik; pengesahan 2 langkah dan biometrik peranti tersedia.</li><li>Akses data berasaskan peranan (staf, penyelia, pemandu / PIC, pentadbir) dan sebarang paparan oleh penyelia direkod.</li></ul><p>Tiada sistem yang bebas risiko sepenuhnya. Sila jangan kongsi kata laluan dan log keluar daripada peranti kongsi.</p></div>
+  <div class="card"><h2>6. Hak anda</h2><p>Selaras dengan prinsip perlindungan data peribadi, anda berhak untuk: mengetahui data yang disimpan tentang anda; meminta pembetulan data yang tidak tepat (butiran profil boleh dikemas kini sendiri di <i>Profil</i>); menarik balik kebenaran semakan lokasi dengan mematikan kebenaran lokasi pada peranti (kehadiran masih boleh direkod mengikut prosedur jabatan); dan menetapkan penutupan akaun di <a href="./account-closure.html">Penutupan Akaun</a>.</p></div>
+  <div class="card"><h2>7. Hubungi kami</h2><p>Untuk pertanyaan, aduan atau permohonan akses / pembetulan data: <span class="todo">[nama pegawai &amp; e-mel / no. telefon KKAH — isi sebelum dilancarkan]</span>.</p><p class="meta">Dasar ini boleh dikemas kini; versi terkini sentiasa tersedia di halaman ini dan perubahan penting akan dimaklumkan melalui notifikasi.</p></div>
+  <div class="links"><a href="./privacy.html">Dasar Privasi</a><a href="./terms.html">Terma &amp; Syarat</a><a href="./account-closure.html">Penutupan Akaun</a></div>
+</div>
+</body>
+</html>
