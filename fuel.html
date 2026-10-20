@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Minyak &amp; Analisis</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.13.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.13.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.14.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.14.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 <link rel="manifest" href="./manifest.json">
@@ -204,8 +204,12 @@
   <label>Gambar resit</label>
   <div class="photo">
     <img id="shPrev" alt="Pratonton resit">
-    <button type="button" class="pbtn" id="shPhotoBtn">📷 Ambil / pilih gambar resit</button>
+    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button type="button" class="pbtn" id="shPhotoBtn">📷 Kamera</button>
+      <button type="button" class="pbtn" id="shGalBtn">🖼️ Galeri</button>
+    </div>
     <input type="file" id="shFile" accept="image/*" capture="environment" hidden>
+    <input type="file" id="shFileG" accept="image/*" hidden>
   </div>
   <div class="bar" id="shBar" style="display:none"><i id="shBarI"></i></div>
   <div class="read" id="shRead" role="status"></div>
@@ -550,6 +554,7 @@ function updateSave(){
 ['shAmt','shLit','shDate'].forEach(id => $(id).addEventListener('change', () => updateSave()));
 $('shVeh').addEventListener('change', vehChanged);
 $('shPhotoBtn').onclick = () => $('shFile').click();
+$('shGalBtn').onclick = () => $('shFileG').click();
 $('shCancel').onclick = closeSheet;
 $('fab').onclick = openSheet;
 $('sheet').addEventListener('pointerdown', e => { if(e.target === $('sheet')) closeSheet(); });
@@ -568,8 +573,8 @@ function resizeToJpeg(file, max){
     img.src = url;
   });
 }
-$('shFile').addEventListener('change', async () => {
-  const f = $('shFile').files[0]; if(!f) return;
+async function onReceiptPicked(ev){
+  const f = ev.target.files[0]; ev.target.value = ''; if(!f) return;
   try{
     const out = await resizeToJpeg(f, 1600);
     imgB64 = out.dataUrl; $('shPrev').src = out.dataUrl; $('shPrev').classList.add('show');
@@ -588,7 +593,9 @@ $('shFile').addEventListener('change', async () => {
     }
   }catch(err){ setRead('err', esc(err.message || 'Gambar tidak dapat dibaca')); imgB64 = ''; }
   $('shBar').style.display = 'none'; reading = false; updatePpl(); updateSave();
-});
+}
+$('shFile').addEventListener('change', onReceiptPicked);
+$('shFileG').addEventListener('change', onReceiptPicked);
 ['shAmt','shLit','shDate'].forEach(id => $(id).addEventListener('input', () => $(id).classList.remove('auto')));
 
 $('shSave').onclick = async () => {
