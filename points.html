@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Mata &amp; Ranking</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.15.0">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84; --mint-100:#EAF6F2; --mint-050:#F6FBF9; --gold:#C9A227; --gold-bg:#FFF6D6; --silver:#9AA7A9; --bronze:#B87333; --green:#0a8f5a; --red:#C62839; --amber:#B7791F; --ink:#1E2B29; --ink2:#5B6B68; --line:#DCEAE6; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; min-height:100vh; background:radial-gradient(1200px 800px at 50% -10%,var(--mint-100),var(--mint-050)); font-family:'Inter',sans-serif; color:var(--ink); padding:14px 14px 48px; }
+  .wrap{ max-width:600px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .head{ border-radius:24px; padding:18px 20px; color:#fff; background:linear-gradient(135deg,var(--teal-900),var(--teal-700)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .head .eyebrow{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:700; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:3px 0 0; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
+  .month{ display:flex; align-items:center; justify-content:space-between; background:#fff; border:1px solid var(--line); border-radius:18px; padding:6px; }
+  .month button{ width:46px; height:46px; border-radius:14px; border:none; background:var(--mint-100); font-size:20px; font-weight:800; color:var(--teal-700); cursor:pointer; }
+  .month button:disabled{ opacity:.35; cursor:default; }
+  .month .mt{ font-family:'Manrope',sans-serif; font-weight:800; font-size:17px; text-align:center; } .month .mt small{ display:block; font-family:'Inter',sans-serif; font-weight:600; font-size:11.5px; color:var(--ink2); }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:22px; padding:16px; box-shadow:0 12px 30px -24px rgba(11,61,58,.5); }
+  .card h3{ margin:0 0 2px; font-family:'Manrope',sans-serif; font-size:16px; font-weight:800; } .card .sub{ font-size:12.5px; color:var(--ink2); margin:0 0 12px; }
+
+  /* podium */
+  .podium-card{ background:linear-gradient(180deg,#fff 0%,#F2FBF8 100%); padding-bottom:0; overflow:hidden; }
+  .podium{ display:grid; grid-template-columns:1fr 1.12fr 1fr; gap:8px; align-items:end; margin-top:6px; }
+  .pcol{ display:flex; flex-direction:column; align-items:center; text-align:center; min-width:0; }
+  .pav{ width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center; font:800 20px 'Manrope',sans-serif; color:#fff; border:3px solid #fff; box-shadow:0 8px 18px -8px rgba(0,0,0,.4); position:relative; }
+  .p1 .pav{ width:70px; height:70px; font-size:25px; background:linear-gradient(135deg,#E3B93A,#B8901C); }
+  .p2 .pav{ background:linear-gradient(135deg,#B7C2C4,#8A9899); } .p3 .pav{ background:linear-gradient(135deg,#D79B62,#A8662D); }
+  .crown{ position:absolute; top:-22px; left:50%; transform:translateX(-50%) rotate(-6deg); font-size:24px; }
+  .pname{ font-weight:700; font-size:13px; margin-top:8px; line-height:1.25; max-width:100%; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .punit{ font-size:11px; color:var(--ink2); margin-top:1px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ppts{ font:800 18px 'Manrope',sans-serif; margin:6px 0 8px; } .ppts small{ font-size:11px; font-weight:700; color:var(--ink2); }
+  .block{ width:100%; border-radius:14px 14px 0 0; display:flex; align-items:flex-start; justify-content:center; padding-top:8px; font:800 26px 'Manrope',sans-serif; color:rgba(255,255,255,.95); transform-origin:bottom; animation:rise .8s cubic-bezier(.2,.8,.2,1) both; }
+  .p1 .block{ height:104px; background:linear-gradient(180deg,#E3B93A,#B8901C); animation-delay:.1s; } .p2 .block{ height:76px; background:linear-gradient(180deg,#B7C2C4,#8A9899); animation-delay:.25s; } .p3 .block{ height:58px; background:linear-gradient(180deg,#D79B62,#A8662D); animation-delay:.4s; }
+  @keyframes rise{ from{ transform:scaleY(0); } to{ transform:scaleY(1); } }
+  .pcol.me .pav{ outline:3px solid var(--teal-500); outline-offset:2px; }
+  .last{ margin-top:0; padding:12px 14px; border-radius:16px; background:var(--gold-bg); border:1px solid #F0DC9A; font-size:13px; line-height:1.5; }
+  .last b{ font-weight:800; }
+
+  /* me */
+  .me{ display:grid; grid-template-columns:132px 1fr; gap:14px; align-items:center; }
+  .ring{ position:relative; width:132px; height:132px; }
+  .ring svg{ width:100%; height:100%; transform:rotate(-90deg); }
+  .ring .bg{ stroke:#E4EFEB; } .ring .fg{ stroke:url(#rg); stroke-linecap:round; transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1); }
+  .ring .mid{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .ring .mid b{ font:800 30px 'Manrope',sans-serif; line-height:1; } .ring .mid span{ font-size:11px; font-weight:700; color:var(--ink2); margin-top:3px; letter-spacing:.04em; text-transform:uppercase; }
+  .rk{ font:800 24px 'Manrope',sans-serif; } .rk small{ font-size:13px; font-weight:600; color:var(--ink2); }
+  .msg{ font-size:13.5px; line-height:1.5; margin-top:6px; color:var(--ink); }
+  .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:14px; }
+  .st{ background:var(--mint-100); border-radius:14px; padding:10px 4px; text-align:center; } .st b{ display:block; font:800 20px 'Manrope',sans-serif; } .st span{ font-size:10.5px; font-weight:700; color:var(--ink2); text-transform:uppercase; letter-spacing:.03em; }
+  .st.bad b{ color:var(--red); } .st.good b{ color:var(--green); }
+
+  /* lists */
+  .row{ display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line); }
+  .row:last-child{ border-bottom:none; } .row.me{ background:linear-gradient(90deg,rgba(28,143,132,.1),transparent); margin:0 -16px; padding-left:16px; padding-right:16px; }
+  .rn{ width:30px; text-align:center; font:800 15px 'Manrope',sans-serif; color:var(--ink2); }
+  .av{ width:38px; height:38px; border-radius:50%; background:var(--mint-100); display:flex; align-items:center; justify-content:center; font:800 14px 'Manrope',sans-serif; color:var(--teal-700); flex-shrink:0; }
+  .row .mid{ flex:1; min-width:0; } .row .nm{ font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .row .un{ font-size:11.5px; color:var(--ink2); }
+  .row .pt{ font:800 16px 'Manrope',sans-serif; } .row .pt small{ font-size:10.5px; font-weight:700; color:var(--ink2); }
+  .day{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); font-size:13px; } .day:last-child{ border-bottom:none; }
+  .day .d{ width:46px; text-align:center; background:var(--mint-100); border-radius:11px; padding:5px 0; } .day .d b{ display:block; font:800 16px 'Manrope',sans-serif; line-height:1.1; } .day .d span{ font-size:10px; font-weight:700; color:var(--ink2); text-transform:uppercase; }
+  .day .t{ flex:1; line-height:1.4; } .day .t em{ font-style:normal; font-size:11.5px; color:var(--ink2); display:block; }
+  .chip{ font:800 13px 'Manrope',sans-serif; padding:5px 11px; border-radius:99px; } .chip.pos{ background:#E0F5E8; color:var(--green); } .chip.neg{ background:#FDE0E3; color:var(--red); } .chip.mid{ background:#FFF3D6; color:#8a6d0a; }
+  .empty{ text-align:center; padding:26px 12px; color:var(--ink2); font-size:14px; line-height:1.6; }
+  .btn{ min-height:48px; border-radius:14px; border:1.5px solid var(--line); background:#fff; font:700 14px 'Manrope',sans-serif; color:var(--teal-700); cursor:pointer; padding:0 18px; width:100%; }
+  .rules{ display:none; margin-top:12px; font-size:13.5px; line-height:1.6; } .rules.show{ display:block; } .rules table{ width:100%; border-collapse:collapse; } .rules td{ padding:8px 4px; border-bottom:1px solid var(--line); } .rules td:last-child{ text-align:right; font-weight:800; font-family:'Manrope',sans-serif; }
+  .sk{ background:linear-gradient(90deg,#E4EFEB 25%,#F3F9F7 50%,#E4EFEB 75%); background-size:200% 100%; animation:sh 1.4s infinite; border-radius:12px; } @keyframes sh{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
+  .toast{ position:fixed; left:50%; bottom:28px; transform:translate(-50%,30px); background:var(--teal-900); color:#fff; font-weight:700; font-size:14px; padding:13px 20px; border-radius:99px; opacity:0; pointer-events:none; transition:all .3s; z-index:80; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+  @media (max-width:380px){ .me{ grid-template-columns:1fr; justify-items:center; text-align:center; } .stats{ grid-template-columns:repeat(2,1fr); } }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>🏆 Mata &amp; Ranking</h1></div><a class="back" href="./dashboard.html">← Dashboard</a></div>
+  <div class="month"><button id="mPrev" aria-label="Bulan sebelum">‹</button><div class="mt" id="mTitle">…<small id="mSub"></small></div><button id="mNext" aria-label="Bulan seterusnya">›</button></div>
+
+  <div class="card podium-card"><h3>Podium bulan ini</h3><p class="sub" id="podSub">Tiga mata tertinggi</p><div id="podium"><div class="sk" style="height:210px"></div></div></div>
+  <div id="last"></div>
+
+  <div class="card" id="meCard"><div class="sk" style="height:170px"></div></div>
+  <div class="card" id="dayCard" style="display:none"><h3>Mata harian saya</h3><p class="sub">Hanya anda yang nampak butiran ini.</p><div id="days"></div></div>
+  <div class="card"><h3>Ranking</h3><p class="sub" id="rankSub">10 teratas</p><div id="rank"><div class="sk" style="height:120px"></div></div></div>
+
+  <div class="card"><button class="btn" id="rulesBtn" type="button" aria-expanded="false">ℹ️ Cara mata dikira</button><div class="rules" id="rules"></div></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const token = sessionStorage.getItem('kkah_session_token');
+if(!token) location.href = './login.html';
+const IC = sessionStorage.getItem('kkah_ic') || '';
+const MONTHS = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+const DOW = ['Ahd','Isn','Sel','Rab','Kha','Jum','Sab'];
+let Y = 0, M = 0, data = null;
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ini = n => String(n).trim().split(/\s+/).filter(w => /^[A-Za-z]/.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+const sgn = n => (n > 0 ? '+' : '') + n;
+function toast(m){ const t = $('toast'); t.textContent = m; t.className = 'toast show'; clearTimeout(toast._t); toast._t = setTimeout(() => t.className = 'toast', 3000); }
+
+/* stale-while-revalidate cache (cleared by the dashboard at logout: prefix kkah_cache_) */
+const ck = k => 'kkah_cache_' + IC + '_pts_' + k;
+const cget = k => { try{ return JSON.parse(localStorage.getItem(ck(k)) || 'null'); }catch(e){ return null; } };
+const cset = (k, d) => { try{ localStorage.setItem(ck(k), JSON.stringify({ t: Date.now(), d })); }catch(e){} };
+async function load(){
+  const key = 'b_' + (Y || 0) + '_' + (M || 0), hit = cget(key);
+  if(hit){ data = hit.d; render(); if(Date.now() - hit.t < 90000) return; }
+  try{
+    const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getPointsBoard', token, year: Y, month: M }) });
+    const d = await r.json();
+    if(!d.ok){ if(/expired/i.test(d.error || '')){ location.href = './login.html'; return; } if(!hit) fail(d.error); return; }
+    cset(key, d); data = d; render();
+  }catch(e){ if(!hit) fail('Sambungan gagal. Semak internet anda.'); }
+}
+function fail(msg){ $('podium').innerHTML = '<div class="empty">' + esc(msg) + '<br><br><button class="btn" onclick="load()">Cuba lagi</button></div>'; $('meCard').innerHTML = ''; $('rank').innerHTML = ''; }
+
+function render(){
+  const d = data; Y = d.year; M = d.month;
+  $('mTitle').childNodes[0].nodeValue = MONTHS[M - 1] + ' ' + Y; $('mSub').textContent = d.isCurrent ? 'Bulan semasa · dikemas kini setiap beberapa minit' : 'Keputusan akhir';
+  $('mNext').disabled = d.isCurrent; $('mPrev').disabled = (Y === 2025 && M === 1);
+  $('podSub').textContent = d.isCurrent ? 'Siapa di puncak setakat ini?' : 'Juara ' + MONTHS[M - 1] + ' ' + Y;
+  const myName = d.me ? d.me.name : '';
+
+  // podium (visual order 2 · 1 · 3)
+  if(!d.podium.length){ $('podium').innerHTML = '<div class="empty">Belum ada mata untuk bulan ini.<br>Mata bermula bila staf daftar masuk &amp; keluar.</div>'; }
+  else{
+    const slot = (i, cls, medal) => {
+      const p = d.podium[i]; if(!p) return '<div class="pcol"></div>';
+      return '<div class="pcol ' + cls + (p.name === myName ? ' me' : '') + '"><div class="pav">' + (i === 0 ? '<span class="crown" aria-hidden="true">👑</span>' : '') + esc(ini(p.name)) + '</div>' +
+        '<div class="pname">' + esc(p.name) + '</div><div class="punit">' + esc(p.unit || '') + '</div><div class="ppts">' + p.points + ' <small>mata</small></div>' +
+        '<div class="block" aria-label="Kedudukan ' + (i + 1) + '">' + medal + '</div></div>';
+    };
+    $('podium').innerHTML = '<div class="podium" role="list">' + slot(1, 'p2', '🥈') + slot(0, 'p1', '🥇') + slot(2, 'p3', '🥉') + '</div>';
+  }
+  // last month's champions
+  $('last').innerHTML = d.last ? '<div class="last">🎖️ <b>Juara ' + MONTHS[d.last.month - 1] + ':</b> ' + d.last.podium.map((p, i) => ['🥇','🥈','🥉'][i] + ' ' + esc(p.name) + ' (' + p.points + ')').join(' &nbsp;·&nbsp; ') + '</div>' : '';
+
+  // me
+  const me = d.me, best = d.podium[0] ? Math.max(d.podium[0].points, 1) : 1;
+  if(!me){
+    $('meCard').innerHTML = '<h3>Kedudukan saya</h3><div class="empty">Tiada rekod kehadiran anda untuk ' + MONTHS[M - 1] + ' lagi.<br>Daftar masuk &amp; keluar untuk mula mengumpul mata.</div>'; $('dayCard').style.display = 'none';
+  }else{
+    const pct = Math.max(0, Math.min(1, me.points / best)), C = 2 * Math.PI * 54;
+    let msg;
+    if(me.rank === 1) msg = '👑 Anda di <b>tempat pertama</b>! Kekalkan daftar masuk tepat masa.';
+    else if(me.rank <= 3) msg = '🎉 Anda dalam <b>podium</b>! ' + (me.toNext ? me.toNext + ' mata lagi untuk naik satu tangga.' : '');
+    else msg = me.toPodium ? '<b>' + me.toPodium + ' mata</b> lagi untuk masuk podium. Daftar masuk sebelum ' + d.rules.lateAfter + ' dan jangan lupa daftar keluar.' : 'Teruskan usaha!';
+    $('meCard').innerHTML = '<h3>Kedudukan saya</h3><p class="sub">' + esc(me.name) + '</p>' +
+      '<div class="me"><div class="ring"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1C8F84"/><stop offset="1" stop-color="#C9A227"/></linearGradient></defs>' +
+      '<circle class="bg" cx="60" cy="60" r="54" fill="none" stroke-width="11"/><circle class="fg" id="ringFg" cx="60" cy="60" r="54" fill="none" stroke-width="11" stroke-dasharray="' + C + '" stroke-dashoffset="' + C + '"/></svg>' +
+      '<div class="mid"><b>' + me.points + '</b><span>mata</span></div></div>' +
+      '<div><div class="rk">#' + me.rank + ' <small>daripada ' + d.total + '</small></div><div class="msg">' + msg + '</div></div></div>' +
+      '<div class="stats"><div class="st good"><b>' + me.onTime + '</b><span>Tepat masa</span></div><div class="st ' + (me.late ? 'bad' : '') + '"><b>' + me.late + '</b><span>Lewat</span></div><div class="st"><b>' + me.outs + '</b><span>Check-out</span></div><div class="st ' + (me.el ? 'bad' : '') + '"><b>' + me.el + '</b><span>EL</span></div></div>' +
+      (me.streak >= 3 ? '<div class="msg" style="margin-top:12px">🔥 Rentetan tepat masa terbaik: <b>' + me.streak + ' hari</b></div>' : '');
+    requestAnimationFrame(() => setTimeout(() => { const f = $('ringFg'); if(f) f.style.strokeDashoffset = C * (1 - pct); }, 60));
+    // daily
+    $('dayCard').style.display = '';
+    $('days').innerHTML = me.daily.length ? me.daily.slice().reverse().map(x => {
+      const p = x.d.split('-').map(Number), dow = DOW[new Date(p[0], p[1] - 1, p[2]).getDay()];
+      const label = x.tag === 'el' ? 'Cuti kecemasan (EL)' : (x.in + ' masuk' + (x.out ? ' · ' + x.out + ' keluar' : ' · <span style="color:var(--amber);font-weight:600">tiada check-out</span>'));
+      const sub = x.tag === 'late' ? 'Lewat selepas ' + d.rules.lateAfter : x.tag === 'ok' ? 'Tepat masa' : '';
+      return '<div class="day"><div class="d"><b>' + p[2] + '</b><span>' + dow + '</span></div><div class="t">' + label + (sub ? '<em>' + sub + '</em>' : '') + '</div><span class="chip ' + (x.pts > 0 ? 'pos' : x.pts < 0 ? 'neg' : 'mid') + '">' + sgn(x.pts) + '</span></div>';
+    }).join('') : '<div class="empty">Tiada rekod.</div>';
+  }
+
+  // ranking list
+  const rowH = p => '<div class="row' + (p.name === myName ? ' me' : '') + '"><div class="rn">' + p.rank + '</div><div class="av">' + esc(ini(p.name)) + '</div><div class="mid"><div class="nm">' + esc(p.name) + (p.name === myName ? ' <span style="color:var(--teal-500)">(Anda)</span>' : '') + '</div><div class="un">' + esc(p.unit || '') + '</div></div><div class="pt">' + p.points + ' <small>mata</small></div></div>';
+  let list = d.top.map(rowH).join('');
+  if(me && !me.inTop10 && me.around.length) list += '<div style="text-align:center;color:var(--ink2);padding:4px 0;letter-spacing:.3em">⋮</div>' + me.around.map(rowH).join('');
+  $('rank').innerHTML = list || '<div class="empty">Belum ada ranking.</div>';
+  $('rankSub').textContent = d.total + ' staf dalam ranking' + (d.total > 10 ? ' · 10 teratas' : '');
+
+  const r = d.rules;
+  $('rules').innerHTML = '<table><tr><td>✅ Daftar masuk tepat masa (sebelum / pada ' + r.lateAfter + ')</td><td>' + sgn(r.checkIn) + '</td></tr><tr><td>⏰ Daftar masuk lewat (selepas ' + r.lateAfter + ')</td><td>' + sgn(r.lateIn) + '</td></tr><tr><td>🚪 Daftar keluar pada hari yang sama</td><td>' + sgn(r.checkOut) + '</td></tr><tr><td>🚨 Cuti kecemasan (EL), setiap hari</td><td>' + sgn(r.el) + '</td></tr></table>' +
+    '<p style="color:var(--ink2);font-size:12.5px;margin:10px 0 0">Jika mata sama: lebih banyak hari tepat masa, kemudian purata masa masuk lebih awal. Mata dikira semula daripada rekod kehadiran, jadi sentiasa tepat. Butiran lewat dan EL hanya dilihat oleh anda sendiri.</p>';
+}
+
+$('mPrev').onclick = () => { M--; if(M < 1){ M = 12; Y--; } load(); };
+$('mNext').onclick = () => { M++; if(M > 12){ M = 1; Y++; } load(); };
+$('rulesBtn').onclick = () => { const r = $('rules'), on = r.classList.toggle('show'); $('rulesBtn').setAttribute('aria-expanded', on); };
+load();
+</script>
+</body>
+</html>
