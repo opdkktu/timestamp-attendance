@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.12.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.12.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.13.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.13.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -1000,7 +1000,7 @@ async function loadTransportBox(){
     const d = await res.json();
     if(!d || !d.ok) return;
     const r = d.role || {};
-    if(!trDocCardAdded && (r.isDriver || r.isPic || r.isTop)){ trDocCardAdded = true; addModuleCard('Dokumen Kenderaan', '🪪', './vehicles.html'); }
+    if(!trDocCardAdded && (r.isDriver || r.isPic || r.isTop)){ trDocCardAdded = true; addModuleCard('Dokumen Kenderaan', '🪪', './vehicles.html'); addModuleCard('Minyak & Analisis', '⛽', './fuel.html'); }
 
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const t12 = hm => { const p = String(hm).split(':').map(Number); const h = p[0] || 0; return (h % 12 || 12) + ':' + String(p[1] || 0).padStart(2,'0') + (h >= 12 ? ' PM' : ' AM'); };
@@ -1036,10 +1036,10 @@ function warmFaceAssets_(){
   if('requestIdleCallback' in window) requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 5000);
 }
 
-/* === Weekday rule: Check Out opens at 1:00 PM Mon–Fri (the server enforces it too) === */
+/* === Working-day rule: Check Out opens at 1:00 PM Sun–Thu; Fri & Sat are non-working (the server enforces it too) === */
 function coOpenNowLocal_(){
   const d = new Date(), dow = d.getDay(); // 0 Sun … 6 Sat
-  const weekday = dow >= 1 && dow <= 5;
+  const weekday = dow !== 5 && dow !== 6;      // Fri (5) & Sat (6) are non-working days
   return !weekday || d.getHours() >= 13;
 }
 
@@ -1736,6 +1736,8 @@ function escHtml_(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
 function renderChecklistBox(item){
   const el = document.getElementById(CHK_BOX[item.key]); if(!el) return;
   const name = item.icon + ' ' + item.label;
+  // Ambulance: the driver types the odometer inside the checklist — show the latest reading here.
+  const odo = (item.key === 'ambulance' && item.odo) ? '<div class="sb-sub" style="margin-top:3px;">🛣️ ' + Number(item.odo).toLocaleString('en-MY') + ' km</div>' : '';
   const btn = (txt, soft) => VIEW_NAME ? '' :
     '<button class="sb-btn' + (soft ? ' soft' : '') + '" onclick="openChecklist(\'' + item.key + '\')">' + txt + ' →</button>';
   if(item.error){
@@ -1744,13 +1746,13 @@ function renderChecklistBox(item){
   }else if(item.done){
     el.className = 'status-box sb-ok';
     el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">Disemak ✓</div>' +
-      '<div class="sb-sub">' + escHtml_(item.by) + '<br>' + escHtml_(item.time) + '</div>';
+      '<div class="sb-sub">' + escHtml_(item.by) + '<br>' + escHtml_(item.time) + '</div>' + odo;
   }else if(item.offDay){
     el.className = 'status-box sb-neutral';
-    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">Hari cuti</div><div class="sb-sub">Tidak diwajibkan hari ini</div>' + btn('Semak juga', true);
+    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">Hari cuti</div><div class="sb-sub">Tidak diwajibkan hari ini</div>' + odo + btn('Semak juga', true);
   }else{
     el.className = 'status-box sb-alert';
-    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">BELUM DISEMAK</div><div class="sb-sub">Sila semak sekarang</div>' + btn('Semak sekarang');
+    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">BELUM DISEMAK</div><div class="sb-sub">Sila semak sekarang</div>' + odo + btn('Semak sekarang');
   }
 }
 
