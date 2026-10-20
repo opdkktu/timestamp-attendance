@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.15.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.15.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.0.3.8">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.3.8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -415,6 +415,9 @@
     to{ opacity:1; transform:translateY(0); }
   }
 
+  /* Driver mode: a driver sees only the Ambulance checklist and has no queue-calling box */
+  body.driver-mode #kcBox, body.driver-mode #box_temperature, body.driver-mode #box_trolley, body.driver-mode #box_bag{ display:none !important; }
+
   /* === Account sidebar (replaces the old "⋯" dropdown banner) === */
   .sidebar-overlay{
     position:fixed; inset:0; background:rgba(11,61,58,0.5); z-index:80;
@@ -783,7 +786,14 @@
 
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="./emergency-alert.js"></script>
-<script src="./location-watch.js?v=1.15.0"></script>
+<script>
+/* Driver mode is remembered per person so the boxes never flash before the server answers. */
+function applyDriverMode_(on){
+  try{ document.body.classList.toggle('driver-mode', !!on); localStorage.setItem('kkah_driver_mode_' + (sessionStorage.getItem('kkah_ic') || ''), on ? '1' : '0'); }catch(e){}
+}
+try{ if(localStorage.getItem('kkah_driver_mode_' + (sessionStorage.getItem('kkah_ic') || '')) === '1') document.body.classList.add('driver-mode'); }catch(e){}
+</script>
+<script src="./location-watch.js?v=1.16.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
 const ONESIGNAL_APP_ID = 'e6ffc7a0-2572-46da-b664-2a03c6dd210a'; // public App ID — safe to expose client-side, unlike the REST API key
@@ -1630,6 +1640,7 @@ function kcSetTarget(id, remember){
   kcRenderTarget();
 }
 function kcPreselectFromZone(zoneText){
+  if(document.body.classList.contains('driver-mode')) return;
   const z = String(zoneText || '');
   const hit = CALL_TARGETS.find(t => t.zones.some(rx => rx.test(z)));
   if(hit){ kcZoneMatched = true; kcSetTarget(hit.id, false); if(!VIEW_NAME && kcPinPref() === null && !kcPinned) kcSetPinned(true, false); } // first time on a kaunter: Mod Kaunter turns itself on
@@ -1653,6 +1664,7 @@ function kcPickTarget(id){
 }
 
 function kcOpen(){
+  if(document.body.classList.contains('driver-mode')) return;
   const box = document.getElementById('kcBox');
   if(box.classList.contains('open')) return;
   box.classList.add('open');
@@ -1778,6 +1790,9 @@ async function loadChecklistBoxes(fresh){
       body: JSON.stringify({ action:'getChecklistStatus', token: sessionStorage.getItem('kkah_session_token'), fresh: fresh === true }) });
     const data = await res.json();
     if(!data.ok || !data.lists) throw new Error(data.error || 'no data');
+    if(data.role) applyDriverMode_(data.role.driverOnly);
+    const shown = data.show || CHK_ORDER;
+    CHK_ORDER.forEach(k => { const b = document.getElementById(CHK_BOX[k]); if(b) b.style.display = shown.indexOf(k) === -1 ? 'none' : ''; });   // e.g. ordinary staff do not see Ambulance
     data.lists.forEach(it => { chkData[it.key] = it; renderChecklistBox(it); });
   }catch(err){
     CHK_ORDER.forEach(key => csvLoadBox_(CHK_BOX[key]));   // backend unreachable → old published-CSV method
