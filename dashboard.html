@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.0.3.8">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.3.8">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.17.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.17.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -44,7 +44,8 @@
   }
   .menu-btn:focus-visible{ outline:2px solid var(--gold-500); }
 
-  .content{ max-width:720px; margin:-14px auto 40px; padding:0 20px; }
+
+  .content{ max-width:720px; margin:18px auto 40px; padding:0 20px; }
 
   .banner{ display:none; padding:12px 16px; border-radius:12px; font-size:13px; margin-bottom:16px; }
   .banner.show{ display:block; }
@@ -435,7 +436,7 @@
     align-self:flex-end; background:var(--mint-100); border:none; color:var(--teal-900);
     width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; margin-bottom:10px;
   }
-  .sidebar-profile{ text-align:center; padding:4px 0 20px; border-bottom:1px solid var(--line); margin-bottom:14px; }
+  .sidebar-profile{ text-align:left; padding:4px 2px 16px; border-bottom:1px solid var(--line); margin-bottom:14px; }
   .sidebar-avatar{
     width:72px; height:72px; border-radius:50%; margin:0 auto 12px; object-fit:cover;
     background:var(--mint-100); display:flex; align-items:center; justify-content:center;
@@ -479,6 +480,64 @@
     cursor:pointer; white-space:nowrap;
   }
   .year-tab.active{ background:var(--teal-700); border-color:var(--teal-700); color:#fff; }
+
+  /* ===== MyJPJ-style home: hero + photo ring + tiles + floating pill nav ===== */
+  body{ padding-bottom:128px; }
+  .hero{ position:relative; height:176px; background:linear-gradient(180deg,#0B3D3A 0%,#0F5C56 55%,#1C8F84 100%); overflow:hidden; border-radius:0 0 34px 34px; color:#fff; }
+  .hero::before{ content:''; position:absolute; inset:0; opacity:.22; background:
+      linear-gradient(#fff,#fff) 0 66px/46% 2px no-repeat, linear-gradient(#fff,#fff) 0 84px/34% 2px no-repeat, linear-gradient(#fff,#fff) 0 102px/52% 2px no-repeat,
+      linear-gradient(#fff,#fff) 100% 78px/40% 2px no-repeat, linear-gradient(#fff,#fff) 100% 96px/30% 2px no-repeat; }
+  .hero::after{ content:''; position:absolute; right:-40px; top:14px; width:230px; height:230px; border-radius:50%; border:2px solid rgba(255,255,255,.14); box-shadow:inset 0 0 0 26px rgba(255,255,255,.05); }
+  .hero-in{ max-width:520px; margin:0 auto; position:relative; height:100%; }
+  .hbtn{ position:absolute; top:max(14px, env(safe-area-inset-top)); width:44px; height:44px; border-radius:50%; border:none; background:rgba(255,255,255,.94); color:var(--teal-700); font-size:20px; display:flex; align-items:center; justify-content:center; text-decoration:none; box-shadow:0 8px 20px -8px rgba(0,0,0,.4); cursor:pointer; z-index:2; padding:0; }
+  .hbtn.l{ left:16px; } .hbtn.r{ right:16px; }
+  .hbtn.menu-btn{ width:44px; height:44px; background:rgba(255,255,255,.94); color:var(--teal-700); font-size:22px; font-weight:800; }
+  .hbtn.menu-btn.has-unread::after{ top:4px; right:4px; }
+  .hbadge{ position:absolute; top:-3px; right:-3px; min-width:19px; height:19px; padding:0 5px; border-radius:99px; background:#dc2626; color:#fff; font:800 10.5px 'Manrope',sans-serif; display:none; align-items:center; justify-content:center; border:2px solid #fff; }
+  .hero-brand{ position:absolute; top:max(18px, env(safe-area-inset-top)); left:0; right:0; text-align:center; z-index:1; pointer-events:none; }
+  .hero-brand b{ font:800 22px 'Manrope',sans-serif; letter-spacing:.14em; display:block; }
+  .hero-brand small{ font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
+  .idwrap{ margin:-64px auto 0; max-width:520px; text-align:center; position:relative; z-index:3; padding:0 16px; }
+  .avatar{ width:120px; height:120px; border-radius:50%; margin:0 auto; background:#fff; padding:6px; box-shadow:0 18px 36px -14px rgba(11,61,58,.55), 0 0 0 1px rgba(0,0,0,.06); }
+  .avatar > div{ width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg,#1C8F84,#0F5C56) center/cover no-repeat; color:#fff; display:flex; align-items:center; justify-content:center; font:800 38px 'Manrope',sans-serif; }
+  .nick{ font:800 23px 'Manrope',sans-serif; margin:12px 0 2px; letter-spacing:-.01em; color:var(--teal-900); }
+  .real{ font-size:12.5px; color:var(--ink-500); min-height:17px; } .real a{ color:var(--teal-700); font-weight:700; text-decoration:none; }
+  .rank-chips{ display:flex; gap:8px; justify-content:center; margin-top:10px; flex-wrap:wrap; align-items:center; }
+  .rchip{ padding:7px 14px; border-radius:99px; background:#fff; border:1.5px solid var(--line); font:700 13px 'Manrope',sans-serif; color:var(--ink-700); text-decoration:none; } .rchip b{ color:var(--teal-700); }
+  .rchip.gold{ background:linear-gradient(135deg,#FFF3C4,#FBE08A); border-color:#E9CB62; }
+  .idwrap .role-pill{ background:var(--mint-100); color:var(--teal-700); margin:0; padding:7px 14px; font-size:11.5px; border:1.5px solid #cfe7df; }
+  .idwrap .location-bar{ margin:12px auto 0; background:#fff; color:var(--ink-700); border:1px solid var(--line); box-shadow:0 8px 18px -14px rgba(11,61,58,.5); max-width:100%; }
+  .idwrap .location-bar:hover{ background:var(--mint-050); }
+
+  /* module tiles */
+  .section-title{ font:800 15px 'Manrope',sans-serif; color:var(--teal-900); margin:24px 4px 12px; }
+  .grid{ grid-template-columns:repeat(4,1fr); gap:18px 6px; }
+  .module-card{ background:none; border:none; box-shadow:none; padding:0 2px; border-radius:0; align-items:center; text-align:center; gap:9px; }
+  .module-card:hover{ transform:none; box-shadow:none; }
+  .module-card:hover .module-icon{ transform:translateY(-2px); }
+  .module-card:active .module-icon{ transform:scale(.94); }
+  .module-icon{ width:62px; height:62px; border-radius:20px; font-size:28px; background:#fff; border:1.5px solid var(--line); box-shadow:0 10px 22px -16px rgba(11,61,58,.6); position:relative; transition:transform .15s ease; }
+  .module-name{ font:600 12px 'Inter',sans-serif; line-height:1.25; color:var(--ink-700); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .module-status{ display:none; } .module-status.soon{ display:block; font-size:10px; }
+  .module-card.disabled .module-icon{ filter:grayscale(.6); }
+  .module-icon .ribbon{ position:absolute; top:-8px; right:-12px; min-width:34px; padding:3px 7px 3px 8px; background:#D12B3D; color:#fff; font:800 10.5px 'Manrope',sans-serif; border-radius:6px 6px 0 6px; box-shadow:0 4px 10px -4px rgba(209,43,61,.7); }
+  .module-icon .ribbon::after{ content:''; position:absolute; right:0; bottom:-5px; border-top:5px solid #8f1b29; border-left:6px solid transparent; }
+  .module-icon .ribbon.ok{ background:#0A8F5B; } .module-icon .ribbon.ok::after{ border-top-color:#066b43; }
+  @media (max-width:340px){ .grid{ grid-template-columns:repeat(3,1fr); } }
+
+  /* floating pill nav with centre emblem */
+  .pnav{ position:fixed; left:50%; transform:translateX(-50%); bottom:max(14px, env(safe-area-inset-bottom)); width:min(492px, calc(100% - 28px)); height:74px; background:#fff; border-radius:38px; display:grid; grid-template-columns:1fr 1fr 84px 1fr 1fr; align-items:center; box-shadow:0 18px 40px -12px rgba(11,61,58,.5), 0 0 0 1px rgba(0,0,0,.05); z-index:50; }
+  .pnav .it{ background:none; border:none; font:700 10.5px 'Inter',sans-serif; letter-spacing:.04em; text-transform:uppercase; color:#9aa7a4; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; padding:6px 0; min-height:56px; text-decoration:none; position:relative; -webkit-tap-highlight-color:transparent; }
+  .pnav .it svg{ width:26px; height:26px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .pnav .it.on{ color:var(--teal-700); }
+  .pnav .it:focus-visible, .pnav .emb:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; border-radius:16px; }
+  .pnav .nb{ position:absolute; top:2px; left:calc(50% + 6px); min-width:18px; height:18px; padding:0 5px; border-radius:99px; background:#dc2626; color:#fff; font:800 10px 'Manrope',sans-serif; display:none; align-items:center; justify-content:center; border:2px solid #fff; letter-spacing:0; }
+  .pnav .emb{ text-decoration:none; position:relative; width:78px; height:78px; margin:-30px auto 0; border-radius:50%; background:#fff; padding:5px; box-shadow:0 14px 28px -10px rgba(11,61,58,.6); display:block; }
+  .pnav .emb span{ width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg,#0B3D3A,#1C8F84); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; font:800 24px 'Manrope',sans-serif; line-height:1; }
+  .pnav .emb small{ font-size:9px; font-weight:700; letter-spacing:.08em; opacity:.9; margin-top:3px; }
+  body.view-mode .pnav{ display:none; }
+  body.view-mode{ padding-bottom:30px; }
+  @media (prefers-reduced-motion:reduce){ .module-icon, .module-card{ transition:none; } }
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
@@ -512,18 +571,29 @@
   .nitem .nt{ font-weight:700; font-size:14px; color:#0B3D3A; padding-right:18px; }
   .nitem .nb{ font-size:13px; color:#1E2B29; margin-top:3px; }
   .nitem .nm{ font-size:11.5px; color:#5B6B68; margin-top:6px; }
+  .inbox-list .nitem.go{ cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .12s, box-shadow .12s; }
+  .inbox-list .nitem.go:active{ transform:scale(.985); }
+  .inbox-list .nitem.go:focus-visible{ outline:2px solid #1C8F84; outline-offset:2px; }
+  .inbox-list .ngo{ float:right; color:#0F5C56; font-weight:800; }
   .inbox-empty{ text-align:center; color:#5B6B68; padding:60px 10px; font-size:14px; }
 </style>
 <div class="inbox-ov" id="inboxOv" role="dialog" aria-modal="true" aria-label="Notifikasi">
   <div class="inbox-head"><h2>Notifikasi</h2><button onclick="markInboxRead()">Tandakan dibaca</button><button onclick="closeInbox()">✕</button></div>
   <div class="inbox-list" id="inboxList"></div>
 </div>
+<nav class="pnav" aria-label="Navigasi utama">
+  <button class="it on" type="button" id="navHome" onclick="window.scrollTo({top:0,behavior:'smooth'})"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Utama</button>
+  <button class="it" type="button" onclick="openInbox()" aria-label="Notifikasi"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>Notifikasi<span class="nb" id="navBadge"></span></button>
+  <a class="emb" href="./my-checkin.html" aria-label="Check In / Check Out"><span>📍<small>HADIR</small></span></a>
+  <a class="it" href="./points.html"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Mata</a>
+  <button class="it" type="button" onclick="openSidebar()"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu</button>
+</nav>
+
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar" onclick="event.stopPropagation()">
   <button class="sidebar-close" onclick="closeSidebar()" aria-label="Close menu">✕</button>
 
   <div class="sidebar-profile">
-    <div class="sidebar-avatar" id="sidebarAvatar">—</div>
     <div class="sidebar-name" id="sidebarName">Loading…</div>
     <div class="sidebar-ic" id="sidebarIc">—</div>
   </div>
@@ -579,19 +649,23 @@
   </button>
 </aside>
 
-<div class="topbar">
-  <div class="topbar-row">
-    <div>
-      <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
-      <h1>SIAGA</h1>
-      <span class="role-pill" id="rolePill">STAFF</span>
-    </div>
-    <button class="menu-btn" onclick="openSidebar()" aria-label="Account menu">⋯</button>
+<header class="hero"><div class="hero-in">
+  <button class="hbtn l" type="button" onclick="openInbox()" aria-label="Notifikasi">🔔<span class="hbadge" id="heroBadge"></span></button>
+  <div class="hero-brand"><b>SIAGA</b><small>Klinik Kesihatan Ayer Hitam</small></div>
+  <button class="hbtn r menu-btn" type="button" onclick="openSidebar()" aria-label="Menu akaun">⋯</button>
+</div></header>
+
+<section class="idwrap" aria-label="Profil saya">
+  <div class="avatar"><div id="heroAvatar" role="img" aria-label="Gambar profil">·</div></div>
+  <div class="nick" id="heroNick">&nbsp;</div>
+  <div class="real" id="heroReal"></div>
+  <div class="rank-chips" id="heroChips">
+    <span class="role-pill" id="rolePill">STAFF</span>
   </div>
   <button class="location-bar" id="locationBar" onclick="initLocationBar()" title="Ketik untuk cuba kesan semula">
     <span class="loc-dot"></span><span id="locationText">Mengesan lokasi…</span>
   </button>
-</div>
+</section>
 
 <div class="content">
   <div class="banner error" id="forcedBanner">Please set a new password before continuing.</div>
@@ -665,7 +739,7 @@
     <div class="status-box loading" id="box_cme" onclick="openCmeList()" style="cursor:pointer;"><div class="sb-label">Kehadiran CME</div><div class="sb-main">&nbsp;</div></div>
   </div>
 
-  <div class="section-title">Available</div>
+  <div class="section-title">Modul</div>
   <div class="grid" id="activeGrid"></div>
 
   <div class="section-title" id="soonTitle" style="display:none;">Coming Soon</div>
@@ -793,7 +867,7 @@ function applyDriverMode_(on){
 }
 try{ if(localStorage.getItem('kkah_driver_mode_' + (sessionStorage.getItem('kkah_ic') || '')) === '1') document.body.classList.add('driver-mode'); }catch(e){}
 </script>
-<script src="./location-watch.js?v=1.16.0"></script>
+<script src="./location-watch.js?v=1.17.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
 const ONESIGNAL_APP_ID = 'e6ffc7a0-2572-46da-b664-2a03c6dd210a'; // public App ID — safe to expose client-side, unlike the REST API key
@@ -873,6 +947,50 @@ function addModuleCard(name, icon, href){
   card.innerHTML = '<div class="module-icon">' + icon + '</div><div class="module-name">' + name + '</div><div class="module-status">Open</div>';
   card.addEventListener('click', () => { window.location.href = href; });
   grid.appendChild(card);
+  applyRibbons_();
+}
+/* Corner ribbons on module tiles (e.g. my rank on "Mata & Ranking"). Remembered, so order of loading doesn't matter. */
+const TILE_RIBBONS = {};
+function setModuleRibbon(name, text, ok){ TILE_RIBBONS[name] = { text: text, ok: !!ok }; applyRibbons_(); }
+function applyRibbons_(){
+  document.querySelectorAll('#activeGrid .module-card').forEach(card => {
+    const nm = card.querySelector('.module-name'); const r = nm && TILE_RIBBONS[nm.textContent.trim()];
+    const ic = card.querySelector('.module-icon'); if(!ic) return;
+    let rb = ic.querySelector('.ribbon');
+    if(!r){ if(rb) rb.remove(); return; }
+    if(!rb){ rb = document.createElement('span'); ic.appendChild(rb); }
+    rb.className = 'ribbon' + (r.ok ? ' ok' : ''); rb.textContent = r.text;
+  });
+}
+
+/* My nickname / photo / rank in the hero (replaces the old sidebar avatar). */
+function shortName_(n){ const w = String(n || '').trim().split(/\s+/); return w.length > 2 ? w.slice(0, 2).join(' ') : w.join(' '); }
+function paintHeroName_(){
+  const nm = window._heroName || '', nick = window._heroNick || '';
+  const hn = document.getElementById('heroNick'), hr = document.getElementById('heroReal');
+  if(!hn) return;
+  hn.textContent = nick || shortName_(nm) || ' ';
+  if(nick) hr.textContent = nm;
+  else if(nm && !VIEW_NAME) hr.innerHTML = '<a href="./points.html">Tetapkan nama panggilan ›</a>';
+  else hr.textContent = '';
+  const av = document.getElementById('heroAvatar');
+  if(av && !av.style.backgroundImage) av.textContent = (nick || nm || '·').trim().charAt(0).toUpperCase() || '·';
+}
+async function loadHeroPoints(){
+  if(VIEW_NAME) return;
+  try{
+    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'getPointsBoard', token: sessionStorage.getItem('kkah_session_token') }) });
+    const d = await res.json(); if(!d || !d.ok) return;
+    window._heroNick = d.nickname || ''; paintHeroName_();
+    const chips = document.getElementById('heroChips');
+    chips.querySelectorAll('.rchip').forEach(x => x.remove());
+    if(d.me){
+      const a = document.createElement('a'); a.className = 'rchip gold'; a.href = './points.html';
+      a.innerHTML = '🏆 #' + d.me.rank + ' <b>' + d.me.points + ' mata</b>'; chips.appendChild(a);
+      setModuleRibbon('Mata & Ranking', '#' + d.me.rank, d.me.rank <= 3);
+    }
+  }catch(e){}
 }
 
 /* === Notification inbox (sidebar "Notifikasi") — what the server pushed to me + OneSignal broadcasts === */
@@ -896,6 +1014,8 @@ function updateInboxBadge(){
   const b = document.getElementById('inboxBadge');
   b.style.display = n ? 'inline-flex' : 'none'; b.textContent = n > 99 ? '99+' : n;
   document.querySelector('.menu-btn').classList.toggle('has-unread', n > 0);
+  const txt = n > 99 ? '99+' : String(n);
+  ['heroBadge','navBadge'].forEach(id => { const e = document.getElementById(id); if(e){ e.style.display = n ? 'inline-flex' : 'none'; e.textContent = txt; } });
 }
 function inboxWhen(at){
   const d = new Date(String(at).replace(' ', 'T')), now = new Date();
@@ -910,11 +1030,35 @@ async function openInbox(){
   if(!inboxItems.length) list.innerHTML = '<div class="inbox-empty">Memuatkan…</div>';
   await loadInbox();
   const seen = inboxSeen();
-  list.innerHTML = inboxItems.length ? inboxItems.map(i =>
-    '<div class="nitem' + (i.at > seen ? ' new' : '') + '"><div class="nt">' + cmeEsc(i.title) + '</div><div class="nb">' + cmeEsc(i.body) +
-    '</div><div class="nm">' + (i.type ? cmeEsc(i.type) + ' · ' : '') + inboxWhen(i.at) + '</div></div>').join('')
+  list.innerHTML = inboxItems.length ? inboxItems.map((i, n) =>
+    '<div class="nitem go' + (i.at > seen ? ' new' : '') + '" role="link" tabindex="0" data-n="' + n + '"><div class="nt">' + cmeEsc(i.title) + '</div><div class="nb">' + cmeEsc(i.body) +
+    '</div><div class="nm">' + (i.type ? cmeEsc(i.type) + ' · ' : '') + inboxWhen(i.at) + ' <span class="ngo">Buka ›</span></div></div>').join('')
     : '<div class="inbox-empty">Tiada notifikasi lagi.<br>Pengumuman, peringatan dan hari istimewa akan muncul di sini.</div>';
 }
+/* Tap a notification → open the page it is about (same targets as the push itself). */
+const INBOX_TYPE_PAGE = { 'Kehadiran':'supervisor.html', 'Akaun':'supervisor.html', 'Lokasi':'locwatch.html', 'Pengangkutan':'transport.html',
+  'Hari Jadi':'dashboard.html?bday=1', 'Pengumuman':'dashboard.html', 'Zon':'dashboard.html' };
+function inboxTarget_(i){
+  let u = i && i.url ? String(i.url) : '';
+  if(u){
+    try{ const x = new URL(u, location.href); if(x.origin === location.origin){ u = './' + x.pathname.replace(/^.*\//, '') + x.search + x.hash; } }catch(e){}
+  }
+  return u || ('./' + (INBOX_TYPE_PAGE[i && i.type] || 'dashboard.html'));
+}
+function openInboxItem(n){
+  const i = inboxItems[n]; if(!i) return;
+  markInboxRead();
+  const t = inboxTarget_(i);
+  const here = location.pathname.replace(/^.*\//, '') || 'dashboard.html';
+  if(/^\.\/dashboard\.html(\?bday=1)?$/.test(t) && here.indexOf('dashboard') === 0){ // already on the dashboard → just close and show it
+    closeInbox();
+    if(/bday=1/.test(t)){ const s = document.getElementById('birthdayToastStack'); if(s && s.children.length) s.scrollIntoView({ behavior:'smooth', block:'center' }); }
+    return;
+  }
+  location.href = t;
+}
+document.addEventListener('click', e => { const el = e.target.closest && e.target.closest('#inboxList .nitem[data-n]'); if(el) openInboxItem(+el.dataset.n); });
+document.addEventListener('keydown', e => { if(e.key === 'Enter'){ const el = e.target.closest && e.target.closest('#inboxList .nitem[data-n]'); if(el) openInboxItem(+el.dataset.n); } });
 function markInboxRead(){
   if(inboxItems.length){ try{ localStorage.setItem(inboxSeenKey(), inboxItems[0].at); }catch(e){} }
   updateInboxBadge();
@@ -987,6 +1131,8 @@ window.addEventListener('DOMContentLoaded', () => {
   loadOnCallBox();
   checkSpecialDayPopup();
   if(!VIEW_NAME) loadBirthdayAlerts();
+  loadHeroPoints();
+  if(/[?&]inbox=1/.test(location.search)) setTimeout(() => { try{ openInbox(); }catch(e){} }, 700);
   loadBlsBox();
   loadLeaveStatBoxes();
   loadChecklistBoxes();
@@ -1939,9 +2085,13 @@ async function loadBirthdayAlerts(){
     const data = await res.json();
     if(!data.ok) return;
 
-    // Only YOUR own birthday card remains on the dashboard. The "tomorrow is your birthday" banner and the
-    // colleague "send a wish?" boxes were removed (the 8am birthday push still reaches everyone).
+    // Own birthday card + "send a wish?" boxes for colleagues whose birthday is today / tomorrow.
     if(data.selfToday) showBirthdayCard();
+    const todo = (data.colleagues || []).filter(c => !c.alreadySent);
+    renderColleagueBirthdayToasts(todo);
+    if(todo.length && /[?&]bday=1/.test(location.search)){
+      setTimeout(() => { try{ document.getElementById('birthdayToastStack').scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){} }, 500);
+    }
   }catch(err){
     console.warn('Could not load birthday alerts:', err);
   }
@@ -1963,11 +2113,13 @@ function renderColleagueBirthdayToasts(list){
     card.className = 'bday-toast';
     card.id = 'bdayToast_' + c.ic;
     card.innerHTML =
-      '<div class="bday-toast-text">🎂 ' + (c.when === 'today' ? 'Hari ini' : 'Esok') + ' hari jadi <strong>' + c.name + '</strong>!</div>' +
+      '<div class="bday-toast-text">🎂 ' + (c.when === 'today' ? 'Hari ini' : 'Esok') + ' hari jadi <strong>' + cmeEsc(c.name) + '</strong>!</div>' +
       '<div class="bday-toast-actions">' +
-        '<button class="bday-send-btn" onclick="sendBirthdayWish(\'' + c.ic + '\',\'' + c.name.replace(/'/g, "\\'") + '\')">Hantar Ucapan 🎉</button>' +
-        '<button class="bday-dismiss-btn" onclick="dismissBirthdayToast(\'' + c.ic + '\')">✕</button>' +
+        '<button class="bday-send-btn">Hantar Ucapan 🎉</button>' +
+        '<button class="bday-dismiss-btn" aria-label="Tutup">✕</button>' +
       '</div>';
+    card.querySelector('.bday-send-btn').addEventListener('click', function(){ sendBirthdayWish(c.ic, c.name); });
+    card.querySelector('.bday-dismiss-btn').addEventListener('click', function(){ dismissBirthdayToast(c.ic); });
     container.appendChild(card);
   });
   container.classList.toggle('show', list.length > 0);
@@ -2396,6 +2548,7 @@ function renderModules(role){
   });
   const st = document.getElementById('soonTitle');
   if(st) st.style.display = soonGrid.children.length ? '' : 'none';
+  applyRibbons_();
 }
 
 function handleLogout(){
@@ -2429,7 +2582,7 @@ async function loadSidebarProfile(){
   cachedApi('getMyProfile', TTL.profile, (data) => {
     if(data.ok){
       document.getElementById('sidebarName').textContent = data.name;
-      document.getElementById('sidebarAvatar').textContent = data.name.trim().charAt(0).toUpperCase();
+      window._heroName = data.name; paintHeroName_();
       const pill = document.getElementById('sidebarEmailPill');
       if(data.emailVerified){ pill.textContent = 'Verified'; pill.className = 'sidebar-pill yes'; }
       else{ pill.textContent = 'Not Verified'; pill.className = 'sidebar-pill no'; }
@@ -2439,7 +2592,7 @@ async function loadSidebarProfile(){
   // Photo (large base64) — cached a day so it paints instantly on later visits
   cachedApi('getMyPhoto', TTL.photo, (data) => {
     if(data.ok && data.photo){
-      const avatar = document.getElementById('sidebarAvatar');
+      const avatar = document.getElementById('heroAvatar');
       avatar.textContent = '';
       avatar.style.backgroundImage = `url(${data.photo})`;
       avatar.style.backgroundSize = 'cover';
