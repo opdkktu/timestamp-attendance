@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.0.3.11">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.3.11">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.0.3.12">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.3.12">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -915,7 +915,7 @@ function applyDriverMode_(on){
 }
 try{ if(localStorage.getItem('kkah_driver_mode_' + (sessionStorage.getItem('kkah_ic') || '')) === '1') document.body.classList.add('driver-mode'); }catch(e){}
 </script>
-<script src="./location-watch.js?v=1.19.0"></script>
+<script src="./location-watch.js?v=1.20.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
 const ONESIGNAL_APP_ID = 'e6ffc7a0-2572-46da-b664-2a03c6dd210a'; // public App ID — safe to expose client-side, unlike the REST API key
@@ -988,14 +988,25 @@ function logAct(event, detail){
   }catch(e){}
 }
 
-function addModuleCard(name, icon, href){
+function addModuleCard(name, icon, href, ext){
   const grid = document.getElementById('activeGrid'); if(!grid) return;
+  if(Array.prototype.some.call(grid.querySelectorAll('.module-name'), n => n.textContent.trim() === name)) return;   // never twice
   const card = document.createElement('button');
   card.className = 'module-card';
   card.innerHTML = '<div class="module-icon">' + icon + '</div><div class="module-name">' + name + '</div><div class="module-status">Open</div>';
-  card.addEventListener('click', () => { window.location.href = href; });
+  card.addEventListener('click', () => { if(ext) window.open(href, '_blank', 'noopener'); else window.location.href = href; });
   grid.appendChild(card);
   applyRibbons_();
+}
+
+/* Tiles that depend on the person's unit: AMO → Ambulance Usage Log form (prefilled name) · PPK / PRA → BERSIH */
+async function loadExtraTiles_(){
+  if(VIEW_NAME) return;
+  try{
+    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getMyTiles', token: sessionStorage.getItem('kkah_session_token') }) });
+    const d = await res.json();
+    if(d && d.ok && d.tiles) d.tiles.forEach(t => addModuleCard(t.name, t.icon, t.href, t.ext));
+  }catch(e){ /* optional tiles */ }
 }
 /* Corner ribbons on module tiles (e.g. my rank on "Mata & Ranking"). Remembered, so order of loading doesn't matter. */
 const TILE_RIBBONS = {};
@@ -1266,6 +1277,7 @@ window.addEventListener('DOMContentLoaded', () => {
   loadHealthBox();
   loadCmeBox();
   loadTransportBox();
+  loadExtraTiles_();
   setInterval(() => { if(!saverNow_()) loadTransportBox(); }, 3 * 60 * 1000);
   setInterval(() => { if(!saverNow_()) loadChecklistBoxes(); }, 3 * 60 * 1000); // refresh temperature/trolley/bag/ambulance every 3 min
   // Coming back from a checklist tab (or after the phone slept): refresh straight away, skipping the server's 45 s cache if we just opened one.
@@ -1338,6 +1350,40 @@ function coOpenNowLocal_(){
   const weekday = dow !== 5 && dow !== 6;      // Fri (5) & Sat (6) are non-working days
   return !weekday || d.getHours() >= 13;
 }
+
+/* === 5:00 PM: Check Out opens by itself. Checked in, not out yet → "Waktu balik" screen, 5 s countdown, straight to Check Out === */
+const CO_AUTO_HOUR = 17;
+function coAutoDue_(){
+  if(VIEW_NAME) return false;
+  const st = window._attState; if(!st || !st.hasIn || st.hasOut) return false;
+  if(new Date().getHours() < CO_AUTO_HOUR) return false;
+  try{ if(Number(sessionStorage.getItem('kkah_co_snooze') || 0) > Date.now()) return false; }catch(e){}
+  return !document.getElementById('coAutoOv');
+}
+function coAutoShow_(){
+  if(!coAutoDue_() || document.visibilityState !== 'visible') return;
+  const st = document.createElement('style');
+  st.textContent = '.co-ov{position:fixed;inset:0;z-index:9500;background:rgba(6,30,28,.92);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:22px;animation:ciIn .3s ease both}.co-box{background:#fff;border-radius:26px;padding:26px 22px;max-width:340px;width:100%;text-align:center}.co-box .e{font-size:54px;line-height:1}.co-box h3{font-size:21px;margin:10px 0 4px;color:#0B3D3A}.co-box p{font-size:14px;color:#5B6B68;margin:0 0 6px}.co-box .n{font-size:40px;font-weight:800;color:#0F766E;margin:6px 0 14px}.co-box button{width:100%;padding:14px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px}.co-box .go{background:linear-gradient(135deg,#0F766E,#14B8A6);color:#fff}.co-box .later{background:#EEF3F2;color:#35514E}';
+  const ov = document.createElement('div'); ov.className = 'co-ov'; ov.id = 'coAutoOv';
+  ov.innerHTML = '<div class="co-box"><div class="e">🏁</div><h3>Waktu Check Out</h3><p>Sudah jam 5:00 PM. Check Out dibuka sekarang.</p><div class="n" id="coAutoN">5</div>' +
+    '<button class="go" id="coAutoGo">Check Out sekarang</button><button class="later" id="coAutoLater">Nanti (ingatkan 15 minit)</button></div>';
+  document.head.appendChild(st); document.body.appendChild(ov);
+  let n = 5, t = null;
+  const go = () => { clearInterval(t); window.location.href = './my-checkin.html?auto=1'; };
+  document.getElementById('coAutoGo').onclick = go;
+  document.getElementById('coAutoLater').onclick = () => {
+    clearInterval(t);
+    try{ sessionStorage.setItem('kkah_co_snooze', String(Date.now() + 15 * 60 * 1000)); }catch(e){}
+    ov.remove(); st.remove();
+  };
+  t = setInterval(() => { n--; const el = document.getElementById('coAutoN'); if(el) el.textContent = Math.max(n, 0); if(n <= 0) go(); }, 1000);
+  try{ if(navigator.vibrate) navigator.vibrate([200, 100, 200]); }catch(e){}
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') setTimeout(coAutoShow_, 800); });
+setInterval(() => {
+  if(new Date().getHours() < CO_AUTO_HOUR) return;
+  if(window._attState && window._attState.hasIn && !window._attState.hasOut) loadTodayAttendance().then(coAutoShow_, coAutoShow_); // refresh first: they may have checked out on another phone
+}, 60 * 1000);
 
 /* === Check In first: someone who opens the dashboard without today's Check In is taken straight there (3s, can cancel) === */
 function maybeCheckInPrompt_(){
@@ -2340,6 +2386,7 @@ async function loadTodayAttendance(){
     renderAttTime(outEl, data.checkOut);
     setAttButtons(!!data.checkIn, !!data.checkOut, (data.canCheckOut !== undefined ? data.canCheckOut : coOpenNowLocal_()), data.opensAt || '1:00 PM');
     if(!data.checkIn && !data.checkOut) maybeCheckInPrompt_();
+    setTimeout(coAutoShow_, 1500);   // 5 PM or later and still checked in → open Check Out by itself
   }catch(err){
     renderAttTime(inEl, '');
     renderAttTime(outEl, '');
@@ -2355,6 +2402,7 @@ function setAttButtons(hasIn, hasOut, canOut, opensAt){
   const label = bo.querySelector('span:last-child');
   const waiting = hasIn && !hasOut && !canOut;           // checked in, but it is before 1:00 PM on a weekday
   window._coLocked = waiting;
+  window._attState = { hasIn: !!hasIn, hasOut: !!hasOut };
   bi.className = 'att-btn' + (hasIn ? ' done' : ' primary');
   bo.className = 'att-btn' + (hasOut ? ' done' : (hasIn && canOut) ? ' primary' : ' locked');
   if(label) label.textContent = waiting ? 'Check Out · ' + (opensAt || '1:00 PM') : 'Check Out';
