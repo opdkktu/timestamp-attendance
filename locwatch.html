@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Papan Lokasi</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.14.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.18.0">
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -71,7 +71,9 @@
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="stT"><div class="box">
   <h3 id="stT">Tetapan semakan lokasi</h3><div class="hint">Hanya penyelia TOP boleh menukar. Perubahan berkuat kuasa dalam seminit.</div>
   <label class="sw" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)"><input type="checkbox" id="sEn"> Aktifkan semakan lokasi</label>
-  <div class="g2"><div><label for="sStart">Mula</label><input type="time" id="sStart"></div><div><label for="sEnd">Tamat</label><input type="time" id="sEnd"></div></div>
+  <div class="g2"><div><label for="sStart">Tetingkap 1 — mula</label><input type="time" id="sStart"></div><div><label for="sEnd">Tetingkap 1 — tamat</label><input type="time" id="sEnd"></div></div>
+  <div class="g2"><div><label for="sStart2">Tetingkap 2 — mula</label><input type="time" id="sStart2"></div><div><label for="sEnd2">Tetingkap 2 — tamat</label><input type="time" id="sEnd2"></div></div>
+  <div class="hint">Lalai: 12:00–13:00 dan 14:00–15:00. Kosongkan tetingkap 2 jika tidak digunakan.</div>
   <div class="g2"><div><label for="sInt">Setiap (minit)</label><input type="number" id="sInt" min="5" max="30" step="5" inputmode="numeric"></div><div><label for="sRad">Jejari klinik (m)</label><input type="number" id="sRad" min="50" max="1000" step="10" inputmode="numeric"></div></div>
   <div class="g2"><div><label for="sOut">Amaran selepas (bacaan di luar)</label><input type="number" id="sOut" min="1" max="6" inputmode="numeric"></div><div><label for="sMiss">“Tiada respons” selepas (pusingan)</label><input type="number" id="sMiss" min="1" max="10" inputmode="numeric"></div></div>
   <label for="sEx">Unit dikecualikan (pisah dengan koma)</label><input type="text" id="sEx" placeholder="Pemandu">
@@ -98,12 +100,13 @@ async function load(){
     data = d; render();
   }catch(e){ $('list').innerHTML = '<div class="empty">Sambungan gagal. <br><br><button class="btn ghost" onclick="load()">Cuba lagi</button></div>'; }
 }
+function winTxt(s){ return (s.windows && s.windows.length ? s.windows : [{ start:s.start, end:s.end }]).map(w => w.start + ' – ' + w.end).join(' &amp; '); }
 function render(){
   const s = data.settings, c = data.counts;
   $('banner').className = 'banner ' + (data.inWindow && s.enabled ? 'live' : 'idle');
   $('bannerTx').innerHTML = !s.enabled ? 'Semakan lokasi <b>dimatikan</b>.' : data.inWindow
-    ? '<b>Semakan sedang berjalan</b> · ' + s.start + ' – ' + s.end + ' · setiap ' + s.intervalMin + ' minit · jejari ' + s.radiusM + ' m'
-    : 'Di luar waktu semakan (<b>' + s.start + ' – ' + s.end + '</b>). Papan dikemas kini semasa waktu semakan.';
+    ? '<b>Semakan sedang berjalan</b> · ' + winTxt(s) + ' · setiap ' + s.intervalMin + ' minit · jejari ' + s.radiusM + ' m'
+    : 'Di luar waktu semakan (<b>' + winTxt(s) + '</b>). Papan dikemas kini semasa waktu semakan.';
   const tiles = [['ALL','Semua',data.rows.length,''],['OUTSIDE','Di luar',c.OUTSIDE,'t-out'],['NOREPLY','Tiada respons',c.NOREPLY + c.DENIED,'t-no'],['INSIDE','Di klinik',c.INSIDE,'t-in']];
   $('tiles').innerHTML = tiles.map(t => '<button class="tile ' + t[3] + '" data-f="' + t[0] + '" aria-pressed="' + (filter === t[0]) + '"><b>' + t[2] + '</b><span>' + t[1] + '</span></button>').join('');
   let rows = data.rows;
@@ -122,7 +125,7 @@ $('tiles').addEventListener('click', e => { const b = e.target.closest('.tile');
 $('refresh').onclick = () => { load(); toast('Dikemas kini'); };
 
 $('setBtn').onclick = () => {
-  const s = data.settings; $('sEn').checked = s.enabled; $('sStart').value = s.start; $('sEnd').value = s.end; $('sInt').value = s.intervalMin; $('sRad').value = s.radiusM;
+  const s = data.settings; $('sEn').checked = s.enabled; const w = s.windows && s.windows.length ? s.windows : [{ start:s.start, end:s.end }]; $('sStart').value = w[0].start; $('sEnd').value = w[0].end; $('sStart2').value = w[1] ? w[1].start : ''; $('sEnd2').value = w[1] ? w[1].end : ''; $('sInt').value = s.intervalMin; $('sRad').value = s.radiusM;
   $('sOut').value = s.outsideCount; $('sMiss').value = s.missedCount; $('sEx').value = s.exemptUnits; $('sheet').classList.add('show');
 };
 $('sCancel').onclick = () => $('sheet').classList.remove('show');
@@ -130,7 +133,7 @@ $('sheet').addEventListener('pointerdown', e => { if(e.target === $('sheet')) $(
 $('sSave').onclick = async () => {
   $('sSave').disabled = true;
   try{
-    const d = await api({ action:'setLocWatchSettings', settings:{ enabled: $('sEn').checked, start: $('sStart').value, end: $('sEnd').value, intervalMin: $('sInt').value, radiusM: $('sRad').value, outsideCount: $('sOut').value, missedCount: $('sMiss').value, exemptUnits: $('sEx').value } });
+    const d = await api({ action:'setLocWatchSettings', settings:{ enabled: $('sEn').checked, windows: [{ start: $('sStart').value, end: $('sEnd').value }, { start: $('sStart2').value, end: $('sEnd2').value }], intervalMin: $('sInt').value, radiusM: $('sRad').value, outsideCount: $('sOut').value, missedCount: $('sMiss').value, exemptUnits: $('sEx').value } });
     if(d.ok){ $('sheet').classList.remove('show'); toast('Tetapan disimpan ✓'); load(); } else toast(d.error || 'Gagal menyimpan', true);
   }catch(e){ toast('Sambungan gagal', true); }
   $('sSave').disabled = false;
