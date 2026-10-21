@@ -2,6 +2,8 @@
  * SIAGA — location watch (staff side). Include on the dashboard:  <script src="./location-watch.js"></script>
  *
  * What it does (all visible to the staff — nothing is silent):
+ *  - POWER SAVER: 9:00–12:00 (window.SIAGA_SAVER) nothing runs in the background — only push notifications keep working
+ *  - two windows a day (default 12–1 pm and 2–3 pm); a window covered by continuous readings inside the clinic earns points + a pop-up
  *  - asks the server whether I should report now (checked in, inside the window, not exempt)
  *  - first time: shows a consent notice explaining exactly what is recorded
  *  - while SIAGA is open and visible: reads location every `intervalMin` minutes and sends it
@@ -15,6 +17,8 @@
   var IC = function () { return sessionStorage.getItem('kkah_ic') || ''; };
   var cfg = null, lastReport = 0, busy = false, lastStatusAt = 0, chip = null, ticker = null, lastRes = null, askedConsent = false;
   var pingNow = /[?&]locping=1/.test(location.search);
+  function saver() { var h = new Date().getHours(); return h >= 9 && h < 12; }   // 9:00–12:00 → idle, battery first
+  function wins() { return (cfg && cfg.windows && cfg.windows.length) ? cfg.windows : [(cfg ? cfg.start + '–' + cfg.end : '')]; }
 
   function post(body) {
     return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token: token() }, body)) }).then(function (r) { return r.json(); });
@@ -39,7 +43,17 @@
       '.lw-box h3{margin:0 0 6px;font:800 19px Manrope,sans-serif}.lw-box p{margin:6px 0;font-size:14px;line-height:1.55}.lw-box ul{margin:8px 0 4px;padding-left:20px;font-size:13.5px;line-height:1.6}' +
       '.lw-btns{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;margin-top:16px}' +
       '.lw-btns button{min-height:52px;border-radius:15px;border:none;font:800 15px Manrope,sans-serif;cursor:pointer}' +
-      '.lw-btns .g{background:#fff;border:1.5px solid #DCEAE6;color:#1E2B29}.lw-btns .p{background:linear-gradient(135deg,#0B3D3A,#1C8F84);color:#fff}';
+      '.lw-btns .g{background:#fff;border:1.5px solid #DCEAE6;color:#1E2B29}.lw-btns .p{background:linear-gradient(135deg,#0B3D3A,#1C8F84);color:#fff}' +
+      '.lw-chip .tx a{color:#0F5C56;font-weight:700}.lw-steps{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}' +
+      '.lw-step{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:99px;background:#F3F8F6;border:1px solid #DCEAE6;color:#5B6B68}' +
+      '.lw-step.done{background:#E3F6EC;border-color:#9ad5be;color:#066b43}.lw-step.progress{background:#FFF8E1;border-color:#E8C777;color:#8a6200}.lw-step.broken,.lw-step.missed{background:#FFF1F2;border-color:#E7A1AA;color:#a3202f}' +
+      '.lw-pts{position:fixed;inset:0;z-index:9500;background:rgba(6,30,28,.78);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:lwIn .25s ease both}@keyframes lwIn{from{opacity:0}to{opacity:1}}' +
+      '.lw-pcard{width:min(360px,100%);background:#fff;border-radius:28px;padding:28px 22px 20px;text-align:center;font-family:Inter,sans-serif;color:#1E2B29;animation:lwPop .45s cubic-bezier(.2,1.2,.3,1) both}@keyframes lwPop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}' +
+      '.lw-ptro{width:92px;height:92px;margin:0 auto 10px;border-radius:50%;background:linear-gradient(135deg,#FFF3C4,#FBE08A);display:flex;align-items:center;justify-content:center;font-size:46px;box-shadow:0 14px 30px -12px rgba(201,162,39,.8)}' +
+      '.lw-pnum{font:800 46px Manrope,sans-serif;color:#0F5C56;line-height:1}.lw-pnum small{font-size:18px;margin-left:4px}.lw-pcard h3{margin:8px 0 4px;font:800 18px Manrope,sans-serif}.lw-pcard p{margin:0;font-size:13.5px;color:#5B6B68;line-height:1.5}' +
+      '.lw-pbtn{display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;margin-top:16px;border-radius:15px;border:none;background:linear-gradient(135deg,#0B3D3A,#1C8F84);color:#fff;font:800 14.5px Manrope,sans-serif;text-decoration:none;cursor:pointer}' +
+      '.lw-pbtn.g{background:#fff;color:#5B6B68;border:1.5px solid #DCEAE6;margin-top:8px;font-weight:700}' +
+      '@media (prefers-reduced-motion:reduce){.lw-pcard,.lw-pts{animation:none}}';
     document.head.appendChild(s);
   }
   function ensureChip() {
@@ -62,12 +76,25 @@
   }
   function hide() { if (chip) chip.style.display = 'none'; }
 
+  function pointsOverlay(a) {
+    css();
+    var ov = document.createElement('div'); ov.className = 'lw-pts'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Mata diperoleh');
+    ov.innerHTML = '<div class="lw-pcard"><div class="lw-ptro">🎯</div><div class="lw-pnum">+' + a.pts + '<small>mata</small></div>' +
+      '<h3>Semakan lokasi lengkap!</h3><p>Anda kekal berterusan di dalam klinik sepanjang tetingkap <b>' + a.win + '</b>. Terima kasih!</p>' +
+      '<a class="lw-pbtn" href="./points.html#rules">Lihat pecahan mata</a><button class="lw-pbtn g" type="button">Tutup</button></div>';
+    document.body.appendChild(ov);
+    ov.querySelector('button').onclick = function () { ov.remove(); };
+    try { if (window.confetti) window.confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } }); } catch (e) {}
+    try { if (navigator.vibrate) navigator.vibrate([80, 50, 80]); } catch (e) {}
+  }
+
   function consentSheet() {
     return new Promise(function (resolve) {
       css();
       var ov = document.createElement('div'); ov.className = 'lw-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
       ov.innerHTML = '<div class="lw-box"><h3>📍 Semakan lokasi waktu bertugas</h3>' +
-        '<p>Antara <b>' + cfg.start + ' – ' + cfg.end + '</b>, selepas anda daftar masuk dan sebelum daftar keluar, SIAGA akan menyemak lokasi anda <b>setiap ' + cfg.intervalMin + ' minit</b> apabila aplikasi dibuka.</p>' +
+        '<p>Pada <b>' + wins().join(' dan ') + '</b>, selepas anda daftar masuk dan sebelum daftar keluar, SIAGA akan menyemak lokasi anda <b>setiap ' + cfg.intervalMin + ' minit</b> apabila aplikasi dibuka.</p>' +
+        '<ul><li>🎯 Setiap tetingkap yang disemak <b>berterusan di dalam klinik</b> memberi <b>+' + (cfg.locPts || 5) + ' mata</b>.</li></ul>' +
         '<ul><li>Hanya <b>jarak dari klinik</b> dan masa direkod — bukan laluan perjalanan.</li><li>Jika anda di luar kawasan klinik (' + cfg.radiusM + ' m) beberapa bacaan berturut-turut, <b>penyelia dimaklumkan</b>.</li>' +
         '<li>Bertugas di luar (lawatan, ambulans, kursus)? Tekan <b>“Tugas luar”</b> dan tiada amaran dihantar.</li><li>Rekod dipadam automatik selepas 90 hari.</li></ul>' +
         '<p style="font-size:12.5px;color:#5B6B68">Telefon mungkin meminta kebenaran lokasi — sila pilih <b>Benarkan</b>.</p>' +
@@ -80,9 +107,21 @@
   }
 
   /* ---------- logic ---------- */
+  function steps(rows) {
+    if (!rows || !rows.length) return '';
+    var ic = { done: '✅', progress: '⏳', broken: '✖', missed: '✖', upcoming: '🕒' };
+    return '<div class="lw-steps">' + rows.map(function (r) { return '<span class="lw-step ' + r.state + '">' + (ic[r.state] || '') + ' ' + r.label + '</span>'; }).join('') + '</div>';
+  }
+  function ptsLink() { return ' <a href="./points.html#rules">Lihat pecahan mata ›</a>'; }
+  function winLine(res) {
+    if (!res.win) return '';
+    if (res.win.done) return '<br>🎯 Tetingkap ' + res.win.label + ' lengkap — mata telah diberi.' + ptsLink();
+    if (res.win.broken) return '<br>Tetingkap ' + res.win.label + ': kesinambungan terputus — tiada mata untuk tetingkap ini.' + ptsLink();
+    return '<br>🎯 Tetingkap ' + res.win.label + ' · ' + res.win.count + ' bacaan — kekal berterusan untuk <b>+' + (res.locPts || 5) + ' mata</b>.' + ptsLink();
+  }
   function fmtOk(res) {
     if (res.outDuty) return ['ok', '🚗', 'Tugas luar', 'Tiada amaran lokasi dihantar kepada penyelia.', true];
-    if (res.inside === 'Y') return ['ok', '✅', 'Anda berada di klinik', 'Lokasi disemak ' + res.time + ' · seterusnya dalam ' + res.nextInMin + ' minit.', true];
+    if (res.inside === 'Y') return ['ok', '✅', 'Anda berada di klinik', 'Lokasi disemak ' + res.time + ' · seterusnya dalam ' + res.nextInMin + ' minit.' + winLine(res), true];
     if (res.inside === 'N') return ['bad', '⚠️', 'Anda di luar kawasan klinik', '±' + res.dist + ' m dari klinik' + (res.supervisorNotified ? ' — <b>penyelia telah dimaklumkan</b>.' : '.') + ' Bertugas luar? Tekan “Tugas luar”.', true];
     if (res.inside === 'DENIED') return ['warn', '🔒', 'Kebenaran lokasi dimatikan', 'Hidupkan lokasi untuk SIAGA dalam tetapan telefon, kemudian <a href="#" data-now>cuba lagi</a>.', true];
     return ['warn', '📡', 'Isyarat GPS lemah', 'Lokasi tidak dapat ditentukan dengan tepat. Cuba di kawasan terbuka — <a href="#" data-now>semak semula</a>.', true];
@@ -110,6 +149,7 @@
       if (!res || !res.ok) { if (res && /expired/i.test(res.error || '')) return; render('warn', '⚠️', 'Gagal menghantar lokasi', 'Akan cuba lagi sebentar lagi.', false); return; }
       if (res.tracking === false) { cfg.active = false; refresh(true); return; }
       lastRes = res; var f = fmtOk(res); render(f[0], f[1], f[2], f[3], f[4]);
+      if (res.award) pointsOverlay(res.award);
     }).catch(function () { busy = false; render('warn', '📶', 'Tiada sambungan', 'Lokasi akan dihantar bila sambungan pulih.', false); });
   }
 
@@ -141,11 +181,11 @@
       cfg = s;
       if (s.exempt || !s.enabled || s.reason === 'readonly' || s.reason === 'notin' || s.reason === 'checkedout') { hide(); return; }
       if (s.reason === 'outside_window' && s.checkedIn !== false) {
-        render('', '📍', 'Semakan lokasi: ' + s.start + ' – ' + s.end, 'Anda akan diminta menghantar lokasi dalam tempoh ini setiap ' + s.intervalMin + ' minit.', false); return;
+        render('', '📍', 'Semakan lokasi: ' + wins().join(' & '), 'Hantar lokasi setiap ' + s.intervalMin + ' minit dalam tetingkap ini. Berterusan di klinik = <b>+' + (s.locPts || 5) + ' mata</b> setiap tetingkap.' + ptsLink() + steps(s.today), false); return;
       }
       if (s.active) {
         if (s.me && s.me.lastTime && !lastRes) { lastRes = { time: s.me.lastTime, inside: s.me.inside, dist: s.me.lastDist, nextInMin: s.intervalMin, outDuty: s.me.outDuty }; var f = fmtOk(lastRes); render(f[0], f[1], f[2], f[3], f[4]); }
-        else if (!lastRes) render('', '📍', 'Semakan lokasi aktif', 'Menyemak lokasi anda…', true);
+        else if (!lastRes) render('', '📍', 'Semakan lokasi aktif', 'Menyemak lokasi anda…' + steps(s.today), true);
         var due = Date.now() - lastReport >= s.intervalMin * 60000;
         if (due && !pingNow) report('app');
       }
@@ -153,17 +193,18 @@
   }
 
   function tick() {
-    if (document.hidden || !cfg) return;
+    if (document.hidden || !cfg || saver()) return;       // 9:00–12:00 power saver: no background work
     if (cfg.active) { if (Date.now() - lastReport >= cfg.intervalMin * 60000) report('app'); }
     refresh(false);
   }
 
   function start() {
     if (!token() || ticker) return;
+    window.SIAGA_SAVER = saver();
     var wasPing = pingNow;
     refresh(true).then(function () { if (wasPing && cfg && cfg.active) { pingNow = false; report('ping', true); } });
     ticker = setInterval(tick, 60000);
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) { lastStatusAt = 0; tick(); refresh(true); } });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden && !saver()) { lastStatusAt = 0; tick(); refresh(true); } });
     window.addEventListener('online', function () { refresh(true); });
   }
 
