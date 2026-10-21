@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIAGA · Dokumen Kenderaan</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.14.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.14.0">
+<title>SIAGA · Dokumen &amp; Penyelenggaraan Kenderaan</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.19.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.19.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 <link rel="manifest" href="./manifest.json">
@@ -65,6 +65,24 @@
   .toast{ position:fixed; left:50%; bottom:22px; transform:translate(-50%,30px); background:var(--teal-900); color:#fff; font-weight:700; font-size:14px; padding:13px 20px; border-radius:99px; box-shadow:0 14px 34px rgba(0,0,0,.3); opacity:0; pointer-events:none; transition:all .3s ease; z-index:60; max-width:92vw; text-align:center; }
   .toast.show{ opacity:1; transform:translate(-50%,0); } .toast.err{ background:var(--red-600); }
   @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+
+  /* maintenance (engine oil + battery) */
+  .mcard{ background:#fff; border:1px solid var(--line); border-radius:20px; padding:14px; box-shadow:0 12px 30px -24px rgba(11,61,58,.5); margin-bottom:12px; }
+  .mcard .mh{ display:flex; align-items:center; gap:10px; margin-bottom:6px; } .mcard .mh .ic{ width:40px; height:40px; font-size:20px; }
+  .mrow{ border-top:1px dashed var(--line); padding:12px 0 4px; margin-top:8px; }
+  .mrow .t{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-family:'Manrope',sans-serif; font-weight:800; font-size:14px; }
+  .mrow .d{ font-size:12.5px; color:var(--ink-500); line-height:1.5; margin-top:5px; }
+  .mrow .d b{ color:var(--ink-700); }
+  .mbtns{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .mbtn{ min-height:44px; padding:0 14px; border-radius:12px; border:1.5px solid var(--line); background:#fff; font:inherit; font-weight:800; font-size:13px; color:var(--teal-700); cursor:pointer; }
+  .mbtn.pri{ background:linear-gradient(135deg,var(--teal-900),var(--teal-500)); color:#fff; border:none; }
+  .mhist{ margin-top:10px; font-size:12px; color:var(--ink-500); } .mhist summary{ cursor:pointer; font-weight:700; padding:6px 0; }
+  .mhist div{ padding:3px 0; border-bottom:1px solid #f0f5f3; }
+  .pctbig{ font:800 54px 'Manrope',sans-serif; text-align:center; line-height:1; margin:10px 0 2px; } .pctbig small{ font-size:22px; }
+  .pctnote{ text-align:center; font-size:13px; font-weight:700; margin-bottom:6px; min-height:19px; }
+  input[type=range]{ width:100%; height:44px; accent-color:var(--teal-500); }
+  input[type=number]{ width:100%; height:48px; border-radius:12px; border:1.5px solid var(--line); padding:0 13px; font:inherit; font-size:15px; color:var(--ink-700); background:#fff; }
+  .prev{ margin-top:12px; padding:11px 13px; border-radius:14px; background:var(--mint-100); font-size:13px; line-height:1.5; color:var(--teal-900); }
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
@@ -72,12 +90,15 @@
 <body>
 <div class="wrap">
   <div class="head">
-    <div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>Dokumen Kenderaan</h1></div>
+    <div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>Kenderaan</h1></div>
     <a class="back" href="./dashboard.html">← Dashboard</a>
   </div>
 
   <h2>Cukai jalan kenderaan</h2>
   <div id="vehicles"><div class="empty"><div class="spin"></div>Memuatkan…</div></div>
+
+  <h2 id="maintTitle">Penyelenggaraan — minyak enjin &amp; bateri</h2>
+  <div id="maint"><div class="empty"><div class="spin"></div>Memuatkan…</div></div>
 
   <h2 id="licTitle">Lesen memandu</h2>
   <div id="licences"></div>
@@ -92,15 +113,16 @@
   <label>Gambar dokumen (pilihan)</label>
   <div class="photo">
     <img id="shPreview" alt="">
-    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <button type="button" class="pbtn" onclick="document.getElementById('shFile').click()">📷 Kamera</button>
-      <button type="button" class="pbtn" onclick="document.getElementById('shFileG').click()">🖼️ Galeri</button>
-    </div>
-    <input type="file" id="shFile" accept="image/*" capture="environment" hidden>
-    <input type="file" id="shFileG" accept="image/*" hidden>
+    <button type="button" class="pbtn" onclick="document.getElementById('shFile').click()">📷 Ambil gambar / pilih dari galeri</button>
+    <input type="file" id="shFile" accept="image/*" hidden>
   </div>
   <div class="hint">Gambar disimpan dalam folder “Dokumen Pemandu” bersama gambar staf.</div>
   <div class="acts"><button class="btn ghost" onclick="closeSheet()">Batal</button><button class="btn primary" id="shSave" onclick="save()">Simpan</button></div>
+</div></div>
+<div class="sheet" id="msheet"><div class="box">
+  <h3 id="mTitle">Rekod</h3><p id="mSub"></p>
+  <div id="mBody"></div>
+  <div class="acts"><button class="btn ghost" onclick="closeM()">Batal</button><button class="btn primary" id="mSave" onclick="saveM()">Simpan</button></div>
 </div></div>
 <div class="toast" id="toast"></div>
 
@@ -155,7 +177,7 @@ function render(){
 }
 
 function openSheet(title, sub, expiry, extra){
-  imageB64 = ''; $('shFile').value = ''; $('shFileG').value = ''; $('shPreview').className = ''; $('shPreview').removeAttribute('src');
+  imageB64 = ''; $('shFile').value = ''; $('shPreview').className = ''; $('shPreview').removeAttribute('src');
   $('shTitle').textContent = title; $('shSub').textContent = sub; $('shExtra').innerHTML = extra || '';
   $('shExpiry').value = expiry || ''; $('shSave').disabled = false; $('shSave').textContent = 'Simpan';
   $('sheet').classList.add('show');
@@ -188,7 +210,6 @@ const onDocPicked = e => {
   img.src = URL.createObjectURL(f); e.target.value = '';
 };
 $('shFile').addEventListener('change', onDocPicked);
-$('shFileG').addEventListener('change', onDocPicked);
 
 async function save(){
   if(saving || !editing) return;
@@ -210,7 +231,107 @@ async function save(){
   saving = false;
 }
 
+/* ================= Penyelenggaraan: minyak enjin + bateri ================= */
+let mv = null, mEdit = null, mSaving = false;
+const kmFmt = n => n === null || n === undefined ? '—' : Number(n).toLocaleString('en-US') + ' km';
+async function loadMaint(){
+  try{
+    const d = await api({ action:'getVehicleMaint' });
+    if(!d.ok){ $('maint').innerHTML = '<div class="empty">' + esc(d.error || 'Tidak dapat memuatkan') + '</div>'; return; }
+    mv = d; renderMaint();
+  }catch(e){ $('maint').innerHTML = '<div class="empty">Sambungan gagal.<br><br><button class="edit" onclick="loadMaint()">Cuba lagi</button></div>'; }
+}
+function lvPill(level, text){ return '<span class="pill ' + level + '">' + esc(text) + '</span>'; }
+function histLine(x){
+  const t = x.type === 'OIL' ? '🛢 Tukar minyak' + (x.km !== null ? ' pada ' + kmFmt(x.km) : '') + (x.nextKm !== null ? ' → seterusnya ' + kmFmt(x.nextKm) : '')
+          : x.type === 'BAT_CHANGE' ? '🔋 Tukar bateri' : '🔋 Semakan bateri ' + (x.pct !== null ? x.pct + '%' : '');
+  return '<div>' + fmtDate(x.date) + ' · ' + t + ' <span style="opacity:.7">· ' + esc(String(x.by).split(' ').slice(0, 2).join(' ')) + '</span></div>';
+}
+function renderMaint(){
+  $('maint').innerHTML = mv.vehicles.map((v, i) => {
+    const o = v.oil, b = v.bat, real = v.plate && !/^ISI/i.test(v.plate);
+    const oilLine = o.set
+      ? '<div class="d">Tukar terakhir <b>' + fmtDate(o.lastDate) + '</b>' + (o.lastKm !== null ? ' pada <b>' + kmFmt(o.lastKm) + '</b>' : '') + '<br>Seterusnya: <b>' + (o.nextKm ? kmFmt(o.nextKm) : '—') + '</b> atau <b>' + fmtDate(o.nextDate) + '</b> (mana yang dahulu)' +
+        (o.odo ? '<br>Odometer terkini ' + kmFmt(o.odo) + ' (' + fmtDate(o.odoDate) + ')' : '<br><span style="color:var(--amber)">Odometer terkini belum ada — isi odometer pada resit minyak / checklist.</span>') + '</div>'
+      : '<div class="d">Belum direkod. Isi odometer semasa tukar minyak dan/atau odometer untuk tukar seterusnya.</div>';
+    const batLine = b.set
+      ? '<div class="d">Tukar terakhir <b>' + fmtDate(b.lastDate) + '</b> · umur <b>' + b.ageMonths + ' bulan</b>' + (b.pct !== null ? '<br>Kesihatan terakhir: <b>' + b.pct + '%</b>' : '') +
+        (b.ageMonths >= 12 ? (b.needConfirm ? '<br><b style="color:var(--red-600)">Sila sahkan peratus kesihatan bateri bulan ini.</b>' : '<br>Disemak bulan ini ✓') : '<br>Semakan bulanan bermula selepas bateri berumur 1 tahun.') + '</div>'
+      : '<div class="d">Belum direkod. Isi tarikh bateri terakhir ditukar.</div>';
+    const ed = v.canEdit;
+    return '<div class="mcard"><div class="mh"><div class="ic">' + (/ambulan/i.test(v.name) ? '🚑' : '🚐') + '</div><div class="mid"><div class="nm">' + esc(v.name) + '</div><div class="sub">' + esc(real ? v.plate : 'No. plat belum diisi') + '</div></div></div>' +
+      '<div class="mrow"><div class="t"><span>🛢 Minyak enjin</span>' + lvPill(o.level, o.set ? o.text : 'Belum direkod') + '</div>' + oilLine +
+        (ed ? '<div class="mbtns"><button class="mbtn pri" onclick="openOil(' + i + ')">Rekod tukar minyak</button></div>' : '') + '</div>' +
+      '<div class="mrow"><div class="t"><span>🔋 Bateri</span>' + lvPill(b.level, b.set ? b.text : 'Belum direkod') + '</div>' + batLine +
+        (ed ? '<div class="mbtns">' + (b.set ? '<button class="mbtn' + (b.needConfirm ? ' pri' : '') + '" onclick="openBatCheck(' + i + ')">Semak kesihatan (%)</button>' : '') + '<button class="mbtn" onclick="openBatChange(' + i + ')">Rekod tukar bateri</button></div>' : '') + '</div>' +
+      (v.history.length ? '<details class="mhist"><summary>Sejarah terkini</summary>' + v.history.map(histLine).join('') + '</details>' : '') + '</div>';
+  }).join('') || '<div class="empty">Tiada kenderaan.</div>';
+}
+
+function openM(title, sub, body, btn){
+  mSaving = false; $('mTitle').textContent = title; $('mSub').textContent = sub; $('mBody').innerHTML = body;
+  $('mSave').disabled = false; $('mSave').textContent = btn || 'Simpan'; $('msheet').classList.add('show');
+}
+function closeM(){ $('msheet').classList.remove('show'); mEdit = null; }
+function addMonthsStr(d, n){
+  const p = d.split('-').map(Number), t = new Date(Date.UTC(p[0], p[1] - 1 + n + 1, 0)).getUTCDate(), x = new Date(Date.UTC(p[0], p[1] - 1 + n, Math.min(p[2], t)));
+  return x.getUTCFullYear() + '-' + ('0' + (x.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + x.getUTCDate()).slice(-2);
+}
+function oilPreview(){
+  const d = $('mDate').value, a = parseInt($('mLast').value, 10), n = parseInt($('mNext').value, 10), el = $('mPrev');
+  if(!d){ el.textContent = 'Pilih tarikh tukar minyak.'; return; }
+  let next = isNaN(n) ? (isNaN(a) ? null : a + mv.oilInterval) : n;
+  el.innerHTML = next === null ? 'Isi sekurang-kurangnya satu odometer.' : 'Tukar seterusnya pada <b>' + kmFmt(next) + '</b>' + (isNaN(n) ? ' (odometer semasa + ' + mv.oilInterval.toLocaleString('en-US') + ' km)' : '') + ' atau <b>' + fmtDate(addMonthsStr(d, 6)) + '</b> (+6 bulan) — mana yang dahulu.';
+}
+function openOil(i){
+  const v = mv.vehicles[i]; mEdit = { type:'oil', v };
+  openM('Rekod tukar minyak enjin', v.name + (v.plate ? ' · ' + v.plate : ''),
+    '<label for="mDate">Tarikh tukar minyak</label><input type="date" id="mDate" max="' + mv.today + '" value="' + mv.today + '">' +
+    '<div class="row2"><div><label for="mLast">Odometer semasa tukar (km)</label><input type="number" id="mLast" inputmode="numeric" min="0" placeholder="cth. 43500"' + (v.oil.odo ? ' value="' + v.oil.odo + '"' : '') + '></div>' +
+    '<div><label for="mNext">Tukar seterusnya pada (km)</label><input type="number" id="mNext" inputmode="numeric" min="0" placeholder="cth. 48500"></div></div>' +
+    '<div class="hint">Isi salah satu atau kedua-duanya. Jika hanya odometer semasa diisi, seterusnya dikira +' + mv.oilInterval.toLocaleString('en-US') + ' km. Tarikh seterusnya sentiasa +6 bulan.</div><div class="prev" id="mPrev"></div>');
+  ['mDate','mLast','mNext'].forEach(id => $(id).addEventListener('input', oilPreview)); oilPreview();
+}
+function openBatChange(i){
+  const v = mv.vehicles[i]; mEdit = { type:'batchg', v };
+  openM('Rekod tukar bateri', v.name + (v.plate ? ' · ' + v.plate : ''),
+    '<label for="mDate">Tarikh bateri ditukar</label><input type="date" id="mDate" max="' + mv.today + '" value="' + (v.bat.lastDate || mv.today) + '">' +
+    '<div class="hint">Selepas bateri berumur 1 tahun, pemandu perlu mengesahkan peratus kesihatan bateri <b>setiap bulan</b>. Menukar tarikh ini memulakan kiraan 1 tahun semula.</div>');
+}
+function pctColor(p){ return p < 60 ? '#C62839' : p < 75 ? '#B7791F' : '#0a8f5a'; }
+function pctNote(p){ return p < 60 ? 'Lemah — rancang tukar bateri' : p < 75 ? 'Sederhana — pantau rapat' : 'Baik'; }
+function paintPct(){ const p = parseInt($('mPct').value, 10); $('mPctBig').innerHTML = p + '<small>%</small>'; $('mPctBig').style.color = pctColor(p); $('mPctNote').textContent = pctNote(p); $('mPctNote').style.color = pctColor(p); }
+function openBatCheck(i){
+  const v = mv.vehicles[i]; mEdit = { type:'batchk', v };
+  openM('Kesihatan bateri bulan ini', v.name + ' · bateri berumur ' + v.bat.ageMonths + ' bulan',
+    '<div class="pctbig" id="mPctBig"></div><div class="pctnote" id="mPctNote"></div>' +
+    '<input type="range" id="mPct" min="1" max="100" step="1" value="' + (v.bat.pct || 80) + '" aria-label="Peratus kesihatan bateri">' +
+    '<div class="hint">Baca peratus kesihatan (SoH) daripada penguji bateri / paparan kenderaan. Di bawah 75% = amaran, di bawah 60% = penyelia dimaklumkan serta-merta.</div>', 'Sahkan');
+  $('mPct').addEventListener('input', paintPct); paintPct();
+}
+async function saveM(){
+  if(mSaving || !mEdit) return;
+  let body;
+  if(mEdit.type === 'oil'){
+    body = { action:'saveOilChange', id: mEdit.v.id, date: $('mDate').value, lastKm: $('mLast').value, nextKm: $('mNext').value };
+    if(!body.lastKm && !body.nextKm){ toast('Isi sekurang-kurangnya satu odometer', true); return; }
+  }else if(mEdit.type === 'batchg'){
+    body = { action:'saveBatteryChange', id: mEdit.v.id, date: $('mDate').value };
+  }else{
+    body = { action:'saveBatteryCheck', id: mEdit.v.id, pct: $('mPct').value };
+  }
+  mSaving = true; $('mSave').disabled = true; $('mSave').textContent = 'Menyimpan…';
+  try{
+    const r = await api(body);
+    if(!r.ok){ toast(r.error || 'Tidak berjaya', true); $('mSave').disabled = false; $('mSave').textContent = 'Simpan'; }
+    else{ toast(r.weak ? '⚠️ Disimpan — bateri lemah, penyelia dimaklumkan' : '✅ Disimpan'); closeM(); loadMaint(); }
+  }catch(e){ toast('Sambungan gagal. Cuba lagi.', true); $('mSave').disabled = false; $('mSave').textContent = 'Simpan'; }
+  mSaving = false;
+}
+$('msheet').addEventListener('pointerdown', e => { if(e.target === $('msheet')) closeM(); });
+
 load();
+loadMaint();
 </script>
 </body>
 </html>
