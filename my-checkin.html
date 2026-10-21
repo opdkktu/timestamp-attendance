@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>SIAGA · Check In / Out</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.12.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.12.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.20.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.20.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -107,6 +107,10 @@
   .start h2{ font-family:'Manrope',sans-serif; font-size:24px; margin:0 0 8px; }
   .start p{ font-size:14px; opacity:.85; margin:0 0 22px; max-width:300px; line-height:1.5; }
   .start .btn{ width:min(300px,100%); background:#fff; color:var(--teal-900); }
+  .start .btn.ghost-w{ background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,.55); margin-top:12px; }
+  .start .btn[hidden]{ display:none; }
+  .start .big-count{ font-family:'Manrope',sans-serif; font-size:44px; font-weight:800; letter-spacing:.02em; margin:0 0 14px; display:none; }
+  .start.standby .big-count{ display:block; }
 
   .flash{ position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:55; }
   .flash.go{ animation:flash .45s ease-out; }
@@ -148,8 +152,11 @@
 
 <div class="start" id="startScreen">
   <h2 id="startTitle">Check In</h2>
-  <p>Tekan untuk mula. Telefon akan meminta akses kamera &amp; lokasi (sekali sahaja).</p>
-  <button class="btn" onclick="beginStart()">Mula</button>
+  <div class="big-count" id="standbyCount">--:--</div>
+  <p id="startMsg">Tekan untuk mula. Telefon akan meminta akses kamera &amp; lokasi (sekali sahaja).</p>
+  <button class="btn" id="startGo" onclick="beginStart()">Mula</button>
+  <button class="btn ghost-w" id="startStandby" onclick="enterStandby()" hidden>⏰ Standby — buka automatik 5:00 PM</button>
+  <button class="btn ghost-w" id="startCancel" onclick="cancelStandby()" hidden>Batal standby</button>
 </div>
 
 <main class="app">
@@ -212,6 +219,8 @@ const MATCH_THRESHOLD = 0.5;
 const RECOGNIZE_STABLE_FRAMES = 2;      // was 3 — quicker, still two matching frames in a row
 const DETECTOR_INPUT = 224;              // smaller input = faster detection on phones
 const DESC_CACHE_KEY = 'kkah_my_desc_v1';
+const CO_AUTO_HOUR = 17;                 // auto-open Check Out at 5:00 PM (standby mode)
+const CO_STANDBY_FROM = 16;              // offer the standby choice from 4:00 PM
 const CHECKOUT_OPEN_HOUR = 13;           // mirrors CONFIG.CHECKOUT_OPEN_HOUR on the server (the server is the real gate)
 
 /* ---------------- Geofence config — Klinik Kesihatan Ayer Hitam ---------------- */
@@ -316,6 +325,9 @@ async function boot(){
     }else{ setMode('IN'); }
   }
 
+  // 1b) Check Out between 4:00 and 5:00 PM on a working day: leave now, or stand by and let it open by itself at 5:00 PM.
+  if(mode === 'OUT' && standbyOffered()){ showStandbyChoice(); return; }
+
   // 2) Start straight away when the phone already allowed camera + location; otherwise one friendly tap.
   if(await permissionsGranted()) beginStart();
   else $('startScreen').classList.add('show');
@@ -332,7 +344,39 @@ async function fetchToday(){
   return null; // carry on — the server still decides IN/OUT and enforces the rules
 }
 
-function openNowLocal(){ const d = new Date(), dow = d.getDay(); return !(dow >= 1 && dow <= 5) || d.getHours() >= CHECKOUT_OPEN_HOUR; }
+function openNowLocal(){ const d = new Date(), dow = d.getDay(); return (dow === 5 || dow === 6) || d.getHours() >= CHECKOUT_OPEN_HOUR; }   // Fri & Sat are non-working days → always open
+
+
+/* ===================== standby: Check Out opens by itself at 5:00 PM ===================== */
+let standbyTimer = null;
+function standbyOffered(){
+  const d = new Date(), dow = d.getDay(), wd = dow !== 5 && dow !== 6;
+  return wd && d.getHours() >= CO_STANDBY_FROM && d.getHours() < CO_AUTO_HOUR;
+}
+function showStandbyChoice(){
+  $('startScreen').classList.remove('standby');
+  $('startGo').hidden = false; $('startGo').textContent = 'Check Out sekarang';
+  $('startStandby').hidden = false; $('startCancel').hidden = true;
+  $('startMsg').textContent = 'Balik awal? Tekan Check Out sekarang. Menunggu jam 5:00 PM? Pilih Standby — skrin ini terbuka sendiri tepat jam 5:00 PM.';
+  $('startScreen').classList.add('show');
+}
+function enterStandby(){
+  audioCtx(); requestWake();                       // this tap unlocks sound + keeps the screen on
+  const ss = $('startScreen'); ss.classList.add('standby');
+  $('startGo').hidden = false; $('startGo').textContent = 'Check Out sekarang';
+  $('startStandby').hidden = true; $('startCancel').hidden = false;
+  $('startTitle').textContent = '⏰ Standby Check Out';
+  $('startMsg').textContent = 'Biarkan skrin ini terbuka. Kamera akan bermula automatik jam 5:00 PM.';
+  const tick = () => {
+    const d = new Date(), t = new Date(); t.setHours(CO_AUTO_HOUR, 0, 0, 0);
+    const left = Math.max(0, Math.ceil((t - d) / 1000));
+    if(left <= 0){ clearInterval(standbyTimer); standbyTimer = null; ss.classList.remove('standby'); $('startTitle').textContent = 'Check Out'; beginStart(); return; }
+    const m = Math.floor(left / 60), sec = left % 60;
+    $('standbyCount').textContent = String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  };
+  tick(); clearInterval(standbyTimer); standbyTimer = setInterval(tick, 1000);
+}
+function cancelStandby(){ clearInterval(standbyTimer); standbyTimer = null; showStandbyChoice(); $('startTitle').textContent = 'Check Out'; }
 
 async function permissionsGranted(){
   try{
@@ -367,7 +411,8 @@ function fmt12(hms){
 /* ===================== prepare (everything in parallel) ===================== */
 function beginStart(){
   audioCtx(); // this tap unlocks sound for the cues below
-  $('startScreen').classList.remove('show');
+  clearInterval(standbyTimer); standbyTimer = null;
+  $('startScreen').classList.remove('show', 'standby');
   init();
 }
 
