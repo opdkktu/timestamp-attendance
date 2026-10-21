@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>SIAGA · Mata &amp; Ranking</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.16.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.18.0">
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -34,7 +34,7 @@
   .divider{ height:2px; background:var(--line); margin:20px 16px 0; border-radius:2px; }
 
   /* ===== tiles with corner ribbons ===== */
-  .tiles{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px 6px; padding:20px 14px 6px; }
+  .tiles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(68px,1fr)); gap:10px 6px; padding:20px 14px 6px; }
   .tile{ text-align:center; position:relative; padding:0 2px; }
   .ti{ width:62px; height:62px; margin:0 auto; border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:28px; position:relative; background:#fff; border:1.5px solid var(--line); box-shadow:0 10px 22px -16px rgba(11,61,58,.6); }
   .tile.good .ti{ background:linear-gradient(180deg,#F1FBF6,#DDF3E8); border-color:#BFE6D2; } .tile.bad .ti{ background:linear-gradient(180deg,#FFF6F7,#FDE3E6); border-color:#F3C0C6; }
@@ -244,7 +244,7 @@ function render(){
   $('embRank').textContent = me ? '#' + me.rank : '–';
   const T = (cls, ico, label, val, rib, ribOk) => '<div class="tile ' + cls + '"><div class="ti" aria-hidden="true">' + ico + (rib ? '<span class="ribbon' + (ribOk ? ' ok' : '') + '">' + rib + '</span>' : '') + '</div><div class="tl">' + label + '<b>' + val + '</b></div></div>';
   $('tiles').innerHTML = me ? T('good', '✅', 'Tepat masa', me.onTime, me.onTime ? sgn(me.onTime * r.checkIn) : '', true) + T(me.late ? 'bad' : 'neu', '⏰', 'Lewat', me.late, me.late ? sgn(me.late * r.lateIn) : '') +
-    T('neu', '🚪', 'Check-out', me.outs, me.outs ? sgn(me.outs * r.checkOut) : '', true) + T(me.el ? 'bad' : 'neu', '🚨', 'EL', me.el, me.el ? sgn(me.el * r.el) : '') : '';
+    T('neu', '🚪', 'Check-out', me.outs, me.outs ? sgn(me.outs * r.checkOut) : '', true) + (r.locWindow ? T(me.loc ? 'good' : 'neu', '📍', 'Lokasi', me.loc || 0, me.loc ? sgn(me.loc * r.locWindow) : '', true) : '') + T(me.el ? 'bad' : 'neu', '🚨', 'EL', me.el, me.el ? sgn(me.el * r.el) : '') : '';
 
   // podium
   $('podTitle').textContent = d.isCurrent ? 'Podium bulan ini' : 'Juara ' + MONTHS[M - 1] + ' ' + Y;
@@ -281,13 +281,14 @@ function render(){
   // daily
   $('days').innerHTML = me && me.daily.length ? me.daily.slice().reverse().map(x => {
     const p = x.d.split('-').map(Number), dow = DOW[new Date(p[0], p[1] - 1, p[2]).getDay()];
-    const label = x.tag === 'el' ? 'Cuti kecemasan (EL)' : (x.in + ' masuk' + (x.out ? ' · ' + x.out + ' keluar' : ' · <span style="color:var(--amber);font-weight:600">tiada check-out</span>'));
-    const sub = x.tag === 'late' ? 'Lewat selepas ' + r.lateAfter : x.tag === 'ok' ? 'Tepat masa' : '';
+    const label = x.tag === 'loc' ? '📍 Semakan lokasi lengkap × ' + x.n : x.tag === 'el' ? 'Cuti kecemasan (EL)' : (x.in + ' masuk' + (x.out ? ' · ' + x.out + ' keluar' : ' · <span style="color:var(--amber);font-weight:600">tiada check-out</span>'));
+    const sub = x.tag === 'late' ? 'Lewat selepas ' + r.lateAfter : x.tag === 'ok' ? 'Tepat masa' : x.tag === 'loc' ? 'Berterusan di klinik sepanjang tetingkap' : '';
     return '<div class="day"><div class="d"><b>' + p[2] + '</b><span>' + dow + '</span></div><div class="t">' + label + (sub ? '<em>' + sub + '</em>' : '') + '</div><span class="chip ' + (x.pts > 0 ? 'pos' : x.pts < 0 ? 'neg' : 'zero') + '">' + sgn(x.pts) + '</span></div>';
   }).join('') : '<div class="empty">Tiada rekod anda untuk bulan ini.</div>';
 
   // rules
-  $('rules').innerHTML = '<table><tr><td>✅ Daftar masuk tepat masa (pada / sebelum ' + r.lateAfter + ')</td><td>' + sgn(r.checkIn) + '</td></tr><tr><td>⏰ Daftar masuk lewat (selepas ' + r.lateAfter + ')</td><td>' + sgn(r.lateIn) + '</td></tr><tr><td>🚪 Daftar keluar pada hari yang sama</td><td>' + sgn(r.checkOut) + '</td></tr><tr><td>🚨 Cuti kecemasan (EL), setiap hari</td><td>' + sgn(r.el) + '</td></tr></table>' +
+  $('rules').innerHTML = '<table><tr><td>✅ Daftar masuk tepat masa (pada / sebelum ' + r.lateAfter + ')</td><td>' + sgn(r.checkIn) + '</td></tr><tr><td>⏰ Daftar masuk lewat (selepas ' + r.lateAfter + ')</td><td>' + sgn(r.lateIn) + '</td></tr><tr><td>🚪 Daftar keluar pada hari yang sama</td><td>' + sgn(r.checkOut) + '</td></tr><tr><td>🚨 Cuti kecemasan (EL), setiap hari</td><td>' + sgn(r.el) + '</td></tr>' +
+    (r.locWindow ? '<tr><td>📍 Semakan lokasi lengkap — setiap tetingkap (' + (r.locWindows || []).join(' &amp; ') + '). Lokasi dihantar setiap 10 minit <b>tanpa putus</b> dan sentiasa di dalam klinik.</td><td>' + sgn(r.locWindow) + '</td></tr>' : '') + '</table>' +
     '<p class="fine">Jika mata sama: lebih banyak hari tepat masa, kemudian purata masa masuk lebih awal. Butiran lewat dan EL hanya dilihat oleh anda sendiri. Nama panggilan dipaparkan kepada semua; nama penuh hanya kepada penyelia.</p>';
 
   paintPhotos(); loadPhotos();
