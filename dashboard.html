@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.20.1">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.20.1">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.0.3.14">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.3.14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -921,7 +921,7 @@ function applyDriverMode_(on){
 try{ if(localStorage.getItem('kkah_nochk_' + (sessionStorage.getItem('kkah_ic') || '')) === '1') document.body.classList.add('no-chk'); }catch(e){}
 try{ if(localStorage.getItem('kkah_driver_mode_' + (sessionStorage.getItem('kkah_ic') || '')) === '1') document.body.classList.add('driver-mode'); }catch(e){}
 </script>
-<script src="./location-watch.js?v=1.20.1"></script>
+<script src="./location-watch.js?v=1.21.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
 const ONESIGNAL_APP_ID = 'e6ffc7a0-2572-46da-b664-2a03c6dd210a'; // public App ID — safe to expose client-side, unlike the REST API key
@@ -1470,7 +1470,7 @@ async function showWelcomeOverlay(){
 function saverNow_(){ const h = new Date().getHours(); return h >= 9 && h < 12; }
 async function initLocationBar(force){
   const text = document.getElementById('locationText');
-  if(force !== true && saverNow_()){ text.textContent = ''; return; }
+  if(force !== true && saverNow_()){ text.textContent = '🔋 Mod jimat bateri (9 pagi–12 tengah hari) · notifikasi tetap aktif'; return; }
   text.textContent = 'Mengesan lokasi…';
 
   if(!navigator.geolocation){
@@ -2405,6 +2405,9 @@ async function loadTodayAttendance(){
     renderAttTime(outEl, data.checkOut);
     setAttButtons(!!data.checkIn, !!data.checkOut, (data.canCheckOut !== undefined ? data.canCheckOut : coOpenNowLocal_()), data.opensAt || '1:00 PM');
     if(!data.checkIn && !data.checkOut) maybeCheckInPrompt_();
+    if(data.onCallOpen){   // on-call session running (e.g. 8 pm → 1 am): the Check Out button closes it
+      const bo = document.getElementById('attBtnOut'); if(bo){ bo.className = 'att-btn primary'; const l = bo.querySelector('span:last-child'); if(l) l.textContent = '🌙 On-Call Out · sejak ' + formatTime12_(data.onCallIn); window._attState = { hasIn: true, hasOut: true }; }
+    }
     setTimeout(coAutoShow_, 1500);   // 5 PM or later and still checked in → open Check Out by itself
   }catch(err){
     renderAttTime(inEl, '');
