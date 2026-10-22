@@ -309,11 +309,46 @@ window.addEventListener('unhandledrejection', (e) => { console.error('Unhandled 
 
 window.addEventListener('DOMContentLoaded', boot);
 
+/* ===== pre-load: everything slow is done BEFORE the scan screen opens (models, face fingerprint, location fix, server wake-up, camera) ===== */
+let warm = null, camWarm = false, warmedUp = false;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function prewarm(){
+  if(warm) return warm;
+  const modelsP = loadModels();
+  warm = { modelsP, descP: loadMyDescriptor(modelsP).catch(e => console.warn('prewarm descriptor:', e)) };
+  warmLoc();
+  return warm;
+}
+function warmLoc(){ try{ if(navigator.geolocation) navigator.geolocation.getCurrentPosition(() => {}, () => {}, { enableHighAccuracy:false, timeout:8000, maximumAge:60000 }); }catch(e){} }
+async function warmCamera(){
+  if(camWarm || stream) return; camWarm = true;
+  try{ prewarm(); abortRun = false; await startCamera(); await warm.modelsP; await warmUp(); warmedUp = true; }
+  catch(e){ camWarm = false; stopCamera(); }
+}
+
+/* ===== fail-safe: a scan that could not be sent is kept on the phone and re-sent (same reqId → never written twice) ===== */
+const PENDING_KEY = 'kkah_pending_att';
+function savePending(bodyStr){ try{ localStorage.setItem(PENDING_KEY, JSON.stringify({ body: bodyStr, at: Date.now() })); }catch(e){} }
+function clearPending(){ try{ localStorage.removeItem(PENDING_KEY); }catch(e){} }
+async function flushPending(){
+  let p = null; try{ p = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null'); }catch(e){}
+  if(!p || !p.body) return;
+  if(Date.now() - p.at > 6 * 3600000){ clearPending(); return; }
+  try{
+    const b = JSON.parse(p.body); b.token = sessionStorage.getItem('kkah_session_token'); b.retry = true;
+    const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(b) });
+    const d = await res.json();
+    if(d && (d.ok || !d.retry)) clearPending();
+  }catch(e){}
+}
+
 async function boot(){
   const token = sessionStorage.getItem('kkah_session_token');
   if(!token){ window.location.href = './login.html'; return; }
   video = $('video');
   setOffline(!navigator.onLine);
+  prewarm();                                    // start loading the face models + fingerprint right away, in parallel with the status check
+  await flushPending();                         // a scan that failed to send earlier goes out first
   setBanner('info', 'spin', 'Menyemak status hari ini…', '');
   $('prepTrack').classList.add('hide');
 
@@ -357,6 +392,7 @@ function standbyOffered(){
   const at = coAutoAt(); return wd && d >= new Date(at.getTime() - 60 * 60000) && d < at;   // the hour before it opens
 }
 function showStandbyChoice(){
+  prewarm();
   $('startScreen').classList.remove('standby');
   $('startGo').hidden = false; $('startGo').textContent = 'Check Out sekarang';
   $('startStandby').hidden = false; $('startCancel').hidden = true;
@@ -364,7 +400,7 @@ function showStandbyChoice(){
   $('startScreen').classList.add('show');
 }
 function enterStandby(){
-  audioCtx(); requestWake();                       // this tap unlocks sound + keeps the screen on
+  audioCtx(); requestWake(); prewarm();                       // this tap unlocks sound + keeps the screen on
   const ss = $('startScreen'); ss.classList.add('standby');
   $('startGo').hidden = false; $('startGo').textContent = 'Check Out sekarang';
   $('startStandby').hidden = true; $('startCancel').hidden = false;
@@ -374,12 +410,13 @@ function enterStandby(){
     const d = new Date(), t = coAutoAt();
     const left = Math.max(0, Math.ceil((t - d) / 1000));
     if(left <= 0){ clearInterval(standbyTimer); standbyTimer = null; ss.classList.remove('standby'); $('startTitle').textContent = 'Check Out'; beginStart(); return; }
+    if(left <= 45) warmCamera(); else if(left % 60 === 0) warmLoc();          // camera + location are ready before the countdown ends
     const m = Math.floor(left / 60), sec = left % 60;
     $('standbyCount').textContent = String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
   };
   tick(); clearInterval(standbyTimer); standbyTimer = setInterval(tick, 1000);
 }
-function cancelStandby(){ clearInterval(standbyTimer); standbyTimer = null; showStandbyChoice(); $('startTitle').textContent = 'Check Out'; }
+function cancelStandby(){ clearInterval(standbyTimer); standbyTimer = null; if(!scanning){ stopCamera(); camWarm = false; } showStandbyChoice(); $('startTitle').textContent = 'Check Out'; }
 
 async function permissionsGranted(){
   try{
@@ -394,6 +431,8 @@ function showComplete(t){
   $('stage').style.display = 'none'; showButtons(false, true);
   // Called back in for a case / on-call duty? One tap starts an on-call session (same face + clinic location checks).
   let b = $('btnOnCall');
+  const dw = new Date().getDay(), mn = new Date().getHours() * 60 + new Date().getMinutes(), ocFrom = (dw === 5 || dw === 6) ? 0 : (dw === 4 ? 16 * 60 : 17 * 60 + 30);
+  if(mn < ocFrom && mn >= 7 * 60){ const n = document.createElement('p'); n.style.cssText = 'text-align:center;font-size:13px;opacity:.8;margin:10px 0'; n.textContent = '🌙 On-call boleh bermula selepas ' + (dw === 4 ? '4:00 PM' : '5:30 PM') + '.'; $('btnDash').parentNode.insertBefore(n, $('btnDash')); return; }
   if(!b){ b = document.createElement('button'); b.id = 'btnOnCall'; b.className = 'btn primary'; b.style.marginTop = '12px'; b.textContent = '🌙 Check In On-Call'; b.onclick = startOnCall; $('btnDash').parentNode.insertBefore(b, $('btnDash')); }
 }
 let ocIntent = false;
@@ -448,13 +487,13 @@ async function init(){
   try{
     const modelsP = loadModels().then(() => { bump(35); });
     const locP    = requestLocation().then(() => { setStep('loc', 'done'); bump(15); });
-    const camP    = startCamera().then(() => { bump(15); });
-    const descP   = loadMyDescriptor(modelsP).then(() => { bump(25); });
+    const camP    = (stream && stream.active ? Promise.resolve() : startCamera()).then(() => { bump(15); });
+    const descP   = (warm ? warm.descP.then(() => myDescriptor ? null : loadMyDescriptor(modelsP)) : loadMyDescriptor(modelsP)).then(() => { bump(25); });
     await Promise.all([modelsP, locP, camP, descP]);
     if(my !== runId) return;
 
     setBanner('info', 'spin', 'Hampir siap…', 'Memanaskan pengecam muka');
-    await warmUp();
+    if(!warmedUp) await warmUp();
     if(my !== runId) return;
 
     $('prepTrack').classList.add('hide');
@@ -511,7 +550,9 @@ async function reverseGeocode(lat, lng){
 }
 
 /* The three models load at the same time (they used to load one after another). */
-function loadModels(){
+let modelsPromise = null;
+function loadModels(){ if(modelsReady) return Promise.resolve(); if(!modelsPromise) modelsPromise = loadModelsRaw_().catch(e => { modelsPromise = null; throw e; }); return modelsPromise; }
+function loadModelsRaw_(){
   if(modelsReady) return Promise.resolve();
   const wait = () => new Promise(r => { (function poll(){ if(window.faceapi) r(); else setTimeout(poll, 50); })(); }); // face-api.js is deferred
   return wait().then(() => Promise.all([
@@ -645,33 +686,35 @@ async function captureAndRecord(){
   await recordAttendance();
 }
 
+let attReq = null;
 async function recordAttendance(){
   if(recording) return; recording = true;
   setStep('save', 'active'); showButtons(false, false);
-  if(isOffline){ return failRecord('Tiada sambungan internet. Sambungkan semula dan tekan Cuba lagi.', true); }
-
-  try{
-    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 25000);
-    const res = await fetch(API_URL, {
-      method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, signal: ctl.signal,
-      body: JSON.stringify({
-        action:'logAttendance', token: sessionStorage.getItem('kkah_session_token'), name: myName,
-        lat: userLocation ? userLocation.lat : '', lng: userLocation ? userLocation.lng : '',
-        locName: userLocation ? userLocation.name : '',
-        oncall: ocIntent === true
-      })
-    });
-    clearTimeout(to);
-    const data = await res.json();
-
-    if(!data.ok){
-      if(data.code === 'CHECKOUT_TOO_EARLY'){ recording = false; setStep('save', 'error'); cue.fail(); return showLockedAfter(data); }
-      return failRecord(data.error || 'Tidak dapat merekod kehadiran.', false);
-    }
-    onSuccess(data);
-  }catch(err){
-    failRecord(err && err.name === 'AbortError' ? 'Sambungan terlalu perlahan. Gambar anda telah diambil — tekan Cuba lagi.' : 'Ralat rangkaian. Gambar anda telah diambil — tekan Cuba lagi.', true);
+  if(!attReq) attReq = { reqId: (myIc || 'u') + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8), ts: Date.now(), sent: false };
+  const mk = () => JSON.stringify({
+    action:'logAttendance', token: sessionStorage.getItem('kkah_session_token'), name: myName,
+    lat: userLocation ? userLocation.lat : '', lng: userLocation ? userLocation.lng : '', locName: userLocation ? userLocation.name : '',
+    oncall: ocIntent === true, reqId: attReq.reqId, clientTs: attReq.ts, retry: attReq.sent
+  });
+  const waits = [0, 1500, 3500, 7000];
+  for(let n = 0; n < waits.length; n++){
+    if(waits[n]){ setBanner('info', 'spin', 'Menghantar semula…', 'Cubaan ' + (n + 1) + ' daripada ' + waits.length + ' — jangan tutup skrin ini'); await sleep(waits[n]); }
+    if(isOffline){ continue; }
+    try{
+      const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 25000);
+      const body = mk(); attReq.sent = true;
+      const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, signal: ctl.signal, body });
+      clearTimeout(to);
+      const data = await res.json();
+      if(data.ok){ attReq = null; clearPending(); return onSuccess(data); }
+      if(data.code === 'CHECKOUT_TOO_EARLY'){ attReq = null; recording = false; setStep('save', 'error'); cue.fail(); return showLockedAfter(data); }
+      if(data.retry) continue;                                  // server busy → try again (same reqId)
+      attReq = null; return failRecord(data.error || 'Tidak dapat merekod kehadiran.', false);
+    }catch(err){ /* network / timeout → next attempt */ }
   }
+  // every attempt failed: keep the scan safely on the phone — it is sent automatically when the app is opened again
+  savePending(mk());
+  failRecord('Sambungan bermasalah. Rekod anda DISIMPAN pada telefon dan akan dihantar automatik. Tekan Cuba lagi sekarang, atau buka semula apl ini bila sambungan pulih.', true);
 }
 
 function showLockedAfter(data){
