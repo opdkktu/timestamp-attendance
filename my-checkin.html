@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>SIAGA · Check In / Out</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -155,7 +155,7 @@
   <div class="big-count" id="standbyCount">--:--</div>
   <p id="startMsg">Tekan untuk mula. Telefon akan meminta akses kamera &amp; lokasi (sekali sahaja).</p>
   <button class="btn" id="startGo" onclick="beginStart()">Mula</button>
-  <button class="btn ghost-w" id="startStandby" onclick="enterStandby()" hidden>⏰ Standby — buka automatik 5:00 PM</button>
+  <button class="btn ghost-w" id="startStandby" onclick="enterStandby()" hidden>⏰ Standby — buka automatik</button>
   <button class="btn ghost-w" id="startCancel" onclick="cancelStandby()" hidden>Batal standby</button>
 </div>
 
@@ -219,8 +219,9 @@ const MATCH_THRESHOLD = 0.5;
 const RECOGNIZE_STABLE_FRAMES = 2;      // was 3 — quicker, still two matching frames in a row
 const DETECTOR_INPUT = 224;              // smaller input = faster detection on phones
 const DESC_CACHE_KEY = 'kkah_my_desc_v1';
-const CO_AUTO_HOUR = 17;                 // auto-open Check Out at 5:00 PM (standby mode)
-const CO_STANDBY_FROM = 16;              // offer the standby choice from 4:00 PM
+/* auto-open Check Out: Thursday 3:30 PM, other working days 5:00 PM (standby mode) */
+function coAutoAt(){ const d = new Date(), t = new Date(); if(d.getDay() === 4) t.setHours(15, 30, 0, 0); else t.setHours(17, 0, 0, 0); return t; }
+function coAutoLabel(){ return new Date().getDay() === 4 ? '3:30 PM' : '5:00 PM'; }
 const CHECKOUT_OPEN_HOUR = 13;           // mirrors CONFIG.CHECKOUT_OPEN_HOUR on the server (the server is the real gate)
 
 /* ---------------- Geofence config — Klinik Kesihatan Ayer Hitam ---------------- */
@@ -353,13 +354,13 @@ function openNowLocal(){ const d = new Date(), dow = d.getDay(); return (dow ===
 let standbyTimer = null;
 function standbyOffered(){
   const d = new Date(), dow = d.getDay(), wd = dow !== 5 && dow !== 6;
-  return wd && d.getHours() >= CO_STANDBY_FROM && d.getHours() < CO_AUTO_HOUR;
+  const at = coAutoAt(); return wd && d >= new Date(at.getTime() - 60 * 60000) && d < at;   // the hour before it opens
 }
 function showStandbyChoice(){
   $('startScreen').classList.remove('standby');
   $('startGo').hidden = false; $('startGo').textContent = 'Check Out sekarang';
   $('startStandby').hidden = false; $('startCancel').hidden = true;
-  $('startMsg').textContent = 'Balik awal? Tekan Check Out sekarang. Menunggu jam 5:00 PM? Pilih Standby — skrin ini terbuka sendiri tepat jam 5:00 PM.';
+  $('startMsg').textContent = 'Balik awal? Tekan Check Out sekarang. Menunggu jam ' + coAutoLabel() + '? Pilih Standby — skrin ini terbuka sendiri tepat jam ' + coAutoLabel() + '.';
   $('startScreen').classList.add('show');
 }
 function enterStandby(){
@@ -370,7 +371,7 @@ function enterStandby(){
   $('startTitle').textContent = '⏰ Standby Check Out';
   $('startMsg').textContent = 'Biarkan skrin ini terbuka. Kamera akan bermula automatik jam 5:00 PM.';
   const tick = () => {
-    const d = new Date(), t = new Date(); t.setHours(CO_AUTO_HOUR, 0, 0, 0);
+    const d = new Date(), t = coAutoAt();
     const left = Math.max(0, Math.ceil((t - d) / 1000));
     if(left <= 0){ clearInterval(standbyTimer); standbyTimer = null; ss.classList.remove('standby'); $('startTitle').textContent = 'Check Out'; beginStart(); return; }
     const m = Math.floor(left / 60), sec = left % 60;
