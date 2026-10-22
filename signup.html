@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Sign Up</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.20.1">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.20.1">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -39,7 +39,7 @@
 
   .field{ margin-bottom:14px; }
   .field label{ font-size:12px; font-weight:600; color:var(--ink-500); display:block; margin-bottom:6px; }
-  input[type=text], input[type=email], input[type=password]{
+  input[type=text], input[type=email], input[type=password], input[type=tel]{
     width:100%; padding:11px 13px; border-radius:12px; font-size:14px;
     border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700);
   }
@@ -53,6 +53,14 @@
   .ring{ position:absolute; inset:0; border-radius:50%; border:3px solid var(--line); transition:border-color .4s ease; }
   .ring.ready{ border-color:var(--teal-500); }
   .ring.captured{ border-color:var(--green-500); box-shadow:0 0 0 8px rgba(47,174,96,0.15); }
+  .fsteps{ list-style:none; margin:0 0 14px; padding:12px 14px; border-radius:14px; background:var(--mint-050); border:1px solid var(--line); display:none; }
+  .fsteps.show{ display:block; }
+  .fsteps li{ display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.4; padding:5px 0; color:var(--ink-500); }
+  .fsteps li i{ flex:0 0 20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-style:normal; font-size:12px; font-weight:800; background:var(--line); color:#fff; }
+  .fsteps li.run{ color:var(--ink-700); font-weight:600; } .fsteps li.run i{ background:var(--gold-500); animation:fsp 1s infinite; }
+  .fsteps li.ok{ color:var(--ink-700); } .fsteps li.ok i{ background:var(--green-500); }
+  .fsteps li.err{ color:var(--red-500); font-weight:600; } .fsteps li.err i{ background:var(--red-500); }
+  @keyframes fsp{ 50%{ opacity:.45; } }
   .camera-status{ text-align:center; font-size:12px; color:var(--ink-500); margin-bottom:10px; }
   .camera-actions{ display:flex; gap:10px; margin-bottom:16px; }
   .camera-actions .btn{ margin-top:0; }
@@ -89,6 +97,7 @@
   .confirm-icon svg{ width:28px; height:28px; }
   .confirm-text{ text-align:center; font-size:14px; color:var(--ink-500); margin-bottom:20px; line-height:1.6; }
 </style>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
 </head>
@@ -114,6 +123,11 @@
           <canvas id="snapshotCanvas"></canvas>
         </div>
         <div class="camera-status" id="camStatus">Starting camera…</div>
+        <ul class="fsteps" id="fSteps" aria-live="polite">
+          <li id="fs1"><i>1</i><span>Gambar diambil</span></li>
+          <li id="fs2"><i>2</i><span>Membaca faceprint daripada gambar</span></li>
+          <li id="fs3"><i>3</i><span>Ujian pengecaman muka (kamera sebenar)</span></li>
+        </ul>
         <div class="camera-actions">
           <button class="btn" id="captureBtn" onclick="capturePhoto()" disabled>Capture Photo</button>
           <button class="btn outline" id="retakeBtn" onclick="retakePhoto()" style="display:none;">Retake</button>
@@ -145,6 +159,7 @@
       <div class="confirm-icon">
         <svg viewBox="0 0 24 24" fill="none"><path d="M4 6l8 6 8-6M4 6h16v12H4V6z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
+      <ul class="fsteps show" id="doneSteps" style="display:none;margin-top:4px"></ul>
       <div class="confirm-text">We've sent a verification link to your email. Click it to activate your account, then come back and log in.</div>
       <button class="btn outline" onclick="handleResend()" id="resendBtn">Resend Email</button>
       <div class="login-link" style="margin-top:16px;"><a href="./login.html">Back to Log In</a></div>
@@ -166,12 +181,58 @@ const camStatus = document.getElementById('camStatus');
 const captureBtn = document.getElementById('captureBtn');
 const retakeBtn = document.getElementById('retakeBtn');
 
-window.addEventListener('DOMContentLoaded', startCamera);
+window.addEventListener('DOMContentLoaded', () => { startCamera(); loadFaceModels().catch(() => {}); });
+
+/* ---------- face check BEFORE the account is created: a photo the check-in cannot read is the #1 reason a new account fails to check in ---------- */
+const MODEL_URL = './models', MATCH_THRESHOLD = 0.5;
+let faceDesc = null, faceOk = false, modelsP = null, analyseRun = 0;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function loadFaceModels(){
+  if(!modelsP) modelsP = new Promise(r => { (function poll(){ if(window.faceapi) r(); else setTimeout(poll, 50); })(); })
+    .then(() => Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)]))
+    .catch(e => { modelsP = null; throw e; });
+  return modelsP;
+}
+function fstep(n, state, text){
+  const li = document.getElementById('fs' + n); li.className = state;
+  li.querySelector('i').textContent = state === 'ok' ? '✓' : state === 'err' ? '!' : n;
+  if(text) li.querySelector('span').textContent = text;
+}
+async function analysePhoto(){
+  const my = ++analyseRun; faceOk = false; faceDesc = null;
+  document.getElementById('fSteps').classList.add('show');
+  fstep(1, 'ok', 'Gambar diambil'); fstep(2, 'run', 'Membaca faceprint daripada gambar…'); fstep(3, '', 'Ujian pengecaman muka (kamera sebenar)');
+  try{
+    await loadFaceModels();
+    const dets = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptors();
+    if(my !== analyseRun) return;
+    if(!dets.length){ fstep(2, 'err', 'Tiada muka dikesan. Tekan Retake — pastikan muka penuh dalam bulatan, cahaya terang, tanpa topi/pelitup.'); return; }
+    if(dets.length > 1){ fstep(2, 'err', 'Lebih daripada satu muka dikesan. Hanya anda sahaja dalam gambar — tekan Retake.'); return; }
+    faceDesc = dets[0].descriptor;
+    fstep(2, 'ok', 'Faceprint berjaya dibaca (' + Math.round(dets[0].detection.score * 100) + '% yakin)');
+  }catch(e){ fstep(2, 'err', 'Tidak dapat memuatkan pengecam muka. Semak internet dan muat semula halaman.'); return; }
+
+  // trial recognition with the live camera, exactly as check-in will do it
+  fstep(3, 'run', 'Ujian pengecaman — pandang terus ke kamera…');
+  viewfinder.classList.remove('captured'); camRing.classList.remove('captured'); camRing.classList.add('ready');
+  let best = 9, hits = 0; const t0 = Date.now();
+  while(Date.now() - t0 < 10000 && my === analyseRun){
+    try{
+      const d = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptor();
+      if(d){ const dist = faceapi.euclideanDistance(d.descriptor, faceDesc); best = Math.min(best, dist); if(dist <= MATCH_THRESHOLD){ if(++hits >= 2) break; } else hits = 0; }
+    }catch(e){}
+    await sleep(90);
+  }
+  if(my !== analyseRun) return;
+  viewfinder.classList.add('captured'); camRing.classList.remove('ready'); camRing.classList.add('captured');
+  if(hits >= 2){ faceOk = true; fstep(3, 'ok', 'Padanan berjaya (jarak ' + best.toFixed(2) + ') — akaun anda akan dapat Check In dengan lancar'); camStatus.textContent = 'Muka disahkan ✓'; }
+  else fstep(3, 'err', 'Padanan lemah' + (best < 9 ? ' (jarak ' + best.toFixed(2) + ')' : ' — tiada muka dikesan') + '. Tekan Retake dengan cahaya lebih terang dan muka menghadap kamera.');
+}
 
 async function startCamera(){
   camStatus.textContent = 'Starting camera…';
   try{
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { width:320, height:320 } });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:{ ideal:640 }, height:{ ideal:480 } } });
     video.srcObject = stream;
     await new Promise(r => video.onloadedmetadata = r);
     camRing.classList.add('ready');
@@ -184,16 +245,19 @@ async function startCamera(){
 }
 
 function capturePhoto(){
-  canvas.width = 240; canvas.height = 240;
-  canvas.getContext('2d').drawImage(video, 0, 0, 240, 240);
-  selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+  const vw = video.videoWidth || 480, vh = video.videoHeight || 480, side = Math.min(vw, vh), S = 400;   // centred square crop at a size the face reader likes
+  canvas.width = S; canvas.height = S;
+  canvas.getContext('2d').drawImage(video, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, S, S);
+  selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.9);
   viewfinder.classList.add('captured');
   camRing.classList.remove('ready'); camRing.classList.add('captured');
   camStatus.textContent = 'Photo captured';
   captureBtn.style.display = 'none'; retakeBtn.style.display = 'inline-block';
+  analysePhoto();
 }
 
 function retakePhoto(){
+  analyseRun++; faceOk = false; faceDesc = null; document.getElementById('fSteps').classList.remove('show');
   selectedImageBase64 = null;
   photoSkipped = false;
   viewfinder.classList.remove('captured'); camRing.classList.remove('captured'); camRing.classList.add('ready');
@@ -209,7 +273,7 @@ function retakePhoto(){
  */
 let photoSkipped = false;
 function skipPhoto(e){
-  e.preventDefault();
+  e.preventDefault(); analyseRun++; document.getElementById('fSteps').classList.remove('show');
   photoSkipped = true;
   camStatus.textContent = 'Skipped — will use the photo already on file, if any';
   showBanner(null);
@@ -242,6 +306,7 @@ async function handleSignup(){
   if(!/^(\+?60|0)?1?\d{8,10}$/.test(phone.replace(/[\s-]/g, ''))){ showBanner('Please enter a valid phone number, e.g. 0123456789.'); return; }
   if(!selectedImageBase64 && !photoSkipped){ showBanner('Please capture a photo, or tap "Skip this step" if one is already on file.'); return; }
 
+  if(selectedImageBase64 && !photoSkipped && !faceOk){ showBanner('Pengesahan muka belum lulus. Tunggu semua langkah di bawah kamera siap (✓), atau tekan Retake.'); return; }
   const btn = document.getElementById('signupBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Creating account…';
   showBanner(null);
@@ -255,6 +320,9 @@ async function handleSignup(){
     if(!data.ok){ showBanner(data.error || 'Could not create account.'); }
     else{
       signedUpIc = data.ic;
+      try{ if(faceDesc) localStorage.setItem('kkah_my_desc_v1', JSON.stringify({ ic: data.ic || ic, name, hash: '', at: Date.now(), desc: Array.from(faceDesc) })); }catch(e){}   // check-in is instant on this phone
+      const ds = document.getElementById('doneSteps');
+      if(ds){ ds.style.display = 'block'; ds.innerHTML = ['Gambar & akaun dimuat naik', faceDesc ? 'Faceprint dibaca & disimpan pada telefon ini' : 'Menggunakan gambar sedia ada', faceDesc ? 'Ujian pengecaman muka lulus' : 'Gambar sedia ada akan disemak semasa Check In'].map(t => '<li class="ok"><i>✓</i><span>' + t + '</span></li>').join(''); }
       if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
       document.getElementById('stepForm').classList.remove('show');
       document.getElementById('stepConfirm').classList.add('show');
