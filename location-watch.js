@@ -32,6 +32,7 @@
     if (document.getElementById('lwCss')) return;
     var s = document.createElement('style'); s.id = 'lwCss';
     s.textContent =
+      '.lw-ptoast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:9200;background:#0B3D3A;color:#fff;padding:11px 18px;border-radius:99px;font:600 14px Inter,sans-serif;box-shadow:0 14px 30px -10px rgba(0,0,0,.45);animation:lwUp .35s ease both;transition:opacity .4s}.lw-ptoast.out{opacity:0}@keyframes lwUp{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}' +
       '.lw-chip{margin:12px 16px;border-radius:18px;padding:12px 14px;background:#fff;border:1.5px solid #DCEAE6;display:flex;gap:12px;align-items:center;font-family:Inter,sans-serif;box-shadow:0 12px 30px -24px rgba(11,61,58,.5)}' +
       '.lw-chip .ic{width:40px;height:40px;border-radius:13px;background:#EAF6F2;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}' +
       '.lw-chip .tx{flex:1;min-width:0;font-size:13px;line-height:1.45;color:#1E2B29}.lw-chip .tx b{font-family:Manrope,sans-serif;font-weight:800;font-size:14px;display:block}' +
@@ -78,15 +79,13 @@
 
   function pointsOverlay(a) {
     css();
-    var ov = document.createElement('div'); ov.className = 'lw-pts'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Mata diperoleh');
-    ov.innerHTML = '<div class="lw-pcard"><div class="lw-ptro">🎯</div><div class="lw-pnum">+' + a.pts + '<small>mata</small></div>' +
-      '<h3>Semakan lokasi lengkap!</h3><p>Anda kekal berterusan di dalam klinik sepanjang tetingkap <b>' + a.win + '</b>. Terima kasih!</p>' +
-      '<a class="lw-pbtn" href="./points.html#rules">Lihat pecahan mata</a><button class="lw-pbtn g" type="button">Tutup</button></div>';
-    document.body.appendChild(ov);
-    ov.querySelector('button').onclick = function () { ov.remove(); };
-    try { if (window.confetti) window.confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } }); } catch (e) {}
-    try { if (navigator.vibrate) navigator.vibrate([80, 50, 80]); } catch (e) {}
+    var t = document.createElement('div'); t.className = 'lw-ptoast'; t.setAttribute('role', 'status');
+    t.innerHTML = '🎯 <b>+' + a.pts + ' mata</b> · semakan lokasi';
+    document.body.appendChild(t);
+    try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+    setTimeout(function () { t.classList.add('out'); setTimeout(function () { t.remove(); }, 400); }, 2200);
   }
+
 
   function consentSheet() {
     return new Promise(function (resolve) {
@@ -94,7 +93,7 @@
       var ov = document.createElement('div'); ov.className = 'lw-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
       ov.innerHTML = '<div class="lw-box"><h3>📍 Semakan lokasi waktu bertugas</h3>' +
         '<p>Pada <b>' + wins().join(' dan ') + '</b>, selepas anda daftar masuk dan sebelum daftar keluar, SIAGA akan menyemak lokasi anda <b>setiap ' + cfg.intervalMin + ' minit</b> apabila aplikasi dibuka.</p>' +
-        '<ul><li>🎯 Setiap tetingkap yang disemak <b>berterusan di dalam klinik</b> memberi <b>+' + (cfg.locPts || 5) + ' mata</b>.</li></ul>' +
+        '<ul><li>🎯 Setiap semakan di dalam klinik memberi <b>+' + (cfg.locPts || 1) + ' mata</b>.</li></ul>' +
         '<ul><li>Hanya <b>jarak dari klinik</b> dan masa direkod — bukan laluan perjalanan.</li><li>Jika anda di luar kawasan klinik (' + cfg.radiusM + ' m) beberapa bacaan berturut-turut, <b>penyelia dimaklumkan</b>.</li>' +
         '<li>Bertugas di luar (lawatan, ambulans, kursus)? Tekan <b>“Tugas luar”</b> dan tiada amaran dihantar.</li><li>Rekod dipadam automatik selepas 90 hari.</li></ul>' +
         '<p style="font-size:12.5px;color:#5B6B68">Telefon mungkin meminta kebenaran lokasi — sila pilih <b>Benarkan</b>.</p>' +
@@ -115,9 +114,7 @@
   function ptsLink() { return ' <a href="./points.html#rules">Lihat pecahan mata ›</a>'; }
   function winLine(res) {
     if (!res.win) return '';
-    if (res.win.done) return '<br>🎯 Tetingkap ' + res.win.label + ' lengkap — mata telah diberi.' + ptsLink();
-    if (res.win.broken) return '<br>Tetingkap ' + res.win.label + ': kesinambungan terputus — tiada mata untuk tetingkap ini.' + ptsLink();
-    return '<br>🎯 Tetingkap ' + res.win.label + ' · ' + res.win.count + ' bacaan — kekal berterusan untuk <b>+' + (res.locPts || 5) + ' mata</b>.' + ptsLink();
+    return '<br>🎯 <b>+' + (res.locPts || 1) + ' mata</b> setiap semakan di klinik · ' + res.win.inside + ' semakan dalam ' + res.win.label + '.' + ptsLink();
   }
   function fmtOk(res) {
     if (res.outDuty) return ['ok', '🚗', 'Tugas luar', 'Tiada amaran lokasi dihantar kepada penyelia.', true];
@@ -180,9 +177,7 @@
       if (!s || !s.ok) return;
       cfg = s;
       if (s.exempt || !s.enabled || s.reason === 'readonly' || s.reason === 'notin' || s.reason === 'checkedout') { hide(); return; }
-      if (s.reason === 'outside_window' && s.checkedIn !== false) {
-        render('', '📍', 'Semakan lokasi: ' + wins().join(' & '), 'Hantar lokasi setiap ' + s.intervalMin + ' minit dalam tetingkap ini. Berterusan di klinik = <b>+' + (s.locPts || 5) + ' mata</b> setiap tetingkap.' + ptsLink() + steps(s.today), false); return;
-      }
+      if (s.reason === 'outside_window') { hide(); return; }     // nothing to explain outside the check windows
       if (s.active) {
         if (s.me && s.me.lastTime && !lastRes) { lastRes = { time: s.me.lastTime, inside: s.me.inside, dist: s.me.lastDist, nextInMin: s.intervalMin, outDuty: s.me.outDuty }; var f = fmtOk(lastRes); render(f[0], f[1], f[2], f[3], f[4]); }
         else if (!lastRes) render('', '📍', 'Semakan lokasi aktif', 'Menyemak lokasi anda…' + steps(s.today), true);
