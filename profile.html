@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · My Profile</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.20.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.20.1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SIAGA">
+
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -110,6 +115,10 @@
       <div class="info-box"><div class="label">Age</div><div class="value" id="profileAge">—</div></div>
       <div class="info-box"><div class="label">Birthday</div><div class="value" id="profileDob">—</div></div>
     </div>
+
+    <div class="section-title">Hubungan &amp; BLS</div>
+    <div class="field"><label for="fPhone">Nombor telefon</label><input type="tel" id="fPhone" inputmode="tel" placeholder="0123456789" autocomplete="tel"></div>
+    <div class="field"><label for="fBls">Tarikh BLS <span style="color:#0a8f5a;font-weight:800">· kemas kini = +5 mata</span></label><input type="date" id="fBls"></div>
 
     <div class="section-title">Maklumat Perkhidmatan</div>
     <div class="banner error" id="svcBanner"></div>
@@ -244,6 +253,8 @@ function recalcDurations(){
   document.getElementById('calcP').textContent = o ? (durationText(o, today) || '—') : '—';
 }
 function fillServiceForm(d){
+  document.getElementById('fPhone').value = d.phone || '';
+  document.getElementById('fBls').value = d.blsExpiry || '';
   document.getElementById('fL').value = d.tarikhMasukKkah || '';
   document.getElementById('fN').value = d.tarikhKeluar || '';
   document.getElementById('fO').value = d.tarikhLantikan || '';
@@ -271,6 +282,8 @@ async function saveServiceInfo(){
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action: 'updateMyProfile', token: sessionStorage.getItem('kkah_session_token'),
+        phone: document.getElementById('fPhone').value,
+        blsExpiry: document.getElementById('fBls').value,
         tarikhMasukKkah: document.getElementById('fL').value,
         tarikhKeluar: document.getElementById('fN').value,
         tarikhLantikan: document.getElementById('fO').value,
@@ -282,6 +295,7 @@ async function saveServiceInfo(){
     const data = await res.json();
     if(!data.ok) throw new Error(data.error || 'Gagal menyimpan.');
     fillServiceForm(data);
+    ok.textContent = data.blsPoints ? '✓ Maklumat disimpan. +' + data.blsPoints + ' mata untuk kemas kini BLS 🎉' : '✓ Maklumat disimpan.';
     ok.classList.add('show');
   }catch(e){
     err.textContent = e.message; err.classList.add('show');
