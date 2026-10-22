@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.0.3.14">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.3.14">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.0.3.15">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.3.15">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -598,7 +598,7 @@
 
 <style>
   .inbox-badge{ background:#dc2626; color:#fff; font-size:11px; font-weight:800; min-width:20px; height:20px; padding:0 6px; border-radius:99px; display:inline-flex; align-items:center; justify-content:center; }
-  .menu-btn.has-unread{ position:relative; }
+  .hbtn.menu-btn.has-unread{ position:absolute; }   /* keep the gear at the top-right when the unread dot shows */
   .menu-btn.has-unread::after{ content:''; position:absolute; top:6px; right:6px; width:10px; height:10px; border-radius:50%; background:#dc2626; border:2px solid #fff; }
   .inbox-ov{ position:fixed; inset:0; z-index:160; background:var(--bg,#F3F8F6); display:none; flex-direction:column; }
   .inbox-ov.show{ display:flex; }
@@ -921,7 +921,7 @@ function applyDriverMode_(on){
 try{ if(localStorage.getItem('kkah_nochk_' + (sessionStorage.getItem('kkah_ic') || '')) === '1') document.body.classList.add('no-chk'); }catch(e){}
 try{ if(localStorage.getItem('kkah_driver_mode_' + (sessionStorage.getItem('kkah_ic') || '')) === '1') document.body.classList.add('driver-mode'); }catch(e){}
 </script>
-<script src="./location-watch.js?v=1.21.0"></script>
+<script src="./location-watch.js?v=1.21.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
 const ONESIGNAL_APP_ID = 'e6ffc7a0-2572-46da-b664-2a03c6dd210a'; // public App ID — safe to expose client-side, unlike the REST API key
@@ -1370,11 +1370,13 @@ function coOpenNowLocal_(){
 }
 
 /* === 5:00 PM: Check Out opens by itself. Checked in, not out yet → "Waktu balik" screen, 5 s countdown, straight to Check Out === */
-const CO_AUTO_HOUR = 17;
+/* Thursday check-out opens by itself at 3:30 PM, every other working day at 5:00 PM */
+function coAutoMin_(){ return new Date().getDay() === 4 ? 15 * 60 + 30 : 17 * 60; }
+function coAutoReached_(){ const n = new Date(); return n.getHours() * 60 + n.getMinutes() >= coAutoMin_(); }
 function coAutoDue_(){
   if(VIEW_NAME) return false;
   const st = window._attState; if(!st || !st.hasIn || st.hasOut) return false;
-  if(new Date().getHours() < CO_AUTO_HOUR) return false;
+  if(!coAutoReached_()) return false;
   try{ if(Number(sessionStorage.getItem('kkah_co_snooze') || 0) > Date.now()) return false; }catch(e){}
   return !document.getElementById('coAutoOv');
 }
@@ -1383,7 +1385,7 @@ function coAutoShow_(){
   const st = document.createElement('style');
   st.textContent = '.co-ov{position:fixed;inset:0;z-index:9500;background:rgba(6,30,28,.92);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:22px;animation:ciIn .3s ease both}.co-box{background:#fff;border-radius:26px;padding:26px 22px;max-width:340px;width:100%;text-align:center}.co-box .e{font-size:54px;line-height:1}.co-box h3{font-size:21px;margin:10px 0 4px;color:#0B3D3A}.co-box p{font-size:14px;color:#5B6B68;margin:0 0 6px}.co-box .n{font-size:40px;font-weight:800;color:#0F766E;margin:6px 0 14px}.co-box button{width:100%;padding:14px;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px}.co-box .go{background:linear-gradient(135deg,#0F766E,#14B8A6);color:#fff}.co-box .later{background:#EEF3F2;color:#35514E}';
   const ov = document.createElement('div'); ov.className = 'co-ov'; ov.id = 'coAutoOv';
-  ov.innerHTML = '<div class="co-box"><div class="e">🏁</div><h3>Waktu Check Out</h3><p>Sudah jam 5:00 PM. Check Out dibuka sekarang.</p><div class="n" id="coAutoN">5</div>' +
+  ov.innerHTML = '<div class="co-box"><div class="e">🏁</div><h3>Waktu Check Out</h3><p>Sudah waktu balik. Check Out dibuka sekarang.</p><div class="n" id="coAutoN">5</div>' +
     '<button class="go" id="coAutoGo">Check Out sekarang</button><button class="later" id="coAutoLater">Nanti (ingatkan 15 minit)</button></div>';
   document.head.appendChild(st); document.body.appendChild(ov);
   let n = 5, t = null;
@@ -1399,7 +1401,7 @@ function coAutoShow_(){
 }
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') setTimeout(coAutoShow_, 800); });
 setInterval(() => {
-  if(new Date().getHours() < CO_AUTO_HOUR) return;
+  if(!coAutoReached_()) return;
   if(window._attState && window._attState.hasIn && !window._attState.hasOut) loadTodayAttendance().then(coAutoShow_, coAutoShow_); // refresh first: they may have checked out on another phone
 }, 60 * 1000);
 
