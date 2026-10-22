@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.0.3.15">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.3.15">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -582,7 +582,7 @@
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
-<script src="./permission-gate.js"></script>
+<!-- location-access overlay removed from the dashboard (check-in pages still use it) -->
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 </head>
 <body>
@@ -921,6 +921,7 @@ function applyDriverMode_(on){
 try{ if(localStorage.getItem('kkah_nochk_' + (sessionStorage.getItem('kkah_ic') || '')) === '1') document.body.classList.add('no-chk'); }catch(e){}
 try{ if(localStorage.getItem('kkah_driver_mode_' + (sessionStorage.getItem('kkah_ic') || '')) === '1') document.body.classList.add('driver-mode'); }catch(e){}
 </script>
+<style>.lw-chip,.lw-ov{display:none!important}</style>
 <script src="./location-watch.js?v=1.21.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
@@ -1400,6 +1401,18 @@ function coAutoShow_(){
   try{ if(navigator.vibrate) navigator.vibrate([200, 100, 200]); }catch(e){}
 }
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') setTimeout(coAutoShow_, 800); });
+/* quietly pre-fetch the face models (and send any scan that failed earlier) so Check Out opens instantly at the cut-off */
+function coPrefetch_(){
+  if(window._coPref) return;
+  const n = new Date(); if(n.getHours() * 60 + n.getMinutes() < coAutoMin_() - 45 || [5, 6].indexOf(n.getDay()) !== -1) return;
+  window._coPref = 1;
+  ['tiny_face_detector_model-weights_manifest.json','tiny_face_detector_model-shard1','face_landmark_68_model-weights_manifest.json','face_landmark_68_model-shard1','face_recognition_model-weights_manifest.json','face_recognition_model-shard1','face_recognition_model-shard2'].forEach(f => fetch('./models/' + f).catch(() => {}));
+  try{ fetch('https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js', { mode:'no-cors' }).catch(() => {}); }catch(e){}
+}
+setInterval(coPrefetch_, 60 * 1000); setTimeout(coPrefetch_, 4000);
+/* a check-in/out that could not be sent earlier (bad signal) is re-sent from here too — same reqId, so it is never written twice */
+setTimeout(async () => { try{ const p = JSON.parse(localStorage.getItem('kkah_pending_att') || 'null'); if(!p || !p.body) return; const b = JSON.parse(p.body); b.token = sessionStorage.getItem('kkah_session_token'); b.retry = true;
+  const r = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(b) }); const d = await r.json(); if(d && (d.ok || !d.retry)){ localStorage.removeItem('kkah_pending_att'); try{ loadTodayAttendance(); }catch(e){} } }catch(e){} }, 3000);
 setInterval(() => {
   if(!coAutoReached_()) return;
   if(window._attState && window._attState.hasIn && !window._attState.hasOut) loadTodayAttendance().then(coAutoShow_, coAutoShow_); // refresh first: they may have checked out on another phone
