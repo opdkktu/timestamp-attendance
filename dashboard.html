@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.0.3.12">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.3.12">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.20.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.20.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -417,6 +417,10 @@
   }
 
   /* Driver mode: a driver sees only the Ambulance checklist and has no queue-calling box */
+  body.no-chk #box_temperature, body.no-chk #box_trolley, body.no-chk #box_bag, body.no-chk #box_ambulance{ display:none !important; }
+  .sb-act{ grid-column:1 / -1; cursor:pointer; background:linear-gradient(135deg,#0B3D3A,#1C8F84); color:#fff; border:none; display:flex; align-items:center; gap:14px; text-align:left; padding:14px 16px; border-radius:20px; box-shadow:0 14px 28px -16px rgba(11,61,58,.7); font:inherit; }
+  .sb-act .ai{ width:46px; height:46px; border-radius:14px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+  .sb-act b{ display:block; font:800 15.5px Manrope,sans-serif; } .sb-act small{ display:block; font-size:12px; opacity:.85; margin-top:2px; } .sb-act .go{ margin-left:auto; font-size:20px; opacity:.9; }
   body.driver-mode #kcBox, body.driver-mode #box_temperature, body.driver-mode #box_trolley, body.driver-mode #box_bag{ display:none !important; }
 
   /* === Account sidebar (replaces the old "⋯" dropdown banner) === */
@@ -773,6 +777,7 @@
   </div>
 
   <div class="status-boxes-grid">
+    <div id="actSlot" style="display:contents"></div>
     <div class="status-box loading" id="box_bls"><div class="sb-label">BLS Validity</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_temperature"><div class="sb-label">Temperature</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_trolley"><div class="sb-label">Emergency Trolley</div><div class="sb-main">&nbsp;</div></div>
@@ -913,14 +918,14 @@
 function applyDriverMode_(on){
   try{ document.body.classList.toggle('driver-mode', !!on); localStorage.setItem('kkah_driver_mode_' + (sessionStorage.getItem('kkah_ic') || ''), on ? '1' : '0'); }catch(e){}
 }
+try{ if(localStorage.getItem('kkah_nochk_' + (sessionStorage.getItem('kkah_ic') || '')) === '1') document.body.classList.add('no-chk'); }catch(e){}
 try{ if(localStorage.getItem('kkah_driver_mode_' + (sessionStorage.getItem('kkah_ic') || '')) === '1') document.body.classList.add('driver-mode'); }catch(e){}
 </script>
-<script src="./location-watch.js?v=1.20.0"></script>
+<script src="./location-watch.js?v=1.20.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
 const ONESIGNAL_APP_ID = 'e6ffc7a0-2572-46da-b664-2a03c6dd210a'; // public App ID — safe to expose client-side, unlike the REST API key
 const MODULES = [
-  { id: 'profile', name: 'Update Profile', icon: '👤', status: 'active', href: './profile.html' },
   { id: 'borang', name: 'Borang Permohonan', icon: '📝', status: 'active', href: './borang.html' },
   { id: 'jadual', name: 'Jadual & Rekod Saya', icon: '📅', status: 'active', href: './jadual.html' },
   { id: 'myreport', name: 'Laporan Kehadiran Bulanan', icon: '📊', status: 'active', href: './report.html' },
@@ -1005,8 +1010,21 @@ async function loadExtraTiles_(){
   try{
     const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getMyTiles', token: sessionStorage.getItem('kkah_session_token') }) });
     const d = await res.json();
-    if(d && d.ok && d.tiles) d.tiles.forEach(t => addModuleCard(t.name, t.icon, t.href, t.ext));
-  }catch(e){ /* optional tiles */ }
+    if(!d || !d.ok) return;
+    const nochk = !!d.hideChecklists;
+    document.body.classList.toggle('no-chk', nochk);
+    try{ localStorage.setItem('kkah_nochk_' + (sessionStorage.getItem('kkah_ic') || ''), nochk ? '1' : '0'); }catch(e){}
+    const slot = document.getElementById('actSlot'); if(!slot) return;
+    slot.innerHTML = '';
+    (d.tiles || []).forEach(t => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'status-box sb-act';
+      const sub = t.id === 'bersih' ? 'Tandakan tugasan kebersihan hari ini' : t.id === 'amo' ? 'Buka borang \u2014 nama anda telah diisi' : '';
+      b.innerHTML = '<span class="ai">' + t.icon + '</span><span><b></b><small>' + sub + '</small></span><span class="go">\u203A</span>';
+      b.querySelector('b').textContent = t.name;
+      b.onclick = () => { if(t.ext) window.open(t.href, '_blank', 'noopener'); else window.location.href = t.href; };
+      slot.appendChild(b);
+    });
+  }catch(e){ /* optional */ }
 }
 /* Corner ribbons on module tiles (e.g. my rank on "Mata & Ranking"). Remembered, so order of loading doesn't matter. */
 const TILE_RIBBONS = {};
@@ -1452,7 +1470,7 @@ async function showWelcomeOverlay(){
 function saverNow_(){ const h = new Date().getHours(); return h >= 9 && h < 12; }
 async function initLocationBar(force){
   const text = document.getElementById('locationText');
-  if(force !== true && saverNow_()){ text.textContent = '🔋 Mod jimat bateri (9 pagi–12 tengah hari) · notifikasi tetap aktif'; return; }
+  if(force !== true && saverNow_()){ text.textContent = ''; return; }
   text.textContent = 'Mengesan lokasi…';
 
   if(!navigator.geolocation){
@@ -2104,6 +2122,7 @@ function renderChecklistBox(item){
 }
 
 async function loadChecklistBoxes(fresh){
+  if(document.body.classList.contains('no-chk')) return;   // PPK / PRA: no checklist status boxes
   csvLoadBox_('box_temperature');   // temperature checklist still comes from its published sheet
   chkLastLoad = Date.now();
   try{
