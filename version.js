@@ -12,7 +12,7 @@
  *      bypassing cache) against what a visitor last saw, and shows a
  *      "new version available — tap to refresh" banner if they differ.
  */
-const APP_VERSION = '1.0.3.12';
+const APP_VERSION = '1.0.3.13';
 const APP_BUILD_DATE = '2026-10-07';          // update alongside APP_VERSION on each deploy
 
 // --- About System tab ---
