@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Penyelia — SIAGA</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.1.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.1.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
 <link rel="manifest" href="./manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -170,7 +170,7 @@ $('annSend').onclick = async function(){
   let d; try{ d = await api('listSupervisedStaff'); }catch(e){ d = { ok:false, error:'Ralat sambungan.' }; }
   if(!d.ok){ document.getElementById('list').innerHTML = '<div class="empty">' + esc(d.error) + '</div>'; return; }
   all = d.staff;
-  document.getElementById('lvl').textContent = d.level === 'TOP' ? 'KETUA' : 'PENYELIA UNIT';
+  document.getElementById('lvl').textContent = d.level === 'TOP' ? 'KETUA' : d.level === 'VIEW' ? 'PEMERHATI (SEMUA STAF)' : 'PENYELIA UNIT';
   if(d.units.length > 1){
     const chips = document.getElementById('chips');
     chips.innerHTML = '<button class="chip on" data-u="">Semua</button>' + d.units.map(u => '<button class="chip" data-u="' + esc(u) + '">' + esc(u) + '</button>').join('');
