@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KKAH HR Portal · Sign Up</title>
+<title>SIAGA · Sign Up</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.20.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.20.1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SIAGA">
+
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -120,6 +125,7 @@
 
       <div class="field"><label for="nameInput">Full Name</label><input type="text" id="nameInput" autocomplete="name"></div>
       <div class="field"><label for="icInput">IC Number</label><input type="text" id="icInput" autocomplete="off"></div>
+      <div class="field"><label for="phoneInput">Phone Number</label><input type="tel" id="phoneInput" autocomplete="tel" inputmode="tel" placeholder="0123456789"></div>
       <div class="field"><label for="emailInput">Email</label><input type="email" id="emailInput" autocomplete="email"></div>
       <div class="field"><label for="passwordInput">Password</label><input type="password" id="passwordInput" autocomplete="new-password" oninput="updateStrength()"></div>
       <ul class="strength-list" id="strengthList">
@@ -229,9 +235,11 @@ async function handleSignup(){
   const name = document.getElementById('nameInput').value.trim();
   const ic = document.getElementById('icInput').value.trim();
   const email = document.getElementById('emailInput').value.trim();
+  const phone = document.getElementById('phoneInput').value.trim();
   const password = document.getElementById('passwordInput').value;
 
-  if(!name || !ic || !email || !password){ showBanner('Please fill in all fields.'); return; }
+  if(!name || !ic || !email || !password || !phone){ showBanner('Please fill in all fields.'); return; }
+  if(!/^(\+?60|0)?1?\d{8,10}$/.test(phone.replace(/[\s-]/g, ''))){ showBanner('Please enter a valid phone number, e.g. 0123456789.'); return; }
   if(!selectedImageBase64 && !photoSkipped){ showBanner('Please capture a photo, or tap "Skip this step" if one is already on file.'); return; }
 
   const btn = document.getElementById('signupBtn');
@@ -241,7 +249,7 @@ async function handleSignup(){
   try{
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'signup', name, ic, email, password, imageBase64: selectedImageBase64 })
+      body: JSON.stringify({ action: 'signup', name, ic, email, phone, password, imageBase64: selectedImageBase64 })
     });
     const data = await res.json();
     if(!data.ok){ showBanner(data.error || 'Could not create account.'); }
