@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>SIAGA · Check In / Out</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.20.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.20.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.0">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -267,8 +267,9 @@ function setProgress(p){ $('prepFill').style.width = Math.min(100, p) + '%'; }
 function showButtons(retry, dash){ $('btnRetry').hidden = !retry; $('btnDash').hidden = !dash; }
 function setMode(m){
   mode = m;
-  const pill = $('modePill'); pill.hidden = false; pill.textContent = m === 'OUT' ? 'CHECK OUT' : 'CHECK IN'; pill.className = 'mode-pill' + (m === 'OUT' ? ' out' : '');
-  $('startTitle').textContent = m === 'OUT' ? 'Check Out' : 'Check In';
+  const out = m === 'OUT' || m === 'OC_OUT', oc = m === 'OC_IN' || m === 'OC_OUT';
+  const pill = $('modePill'); pill.hidden = false; pill.textContent = (oc ? '🌙 ON-CALL ' : '') + (out ? 'CHECK OUT' : 'CHECK IN'); pill.className = 'mode-pill' + (out ? ' out' : '');
+  $('startTitle').textContent = (oc ? 'On-Call ' : '') + (out ? 'Check Out' : 'Check In');
 }
 function setOffline(state){ isOffline = state; $('offlineBanner').classList.toggle('show', state); }
 
@@ -318,8 +319,9 @@ async function boot(){
   // 1) What are we doing today — Check In, Check Out, locked until 1 PM, or already complete?
   const today = await fetchToday();
   if(today){
-    if(today.checkIn && today.checkOut){ return showComplete(today); }
-    if(today.checkIn){
+    if(today.onCallOpen){ ocIntent = false; setMode('OC_OUT'); $('startTitle').textContent = 'On-Call Check Out'; }   // on-call session running → this scan closes it
+    else if(today.checkIn && today.checkOut){ return showComplete(today); }
+    else if(today.checkIn){
       setMode('OUT');
       if(today.canCheckOut === false || (today.canCheckOut === undefined && !openNowLocal())){ return showLocked(today.opensAt || '1:00 PM'); }
     }else{ setMode('IN'); }
@@ -389,6 +391,16 @@ async function permissionsGranted(){
 function showComplete(t){
   setBanner('ok', '🎉', 'Kehadiran hari ini lengkap', 'Masuk ' + fmt12(t.checkIn) + '  ·  Keluar ' + fmt12(t.checkOut));
   $('stage').style.display = 'none'; showButtons(false, true);
+  // Called back in for a case / on-call duty? One tap starts an on-call session (same face + clinic location checks).
+  let b = $('btnOnCall');
+  if(!b){ b = document.createElement('button'); b.id = 'btnOnCall'; b.className = 'btn primary'; b.style.marginTop = '12px'; b.textContent = '🌙 Check In On-Call'; b.onclick = startOnCall; $('btnDash').parentNode.insertBefore(b, $('btnDash')); }
+}
+let ocIntent = false;
+function startOnCall(){
+  ocIntent = true; setMode('OC_IN'); $('btnOnCall').remove(); showButtons(false, false);
+  $('stage').style.display = ''; $('startTitle').textContent = 'On-Call Check In';
+  if(redirectTimer) clearInterval(redirectTimer);
+  beginStart();
 }
 let lockTimer = null;
 function showLocked(opensAt){
@@ -644,7 +656,8 @@ async function recordAttendance(){
       body: JSON.stringify({
         action:'logAttendance', token: sessionStorage.getItem('kkah_session_token'), name: myName,
         lat: userLocation ? userLocation.lat : '', lng: userLocation ? userLocation.lng : '',
-        locName: userLocation ? userLocation.name : ''
+        locName: userLocation ? userLocation.name : '',
+        oncall: ocIntent === true
       })
     });
     clearTimeout(to);
@@ -681,10 +694,10 @@ function onRetry(){
 function onSuccess(data){
   recording = false; releaseWake();
   setStep('save', 'done');
-  const isOut = data.type === 'OUT';
+  const isOut = data.type === 'OUT' || data.type === 'OC_OUT', isOc = data.type === 'OC_IN' || data.type === 'OC_OUT';
   $('checkBadge').classList.add('show');
   $('ring').className = 'ring success';
-  setBanner('ok', '✅', isOut ? 'CHECK OUT BERJAYA' : 'CHECK IN BERJAYA', 'Terima kasih, ' + (myName || '').split(' ')[0] + '. Anda boleh simpan telefon.');
+  setBanner('ok', isOc ? '🌙' : '✅', (isOc ? 'ON-CALL ' : '') + (isOut ? 'CHECK OUT BERJAYA' : 'CHECK IN BERJAYA'), 'Terima kasih, ' + (myName || '').split(' ')[0] + '. Anda boleh simpan telefon.');
   cue.success();
   try{ $('successSound').play().catch(() => {}); }catch(e){}
   speak(isOut ? 'Check out berjaya' : 'Check in berjaya');
