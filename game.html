@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b1f2a">
+<title>Kotak Permainan</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<style>
+  :root{ --bg:#0b1f2a; --card:#12303d; --line:rgba(255,255,255,.12); --teal:#1C8F84; --gold:#FBBF24; --pink:#ec4899; --ink:#eef6f5; --mut:#9db6b3; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; min-height:100%; }
+  body{ background:radial-gradient(900px 600px at 50% -10%,#1b4a5a,var(--bg)); color:var(--ink); font-family:Inter,'Segoe UI',system-ui,sans-serif; display:flex; flex-direction:column; align-items:center; padding:max(12px,env(safe-area-inset-top)) 14px max(16px,env(safe-area-inset-bottom)); user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+  .top{ width:100%; max-width:430px; display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .back{ width:44px; height:44px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:#fff; font-size:20px; cursor:pointer; }
+  .ttl{ flex:1; font:800 17px Manrope,Inter,sans-serif; }
+  .badge{ min-width:70px; padding:9px 14px; border-radius:14px; background:rgba(0,0,0,.28); border:1px solid var(--line); font-weight:800; text-align:center; }
+  .badge.coin{ color:var(--gold); } .badge.time{ color:#fb7185; }
+  .card{ width:100%; max-width:430px; background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03)); border:1px solid var(--line); border-radius:26px; padding:18px; box-shadow:0 24px 60px -24px rgba(0,0,0,.7); position:relative; text-align:center; }
+  .card h1{ margin:2px 0 4px; font:900 25px Manrope,Inter,sans-serif; background:linear-gradient(90deg,#fda4af,#fde68a,#7dd3fc); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .sub{ color:var(--mut); font-size:14px; line-height:1.5; margin:4px 0 12px; }
+  .pill{ display:inline-block; padding:6px 12px; border-radius:99px; background:rgba(251,191,36,.14); border:1px solid rgba(251,191,36,.4); color:#fde68a; font-weight:700; font-size:13px; margin:2px 0 10px; }
+  .big{ width:100%; min-height:62px; margin-top:14px; border:none; border-radius:18px; font:900 19px Manrope,Inter,sans-serif; letter-spacing:.04em; text-transform:uppercase; color:#06222a; background:linear-gradient(90deg,#34d399,#22d3ee,#34d399); background-size:200% auto; cursor:pointer; animation:glow 2.2s infinite; box-shadow:0 12px 30px -10px rgba(34,211,238,.7); }
+  .big:disabled{ opacity:.55; animation:none; cursor:default; }
+  .ghost{ width:100%; min-height:50px; margin-top:10px; border-radius:16px; border:1px solid var(--line); background:transparent; color:#fff; font:700 15px Inter,sans-serif; cursor:pointer; }
+  @keyframes glow{ 0%,100%{ background-position:0 50%; } 50%{ background-position:100% 50%; } }
+  .stage{ position:relative; width:100%; aspect-ratio:340/360; border-radius:20px; overflow:hidden; border:2px solid rgba(125,211,252,.5); background:linear-gradient(#050b14,#111827); margin-top:6px; }
+  .stage canvas{ width:100%; height:100%; display:block; touch-action:none; }
+  .wheelbox{ position:relative; width:min(300px,80vw); aspect-ratio:1; margin:8px auto 4px; }
+  .wheelbox canvas{ width:100%; height:100%; border-radius:50%; box-shadow:0 0 0 6px #1f2937,0 0 30px rgba(245,158,11,.45); }
+  .ptr{ position:absolute; top:-14px; left:50%; transform:translateX(-50%); border-left:14px solid transparent; border-right:14px solid transparent; border-top:26px solid #ef4444; z-index:3; filter:drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
+  .hub{ position:absolute; left:50%; top:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; background:radial-gradient(#fff,#cbd5e1); box-shadow:0 2px 8px rgba(0,0,0,.5); z-index:2; }
+  .msg{ min-height:1.5em; margin-top:10px; font-weight:600; color:#d6e6e4; font-size:14px; }
+  /* full-screen loading overlay + count-down + result */
+  .ov{ position:fixed; inset:0; z-index:50; background:rgba(8,20,28,.96); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:24px; transition:opacity .25s; }
+  .ov.hide{ opacity:0; pointer-events:none; }
+  .spin{ width:62px; height:62px; border-radius:50%; border:6px solid transparent; border-top-color:#fb7185; border-right-color:#fbbf24; border-bottom-color:#38bdf8; border-left-color:#a78bfa; animation:rot .8s linear infinite; filter:drop-shadow(0 0 10px rgba(251,113,133,.7)); }
+  @keyframes rot{ to{ transform:rotate(360deg); } }
+  .ovt{ font:800 18px Manrope,Inter,sans-serif; } .ovs{ color:var(--mut); font-size:13.5px; }
+  .cd{ font:900 110px Manrope,Inter,sans-serif; background:linear-gradient(#fde047,#fb923c); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; animation:pop .6s ease-out; }
+  @keyframes pop{ from{ transform:scale(.4); opacity:0; } to{ transform:scale(1); opacity:1; } }
+  .win{ font:900 64px Manrope,Inter,sans-serif; color:var(--gold); text-shadow:0 0 26px rgba(251,191,36,.6); animation:pop .5s ease-out; }
+  @media (prefers-reduced-motion:reduce){ .big,.spin,.cd,.win{ animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="ov" id="ov" role="status" aria-live="polite"><div class="spin"></div><div class="ovt" id="ovT">Menyediakan permainan…</div><div class="ovs" id="ovS">Menyemak sesi dan lokasi anda</div></div>
+
+<div class="top">
+  <button class="back" onclick="goBack()" aria-label="Kembali">‹</button>
+  <div class="ttl" id="ttl">Kotak Permainan</div>
+  <div class="badge coin" id="coinBadge" style="display:none">🪙 <span id="coins">0</span></div>
+  <div class="badge time" id="timeBadge" style="display:none">⏱ <span id="tleft">10</span>s</div>
+</div>
+
+<div class="card" id="card"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const token = sessionStorage.getItem('kkah_session_token');
+let state = null, pos = null, posAt = 0, busy = false;
+
+function goBack(){ window.location.href = './dashboard.html'; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])); }
+function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+function ov(show, title, sub, html){
+  const o = $('ov'); o.classList.toggle('hide', !show); if(!show) return;
+  o.innerHTML = html || ('<div class="spin"></div><div class="ovt">' + esc(title || '') + '</div><div class="ovs">' + esc(sub || '') + '</div>');
+}
+async function api(body){
+  const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)) });
+  return res.json();
+}
+function getPos(maxAge){
+  return new Promise((resolve, reject) => {
+    if(pos && Date.now() - posAt < (maxAge || 45000)) return resolve(pos);
+    if(!navigator.geolocation) return reject(new Error('Lokasi tidak disokong peranti ini.'));
+    navigator.geolocation.getCurrentPosition(p => { pos = { lat:p.coords.latitude, lng:p.coords.longitude, acc:p.coords.accuracy }; posAt = Date.now(); resolve(pos); },
+      () => reject(new Error('Lokasi tidak dibenarkan. Hidupkan lokasi dan benarkan akses, kemudian cuba lagi.')), { enableHighAccuracy:false, timeout:9000, maximumAge:60000 });
+  });
+}
+
+/* ---------------- open: loading overlay → state → one big button ---------------- */
+(async function boot(){
+  if(!token){ window.location.href = './login.html'; return; }
+  ov(true, 'Menyediakan permainan…', 'Menyemak sesi dan lokasi anda');
+  const [st] = await Promise.all([
+    api({ action:'getGameState' }).catch(() => null),
+    getPos().catch(() => null),
+    new Promise(r => setTimeout(r, 900))                         // never a flash: the loading screen stays long enough to read
+  ]);
+  if(!st || !st.ok){ if(st && /expired/i.test(st.error || '')){ window.location.href = './login.html'; return; } return showInfo('⚠️', 'Tidak dapat memuatkan', (st && st.error) || 'Semak sambungan internet dan cuba lagi.', true); }
+  state = st; ov(false); render();
+})();
+
+function showInfo(icon, title, text, retry){
+  ov(false);
+  $('card').innerHTML = '<div style="font-size:54px">' + icon + '</div><h1>' + esc(title) + '</h1><p class="sub">' + esc(text) + '</p>' +
+    (retry ? '<button class="big" onclick="location.reload()">Cuba lagi</button>' : '') + '<button class="ghost" onclick="goBack()">Kembali ke Dashboard</button>';
+}
+function render(){
+  const s = state;
+  if(!s.game) return showInfo('🗓️', 'Tiada permainan hari ini', 'Permainan baharu akan datang tidak lama lagi. Jumpa lagi pada hari bermain!');
+  if(s.left < 1) return showInfo('✅', 'Anda sudah bermain hari ini', 'Mata telah ditambah ke akaun anda. Jumpa lagi esok!');
+  if(s.before) return showInfo('⏳', 'Belum dibuka', 'Permainan dibuka jam ' + s.from + '. Masa sekarang ' + s.serverNow + '.');
+  if(s.after) return showInfo('🌙', 'Permainan sudah ditutup', 'Dibuka setiap hari bermain jam ' + s.from + ' – ' + s.to + '.');
+  if(s.game === 'spin') readySpin(); else readyShake();
+}
+
+/* ====================================================== LUCKY SPIN ====================================================== */
+const COLORS = ['#3b82f6','#10b981','#8b5cf6','#ec4899','#f59e0b','#06b6d4','#ef4444'];
+let wheel = null, rot = 0;
+function readySpin(){
+  $('ttl').textContent = 'Lucky Spin';
+  $('card').innerHTML = '<h1>🎡 Lucky Spin</h1><p class="sub">Satu ketikan sahaja — roda akan berputar dan hadiah anda terus masuk ke akaun.</p>' +
+    '<div class="wheelbox"><div class="ptr"></div><canvas id="wc" width="600" height="600"></canvas><div class="hub"></div></div>' +
+    '<button class="big" id="go" onclick="doSpin()">🎡 Putar!</button><div class="msg" id="msg"></div><button class="ghost" onclick="goBack()">Kembali</button>';
+  wheel = $('wc'); drawWheel();
+}
+function drawWheel(){
+  const c = wheel.getContext('2d'), n = state.segments.length, arc = Math.PI * 2 / n, R = wheel.width / 2;
+  c.clearRect(0, 0, wheel.width, wheel.height);
+  for(let i = 0; i < n; i++){
+    const a = rot + i * arc; c.beginPath(); c.moveTo(R, R); c.arc(R, R, R - 2, a, a + arc); c.closePath(); c.fillStyle = COLORS[i % COLORS.length]; c.fill();
+    c.lineWidth = 5; c.strokeStyle = '#111827'; c.stroke();
+    c.save(); c.translate(R, R); c.rotate(a + arc / 2); c.textAlign = 'right'; c.fillStyle = '#fff'; c.font = '900 46px Manrope,Inter,sans-serif'; c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = 6;
+    c.fillText(String(state.segments[i]), R - 40, 16); c.restore();
+  }
+}
+async function doSpin(){
+  if(busy) return; busy = true; $('go').disabled = true; $('msg').textContent = 'Menyemak lokasi…'; buzz(20);
+  try{
+    const p = await getPos(30000);
+    api({ action:'reportLocation', lat:p.lat, lng:p.lng, acc:p.acc, src:'app' }).catch(() => {});          // the 12–1 pm location check counts too
+    const r = await api({ action:'startGame', lat:p.lat, lng:p.lng, acc:p.acc });
+    if(!r.ok){ busy = false; $('go').disabled = false; $('msg').textContent = r.error || 'Tidak dapat bermula.'; return; }
+    $('msg').textContent = 'Berputar…';
+    const n = state.segments.length, arc = Math.PI * 2 / n, idx = Math.max(0, state.segments.indexOf(r.prize));
+    const want = -Math.PI / 2 - (idx + 0.5) * arc, start = rot, delta = (((want - start) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2), total = Math.PI * 2 * 5 + delta, t0 = performance.now(), DUR = 5000;
+    const step = now => {
+      const k = Math.min(1, (now - t0) / DUR), e = 1 - Math.pow(1 - k, 3); rot = start + total * e; drawWheel();
+      if(k < 1) requestAnimationFrame(step); else spinDone(r.prize);
+    };
+    requestAnimationFrame(step);
+  }catch(e){ busy = false; $('go').disabled = false; $('msg').textContent = e.message || 'Ralat. Cuba lagi.'; }
+}
+function spinDone(prize){
+  buzz([60, 40, 120]);
+  ov(true, '', '', '<div class="ovt" style="color:#4ade80">🎉 TAHNIAH!</div><div class="win">+' + prize + '</div><div class="ovt">mata ditambah</div><div class="ovs">Hadiah telah disimpan ke akaun anda</div><button class="big" style="max-width:320px" onclick="goBack()">Kembali ke Dashboard</button>');
+}
+
+/* ====================================================== SHAKE & CATCH ====================================================== */
+let cv, cx, coins = 0, cap = 10, left = 10, playing = false, tmr = null, falling = [], basket = { x:125, y:325, w:90, h:26 }, lastX = null, lastY = null, lastU = 0, sid = '', gotMotion = false, rafOn = false, dragMode = false;
+function readyShake(){
+  $('ttl').textContent = 'Shake & Catch';
+  $('card').innerHTML = '<h1>📱 Shake & Catch</h1>' +
+    (state.birth ? '<div class="pill">🎂 Bulan lahir anda — maksimum ' + state.cap + ' syiling!</div>' : '<div class="pill">Maksimum ' + state.cap + ' syiling</div>') +
+    '<p class="sub">Goncang telefon untuk hujan syiling, condongkan untuk gerakkan bakul. Masa 10 saat.</p>' +
+    '<div class="stage"><canvas id="cv" width="340" height="360"></canvas></div><div class="msg" id="msg"></div>' +
+    '<button class="big" id="go" onclick="doShake()">▶ Mula!</button><button class="ghost" onclick="goBack()">Kembali</button>';
+  cv = $('cv'); cx = cv.getContext('2d'); cap = state.cap; coins = 0; basket.x = cv.width / 2 - basket.w / 2; drawIdle();
+}
+function drawIdle(){
+  cx.clearRect(0, 0, cv.width, cv.height); cx.fillStyle = 'rgba(255,255,255,.85)'; cx.font = '800 22px Manrope,Inter,sans-serif'; cx.textAlign = 'center';
+  cx.fillText('Sedia?', cv.width / 2, 150); cx.font = '600 14px Inter,sans-serif'; cx.fillStyle = '#9db6b3'; cx.fillText('Tekan Mula — satu ketikan sahaja', cv.width / 2, 178);
+  coin(cx, cv.width / 2, 230, 22); drawBasket();
+}
+function coin(g, x, y, r){
+  const gr = g.createRadialGradient(x - r / 3, y - r / 3, r / 6, x, y, r); gr.addColorStop(0, '#fff7c2'); gr.addColorStop(.5, '#fbbf24'); gr.addColorStop(1, '#b45309');
+  g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fillStyle = gr; g.fill(); g.lineWidth = 2; g.strokeStyle = '#92400e'; g.stroke();
+  g.fillStyle = 'rgba(146,64,14,.75)'; g.font = '900 ' + Math.round(r * 1.1) + 'px sans-serif'; g.textAlign = 'center'; g.fillText('$', x, y + r * .38);
+}
+function drawBasket(){
+  cx.fillStyle = '#ec4899'; cx.beginPath(); if(cx.roundRect) cx.roundRect(basket.x, basket.y, basket.w, basket.h, [8, 8, 14, 14]); else cx.rect(basket.x, basket.y, basket.w, basket.h); cx.fill();
+  cx.lineWidth = 3; cx.strokeStyle = '#fda4af'; cx.stroke();
+}
+async function doShake(){
+  if(busy) return; busy = true; $('go').disabled = true; $('msg').textContent = 'Menyemak lokasi…'; buzz(20);
+  try{
+    if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){ try{ await DeviceMotionEvent.requestPermission(); }catch(e){} }   // iOS asks inside this same tap
+    const p = await getPos(30000);
+    api({ action:'reportLocation', lat:p.lat, lng:p.lng, acc:p.acc, src:'app' }).catch(() => {});
+    const r = await api({ action:'startGame', lat:p.lat, lng:p.lng, acc:p.acc });
+    if(!r.ok){ busy = false; $('go').disabled = false; $('msg').textContent = r.error || 'Tidak dapat bermula.'; return; }
+    sid = r.sid; cap = r.cap; $('go').style.display = 'none'; $('msg').textContent = '';
+    countdown(3);
+  }catch(e){ busy = false; $('go').disabled = false; $('msg').textContent = e.message || 'Ralat. Cuba lagi.'; }
+}
+function countdown(n){
+  if(n > 0){ ov(true, '', '', '<div class="cd">' + n + '</div><div class="ovs">Bersedia untuk menggoncang!</div>'); buzz(30); setTimeout(() => countdown(n - 1), 1000); }
+  else{ ov(true, '', '', '<div class="cd" style="background:linear-gradient(#86efac,#16a34a);-webkit-background-clip:text;background-clip:text">GO!</div>'); setTimeout(() => { ov(false); runShake(); }, 550); }
+}
+function runShake(){
+  coins = 0; left = 10; playing = true; falling = []; gotMotion = false; dragMode = false; lastX = lastY = null; basket.x = cv.width / 2 - basket.w / 2;
+  $('coinBadge').style.display = ''; $('timeBadge').style.display = ''; $('coins').textContent = '0'; $('tleft').textContent = '10'; $('msg').textContent = 'GONCANG TELEFON SEKARANG! 📱';
+  window.addEventListener('devicemotion', onMotion);
+  cv.addEventListener('pointermove', onDrag); cv.addEventListener('pointerdown', onDrag);
+  setTimeout(() => { if(playing && !gotMotion){ dragMode = true; $('msg').textContent = 'Seret jari untuk gerakkan bakul 👆'; } }, 1500);     // no motion sensor (e.g. a computer) → drag instead
+  tmr = setInterval(() => { left--; $('tleft').textContent = Math.max(0, left); if(left <= 0) endShake(); }, 1000);
+  if(!rafOn){ rafOn = true; requestAnimationFrame(loop); }
+}
+function onMotion(e){
+  if(!playing) return; const a = e.accelerationIncludingGravity; if(!a || a.x === null) return; gotMotion = true;
+  const t = Date.now();
+  if(t - lastU > 80){
+    if(lastX !== null && ((Math.abs(a.x - lastX) + Math.abs(a.y - lastY)) / (t - lastU) * 10000) > 1200) for(let i = 0; i < 3; i++) spawn();
+    lastX = a.x; lastY = a.y; lastU = t;
+  }
+  basket.x = Math.max(0, Math.min(cv.width - basket.w, basket.x - a.x * 2.8));
+}
+function onDrag(e){ if(!playing) return; const r = cv.getBoundingClientRect(); basket.x = Math.max(0, Math.min(cv.width - basket.w, (e.clientX - r.left) / r.width * cv.width - basket.w / 2)); }
+function spawn(){ falling.push({ x: 14 + Math.random() * (cv.width - 28), y: -16, r: 13, v: 3 + Math.random() * 3.5 }); }
+function loop(){
+  if(!playing){ rafOn = false; return; }
+  cx.clearRect(0, 0, cv.width, cv.height);
+  if(Math.random() < (dragMode ? 0.34 : 0.26) && falling.length < 38) spawn();
+  for(let i = falling.length - 1; i >= 0; i--){
+    const c = falling[i]; c.y += c.v; coin(cx, c.x, c.y, c.r);
+    if(c.y + c.r >= basket.y && c.y < basket.y + basket.h && c.x >= basket.x - 6 && c.x <= basket.x + basket.w + 6){
+      falling.splice(i, 1);
+      if(coins < cap){ coins++; $('coins').textContent = coins; buzz(12); if(coins >= cap) $('msg').textContent = '🎉 MAKSIMUM ' + cap + ' syiling!'; }
+      continue;
+    }
+    if(c.y > cv.height + 20) falling.splice(i, 1);
+  }
+  drawBasket(); requestAnimationFrame(loop);
+}
+async function endShake(){
+  playing = false; clearInterval(tmr); window.removeEventListener('devicemotion', onMotion);
+  ov(true, 'Menyimpan skor…', 'Sebentar sahaja');
+  let r = null;
+  for(let n = 0; n < 4 && !(r && (r.ok || r.error)); n++){ try{ r = await api({ action:'finishGame', sid, coins }); }catch(e){ await new Promise(s => setTimeout(s, 1200 * (n + 1))); } }
+  if(r && r.ok){
+    buzz([60, 40, 120]);
+    ov(true, '', '', '<div class="ovt" style="color:#4ade80">🎉 TAMAT!</div><div class="win">+' + r.coins + '</div><div class="ovt">mata ditambah</div><div class="ovs">Skor telah disimpan ke akaun anda</div><button class="big" style="max-width:320px" onclick="goBack()">Kembali ke Dashboard</button>');
+  }else{
+    ov(true, '', '', '<div class="ovt" style="color:#fda4af">⚠️ Skor tidak dapat disimpan</div><div class="ovs">' + esc((r && r.error) || 'Sambungan bermasalah. Cuba lagi.') + '</div><button class="big" style="max-width:320px" onclick="goBack()">Kembali</button>');
+  }
+}
+</script>
+</body>
+</html>
