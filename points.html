@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>SIAGA · Mata &amp; Ranking</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.20.1">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -225,7 +225,7 @@ async function load(){
   try{
     const d = await api({ action:'getPointsBoard', year: Y, month: M });
     if(!d.ok){ if(/expired/i.test(d.error || '')){ location.href = './login.html'; return; } if(!hit) fail(d.error); return; }
-    cset(key, d); data = d; render();
+    cset(key, d); data = d; render(); if(d.viewPts) toast('+' + d.viewPts + ' mata — semakan mingguan 🏆');
   }catch(e){ if(!hit) fail('Sambungan gagal. Semak internet anda.'); }
 }
 function fail(msg){ $('podium').innerHTML = '<div class="empty">' + esc(msg) + '<br><br><button class="btn ghost" style="width:100%" onclick="load()">Cuba lagi</button></div>'; }
@@ -281,7 +281,7 @@ function render(){
   // daily
   $('days').innerHTML = me && me.daily.length ? me.daily.slice().reverse().map(x => {
     const p = x.d.split('-').map(Number), dow = DOW[new Date(p[0], p[1] - 1, p[2]).getDay()];
-    const label = x.tag === 'loc' ? '📍 Semakan lokasi × ' + x.n : x.tag === 'chk' ? '📋 Senarai semak dikemas kini × ' + x.n : x.tag === 'bls' ? '🩺 Tarikh BLS dikemas kini' : x.tag === 'bersih' ? '🧹 BERSIH' + (x.daily ? ' · semua tugasan harian selesai' : '') + (x.tasks ? ' · ' + x.tasks + ' tugasan berkala' : '') + (x.bonus ? ' · bonus ' + x.bonus + ' mata' : '') : x.tag === 'el' ? 'Cuti kecemasan (EL)' : (x.in + ' masuk' + (x.out ? ' · ' + x.out + ' keluar' : ' · <span style="color:var(--amber);font-weight:600">tiada check-out</span>'));
+    const label = x.tag === 'loc' ? '📍 Semakan lokasi × ' + x.n : x.tag === 'chk' ? '📋 Senarai semak dikemas kini × ' + x.n : x.tag === 'evt' ? x.lbl : x.tag === 'bls' ? '🩺 Tarikh BLS dikemas kini' : x.tag === 'bersih' ? '🧹 BERSIH' + (x.daily ? ' · semua tugasan harian selesai' : '') + (x.tasks ? ' · ' + x.tasks + ' tugasan berkala' : '') + (x.bonus ? ' · bonus ' + x.bonus + ' mata' : '') : x.tag === 'el' ? 'Cuti kecemasan (EL)' : (x.in + ' masuk' + (x.out ? ' · ' + x.out + ' keluar' : ' · <span style="color:var(--amber);font-weight:600">tiada check-out</span>'));
     const sub = x.tag === 'late' ? 'Lewat selepas ' + r.lateAfter : x.tag === 'ok' ? 'Tepat masa' : x.tag === 'loc' ? 'Setiap semakan 10 minit di dalam klinik' : '';
     return '<div class="day"><div class="d"><b>' + p[2] + '</b><span>' + dow + '</span></div><div class="t">' + label + (sub ? '<em>' + sub + '</em>' : '') + '</div><span class="chip ' + (x.pts > 0 ? 'pos' : x.pts < 0 ? 'neg' : 'zero') + '">' + sgn(x.pts) + '</span></div>';
   }).join('') : '<div class="empty">Tiada rekod anda untuk bulan ini.</div>';
@@ -290,7 +290,13 @@ function render(){
   $('rules').innerHTML = '<table><tr><td>✅ Daftar masuk tepat masa (pada / sebelum ' + r.lateAfter + ')</td><td>' + sgn(r.checkIn) + '</td></tr><tr><td>⏰ Daftar masuk lewat (selepas ' + r.lateAfter + ')</td><td>' + sgn(r.lateIn) + '</td></tr><tr><td>🚪 Daftar keluar pada hari yang sama</td><td>' + sgn(r.checkOut) + '</td></tr><tr><td>🚨 Cuti kecemasan (EL), setiap hari</td><td>' + sgn(r.el) + '</td></tr>' +
     (r.locCheck ? '<tr><td>📍 Setiap semakan lokasi 10 minit di dalam klinik (' + (r.locWindows || []).join(' &amp; ') + ')</td><td>' + sgn(r.locCheck) + '</td></tr>' : '') +
     (r.checklist ? '<tr><td>📋 Kemas kini senarai semak (Trolley / Beg / Ambulans), sekali sehari bagi setiap satu</td><td>' + sgn(r.checklist) + '</td></tr>' : '') +
-    (r.bls ? '<tr><td>🩺 Kemas kini tarikh BLS dalam Update Profile (sebulan sekali, tarikh lebih baharu)</td><td>' + sgn(r.bls) + '</td></tr>' : '') +
+    (r.bls ? '<tr><td>🩺 Tarikh BLS: kali pertama diisi, atau selepas BLS luput → tarikh sah baharu</td><td>' + sgn(r.bls) + '</td></tr>' : '') +
+    (r.bio ? '<tr><td>🔐 Aktifkan Face ID / Touch ID (sekali seumur akaun)</td><td>' + sgn(r.bio) + '</td></tr>' : '') +
+    (r.tfa ? '<tr><td>🛡️ Aktifkan pengesahan 2 langkah (sekali seumur akaun)</td><td>' + sgn(r.tfa) + '</td></tr>' : '') +
+    (r.uname ? '<tr><td>🏷️ Tetapkan nama pengguna (sekali)</td><td>' + sgn(r.uname) + '</td></tr>' : '') +
+    (r.view ? '<tr><td>🏆 Buka halaman mata (seminggu sekali)</td><td>' + sgn(r.view) + '</td></tr>' : '') +
+    '<tr><td>🎮 Kotak permainan 12:45 (Ahad Shake maks 10 · bulan lahir 50 · Isnin Lucky Spin maks 20)</td><td>+ syiling</td></tr>' +
+    (r.fuel ? '<tr><td>⛽ Muat naik resit petrol</td><td>' + sgn(r.fuel) + '</td></tr>' : '') +
     (r.bersihDay ? '<tr><td>🧹 BERSIH (PPK / PRA): semua tugasan harian siap Pagi &amp; Petang pada hari anda daftar masuk</td><td>' + sgn(r.bersihDay) + '</td></tr>' : '') +
     (r.bersihTask ? '<tr><td>🧹 BERSIH: setiap tugasan mingguan / bulanan siap (sekali setiap tempoh)</td><td>' + sgn(r.bersihTask) + '</td></tr>' : '') +
     (r.bersihStreak ? '<tr><td>🧹 BERSIH: bonus bagi setiap ' + r.bersihStreakN + ' hari lengkap dalam bulan</td><td>' + sgn(r.bersihStreak) + '</td></tr>' : '') + '</table>' +
@@ -322,7 +328,7 @@ $('nickSave').onclick = async () => {
   $('nickSave').disabled = true;
   try{
     const d = await api({ action:'setNickname', nickname: v });
-    if(d.ok){ closeNick(); toast('Nama panggilan disimpan ✓'); try{ Object.keys(localStorage).filter(k => k.indexOf(ck('b_')) === 0).forEach(k => localStorage.removeItem(k)); }catch(e){} load(); }
+    if(d.ok){ closeNick(); toast(d.points ? 'Nama panggilan disimpan ✓  +' + d.points + ' mata 🎉' : 'Nama panggilan disimpan ✓'); try{ Object.keys(localStorage).filter(k => k.indexOf(ck('b_')) === 0).forEach(k => localStorage.removeItem(k)); }catch(e){} load(); }
     else $('nickErr').textContent = d.error || 'Gagal menyimpan.';
   }catch(e){ $('nickErr').textContent = 'Sambungan gagal.'; }
   $('nickSave').disabled = false;
