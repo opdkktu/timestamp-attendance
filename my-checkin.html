@@ -356,6 +356,7 @@ async function boot(){
   const today = await fetchToday();
   if(today){
     if(today.onCallOpen){ ocIntent = false; setMode('OC_OUT'); $('startTitle').textContent = 'On-Call Check Out'; }   // on-call session running → this scan closes it
+    else if(today.weekend){ setMode(today.openIn ? 'OUT' : 'IN'); if(today.openIn){ $('startTitle').textContent = 'Check Out'; } else if(today.checkIn){ $('startTitle').textContent = 'Check In (pusingan baharu)'; } }   // Fri & Sat: any number of in/out rounds, no time limit
     else if(today.checkIn && today.checkOut){ return showComplete(today); }
     else if(today.checkIn){
       setMode('OUT');
