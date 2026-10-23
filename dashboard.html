@@ -419,6 +419,9 @@
   /* Driver mode: a driver sees only the Ambulance checklist and has no queue-calling box */
   body.no-chk #box_temperature, body.no-chk #box_trolley, body.no-chk #box_bag, body.no-chk #box_ambulance{ display:none !important; }
   .sb-act{ grid-column:1 / -1; cursor:pointer; background:linear-gradient(135deg,#0B3D3A,#1C8F84); color:#fff; border:none; display:flex; align-items:center; gap:14px; text-align:left; padding:14px 16px; border-radius:20px; box-shadow:0 14px 28px -16px rgba(11,61,58,.7); font:inherit; }
+  .sb-act.sb-game{ background:linear-gradient(135deg,#4c1d95,#a21caf 55%,#f59e0b); animation:gmPulse 2.2s ease-in-out infinite; }
+  @keyframes gmPulse{ 0%,100%{ box-shadow:0 8px 22px -10px rgba(162,28,175,.55); } 50%{ box-shadow:0 10px 30px -6px rgba(245,158,11,.85); } }
+  @media (prefers-reduced-motion:reduce){ .sb-act.sb-game{ animation:none; } }
   .sb-act .ai{ width:46px; height:46px; border-radius:14px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
   .sb-act b{ display:block; font:800 15.5px Manrope,sans-serif; } .sb-act small{ display:block; font-size:12px; opacity:.85; margin-top:2px; } .sb-act .go{ margin-left:auto; font-size:20px; opacity:.9; }
   body.driver-mode #kcBox, body.driver-mode #box_temperature, body.driver-mode #box_trolley, body.driver-mode #box_bag{ display:none !important; }
@@ -777,6 +780,7 @@
   </div>
 
   <div class="status-boxes-grid">
+    <div id="gameSlot" style="display:contents"></div>
     <div id="actSlot" style="display:contents"></div>
     <div class="status-box loading" id="box_bls"><div class="sb-label">BLS Validity</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_temperature"><div class="sb-label">Temperature</div><div class="sb-main">&nbsp;</div></div>
@@ -1006,6 +1010,27 @@ function addModuleCard(name, icon, href, ext){
 }
 
 /* Tiles that depend on the person's unit: AMO → Ambulance Usage Log form (prefilled name) · PPK / PRA → BERSIH */
+/* === Daily game box: appears while today's game is open (12:45–1:30 PM) and the person still has a session left === */
+async function loadGameTile_(){
+  if(VIEW_NAME) return;
+  const slot = document.getElementById('gameSlot'); if(!slot) return;
+  try{
+    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getGameState', token: sessionStorage.getItem('kkah_session_token') }) });
+    const g = await res.json();
+    slot.innerHTML = '';
+    if(!g || !g.ok || !g.game || !g.open || g.left < 1) return;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'status-box sb-act sb-game';
+    const name = g.game === 'spin' ? 'Lucky Spin' : 'Shake & Catch', sub = g.game === 'spin' ? 'Satu ketikan \u00b7 menang sehingga 20 mata' : 'Satu ketikan \u00b7 kumpul sehingga ' + g.cap + ' mata' + (g.birth ? ' \ud83c\udf82' : '');
+    b.innerHTML = '<span class="ai">' + (g.game === 'spin' ? '\ud83c\udfa1' : '\ud83e\ude99') + '</span><span><b></b><small></small></span><span class="go">\u203a</span>';
+    b.querySelector('b').textContent = '\ud83c\udfae Masa bermain \u2014 ' + name; b.querySelector('small').textContent = sub;
+    b.onclick = () => { window.location.href = './game.html'; };
+    slot.appendChild(b);
+  }catch(e){ /* optional */ }
+}
+setTimeout(loadGameTile_, 1200);
+setInterval(() => { const n = new Date(), m = n.getHours() * 60 + n.getMinutes(); if(!document.hidden && m >= 12 * 60 + 40 && m < 13 * 60 + 35) loadGameTile_(); }, 60 * 1000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(loadGameTile_, 600); });
+
 async function loadExtraTiles_(){
   if(VIEW_NAME) return;
   try{
@@ -1373,7 +1398,8 @@ function coOpenNowLocal_(){
 /* === 5:00 PM: Check Out opens by itself. Checked in, not out yet → "Waktu balik" screen, 5 s countdown, straight to Check Out === */
 /* Thursday check-out opens by itself at 3:30 PM, every other working day at 5:00 PM */
 function coAutoMin_(){ return new Date().getDay() === 4 ? 15 * 60 + 30 : 17 * 60; }
-function coAutoReached_(){ const n = new Date(); return n.getHours() * 60 + n.getMinutes() >= coAutoMin_(); }
+function coAutoReached_(){ const n = new Date(); if(n.getDay() === 5 || n.getDay() === 6) return false;   // Fri & Sat: no automatic check-out
+   return n.getHours() * 60 + n.getMinutes() >= coAutoMin_(); }
 function coAutoDue_(){
   if(VIEW_NAME) return false;
   const st = window._attState; if(!st || !st.hasIn || st.hasOut) return false;
@@ -1485,7 +1511,7 @@ async function showWelcomeOverlay(){
 function saverNow_(){ const h = new Date().getHours(); return h >= 9 && h < 12; }
 async function initLocationBar(force){
   const text = document.getElementById('locationText');
-  if(force !== true && saverNow_()){ text.textContent = '🔋 Mod jimat bateri (9 pagi–12 tengah hari) · notifikasi tetap aktif'; return; }
+  if(force !== true && saverNow_()){ text.textContent = '📍 Ketik untuk kesan lokasi sekarang'; return; }
   text.textContent = 'Mengesan lokasi…';
 
   if(!navigator.geolocation){
@@ -2419,6 +2445,11 @@ async function loadTodayAttendance(){
     renderAttTime(inEl, data.checkIn);
     renderAttTime(outEl, data.checkOut);
     setAttButtons(!!data.checkIn, !!data.checkOut, (data.canCheckOut !== undefined ? data.canCheckOut : coOpenNowLocal_()), data.opensAt || '1:00 PM');
+    if(data.weekend){   // Fri & Sat: free in/out rounds — after an Out the Check In button is available again
+      const bi = document.getElementById('attBtnIn'), bo = document.getElementById('attBtnOut');
+      if(bi && bo){ if(data.openIn){ bi.className = 'att-btn done'; bo.className = 'att-btn primary'; } else if(data.checkOut){ bi.className = 'att-btn primary'; bo.className = 'att-btn done'; } }
+      window._coLocked = false; window._attState = { hasIn: !!data.openIn, hasOut: false };
+    }
     if(!data.checkIn && !data.checkOut) maybeCheckInPrompt_();
     if(data.onCallOpen){   // on-call session running (e.g. 8 pm → 1 am): the Check Out button closes it
       const bo = document.getElementById('attBtnOut'); if(bo){ bo.className = 'att-btn primary'; const l = bo.querySelector('span:last-child'); if(l) l.textContent = '🌙 On-Call Out · sejak ' + formatTime12_(data.onCallIn); window._attState = { hasIn: true, hasOut: true }; }
