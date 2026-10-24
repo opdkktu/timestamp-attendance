@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Staff Integration, Attendance & Governance Application(SIAGA) · About</title>
+<title>SIAGA · About</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SIAGA">
+
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,7 +57,7 @@
   </div>
   <div class="stage">
     <div class="info-list">
-      <div class="info-row"><div class="label">App Name</div><div class="value">KKAH SIAGA</div></div>
+      <div class="info-row"><div class="label">App Name</div><div class="value">SIAGA — Staff Integration, Attendance &amp; Governance Application</div></div>
       <div class="info-row"><div class="label">Version</div><div class="value" id="versionValue">—</div></div>
       <div class="info-row"><div class="label">System Launch Date</div><div class="value" id="launchValue">—</div></div>
       <div class="info-row"><div class="label">Developer</div><div class="value" id="devValue">—</div></div>
@@ -70,5 +75,7 @@
   document.getElementById('devValue').textContent = APP_DEVELOPER;
   document.getElementById('copyrightLine').textContent = getCopyrightLine();
 </script>
+<script src="./emergency-alert.js"></script>
+<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
 </body>
 </html>
