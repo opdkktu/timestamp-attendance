@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1..0.3.18">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.3.18">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -196,6 +196,24 @@
   }
 
   /* === MULTI-BOX STATUS DASHBOARD (boxes 2-7; box 1 is .schedule-card above) === */
+  /* === AMO procedure tasks === */
+  .po-wrap{ margin:0 0 12px; display:flex; flex-direction:column; gap:10px; }
+  .po-card{ background:var(--card-bg,#fff); border:1px solid #f0c36d; border-left:6px solid #E8860C; border-radius:16px; padding:12px 14px; box-shadow:0 6px 18px -10px rgba(0,0,0,.25); }
+  .po-card.urgent{ border-color:#e0524a; border-left-color:#C0392B; animation:poPulse 1.4s ease-in-out infinite; }
+  .po-card.taken{ border-left-color:#1565C0; border-color:#9cc3ee; animation:none; }
+  .po-card.done{ opacity:.6; border-left-color:#1f9a57; border-color:#bfe3cd; animation:none; }
+  @keyframes poPulse{ 0%,100%{ box-shadow:0 6px 18px -10px rgba(192,57,43,.4) } 50%{ box-shadow:0 0 0 4px rgba(192,57,43,.18) } }
+  .po-h{ display:flex; justify-content:space-between; gap:8px; font-weight:800; font-size:14px; }
+  .po-h small{ font-weight:600; opacity:.65; }
+  .po-pt{ font-size:13px; margin-top:2px; }
+  .po-l{ margin-top:6px; font-size:12.5px; line-height:1.5; }
+  .po-l b{ display:inline-block; min-width:62px; }
+  .po-note{ margin-top:6px; font-size:12px; font-style:italic; opacity:.8; }
+  .po-act{ display:flex; gap:8px; margin-top:10px; }
+  .po-btn{ flex:1; height:44px; border:none; border-radius:12px; font-weight:800; font-size:14px; cursor:pointer; font-family:inherit; color:#fff; background:#1565C0; }
+  .po-btn.ok{ background:#1f9a57; }
+  .po-btn:disabled{ opacity:.5; }
+  .po-who{ margin-top:8px; font-size:12px; font-weight:700; }
   /* === Kaunter C quick-call box === */
   .kc-box{
     position:relative; margin-top:12px; height:92px; border-radius:20px; cursor:pointer; overflow:hidden; color:#fff;
@@ -266,6 +284,7 @@
   .kc-opt.sel::after{ content:'✓'; margin-left:auto; }
   .kc-opt small{ font-weight:600; opacity:.75; font-size:11px; }
   .kc-opt.soon{ opacity:.4; cursor:default; }
+  .kc-room-btn{ margin-top:8px; height:36px; padding:0 14px; border-radius:99px; border:none; background:#fff; color:#0B3D3A; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; }
   .kc-msg{ margin-top:12px; text-align:center; font-size:13px; font-weight:600; min-height:18px; line-height:1.35; padding:0 6px; }
   /* === CME scan tile + scanner === */
   .cme-scan-tile{
@@ -779,6 +798,8 @@
     <button class="pw-x" aria-label="Tutup" onclick="event.stopPropagation(); dismissPushWarn()">✕</button>
   </div>
 
+  <div class="po-wrap" id="procSlot" aria-live="polite"></div>
+
   <div class="status-boxes-grid">
     <div id="gameSlot" style="display:contents"></div>
     <div id="actSlot" style="display:contents"></div>
@@ -1030,6 +1051,50 @@ async function loadGameTile_(){
 setTimeout(loadGameTile_, 1200);
 setInterval(() => { const n = new Date(), m = n.getHours() * 60 + n.getMinutes(); if(!document.hidden && m >= 12 * 60 + 40 && m < 13 * 60 + 35) loadGameTile_(); }, 60 * 1000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(loadGameTile_, 600); });
+
+
+/* === AMO tasks: procedures / medication ordered by a doctor (PRIMA DoctorRoom section 4). Only AMO accounts ever see this. === */
+let _poAmo = null, _poBusy = false;
+function poEsc_(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+async function loadProcTasks_(){
+  if(VIEW_NAME || _poAmo === false) return;
+  const slot = document.getElementById('procSlot'); if(!slot) return;
+  try{
+    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getProcOrders', token: sessionStorage.getItem('kkah_session_token') }) });
+    const d = await res.json();
+    if(!d || !d.ok) return;
+    _poAmo = !!d.amo; if(!d.amo){ slot.innerHTML = ''; return; }
+    const open = d.orders.filter(o => o.status !== 'SELESAI');
+    slot.innerHTML = d.orders.slice(0, 12).map(o => {
+      const cls = o.status === 'SELESAI' ? 'done' : o.status === 'DIAMBIL' ? 'taken' : (o.urgent ? 'urgent' : '');
+      const roomNo = (o.room.match(/\d+/) || [''])[0];
+      const who = o.status === 'SELESAI' ? '✅ Selesai oleh ' + poEsc_(o.doneBy) + ' · ' + poEsc_(o.doneAt.slice(0,5))
+                : o.status === 'DIAMBIL' ? '🏃 ' + poEsc_(o.claimBy) + ' sedang menguruskan' : '';
+      const btns = o.status === 'SELESAI' ? '' :
+        '<div class="po-act">' + (o.status === 'DIHANTAR' ? '<button class="po-btn" onclick="poAct_(\'claimProcOrder\',\'' + poEsc_(o.id) + '\',this)">Saya ambil</button>' : '') +
+        '<button class="po-btn ok" onclick="poAct_(\'doneProcOrder\',\'' + poEsc_(o.id) + '\',this)">✓ Selesai</button></div>';
+      return '<div class="po-card ' + cls + '"><div class="po-h"><span>' + (o.urgent ? '⚡ ' : '🔧 ') + 'Bilik ' + poEsc_(roomNo) + ' · No. ' + poEsc_(o.num) + '</span><small>' + poEsc_(o.time.slice(0,5)) + '</small></div>' +
+        '<div class="po-pt">' + poEsc_(o.patient) + ' <small>· Dr. ' + poEsc_(o.doctor) + '</small></div>' +
+        (o.procs.length ? '<div class="po-l"><b>Prosedur</b>' + o.procs.map(poEsc_).join(', ') + '</div>' : '') +
+        (o.meds.length ? '<div class="po-l"><b>Ubat</b>' + o.meds.map(poEsc_).join(', ') + '</div>' : '') +
+        (o.note ? '<div class="po-note">“' + poEsc_(o.note) + '”</div>' : '') + (who ? '<div class="po-who">' + who + '</div>' : '') + btns + '</div>';
+    }).join('');
+    if(open.length && /[?&]proc=1/.test(location.search)) { try{ slot.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} }
+  }catch(e){ /* optional */ }
+}
+async function poAct_(action, id, btn){
+  if(_poBusy) return; _poBusy = true; if(btn) btn.disabled = true;
+  try{
+    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action: action, orderId: id, token: sessionStorage.getItem('kkah_session_token') }) });
+    const d = await res.json();
+    if(navigator.vibrate) navigator.vibrate(d && d.ok ? 50 : [80,60,80]);
+    if(d && !d.ok && d.error) alert(d.error);
+  }catch(e){ alert('Ralat sambungan. Cuba lagi.'); }
+  _poBusy = false; loadProcTasks_();
+}
+setTimeout(loadProcTasks_, 1500);
+setInterval(() => { if(!document.hidden && _poAmo) loadProcTasks_(); }, 25 * 1000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(loadProcTasks_, 400); });
 
 async function loadExtraTiles_(){
   if(VIEW_NAME) return;
@@ -1335,8 +1400,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Emergency: if an alert is live when the dashboard opens or comes back to the foreground, show it + siren.
   if(!VIEW_NAME && window.SiagaEmergency){
-    SiagaEmergency.check(API_URL_DASHBOARD);
-    document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') SiagaEmergency.check(API_URL_DASHBOARD); });
+    SiagaEmergency.watch(API_URL_DASHBOARD);
   }
   warmFaceAssets_(); // pre-download the face models in the background so Check In starts fast
 });
@@ -1398,7 +1462,7 @@ function coOpenNowLocal_(){
 /* === 5:00 PM: Check Out opens by itself. Checked in, not out yet → "Waktu balik" screen, 5 s countdown, straight to Check Out === */
 /* Thursday check-out opens by itself at 3:30 PM, every other working day at 5:00 PM */
 function coAutoMin_(){ return new Date().getDay() === 4 ? 15 * 60 + 30 : 17 * 60; }
-function coAutoReached_(){ const n = new Date(); if(n.getDay() === 5 || n.getDay() === 6) return false;   // Fri & Sat: no automatic check-out
+function coAutoReached_(){ const n = new Date(); if(n.getDay() === 5 || n.getDay() === 6 || window._offDay) return false;   // Fri & Sat: no automatic check-out
    return n.getHours() * 60 + n.getMinutes() >= coAutoMin_(); }
 function coAutoDue_(){
   if(VIEW_NAME) return false;
@@ -1943,9 +2007,16 @@ function closeCmeList(){ document.getElementById('cmeListOverlay').classList.rem
 const CALL_TARGETS = [
   { id: 'A', label: 'Kaunter A', action: 'kaunter', zones: [/kaunter\s*a\b/i] },
   { id: 'B', label: 'Kaunter B', action: 'kaunter', zones: [/kaunter\s*b\b/i] },
-  { id: 'C', label: 'Kaunter C', action: 'kaunter', zones: [/kaunter\s*c\b/i, /runner/i] }
-  // coming next: { id:'R1', label:'Bilik Doktor 1', action:'room', zones:[/bilik\s*1\b/i] } …
+  { id: 'C', label: 'Kaunter C', action: 'kaunter', zones: [/kaunter\s*c\b/i, /runner/i] },
+  { id: 'R1', label: 'Bilik Doktor 1', action: 'room', zones: [/bilik\s*doktor\s*1\b/i] },
+  { id: 'R2', label: 'Bilik Doktor 2', action: 'room', zones: [/bilik\s*doktor\s*2\b/i] },
+  { id: 'R3', label: 'Bilik Doktor 3', action: 'room', zones: [/bilik\s*doktor\s*3\b/i] },
+  { id: 'R4', label: 'Bilik Doktor 4', action: 'room', zones: [/bilik\s*doktor\s*4\b/i] },
+  { id: 'R5', label: 'Bilik Doktor 5', action: 'room', zones: [/bilik\s*doktor\s*5\b/i] },
+  { id: 'R6', label: 'Bilik Doktor 6', action: 'room', zones: [/bilik\s*doktor\s*6\b/i] }
 ];
+const PRIMA_WEB_URL = 'https://script.google.com/a/macros/moh.gov.my/s/AKfycbxSBGU1I4v_geNAMmQR4wnDdm6SZn8gVV4z0AC608EfOEHw3MyO58MJSffoRGElP-c/exec';
+function kcOpenRoom(num, room){ window.open(PRIMA_WEB_URL + '?page=doctor&room' + encodeURIComponent(room) + '&num=' + encodeURIComponent(num), '_blank', 'noopener'); }
 let kcTarget = (function(){ try{ return localStorage.getItem('kkah_call_target') || 'C'; }catch(e){ return 'C'; } })();
 let kcZoneMatched = false;
 let kcBusy = false, kcTimer = null, kcIdle = null;
@@ -2090,7 +2161,14 @@ async function kcCall(num){
   if(data && data.ok){
     if(navigator.vibrate) navigator.vibrate(60);
     kcShow('ok', '<div class="kc-icon">✓</div>', num + ' · ' + (data.name || '') + ' — dipanggil (' + kcTargetObj().label + ')');
-    kcTimer = setTimeout(kcReset, 2200); // ready for the next number
+    if(kcTargetObj().action === 'room'){
+      // a room call keeps the box on screen long enough to open the room's overlay (diagnosis · ubat · prosedur) with this patient
+      const rn = String(kcTarget).replace(/\D/g, '');
+      document.getElementById('kcMsg').insertAdjacentHTML('beforeend', '<br><button type="button" class="kc-room-btn" onclick="event.stopPropagation(); kcOpenRoom(\'' + num + '\',\'' + rn + '\'); kcReset();">🩺 Buka Bilik ' + rn + ' — ubat / prosedur</button>');
+      kcTimer = setTimeout(kcReset, 15000);
+    }else{
+      kcTimer = setTimeout(kcReset, 2200); // ready for the next number
+    }
   }else{
     if(navigator.vibrate) navigator.vibrate([80, 60, 80]);
     const msg = data && data.notFound ? 'Nama tidak dijumpai — nombor ' + num + ' tidak dapat dipanggil' : ((data && data.error) || 'Panggilan gagal');
@@ -2445,7 +2523,8 @@ async function loadTodayAttendance(){
     renderAttTime(inEl, data.checkIn);
     renderAttTime(outEl, data.checkOut);
     setAttButtons(!!data.checkIn, !!data.checkOut, (data.canCheckOut !== undefined ? data.canCheckOut : coOpenNowLocal_()), data.opensAt || '1:00 PM');
-    if(data.weekend){   // Fri & Sat: free in/out rounds — after an Out the Check In button is available again
+    window._offDay = !!data.weekend;   // Fri/Sat or a public holiday → no automatic check-out
+    if(data.weekend){   // Fri & Sat / public holiday: free in/out rounds — after an Out the Check In button is available again
       const bi = document.getElementById('attBtnIn'), bo = document.getElementById('attBtnOut');
       if(bi && bo){ if(data.openIn){ bi.className = 'att-btn done'; bo.className = 'att-btn primary'; } else if(data.checkOut){ bi.className = 'att-btn primary'; bo.className = 'att-btn done'; } }
       window._coLocked = false; window._attState = { hasIn: !!data.openIn, hasOut: false };
@@ -2603,6 +2682,7 @@ function initOneSignal(ic){
         OneSignal.Notifications.addEventListener('foregroundWillDisplay', (ev) => {
           const d = (ev && ev.notification && ev.notification.additionalData) || {};
           if(d.type === 'emergency' && window.SiagaEmergency) SiagaEmergency.fromPush(d);
+          if(d.type === 'Prosedur'){ _poAmo = null; setTimeout(loadProcTasks_, 600); }
         });
       }catch(e){ console.warn('Emergency listener not attached:', e); }
       try{ await OneSignal.login(ic); }catch(e){ console.warn('OneSignal login failed:', e); }
