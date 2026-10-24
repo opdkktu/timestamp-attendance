@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F4530">
+<title>Pendaftaran PRIMA</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<style>
+  :root{
+    --bg:#EEF3F1; --card:#FFFFFF; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB;
+    --mch:#185FA5; --mchl:#E6F0FA; --dg:#C0392B; --warn:#B45309; --ok:#1f9a57;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --mchl:#13283D; }
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:Inter,'Segoe UI',system-ui,sans-serif; min-height:100vh; padding-bottom:calc(96px + env(safe-area-inset-bottom)); }
+  .top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px; padding:calc(10px + env(safe-area-inset-top)) 14px 10px; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; box-shadow:0 6px 18px -10px rgba(0,0,0,.5); }
+  .top.mch{ background:linear-gradient(135deg,#0d3f70,var(--mch)); }
+  .back{ width:42px; height:42px; border:none; border-radius:13px; background:rgba(255,255,255,.16); color:#fff; font-size:22px; cursor:pointer; }
+  .ttl{ flex:1; font-weight:800; font-size:17px; line-height:1.15; } .ttl small{ display:block; font-weight:500; font-size:11.5px; opacity:.8; }
+  .lockbtn{ height:36px; padding:0 12px; border-radius:99px; border:1px solid rgba(255,255,255,.4); background:rgba(255,255,255,.12); color:#fff; font-weight:700; font-size:12.5px; cursor:pointer; display:none; }
+  .wrap{ max-width:560px; margin:0 auto; padding:14px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; margin-bottom:12px; box-shadow:0 8px 22px -16px rgba(0,0,0,.35); }
+  .ct{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--acc); margin-bottom:12px; }
+  .mch .ct, body.mch .ct{ color:var(--mch); }
+  .ct i{ width:9px; height:9px; border-radius:50%; background:var(--acc); } body.mch .ct i{ background:var(--mch); }
+  .field{ margin-bottom:13px; position:relative; }
+  label{ display:block; font-size:12.5px; font-weight:700; margin-bottom:5px; }
+  label small{ font-weight:500; color:var(--mut); }
+  .req{ color:var(--dg); }
+  input,select{ width:100%; height:50px; border-radius:14px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 16px Inter,system-ui,sans-serif; padding:0 14px; outline:none; transition:border-color .15s, box-shadow .15s; appearance:none; -webkit-appearance:none; }
+  select{ background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%); background-position:calc(100% - 20px) 21px,calc(100% - 15px) 21px; background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:36px; }
+  input:focus,select:focus{ border-color:var(--acc); box-shadow:0 0 0 4px rgba(26,107,74,.15); }
+  body.mch input:focus, body.mch select:focus{ border-color:var(--mch); box-shadow:0 0 0 4px rgba(24,95,165,.15); }
+  input.bad,select.bad{ border-color:var(--dg); box-shadow:0 0 0 4px rgba(192,57,43,.14); }
+  .mono{ font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace; letter-spacing:.08em; }
+  #ic{ font-size:24px; font-weight:700; text-align:center; height:60px; letter-spacing:.12em; }
+  .hint{ font-size:12px; color:var(--mut); margin-top:5px; min-height:16px; } .hint b{ color:var(--acc); }
+  .g2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .chip{ display:flex; flex-direction:column; justify-content:center; height:50px; border-radius:14px; background:var(--accl); padding:0 14px; }
+  .chip span{ font-size:10.5px; font-weight:700; color:var(--mut); text-transform:uppercase; letter-spacing:.06em; } .chip b{ font-size:16px; }
+  .modes{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+  .mode{ height:54px; border-radius:16px; border:2px solid var(--line); background:var(--card); color:var(--ink); font:800 13.5px Inter,sans-serif; cursor:pointer; line-height:1.15; }
+  .mode.on.opd{ border-color:var(--acc); background:var(--accl); color:var(--acc2); }
+  .mode.on.mch{ border-color:var(--mch); background:var(--mchl); color:var(--mch); }
+  .auto{ display:inline-block; margin-left:6px; padding:2px 8px; border-radius:99px; background:var(--accl); color:var(--acc2); font-size:10.5px; font-weight:800; }
+  .note{ margin-top:6px; padding:8px 12px; border-radius:12px; background:var(--accl); color:var(--acc2); font-size:12.5px; font-weight:700; display:none; }
+  .bar{ position:fixed; left:0; right:0; bottom:0; z-index:25; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,transparent,var(--bg) 28%); }
+  .bar .in{ max-width:560px; margin:0 auto; }
+  .send{ width:100%; height:58px; border:none; border-radius:18px; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; font:900 17px Inter,sans-serif; letter-spacing:.02em; cursor:pointer; box-shadow:0 12px 26px -12px rgba(15,69,48,.8); }
+  body.mch .send{ background:linear-gradient(135deg,#0d3f70,var(--mch)); }
+  .send:disabled{ opacity:.6; cursor:wait; }
+  .status{ min-height:20px; margin:0 0 8px; text-align:center; font-weight:700; font-size:13px; }
+  .status.err{ color:var(--dg); } .status.ld{ color:var(--mut); }
+  /* PIN gate */
+  .gate{ text-align:center; max-width:380px; margin:34px auto 0; }
+  .gate .lk{ font-size:46px; } .gate h2{ margin:6px 0 4px; font-size:21px; } .gate p{ color:var(--mut); font-size:13.5px; margin:0 0 16px; line-height:1.5; }
+  #pin{ text-align:center; font-size:28px; letter-spacing:.4em; height:62px; }
+  .pinbtn{ margin-top:12px; width:100%; height:54px; border:none; border-radius:16px; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; font:800 16px Inter,sans-serif; cursor:pointer; }
+  .pinbtn:disabled{ opacity:.6; }
+  .pinmsg{ min-height:20px; margin-top:10px; font-size:13px; font-weight:700; color:var(--dg); }
+  /* success overlay */
+  .ov{ position:fixed; inset:0; z-index:60; background:rgba(8,32,24,.94); display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; color:#fff; padding:24px; }
+  .ov.show{ display:flex; }
+  .ov .tick{ width:92px; height:92px; border-radius:50%; background:var(--ok); display:flex; align-items:center; justify-content:center; font-size:52px; animation:pop .45s ease-out; }
+  .ov .nm{ font-size:20px; font-weight:800; } .ov .qn{ font:900 64px 'IBM Plex Mono',ui-monospace,monospace; letter-spacing:.1em; color:#fde68a; } .ov .sm{ opacity:.8; font-size:14px; }
+  @keyframes pop{ from{ transform:scale(.4); opacity:0 } to{ transform:scale(1); opacity:1 } }
+  [hidden]{ display:none !important; }
+  @media (prefers-reduced-motion:reduce){ .ov .tick{ animation:none } }
+</style>
+</head>
+<body>
+
+<div class="top" id="top">
+  <button class="back" onclick="goBack()" aria-label="Kembali">‹</button>
+  <div class="ttl">Pendaftaran PRIMA<small id="sub">Kunci dengan PIN</small></div>
+  <button class="lockbtn" id="lockBtn" onclick="relock()">🔒 Kunci</button>
+</div>
+
+<div class="wrap">
+  <!-- PIN gate -->
+  <div class="gate card" id="gate">
+    <div class="lk">🔒</div>
+    <h2>Pendaftaran Dikunci</h2>
+    <p>Masukkan PIN kaunter untuk membuka pendaftaran pesakit.</p>
+    <input type="password" id="pin" class="mono" inputmode="numeric" maxlength="8" autocomplete="off" aria-label="PIN kaunter">
+    <button class="pinbtn" id="pinBtn" onclick="submitPin()">Buka</button>
+    <div class="pinmsg" id="pinMsg" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- Registration form -->
+  <form id="form" autocomplete="off" hidden>
+    <div class="modes">
+      <button type="button" class="mode on opd" id="mOpd" onclick="setMode('opd')">🏥 Pesakit Luar (OPD)</button>
+      <button type="button" class="mode" id="mMch" onclick="setMode('mch')">👶 Ibu &amp; Anak (MCH)</button>
+    </div>
+
+    <div class="card">
+      <div class="ct"><i></i><span id="pTitle">Maklumat Pesakit</span></div>
+      <div class="field">
+        <label for="ic" id="icLbl">No. Kad Pengenalan</label>
+        <input id="ic" class="mono" inputmode="numeric" maxlength="12" placeholder="901231145678">
+        <div class="hint" id="icHint"></div>
+      </div>
+      <div class="field">
+        <label for="nama">Nama Penuh <span class="req">*</span></label>
+        <input id="nama" placeholder="AHMAD BIN ABU BAKAR" autocapitalize="characters">
+      </div>
+      <div class="field">
+        <label for="bangsa">Bangsa / Kaum <span class="req">*</span></label>
+        <select id="bangsa"></select>
+      </div>
+      <div class="g2" id="pptRow">
+        <div class="field"><label for="passport">No. Pasport <small>(jika ada)</small></label><input id="passport" placeholder="A12345678" autocapitalize="characters"></div>
+        <div class="field"><label for="tlahir">Tahun Lahir <small>(tiada IC)</small></label><input id="tlahir" inputmode="numeric" maxlength="4" placeholder="1985"></div>
+      </div>
+      <div class="g2" id="demog" hidden>
+        <div class="field"><div class="chip"><span>Umur (auto)</span><b id="dAge">—</b></div></div>
+        <div class="field"><div class="chip"><span>Kategori umur</span><b id="dCat">—</b></div></div>
+      </div>
+      <div class="field" id="genderF" hidden>
+        <label for="gender">Jantina <span class="req">*</span></label>
+        <select id="gender"><option value="">— Pilih —</option><option>LELAKI</option><option>PEREMPUAN</option></select>
+      </div>
+      <div class="g2">
+        <div class="field"><label for="phone">No. Telefon <span class="req">*</span></label><input id="phone" type="tel" inputmode="numeric" maxlength="12" placeholder="011XXXXXXXX"></div>
+        <div class="field"><label for="email">E-mel <small>(pilihan)</small></label><input id="email" type="email" placeholder="nama@email.com"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct"><i></i><span id="kTitle">Kategori &amp; Perkhidmatan</span></div>
+      <div id="opdF">
+        <div class="field"><label for="klinik">Klinik / Bahagian <span class="req">*</span></label><select id="klinik"></select></div>
+        <div class="field">
+          <label for="kategori">Kategori Pesakit <span class="req">*</span><span class="auto" id="autoTag" hidden>Auto</span></label>
+          <select id="kategori"></select>
+          <div class="note" id="weNote">✓ Auto: WARGA EMAS (umur ≥ 60)</div>
+        </div>
+      </div>
+      <div id="mchF" hidden>
+        <div class="field"><label for="tujuan">Tujuan / Kategori MCH <span class="req">*</span></label><select id="tujuan"></select></div>
+        <div class="field"><label for="statusB">Status Bayaran <span class="req">*</span></label><select id="statusB"></select></div>
+        <div class="field"><label for="zon">Zon <span class="req">*</span></label><select id="zon"></select></div>
+        <div class="note" id="boNote">👶 B/O dikesan — Status: BAYI KURANG 1 TAHUN. No. IC = IC Ibu.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct"><i></i>No. Giliran <small style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--mut)">(pilihan)</small></div>
+      <input id="qnum" class="mono" inputmode="numeric" maxlength="4" placeholder="0001" style="font-size:26px;font-weight:800;text-align:center;height:60px;">
+      <div class="hint">Kosongkan jika tiada. Nombor akan terus dipaparkan di skrin giliran.</div>
+    </div>
+  </form>
+</div>
+
+<div class="bar" id="bar" hidden>
+  <div class="in">
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <button class="send" id="send" onclick="submitForm()">Hantar &amp; Rekod</button>
+  </div>
+</div>
+
+<div class="ov" id="ov" role="status" aria-live="polite">
+  <div class="tick">✓</div><div class="nm" id="ovNm"></div><div class="qn" id="ovQ"></div><div class="sm" id="ovS"></div>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const token = sessionStorage.getItem('kkah_session_token');
+const $ = id => document.getElementById(id);
+const BANGSA_FULL = ['Melayu','Cina','India','Kadazan','Murut','Bajau','Melanau','Iban','Bidayuh','Orang Asli Semenanjung','Peribumi Sabah Lain','Peribumi Sarawak Lain','LAIN-LAIN','Siam','WARGANEGARA ASING TANPA IZIN','WARGANEGARA ASING DENGAN IZIN'];
+const BANGSA_FOREIGN = ['WARGANEGARA ASING TANPA IZIN','WARGANEGARA ASING DENGAN IZIN'];
+const KLINIK = ['OPD','NCD','DARAH','FMS','KLINIK BERHENTI MEROKOK','ASTHMA','MENTAL','FEVER CLINIC','DRESSING','DIETITION/KAUNSELING','UPT','THALASSAEMIA','TB','Peka B40','METHADONE','PHYSIOTHERAPY','MEDICAL CHECKUP','PROCEDURE LAIN (CBD, Ryle tube, STO)'];
+const KATEGORI = ['RM1','OKU','WARGA EMAS','GL','BAYI KURANG 1 TAHUN','WARGA ASING','RM5','BAYARAN MEDICAL CHECK UP','PERCUMA - TB','TIADA BAYARAN','RM3','RM31'];
+const TUJUAN = ['BOOKING','ANTENATAL','MO','FMS','CHILD CARE','DARAH','FAMILY PLANNING','UPT','TSB','POSTNATAL','BP/BSP/UFEME'];
+const STATUS_B = ['RM1','OKU','WARGA EMAS','GL','BAYI KURANG 1 TAHUN','WARGA ASING','RM5','TIADA BAYARAN','RM3'];
+const ZON = ['ZON A','ZON B','KD Sungai Korok','KD Lana Bulu','KD Sanglang','KD Permatang Paku','KD Jerlun'];
+const MALAY = ['mohd','muhamad','muhammad','mohamad','mohammad',' bin ',' binti ',' bt ',' b. ',' bte ','binti ','bin ','ahmad ','razak ','siti ','nur ','nor ','wan '];
+const CINA = ['wong ','ng ','chen ','chan ','zhang ','chong ','koh ','ong ','yap ','yeoh ','teoh ','goh ','teh ','low ','chew ','sim ','choong ','cheong ','chin ','yong ','phang ','heng ','liow '];
+
+let mode = 'opd', pkTok = '', reqId = '', sending = false, autoKat = '';
+
+function goBack(){ window.location.href = './dashboard.html'; }
+function fill(sel, list, first){ sel.innerHTML = (first === false ? '' : '<option value="">— Pilih —</option>') + list.map(v => '<option>' + v.replace(/&/g, '&amp;') + '</option>').join(''); }
+function api(body, ms){
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms || 30000);
+  return fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)), signal: ctl.signal })
+    .then(r => r.json()).finally(() => clearTimeout(t));
+}
+
+/* ---------- PIN gate ---------- */
+function showGate(msg){
+  pkTok = ''; try{ localStorage.removeItem('kkah_prima_tok'); }catch(e){}
+  $('gate').hidden = false; $('form').hidden = true; $('bar').hidden = true; $('lockBtn').style.display = 'none';
+  $('sub').textContent = 'Kunci dengan PIN'; $('pinMsg').textContent = msg || ''; setTimeout(() => $('pin').focus(), 100);
+}
+function unlock(){
+  $('gate').hidden = true; $('form').hidden = false; $('bar').hidden = false; $('lockBtn').style.display = 'block';
+  $('sub').textContent = 'Daftar pesakit OPD / MCH'; setTimeout(() => $('ic').focus(), 150);
+}
+function relock(){ showGate(''); }
+async function submitPin(){
+  const pin = $('pin').value.replace(/\D/g, ''); if(!pin) return;
+  $('pinBtn').disabled = true; $('pinMsg').style.color = 'var(--mut)'; $('pinMsg').textContent = 'Menyemak…';
+  let d; try{ d = await api({ action:'primaRegPin', pin }, 20000); }catch(e){ d = { ok:false, error:'Ralat sambungan. Cuba lagi.' }; }
+  $('pinBtn').disabled = false; $('pin').value = '';
+  if(d && d.ok){ pkTok = d.pkTok; try{ localStorage.setItem('kkah_prima_tok', JSON.stringify({ t:pkTok, at:Date.now() })); }catch(e){} $('pinMsg').textContent = ''; unlock(); return; }
+  if(d && /expired/i.test(d.error || '')){ window.location.href = './login.html'; return; }
+  $('pinMsg').style.color = 'var(--dg)'; $('pinMsg').textContent = (d && d.error) || 'PIN tidak dapat disemak.'; $('pin').focus();
+  if(navigator.vibrate) navigator.vibrate([80, 60, 80]);
+}
+$('pin').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); submitPin(); } });
+
+/* ---------- demographics + auto rules (same as Kaunter) ---------- */
+function ageFromIc(ic){
+  if(ic.length !== 12) return null;
+  const yy = +ic.slice(0, 2), mm = +ic.slice(2, 4), dd = +ic.slice(4, 6), now = new Date();
+  const fy = yy <= now.getFullYear() % 100 ? 2000 + yy : 1900 + yy, dob = new Date(fy, mm - 1, dd);
+  let age = now.getFullYear() - dob.getFullYear();
+  if(now.getMonth() < dob.getMonth() || (now.getMonth() === dob.getMonth() && now.getDate() < dob.getDate())) age--;
+  return age;
+}
+const ageCat = a => (a === null || a === '' || isNaN(a)) ? '' : a < 10 ? '<10' : a < 20 ? '10-19' : a <= 59 ? '20-59' : '>60';
+function regMode(){ const ic = $('ic').value.replace(/\D/g, ''); return ic.length === 12 ? 'ic' : ($('passport').value.trim() ? 'passport' : 'none'); }
+function isBo(){ return mode === 'mch' && $('nama').value.trim().indexOf('B/O') === 0; }
+function setBangsa(foreign){
+  const cur = $('bangsa').value, list = foreign ? BANGSA_FOREIGN : BANGSA_FULL;
+  fill($('bangsa'), list); if(list.indexOf(cur) >= 0) $('bangsa').value = cur;
+}
+function demog(){
+  const rm = regMode(), bo = isBo();
+  $('demog').hidden = $('genderF').hidden = (rm === 'none' && !bo);
+  if(bo){ setBangsa(false); $('dAge').textContent = '< 1 bulan'; $('dCat').textContent = '<10'; return; }
+  if(rm === 'ic'){
+    setBangsa(false);
+    const ic = $('ic').value.replace(/\D/g, ''), a = ageFromIc(ic);
+    $('dAge').textContent = a; $('dCat').textContent = ageCat(a);
+    $('gender').value = (+ic.charAt(11)) % 2 === 1 ? 'LELAKI' : 'PEREMPUAN';
+  } else if(rm === 'passport'){
+    setBangsa(true);
+    const y = parseInt($('tlahir').value, 10), a = y ? new Date().getFullYear() - y : null;
+    $('dAge').textContent = a === null ? '—' : a; $('dCat').textContent = a === null ? '—' : ageCat(a);
+  } else setBangsa(false);
+}
+function autoKategori(){
+  const ic = $('ic').value.replace(/\D/g, ''), age = ageFromIc(ic), pass = $('passport').value.trim().length > 0, bo = isBo();
+  let kat = '';
+  if(pass) kat = 'WARGA ASING';
+  else if(bo || (age !== null && age < 1)) kat = 'BAYI KURANG 1 TAHUN';
+  else if(age !== null && age >= 60) kat = 'WARGA EMAS';
+  else if(mode === 'opd'){ const k = $('klinik').value; if(k === 'FMS') kat = 'RM5'; else if(k === 'TB') kat = 'PERCUMA - TB'; }
+  const target = mode === 'opd' ? $('kategori') : $('statusB');
+  $('weNote').style.display = 'none'; $('autoTag').hidden = true;
+  if(!kat){ if(target.value === autoKat) target.value = ''; autoKat = ''; return; }
+  target.value = kat; autoKat = kat; $('autoTag').hidden = mode !== 'opd';
+  if(kat === 'WARGA EMAS' && mode === 'opd') $('weNote').style.display = 'block';
+}
+$('ic').addEventListener('input', function(){
+  this.value = this.value.replace(/\D/g, '').slice(0, 12); this.classList.remove('bad');
+  const a = ageFromIc(this.value);
+  $('icHint').innerHTML = this.value.length === 12 ? 'Anggaran umur: <b>' + a + ' tahun</b>' : (this.value.length ? this.value.length + '/12 digit' : '');
+  demog(); autoKategori();
+  if(this.value.length === 12) $('nama').focus();
+});
+$('passport').addEventListener('input', () => { demog(); autoKategori(); });
+$('tlahir').addEventListener('input', function(){ this.value = this.value.replace(/\D/g, '').slice(0, 4); demog(); });
+$('phone').addEventListener('focus', function(){ if(!this.value) this.value = '01'; });
+$('phone').addEventListener('input', function(){ this.value = this.value.replace(/\D/g, '').slice(0, 12); this.classList.remove('bad'); });
+$('qnum').addEventListener('input', function(){ this.value = this.value.replace(/\D/g, '').slice(0, 4); });
+$('nama').addEventListener('input', function(){
+  const p = this.selectionStart; this.value = this.value.toUpperCase(); try{ this.setSelectionRange(p, p); }catch(e){}
+  this.classList.remove('bad');
+  if(!$('bangsa').value){
+    const low = this.value.toLowerCase() + ' ';
+    if(MALAY.some(k => low.indexOf(k) >= 0)) $('bangsa').value = 'Melayu';
+    else if(CINA.some(k => low.indexOf(k) >= 0)) $('bangsa').value = 'Cina';
+  }
+  if(mode === 'mch'){
+    const bo = isBo(); $('boNote').style.display = bo ? 'block' : 'none';
+    $('icLbl').textContent = bo ? 'No. IC Ibu (untuk B/O)' : 'No. Kad Pengenalan';
+    if(bo){ $('statusB').value = 'BAYI KURANG 1 TAHUN'; $('tujuan').value = 'TSB'; }
+    demog();
+  }
+  autoKategori();
+});
+$('klinik').addEventListener('change', () => { autoKat = ''; autoKategori(); });
+['kategori','statusB'].forEach(id => $(id).addEventListener('change', () => { autoKat = ''; $('autoTag').hidden = true; }));
+document.querySelectorAll('input,select').forEach(el => el.addEventListener('input', () => el.classList.remove('bad')));
+
+/* ---------- OPD / MCH ---------- */
+function setMode(m){
+  mode = m; const opd = m === 'opd';
+  $('mOpd').className = 'mode opd' + (opd ? ' on' : ''); $('mMch').className = 'mode mch' + (opd ? '' : ' on');
+  document.body.classList.toggle('mch', !opd); $('top').classList.toggle('mch', !opd);
+  $('opdF').hidden = !opd; $('mchF').hidden = opd;
+  $('pTitle').textContent = opd ? 'Maklumat Pesakit' : 'Maklumat Pesakit (MCH)'; $('kTitle').textContent = opd ? 'Kategori & Perkhidmatan' : 'Tujuan & Status Bayaran (MCH)';
+  $('send').textContent = opd ? 'Hantar & Rekod' : 'Simpan Rekod MCH';
+  resetForm(); $('ic').focus();
+}
+function resetForm(keepQ){
+  $('form').reset(); reqId = ''; autoKat = '';
+  $('icHint').textContent = ''; $('icLbl').textContent = 'No. Kad Pengenalan'; $('boNote').style.display = 'none'; $('weNote').style.display = 'none'; $('autoTag').hidden = true;
+  document.querySelectorAll('.bad').forEach(e => e.classList.remove('bad'));
+  setBangsa(false); fill($('kategori'), KATEGORI); fill($('statusB'), STATUS_B);
+  const thu = new Date().getDay() === 4; fill($('klinik'), thu ? KLINIK.filter(k => k !== 'DARAH') : KLINIK);
+  fill($('tujuan'), TUJUAN); fill($('zon'), ZON); demog();
+  let nq = ''; try{ nq = localStorage.getItem('kkah_prima_nextq') || ''; }catch(e){} $('qnum').value = nq;
+  $('status').textContent = ''; $('status').className = 'status';
+}
+
+/* ---------- submit ---------- */
+function bad(id, msg){ const el = $(id); el.classList.add('bad'); el.focus(); try{ el.scrollIntoView({ block:'center', behavior:'smooth' }); }catch(e){} err(msg); if(navigator.vibrate) navigator.vibrate([60, 40, 60]); return false; }
+function err(m){ $('status').className = 'status err'; $('status').textContent = m; }
+function validate(){
+  const ic = $('ic').value.replace(/\D/g, ''), rm = regMode();
+  if(ic.length && ic.length !== 12) return bad('ic', 'No. IC mesti tepat 12 digit.');
+  if(rm === 'none') return bad('ic', 'Masukkan IC 12 digit, atau No. Pasport.');
+  if(!$('nama').value.trim()) return bad('nama', 'Sila isi nama penuh.');
+  if(!$('bangsa').value) return bad('bangsa', 'Sila pilih bangsa.');
+  if(rm === 'passport' && $('tlahir').value.length !== 4) return bad('tlahir', 'Masukkan tahun lahir (4 digit).');
+  if(!$('gender').value && (rm !== 'none' || isBo())) return bad('gender', 'Sila pilih jantina.');
+  const ph = $('phone').value.trim(); if(!ph || ph === '01' || ph.length < 9) return bad('phone', 'Masukkan no. telefon yang sah.');
+  if(mode === 'opd'){
+    if(!$('klinik').value) return bad('klinik', 'Sila pilih klinik / bahagian.');
+    if(new Date().getDay() === 4 && $('klinik').value === 'DARAH') return bad('klinik', 'Kaunter Darah tidak beroperasi pada hari Khamis.');
+    if(!$('kategori').value) return bad('kategori', 'Sila pilih kategori pesakit.');
+  } else {
+    if(!$('tujuan').value) return bad('tujuan', 'Sila pilih tujuan MCH.');
+    if(!$('statusB').value) return bad('statusB', 'Sila pilih status bayaran.');
+    if(!$('zon').value) return bad('zon', 'Sila pilih zon.');
+  }
+  return true;
+}
+function payload(){
+  const d = $('dAge').textContent, c = $('dCat').textContent;
+  const p = { nama:$('nama').value.trim().toUpperCase(), ic:$('ic').value.replace(/\D/g, ''), bangsa:$('bangsa').value, passport:$('passport').value.trim(), tlahir:$('tlahir').value.trim(),
+    phone:$('phone').value.trim(), email:$('email').value.trim(), queueNum:$('qnum').value.replace(/\D/g, ''), gender:$('gender').value,
+    age:(d === '—' || d === '< 1 bulan') ? '' : d, ageCategory:c === '—' ? '' : c };
+  if(mode === 'opd'){ p.klinik = $('klinik').value; p.kategori = $('kategori').value; }
+  else { p.tujuan = $('tujuan').value; p.statusBayaran = $('statusB').value; p.zon = $('zon').value; }
+  return p;
+}
+async function submitForm(){
+  if(sending || !validate()) return;
+  sending = true; $('send').disabled = true; $('status').className = 'status ld'; $('status').textContent = 'Menghantar…';
+  if(!reqId) reqId = 'R' + Date.now() + Math.random().toString(36).slice(2, 7);       // same id on every retry → never two records
+  const p = payload();
+  let d; try{ d = await api({ action:'primaRegSubmit', mode, reqId, pkTok, payload:p }, 40000); }catch(e){ d = { ok:false, net:true, error:'Tiada sambungan / masa tamat. Tekan semula untuk cuba lagi (tiada rekod berganda).' }; }
+  sending = false; $('send').disabled = false;
+  if(d && d.ok){ done(p, d); return; }
+  if(d && /expired/i.test(d.error || '')){ window.location.href = './login.html'; return; }
+  if(d && d.relock){ showGate(d.error); return; }
+  err((d && d.error) || 'Gagal menyimpan. Cuba lagi.'); if(navigator.vibrate) navigator.vibrate([80, 60, 80]);
+}
+function done(p, d){
+  if(navigator.vibrate) navigator.vibrate(60);
+  $('ovNm').textContent = p.nama; $('ovQ').textContent = d.queueNum || ''; $('ovS').textContent = (mode === 'mch' ? 'Disimpan ke MCH TODAY' : 'Disimpan ke senarai hari ini') + (d.dup ? ' (sudah direkod)' : '') + (d.queueNum ? ' · dipaparkan di skrin giliran' : '');
+  $('ov').classList.add('show');
+  try{ if(d.queueNum) localStorage.setItem('kkah_prima_nextq', String((parseInt(d.queueNum, 10) + 1)).padStart(4, '0')); }catch(e){}
+  setTimeout(() => { $('ov').classList.remove('show'); resetForm(); $('ic').focus(); try{ window.scrollTo({ top:0 }); }catch(e){} }, 1800);
+}
+$('ov').addEventListener('click', () => { $('ov').classList.remove('show'); });
+
+/* ---------- boot ---------- */
+(function(){
+  if(!token){ window.location.href = './login.html'; return; }
+  setBangsa(false); setMode('opd');
+  let saved = null; try{ saved = JSON.parse(localStorage.getItem('kkah_prima_tok') || 'null'); }catch(e){}
+  if(saved && saved.t && Date.now() - saved.at < 55 * 60 * 1000){ pkTok = saved.t; unlock(); } else showGate('');
+})();
+</script>
+</body>
+</html>
