@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · My Profile</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.20.1">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.20.1">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -67,11 +67,21 @@
   .modal .sub{ font-size:12px; color:var(--ink-500); margin-bottom:18px; }
   .field{ margin-bottom:14px; text-align:left; }
   .field label{ font-size:12px; font-weight:600; color:var(--ink-500); display:block; margin-bottom:6px; }
-  input[type=date], input[type=number], select{ width:100%; padding:11px 13px; border-radius:12px; font-size:14px; border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700); background:#fff; }
+  input[type=date], input[type=number], input[type=tel], input[type=text].big, select{ width:100%; padding:11px 13px; border-radius:12px; font-size:14px; border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700); background:#fff; }
   select:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,0.15); }
   .calc-box{ display:flex; justify-content:space-between; align-items:center; gap:10px; background:var(--mint-100); border-radius:12px; padding:11px 14px; margin:-4px 0 14px; font-size:12px; color:var(--ink-500); }
   .calc-box b{ font-family:'Manrope',sans-serif; color:var(--teal-900); font-size:13px; text-align:right; }
   input[type=password]{ width:100%; padding:11px 13px; border-radius:12px; font-size:14px; border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700); }
+  input[type=tel]{ font-size:16px; padding:14px 14px; letter-spacing:.04em; }
+  .bls-row{ display:flex; align-items:center; gap:10px; }
+  .bls-row input{ flex:1; min-width:0; }
+  .bls-dot{ flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:999px; font-size:12px; font-weight:800; white-space:nowrap; }
+  .bls-dot.ok{ background:#e6f7ef; color:#0a8f5a; } .bls-dot.bad{ background:#fdecec; color:#c62828; } .bls-dot.none{ background:#eef1f3; color:#6b7780; }
+  .bls-dot i{ width:10px; height:10px; border-radius:50%; background:currentColor; display:inline-block; }
+  .lockov{ position:fixed; inset:0; z-index:9999; background:linear-gradient(160deg,#0b5d56,#134e4a); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; gap:14px; }
+  .lockov .ic{ font-size:56px; } .lockov h2{ margin:0; font-size:20px; } .lockov p{ margin:0; opacity:.85; font-size:14px; max-width:300px; }
+  .lockov button{ margin-top:8px; padding:14px 26px; border-radius:14px; border:0; background:#fff; color:#0b5d56; font-weight:800; font-size:15px; cursor:pointer; }
+  .lockov a{ color:#fff; opacity:.8; font-size:13px; }
   input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,0.15); }
   .req-list{ font-size:11px; color:var(--ink-500); margin:-6px 0 14px; line-height:1.6; }
   .banner{ display:none; padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:16px; }
@@ -117,8 +127,8 @@
     </div>
 
     <div class="section-title">Hubungan &amp; BLS</div>
-    <div class="field"><label for="fPhone">Nombor telefon</label><input type="tel" id="fPhone" inputmode="tel" placeholder="0123456789" autocomplete="tel"></div>
-    <div class="field"><label for="fBls">Tarikh BLS <span style="color:#0a8f5a;font-weight:800">· kemas kini = +5 mata</span></label><input type="date" id="fBls"></div>
+    <div class="field"><label for="fPhone">Nombor telefon</label><input type="tel" id="fPhone" inputmode="tel" placeholder="0123456789" autocomplete="tel" maxlength="14"></div>
+    <div class="field"><label for="fBls">Tarikh luput BLS <span style="color:#0a8f5a;font-weight:800">· isi kali pertama / selepas luput = +5 mata</span></label><div class="bls-row"><input type="date" id="fBls" oninput="blsDot()"><span class="bls-dot none" id="blsDot"><i></i>Tiada data</span></div></div>
 
     <div class="section-title">Maklumat Perkhidmatan</div>
     <div class="banner error" id="svcBanner"></div>
@@ -200,8 +210,39 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjk
 window.addEventListener('DOMContentLoaded', async () => {
   const token = sessionStorage.getItem('kkah_session_token');
   if(!token){ window.location.href = './login.html'; return; }
+  await profileLock();
   await loadProfile();
 });
+
+function blsDot(){
+  const v = document.getElementById('fBls').value, el = document.getElementById('blsDot');
+  if(!v){ el.className = 'bls-dot none'; el.innerHTML = '<i></i>Tiada data'; return; }
+  const t = new Date(); const today = t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0');
+  const ok = v >= today; el.className = 'bls-dot ' + (ok ? 'ok' : 'bad'); el.innerHTML = '<i></i>' + (ok ? 'Sah' : 'Tamat tempoh');
+}
+
+/* ---------- Face ID / Touch ID lock: the profile only opens after the device unlocks it ---------- */
+async function profileLock(){
+  const enrolled = localStorage.getItem('kkah_biometric_device_token') && localStorage.getItem('kkah_biometric_credential_id');
+  if(!enrolled) return true;                                               // not enabled on this device → nothing to unlock with
+  const can = window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+  if(!can) return true;
+  try{ if(Date.now() - Number(sessionStorage.getItem('kkah_prof_unlocked') || 0) < 5 * 60000) return true; }catch(e){}
+  return new Promise(resolve => {
+    const ov = document.createElement('div'); ov.className = 'lockov';
+    ov.innerHTML = '<div class="ic">🔒</div><h2>Profil dikunci</h2><p>Sahkan dengan Face ID / Touch ID untuk membuka maklumat profil anda.</p><button id="lockGo">Buka dengan Face ID / Touch ID</button><a href="./dashboard.html">← Kembali ke Dashboard</a>';
+    document.body.appendChild(ov);
+    const go = async () => {
+      try{
+        const challenge = new Uint8Array(32); crypto.getRandomValues(challenge);
+        await navigator.credentials.get({ publicKey: { challenge, allowCredentials: [{ id: base64ToArrayBuffer(localStorage.getItem('kkah_biometric_credential_id')), type: 'public-key' }], userVerification: 'required', timeout: 60000 } });
+        try{ sessionStorage.setItem('kkah_prof_unlocked', String(Date.now())); }catch(e){}
+        ov.remove(); resolve(true);
+      }catch(e){ document.querySelector('.lockov p').textContent = 'Pengesahan gagal atau dibatalkan. Cuba lagi.'; }
+    };
+    document.getElementById('lockGo').onclick = go; go();
+  });
+}
 
 async function loadProfile(){
   try{
@@ -254,7 +295,7 @@ function recalcDurations(){
 }
 function fillServiceForm(d){
   document.getElementById('fPhone').value = d.phone || '';
-  document.getElementById('fBls').value = d.blsExpiry || '';
+  document.getElementById('fBls').value = d.blsExpiry || ''; blsDot();
   document.getElementById('fL').value = d.tarikhMasukKkah || '';
   document.getElementById('fN').value = d.tarikhKeluar || '';
   document.getElementById('fO').value = d.tarikhLantikan || '';
@@ -295,7 +336,7 @@ async function saveServiceInfo(){
     const data = await res.json();
     if(!data.ok) throw new Error(data.error || 'Gagal menyimpan.');
     fillServiceForm(data);
-    ok.textContent = data.blsPoints ? '✓ Maklumat disimpan. +' + data.blsPoints + ' mata untuk kemas kini BLS 🎉' : '✓ Maklumat disimpan.';
+    ok.textContent = data.blsPoints ? '✓ Maklumat disimpan. +' + data.blsPoints + ' mata untuk tarikh BLS 🎉' : '✓ Maklumat disimpan.';
     ok.classList.add('show');
   }catch(e){
     err.textContent = e.message; err.classList.add('show');
@@ -347,7 +388,7 @@ async function handleEnableBiometricFromProfile(){
     if(data.ok){
       localStorage.setItem('kkah_biometric_device_token', data.deviceToken);
       localStorage.setItem('kkah_biometric_credential_id', arrayBufferToBase64(credential.rawId));
-      alert('Face ID / Touch ID is now enabled on this device.');
+      alert('Face ID / Touch ID is now enabled on this device.' + (data.points ? ' +' + data.points + ' mata 🎉' : ''));
     }
   }catch(err){
     alert('Could not set up Face ID / Touch ID on this device.');
@@ -416,7 +457,7 @@ async function handleConfirmEnrollTotp(){
     else{
       closeTotpModal();
       totpEnabled = true; renderTotpPill();
-      alert('2-Step Verification is now enabled.');
+      alert('2-Step Verification is now enabled.' + (data.points ? ' +' + data.points + ' mata 🎉' : ''));
     }
   }catch(err){ banner.textContent = 'Network error — please try again.'; banner.classList.add('show'); }
   btn.disabled = false; btn.textContent = 'Confirm & Enable';
@@ -533,5 +574,7 @@ async function handleChangePassword(){
   btn.disabled = false; btn.textContent = 'Update Password';
 }
 </script>
+<script src="./emergency-alert.js"></script>
+<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
 </body>
 </html>
