@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dashboard</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1..0.3.18">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.3.18">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -2524,6 +2524,7 @@ async function loadTodayAttendance(){
     renderAttTime(outEl, data.checkOut);
     setAttButtons(!!data.checkIn, !!data.checkOut, (data.canCheckOut !== undefined ? data.canCheckOut : coOpenNowLocal_()), data.opensAt || '1:00 PM');
     window._offDay = !!data.weekend;   // Fri/Sat or a public holiday → no automatic check-out
+    try{ const _n = new Date(), _k = _n.getFullYear() + '-' + (_n.getMonth() + 1) + '-' + _n.getDate(); localStorage.setItem('kkah_offday', window._offDay ? _k : ''); }catch(e){}   // lets every page's emergency check skip holidays
     if(data.weekend){   // Fri & Sat / public holiday: free in/out rounds — after an Out the Check In button is available again
       const bi = document.getElementById('attBtnIn'), bo = document.getElementById('attBtnOut');
       if(bi && bo){ if(data.openIn){ bi.className = 'att-btn done'; bo.className = 'att-btn primary'; } else if(data.checkOut){ bi.className = 'att-btn primary'; bo.className = 'att-btn done'; } }
