@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KKAH HR Portal · Jadual &amp; Rekod Saya</title>
+<title>SIAGA · Jadual &amp; Rekod Saya</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SIAGA">
+
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -90,6 +95,8 @@
   }
   @keyframes sk{ 0%{ background-position:-200% 0; } 100%{ background-position:200% 0; } }
 </style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
 </head>
 <body>
 
@@ -317,5 +324,7 @@ function doPerDateUpload(el, leaveType, date, chipId){
   reader.readAsDataURL(f);
 }
 </script>
+<script src="./emergency-alert.js"></script>
+<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
 </body>
 </html>
