@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Dokumen &amp; Penyelenggaraan Kenderaan</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.19.0">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.19.0">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 <link rel="manifest" href="./manifest.json">
@@ -333,5 +333,7 @@ $('msheet').addEventListener('pointerdown', e => { if(e.target === $('msheet')) 
 load();
 loadMaint();
 </script>
+<script src="./emergency-alert.js"></script>
+<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
 </body>
 </html>
