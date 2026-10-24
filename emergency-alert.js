@@ -14,6 +14,8 @@
  */
 (function(){
   var SIREN_SRC = './siren.mp3';
+  var DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+  var retryTimer = null, primed = false, watching = false, pollTimer = null;
   var audio = null, ctx = null, synth = null, playing = false, vibTimer = null, wake = null;
   var overlay = null, current = null, ageTimer = null, pageMode = false;
 
@@ -104,7 +106,7 @@
   function start(){
     if(playing) return Promise.resolve('playing');
     function ok(){
-      playing = true; setButtons();
+      playing = true; setButtons(); clearInterval(retryTimer);
       if(navigator.vibrate){ try{ navigator.vibrate([400,200,400,200,400]); }catch(e){} clearInterval(vibTimer); vibTimer = setInterval(function(){ try{ navigator.vibrate([400,200,400]); }catch(e){} }, 1500); }
       try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake = w; }).catch(function(){}); }catch(e){}
       return 'playing';
@@ -112,7 +114,7 @@
     try{
       if(!audio){ audio = new Audio(SIREN_SRC); audio.loop = true; audio.preload = 'auto'; audio.volume = 1; }
       return audio.play().then(ok).catch(function(err){
-        if(err && err.name === 'NotAllowedError'){ setButtons(); return 'blocked'; }
+        if(err && err.name === 'NotAllowedError'){ setButtons(); armRetry(); return 'blocked'; }
         // siren.mp3 missing or unsupported → built-in siren
         var r = startSynth();
         if(r === 'playing') return ok();
@@ -125,7 +127,35 @@
     }
   }
 
+  /** Autoplay was refused → keep trying every second; the very first tap/key/scroll anywhere also starts it. */
+  function armRetry(){
+    clearInterval(retryTimer);
+    retryTimer = setInterval(function(){ if(!current || playing){ clearInterval(retryTimer); return; } start(); }, 1000);
+  }
+
+  /** Unlock sound early: the first touch on ANY SIAGA page primes the siren + audio engine, so a later alert can sound by itself. */
+  function prime(){
+    if(primed) return; primed = true;
+    try{
+      if(!audio){ audio = new Audio(SIREN_SRC); audio.loop = true; audio.preload = 'auto'; audio.volume = 1; }
+      audio.muted = true;
+      var p = audio.play();
+      var done = function(){ try{ audio.pause(); audio.currentTime = 0; audio.muted = false; }catch(e){} };
+      if(p && p.then) p.then(done).catch(function(){ try{ audio.muted = false; }catch(e){} }); else done();
+    }catch(e){}
+    try{
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(AC){ if(!ctx) ctx = new AC(); if(ctx.state === 'suspended') ctx.resume(); }
+    }catch(e){}
+  }
+  function armPrime(){
+    var ev = ['pointerdown','touchstart','keydown','click'];
+    function once(){ ev.forEach(function(n){ document.removeEventListener(n, once, true); }); prime(); if(current && !playing) start(); }
+    ev.forEach(function(n){ document.addEventListener(n, once, true); });
+  }
+
   function stop(){
+    clearInterval(retryTimer);
     playing = false;
     try{ if(audio){ audio.pause(); audio.currentTime = 0; } }catch(e){}
     try{ if(synth){ synth.stop(); synth = null; } }catch(e){}
@@ -202,7 +232,9 @@
       });
     }
     tick();
-    setInterval(tick, 12000);
+    setInterval(tick, 5000);
+    armPrime(); listenSw();
+    document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') tick(); });
   }
 
   /** Dashboard: a push that arrives while the app is open. */
@@ -210,5 +242,33 @@
     if(data && data.type === 'emergency' && !acked(data.id)) show({ id: data.id, at: data.at ? Number(data.at) : Date.now() });
   }
 
-  window.SiagaEmergency = { show: show, check: check, page: page, stop: stop, fromPush: fromPush, start: start };
+  /** A push the service worker saw (works even when the page is in the background). */
+  function listenSw(){
+    try{
+      if(!('serviceWorker' in navigator) || listenSw.done) return; listenSw.done = true;
+      navigator.serviceWorker.addEventListener('message', function(e){
+        var d = e && e.data;
+        if(d && d.type === 'siaga-emergency') fromPush({ type: 'emergency', id: d.id, at: d.at });
+      });
+    }catch(e){}
+  }
+
+  /**
+   * Every SIAGA page: stay ready for an emergency.
+   *  - primes sound on the first touch, so the siren can start by itself later
+   *  - hears the service worker the instant a push arrives (even if the page is hidden)
+   *  - asks the server every 20 s while visible (+ right away on focus / back online / screen on) as a safety net
+   */
+  function watch(apiUrl){
+    apiUrl = apiUrl || window.SIAGA_API || DEFAULT_API;
+    if(watching) return; watching = true;
+    build(); armPrime(); listenSw();
+    function go(){ check(apiUrl); }
+    function sched(){ clearTimeout(pollTimer); pollTimer = setTimeout(function(){ if(document.visibilityState === 'visible') go(); sched(); }, 18000 + Math.random() * 4000); }
+    document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') go(); });
+    window.addEventListener('focus', go); window.addEventListener('online', go); window.addEventListener('pageshow', go);
+    go(); sched();
+  }
+
+  window.SiagaEmergency = { watch: watch, prime: prime, show: show, check: check, page: page, stop: stop, fromPush: fromPush, start: start };
 })();
