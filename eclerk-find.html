@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · e-Clerking</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<link rel="apple-touch-icon" href="./siaga-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0F4530">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --g9:#0F4530; --g7:#1A6B4A; --g5:#2E9E73; --mint:#E3F0EB; --bg:#F5F8F6; --ink:#1C1C1A; --ink2:#5B6B68; --line:#D9E6E0; --red:#C62839; --gold:#C9A227; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; min-height:100vh; background:radial-gradient(1200px 800px at 50% -10%, var(--mint), var(--bg)); font-family:'Inter',sans-serif; color:var(--ink); padding:14px 14px 60px; }
+  .wrap{ max-width:600px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .head{ border-radius:24px; padding:18px 20px; color:#fff; background:linear-gradient(135deg,var(--g9),var(--g7)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .head .eyebrow{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:700; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:3px 0 0; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:20px; padding:16px; box-shadow:0 12px 30px -24px rgba(15,69,48,.5); }
+  .card h2{ margin:0 0 4px; font-family:'Manrope',sans-serif; font-size:16px; font-weight:800; }
+  .sub{ font-size:12.5px; color:var(--ink2); margin:0 0 12px; line-height:1.5; }
+  .srch{ display:flex; gap:8px; }
+  .srch input{ flex:1; min-width:0; height:54px; border-radius:14px; border:1.5px solid var(--line); padding:0 15px; font:inherit; font-size:17px; font-weight:600; letter-spacing:.02em; }
+  .srch input:focus{ outline:none; border-color:var(--g5); box-shadow:0 0 0 3px rgba(46,158,115,.18); }
+  .go{ min-width:92px; height:54px; border-radius:14px; border:none; background:linear-gradient(135deg,var(--g9),var(--g5)); color:#fff; font:800 15px 'Manrope',sans-serif; cursor:pointer; }
+  .go:disabled{ opacity:.55; }
+  .res{ display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+  .pt{ border:1.5px solid var(--line); border-radius:16px; padding:13px 14px; display:flex; gap:12px; align-items:center; background:#fff; }
+  .pt .q{ min-width:58px; text-align:center; background:var(--mint); border-radius:12px; padding:8px 4px; }
+  .pt .q b{ display:block; font-family:'Manrope',sans-serif; font-size:18px; line-height:1; color:var(--g9); }
+  .pt .q small{ font-size:10px; font-weight:700; color:var(--ink2); text-transform:uppercase; }
+  .pt .mid{ flex:1; min-width:0; }
+  .pt .nm{ font-weight:800; font-size:15px; line-height:1.25; word-break:break-word; }
+  .pt .mt{ font-size:12.5px; color:var(--ink2); margin-top:3px; line-height:1.5; }
+  .open{ min-height:46px; padding:0 14px; border-radius:13px; border:none; background:var(--g9); color:#fff; font:800 13.5px 'Manrope',sans-serif; cursor:pointer; white-space:nowrap; }
+  .empty{ text-align:center; padding:22px 10px; color:var(--ink2); font-size:14px; line-height:1.6; }
+  .spin{ width:22px; height:22px; border:3px solid var(--line); border-top-color:var(--g7); border-radius:50%; animation:sp .8s linear infinite; margin:0 auto 8px; }
+  @keyframes sp{ to{ transform:rotate(360deg); } }
+  details.man{ margin-top:14px; border-top:1px solid var(--line); padding-top:10px; }
+  details.man summary{ cursor:pointer; font-weight:700; font-size:13px; color:var(--g7); min-height:40px; display:flex; align-items:center; }
+  label{ display:block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink2); margin:12px 0 6px; }
+  .f{ width:100%; height:50px; border-radius:12px; border:1.5px solid var(--line); padding:0 13px; font:inherit; font-size:16px; }
+  .f:focus{ outline:none; border-color:var(--g5); }
+  .toast{ position:fixed; left:50%; bottom:30px; transform:translate(-50%,30px); background:var(--red); color:#fff; font-weight:700; font-size:14px; padding:13px 20px; border-radius:99px; opacity:0; pointer-events:none; transition:all .3s; z-index:80; max-width:92vw; text-align:center; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>📋 e-Clerking</h1></div>
+    <a class="back" href="./dashboard.html">← Dashboard</a>
+  </div>
+
+  <div class="card">
+    <h2>Cari pesakit</h2>
+    <p class="sub">Taip <b>IC</b>, no. pasport, no. giliran atau nama (sekurang-kurangnya 3 aksara). Hanya pesakit yang didaftarkan <b>hari ini</b> dipaparkan.</p>
+    <form class="srch" id="f" autocomplete="off">
+      <input type="text" id="q" inputmode="search" enterkeyhint="search" maxlength="40" placeholder="cth. 900101015555" aria-label="Carian pesakit">
+      <button class="go" id="go" type="submit">Cari</button>
+    </form>
+    <div class="res" id="res"></div>
+
+    <details class="man">
+      <summary>Tiada dalam senarai hari ini? Buka secara manual</summary>
+      <label for="mNama">Nama pesakit</label><input class="f" type="text" id="mNama" maxlength="80" autocapitalize="characters">
+      <label for="mIc">IC / No. pasport</label><input class="f" type="text" id="mIc" maxlength="20" autocapitalize="characters">
+      <button class="go" id="mGo" type="button" style="width:100%;margin-top:14px">Buka e-Clerking</button>
+    </details>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const token = sessionStorage.getItem('kkah_session_token');
+if(!token) location.href = './login.html';
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(m){ const t = $('toast'); t.textContent = m; t.className = 'toast show'; clearTimeout(toast._t); toast._t = setTimeout(() => t.className = 'toast', 3400); }
+function fmtIc(s){ const d = String(s || '').replace(/\D/g, ''); return d.length === 12 ? d.slice(0, 6) + '-' + d.slice(6, 8) + '-' + d.slice(8) : (s || ''); }
+let rows = [], busy = false;
+
+function openPatient(p){
+  const q = new URLSearchParams({ nama: p.nama || '', ic: p.ic || '', passport: p.passport || '', tlahir: p.tlahir || '', phone: p.phone || '' });
+  location.href = './eclerking.html?' + q.toString();
+}
+$('res').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if(b) openPatient(rows[+b.dataset.i]); });
+
+$('f').addEventListener('submit', async e => {
+  e.preventDefault(); if(busy) return;
+  const q = $('q').value.trim();
+  if(q.length < 3){ toast('Masukkan sekurang-kurangnya 3 aksara'); return; }
+  busy = true; $('go').disabled = true;
+  $('res').innerHTML = '<div class="empty"><div class="spin"></div>Mencari…</div>';
+  try{
+    const r = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'eclerkFind', token, q }) });
+    const d = await r.json();
+    if(!d.ok){
+      if(/expired/i.test(d.error || '')){ location.href = './login.html'; return; }
+      $('res').innerHTML = '<div class="empty">' + esc(d.error || 'Carian gagal') + '</div>';
+    }else{
+      rows = d.rows || [];
+      $('res').innerHTML = rows.length ? rows.map((p, i) =>
+        '<div class="pt"><div class="q"><b>' + esc(p.queueNum || '—') + '</b><small>' + esc(p.jenis || 'No.') + '</small></div>' +
+        '<div class="mid"><div class="nm">' + esc(p.nama) + '</div><div class="mt">' + esc(p.ic ? fmtIc(p.ic) : (p.passport || '')) + (p.klinik ? ' · ' + esc(p.klinik) : '') + (p.masa ? '<br>Daftar ' + esc(String(p.masa).slice(0, 5)) : '') + '</div></div>' +
+        '<button class="open" data-i="' + i + '">Buka ›</button></div>').join('')
+        : '<div class="empty">Tiada pesakit sepadan hari ini.<br>Semak ejaan, atau guna “Buka secara manual” di bawah.</div>';
+    }
+  }catch(err){ $('res').innerHTML = '<div class="empty">Sambungan gagal. Cuba lagi.</div>'; }
+  busy = false; $('go').disabled = false;
+});
+$('mGo').onclick = () => {
+  const n = $('mNama').value.trim(), i = $('mIc').value.trim();
+  if(n.length < 2 || i.length < 5){ toast('Isi nama dan IC / pasport'); return; }
+  const isIc = /^\d{12}$/.test(i.replace(/\D/g, '')) && !/[A-Za-z]/.test(i);
+  openPatient({ nama: n, ic: isIc ? i.replace(/\D/g, '') : '', passport: isIc ? '' : i });
+};
+setTimeout(() => { try{ $('q').focus(); }catch(e){} }, 150);
+</script>
+<script src="./emergency-alert.js"></script>
+<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
+</body>
+</html>
