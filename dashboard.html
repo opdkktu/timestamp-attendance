@@ -441,6 +441,9 @@
   .sb-act.sb-game{ background:linear-gradient(135deg,#4c1d95,#a21caf 55%,#f59e0b); animation:gmPulse 2.2s ease-in-out infinite; }
   @keyframes gmPulse{ 0%,100%{ box-shadow:0 8px 22px -10px rgba(162,28,175,.55); } 50%{ box-shadow:0 10px 30px -6px rgba(245,158,11,.85); } }
   @media (prefers-reduced-motion:reduce){ .sb-act.sb-game{ animation:none; } }
+  .sb-pair{ grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .sb-pair .sb-act{ grid-column:auto; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:8px; padding:14px; min-height:132px; }
+  .sb-pair .sb-act .go{ display:none; } .sb-pair .sb-act small{ line-height:1.35; }
   .sb-act .ai{ width:46px; height:46px; border-radius:14px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
   .sb-act b{ display:block; font:800 15.5px Manrope,sans-serif; } .sb-act small{ display:block; font-size:12px; opacity:.85; margin-top:2px; } .sb-act .go{ margin-left:auto; font-size:20px; opacity:.9; }
   body.driver-mode #kcBox, body.driver-mode #box_temperature, body.driver-mode #box_trolley, body.driver-mode #box_bag{ display:none !important; }
@@ -771,7 +774,7 @@
 
   <div class="kc-box" id="kcBox" onclick="kcOpen()" role="button" aria-label="Panggil nombor giliran">
     <button class="kc-close" onclick="event.stopPropagation(); kcDismiss()" aria-label="Tutup">✕</button>
-    <button class="kc-pin" id="kcPin" onclick="event.stopPropagation(); kcTogglePin()" aria-pressed="false" aria-label="Kekalkan kaunter aktif">📌 Kekal aktif</button>
+    <button class="kc-pin" id="kcPin" onclick="event.stopPropagation(); kcTogglePin()" aria-pressed="false" aria-label="Kekalkan kaunter aktif">📌 Aktif</button>
     <button class="kc-pick" id="kcPick" onclick="event.stopPropagation(); kcToggleMenu()" aria-haspopup="listbox" aria-label="Tukar kaunter"><span id="kcPickText">Tukar</span> ▾</button>
     <div class="kc-label" id="kcLabel">Kaunter C</div>
     <div class="kc-hint" id="kcHint">Ketik untuk panggil nombor giliran</div>
@@ -1109,11 +1112,15 @@ async function loadExtraTiles_(){
     slot.innerHTML = '';
     (d.tiles || []).forEach(t => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'status-box sb-act';
-      const sub = t.id === 'bersih' ? 'Tandakan tugasan kebersihan hari ini' : t.id === 'amo' ? 'Buka borang \u2014 nama anda telah diisi' : t.id === 'primareg' ? 'Daftar pesakit OPD / MCH \u2014 perlu PIN' : '';
+      const sub = t.id === 'bersih' ? 'Tandakan tugasan kebersihan hari ini' : t.id === 'amo' ? 'Buka borang \u2014 nama anda telah diisi' : t.id === 'primareg' ? 'Daftar pesakit OPD / MCH \u2014 perlu PIN' : t.id === 'eclerk' ? 'Cari IC pesakit hari ini, kemudian buka e-Clerking' : '';
       b.innerHTML = '<span class="ai">' + t.icon + '</span><span><b></b><small>' + sub + '</small></span><span class="go">\u203A</span>';
       b.querySelector('b').textContent = t.name;
       b.onclick = () => { if(t.ext) window.open(t.href, '_blank', 'noopener'); else window.location.href = t.href; };
-      slot.appendChild(b);
+      if(t.id === 'primareg' || t.id === 'eclerk'){          // PRIMA Pendaftaran (left) + e-Clerking (right) share one row
+        let pr = slot.querySelector('.sb-pair');
+        if(!pr){ pr = document.createElement('div'); pr.className = 'sb-pair'; slot.appendChild(pr); }
+        pr.appendChild(b);
+      }else slot.appendChild(b);
     });
   }catch(e){ /* optional */ }
 }
@@ -1415,7 +1422,7 @@ async function loadTransportBox(){
     const d = await res.json();
     if(!d || !d.ok) return;
     const r = d.role || {};
-    if(!trDocCardAdded && (r.isDriver || r.isPic || r.isTop)){ trDocCardAdded = true; addModuleCard('Dokumen Kenderaan', '🪪', './vehicles.html'); addModuleCard('Minyak & Analisis', '⛽', './fuel.html'); }
+    if(!trDocCardAdded && (r.isDriver || r.isPic || r.isTop)){ trDocCardAdded = true; addModuleCard('Dokumen Kenderaan', '🪪', './vehicles.html'); addModuleCard('Minyak & Analisis', '⛽', './fuel.html'); addModuleCard('Borang & Dokumen', '📁', './vehicle-docs.html'); }
 
     renderTrAlert_(d, r);
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -2015,8 +2022,12 @@ const CALL_TARGETS = [
   { id: 'R5', label: 'Bilik Doktor 5', action: 'room', zones: [/bilik\s*doktor\s*5\b/i] },
   { id: 'R6', label: 'Bilik Doktor 6', action: 'room', zones: [/bilik\s*doktor\s*6\b/i] }
 ];
-const PRIMA_WEB_URL = 'https://script.google.com/a/macros/moh.gov.my/s/AKfycbxSBGU1I4v_geNAMmQR4wnDdm6SZn8gVV4z0AC608EfOEHw3MyO58MJSffoRGElP-c/exec';
-function kcOpenRoom(num, room){ window.open(PRIMA_WEB_URL + '?page=doctor&room' + encodeURIComponent(room) + '&num=' + encodeURIComponent(num), '_blank', 'noopener'); }
+function kcProcLink_(num, rn){
+  const m = document.getElementById('kcMsg'); if(!m || kcBusy) return;
+  m.innerHTML = '<button type="button" class="kc-room-btn" id="kcProcBtn">🩺 Prosedur / ubat — No. ' + num + '</button>';
+  document.getElementById('kcProcBtn').onclick = (e) => { e.stopPropagation(); kcOpenRoom(num, rn); };
+}
+function kcOpenRoom(num, room){ window.location.href = './prima-room.html?room=' + encodeURIComponent(room) + '&num=' + encodeURIComponent(num); }   // opens the room overlay inside SIAGA (Mod Kaunter stays on when you come back)
 let kcTarget = (function(){ try{ return localStorage.getItem('kkah_call_target') || 'C'; }catch(e){ return 'C'; } })();
 let kcZoneMatched = false;
 let kcBusy = false, kcTimer = null, kcIdle = null;
@@ -2027,14 +2038,14 @@ let kcPinned = false, kcWake = null, kcRefreshTimer = null;
 function kcPinPref(){ try{ return localStorage.getItem('kkah_kc_pin'); }catch(e){ return null; } }
 function kcIdleMsg(){
   if(!kcPinned) return '';
-  return ('wakeLock' in navigator) ? '📌 Kekal aktif — skrin tidak akan tertutup' : '📌 Kekal aktif — tetapkan Auto-Lock telefon kepada “Never”';
+  return ('wakeLock' in navigator) ? '📌 Aktif — skrin tidak akan tertutup' : '📌 Aktif — tetapkan Auto-Lock telefon kepada “Never”';
 }
 function kcSetPinned(on, save){
   kcPinned = !!on;
   const box = document.getElementById('kcBox'), pin = document.getElementById('kcPin');
   box.classList.toggle('pinned', kcPinned);
   pin.setAttribute('aria-pressed', kcPinned ? 'true' : 'false');
-  pin.textContent = kcPinned ? '📌 Aktif' : '📌 Kekal aktif';
+  pin.textContent = kcPinned ? '📌 Aktif ✓' : '📌 Aktif';
   if(save){ try{ localStorage.setItem('kkah_kc_pin', kcPinned ? '1' : '0'); }catch(e){} }
   if(kcPinned){
     clearTimeout(kcIdle);
@@ -2121,6 +2132,13 @@ function kcOpen(){
   box.classList.add('open');
   setTimeout(() => document.getElementById('kcInput').focus(), 350);
   kcArmIdle();
+  kcWarm_();
+}
+/* While the nurse is still typing the number, quietly wake PRIMA up so the call itself is fast (at most once every 2 minutes). */
+let kcWarmAt = 0;
+function kcWarm_(){
+  if(Date.now() - kcWarmAt < 120000) return; kcWarmAt = Date.now();
+  try{ fetch(API_URL_DASHBOARD, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'primaWarm', token: sessionStorage.getItem('kkah_session_token') }), keepalive:true }).catch(() => {}); }catch(e){}
 }
 function kcClose(){
   clearTimeout(kcTimer); clearTimeout(kcIdle);
@@ -2162,10 +2180,10 @@ async function kcCall(num){
     if(navigator.vibrate) navigator.vibrate(60);
     kcShow('ok', '<div class="kc-icon">✓</div>', num + ' · ' + (data.name || '') + ' — dipanggil (' + kcTargetObj().label + ')');
     if(kcTargetObj().action === 'room'){
-      // a room call keeps the box on screen long enough to open the room's overlay (diagnosis · ubat · prosedur) with this patient
+      // A room call just calls the patient (like a counter). The procedure / ubat overlay is OPTIONAL: a small button stays
+      // under the number box after the box is ready again, so the next number can be called straight away.
       const rn = String(kcTarget).replace(/\D/g, '');
-      document.getElementById('kcMsg').insertAdjacentHTML('beforeend', '<br><button type="button" class="kc-room-btn" onclick="event.stopPropagation(); kcOpenRoom(\'' + num + '\',\'' + rn + '\'); kcReset();">🩺 Buka Bilik ' + rn + ' — ubat / prosedur</button>');
-      kcTimer = setTimeout(kcReset, 15000);
+      kcTimer = setTimeout(() => { kcReset(); kcProcLink_(num, rn); }, 2200);
     }else{
       kcTimer = setTimeout(kcReset, 2200); // ready for the next number
     }
