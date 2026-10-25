@@ -1,0 +1,2561 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0, user-scalable=no,viewport-fit=cover">
+<title>Bilik Doktor — PRIMA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   PRIMA — NURSE / DOCTOR STATION
+   Mobile-first CSS restructure
+   Drop-in replacement for the entire <style> block
+   ═══════════════════════════════════════════════ */
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+/* ── FONTS + ROOT ── */
+:root{
+  --bg0:#080F1E;
+  --bg1:#0D1830;
+  --bg2:#112040;
+  --bg3:#172850;
+  --border:#1E3460;
+  --border2:rgba(255,255,255,.08);
+  --green:#2ECC71;
+  --green-dim:#1A6B4A;
+  --purple:#7B68EE;
+  --purple-dim:#3D3580;
+  --amber:#F59E0B;
+  --red:#E74C3C;
+  --blue:#3B8BD4;
+  --text1:#E8EDF5;
+  --text2:rgba(232,237,245,.55);
+  --text3:rgba(232,237,245,.28);
+  --mono:"IBM Plex Mono",monospace;
+  /* True dynamic viewport units with JS fallback */
+  --vh:1vh;
+}
+
+html{
+  width:100%;
+  height:100%;
+  /* Prevent elastic scroll revealing bg on iOS */
+  background:#080F1E;
+  overflow:hidden;
+}
+body{
+  width:100%;
+  height:100%;
+  height:calc(var(--vh,1vh)*100);
+  overflow:hidden;
+  background:var(--bg0);
+  color:var(--text1);
+  font-family:"IBM Plex Sans",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  /* Critical: prevents modal from being clipped */
+  position:relative;
+}
+
+/* ══ LAYOUT — mobile: rows; desktop: grid ══ */
+.ns-layout{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  height:calc(var(--vh,1vh)*100);
+  overflow:hidden;
+  /* DO NOT set position or transform here — kills fixed children */
+}
+
+/* ── HEADER ── */
+header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:.55rem 1rem;
+  background:var(--bg1);
+  border-bottom:2px solid var(--green-dim);
+  flex-shrink:0;
+  position:relative;
+  overflow:hidden;
+  min-height:52px;
+}
+header::after{
+  content:"";position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(46,204,113,.4),transparent);
+}
+.logo{height:32px;width:auto;border-radius:4px;object-fit:contain;background:#fff;padding:2px 4px;flex-shrink:0;}
+.hdr-div{width:1px;height:24px;background:var(--border2);flex-shrink:0;}
+.hdr-info{flex:1;min-width:0;}
+.hdr-name{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr-sub{font-size:9px;color:var(--text3);margin-top:1px;letter-spacing:.03em;}
+.hdr-right{display:flex;align-items:center;gap:.6rem;flex-shrink:0;}
+.ns-badge{
+  display:flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;
+  background:rgba(123,104,238,.15);border:1px solid rgba(123,104,238,.35);
+  font-size:10px;font-weight:700;color:#A99FFF;letter-spacing:.08em;white-space:nowrap;
+}
+.ns-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--purple);animation:dotPulse 2s ease-in-out infinite;}
+@keyframes dotPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(123,104,238,.4);}50%{opacity:.7;box-shadow:0 0 0 5px rgba(123,104,238,0);}}
+.hdr-clock{text-align:right;}
+.clk-time{font-family:var(--mono);font-size:16px;font-weight:700;letter-spacing:.04em;color:var(--text1);line-height:1;}
+.clk-date{font-size:9px;color:var(--text3);margin-top:1px;}
+
+/* ══ BODY — scrollable middle ══ */
+.ns-body{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+}
+
+/* ── PANEL LEFT (call pad) ── */
+.panel-call{
+  display:flex;
+  flex-direction:column;
+  background:var(--bg1);
+  border-bottom:1px solid var(--border);
+  overflow:hidden;
+  flex-shrink:0;
+}
+.call-top{
+  padding:.8rem;
+  border-bottom:1px solid var(--border);
+}
+.section-lbl{
+  font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.2em;color:var(--text3);
+  display:flex;align-items:center;gap:7px;margin-bottom:.65rem;
+}
+.section-lbl::after{content:"";flex:1;height:1px;background:var(--border);}
+
+.num-input-row{display:flex;gap:8px;margin-bottom:.65rem;}
+.num-input{
+  flex:1;background:var(--bg2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;
+  font-family:var(--mono);font-size:24px;font-weight:700;
+  color:var(--text1);letter-spacing:.12em;text-align:center;
+  outline:none;transition:border-color .2s;
+  /* Better touch target */
+  min-height:52px;
+}
+.num-input:focus{border-color:var(--purple);}
+.num-input::placeholder{color:var(--text3);font-size:13px;font-family:"IBM Plex Sans",sans-serif;letter-spacing:.04em;}
+
+.name-input{
+  width:100%;background:var(--bg2);border:1px solid var(--border);
+  border-radius:8px;padding:9px 12px;margin-bottom:.6rem;
+  font-size:13px;color:var(--text1);min-height:42px;
+  outline:none;transition:border-color .2s;
+}
+.name-input:focus{border-color:var(--purple);}
+.name-input::placeholder{color:var(--text3);}
+
+.klinik-row{display:flex;gap:6px;margin-bottom:.75rem;}
+.klinik-chip{
+  flex:1;padding:8px 6px;border-radius:7px;border:1px solid var(--border);
+  background:var(--bg2);color:var(--text2);font-size:11px;font-weight:600;
+  text-align:center;cursor:pointer;transition:all .18s;letter-spacing:.03em;
+  min-height:38px;display:flex;align-items:center;justify-content:center;
+}
+.klinik-chip:hover{border-color:var(--purple);color:var(--text1);}
+.klinik-chip.active{background:rgba(123,104,238,.2);border-color:var(--purple);color:#A99FFF;}
+
+.btn-call{
+  width:100%;padding:13px;border-radius:10px;border:none;
+  background:linear-gradient(135deg,#4A3DB5,#7B68EE);
+  color:#fff;font-size:14px;font-weight:700;
+  letter-spacing:.06em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:all .2s;position:relative;overflow:hidden;
+  min-height:48px;
+}
+.btn-call::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);opacity:0;transition:opacity .2s;}
+.btn-call:hover::before{opacity:1;}
+.btn-call:active{transform:scale(.98);}
+.btn-call:disabled{opacity:.4;cursor:not-allowed;}
+.btn-call-icon{font-size:17px;}
+
+/* Stats */
+.stats-row{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:1px;background:var(--border);
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.stat-cell{background:var(--bg1);padding:.6rem .4rem;text-align:center;}
+.stat-num{font-family:var(--mono);font-size:20px;font-weight:700;line-height:1;color:var(--text1);}
+.stat-lbl{font-size:9px;color:var(--text3);margin-top:3px;letter-spacing:.08em;text-transform:uppercase;}
+.stat-cell.waiting .stat-num{color:var(--amber);}
+.stat-cell.attended .stat-num{color:var(--green);}
+.stat-cell.missed .stat-num{color:var(--red);}
+
+/* History */
+.call-history{flex:1;overflow-y:auto;padding:.6rem .7rem;min-height:0;}
+.call-history::-webkit-scrollbar{width:3px;}
+.call-history::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+
+.hist-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 9px;border-radius:8px;margin-bottom:5px;
+  border:1px solid transparent;transition:all .18s;
+  animation:slideIn .25s ease both;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.hist-item.status-waiting{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.18);}
+.hist-item.status-attended{background:rgba(46,204,113,.05);border-color:rgba(46,204,113,.12);}
+.hist-item.status-missed{background:rgba(231,76,60,.05);border-color:rgba(231,76,60,.12);}
+
+.hist-num{font-family:var(--mono);font-size:15px;font-weight:700;min-width:40px;text-align:center;flex-shrink:0;}
+.status-waiting .hist-num{color:var(--amber);}
+.status-attended .hist-num{color:var(--green);}
+.status-missed .hist-num{color:var(--red);}
+
+.hist-body{flex:1;min-width:0;}
+.hist-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text1);}
+.hist-meta{font-size:10px;color:var(--text3);margin-top:2px;display:flex;gap:6px;}
+.hist-wait{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:10px;flex-shrink:0;white-space:nowrap;}
+.status-waiting .hist-wait{background:rgba(245,158,11,.15);color:var(--amber);}
+.status-attended .hist-wait{background:rgba(46,204,113,.12);color:var(--green);}
+.status-missed .hist-wait{background:rgba(231,76,60,.12);color:var(--red);}
+
+.hist-actions{display:flex;gap:4px;flex-shrink:0;}
+.hist-btn{
+  padding:5px 8px;border-radius:6px;border:1px solid;
+  font-size:10px;font-weight:700;cursor:pointer;
+  transition:all .15s;background:transparent;
+  min-height:30px;min-width:30px;
+}
+.btn-attend{border-color:rgba(46,204,113,.4);color:var(--green);}
+.btn-attend:hover{background:rgba(46,204,113,.15);}
+.btn-miss{border-color:rgba(231,76,60,.3);color:var(--red);}
+.btn-miss:hover{background:rgba(231,76,60,.12);}
+.btn-recall{border-color:rgba(123,104,238,.4);color:var(--purple);}
+.btn-recall:hover{background:rgba(123,104,238,.15);}
+.hist-empty{text-align:center;padding:2rem 1rem;color:var(--text3);font-size:12px;letter-spacing:.06em;}
+
+/* ── PANEL RIGHT (board) ── */
+.panel-board{
+  display:flex;flex-direction:column;
+  overflow:hidden;min-height:0;flex:1;
+  background:var(--bg0);position:relative;
+}
+.board-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.65rem 1rem;
+  background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.board-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:var(--text3);}
+.board-refresh{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:5px;}
+.refresh-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:dotPulse 2s ease-in-out infinite;}
+
+.board-pills{
+  display:flex;gap:6px;padding:.55rem 1rem;
+  border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;
+}
+.board-pills::-webkit-scrollbar{height:0;}
+.pill{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 11px;border-radius:20px;border:1px solid;
+  font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;transition:all .18s;
+  min-height:32px;
+}
+.pill.all{border-color:var(--border);color:var(--text2);background:var(--bg2);}
+.pill.all.active,.pill.all:hover{border-color:rgba(255,255,255,.3);color:var(--text1);background:var(--bg3);}
+.pill.waiting{border-color:rgba(245,158,11,.35);color:var(--amber);background:rgba(245,158,11,.06);}
+.pill.waiting.active,.pill.waiting:hover{background:rgba(245,158,11,.15);}
+.pill.attended{border-color:rgba(46,204,113,.3);color:var(--green);background:rgba(46,204,113,.05);}
+.pill.attended.active,.pill.attended:hover{background:rgba(46,204,113,.12);}
+.pill.missed{border-color:rgba(231,76,60,.3);color:var(--red);background:rgba(231,76,60,.05);}
+.pill.missed.active,.pill.missed:hover{background:rgba(231,76,60,.12);}
+.pill-count{font-family:var(--mono);font-size:13px;font-weight:700;}
+
+.board-grid{
+  flex:1;overflow-y:auto;padding:.8rem;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:12px;align-content:start;min-height:0;
+}
+.board-grid::-webkit-scrollbar{width:3px;}
+.board-grid::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);}
+
+/* Category boxes */
+.cat-box{
+  border-radius:12px;border:2px solid;
+  cursor:pointer;transition:all .22s;
+  display:grid;grid-template-columns:auto 1fr;
+  grid-template-rows:auto auto;
+  column-gap:14px;row-gap:2px;
+  align-items:center;min-height:100px;
+  padding:.9rem 1.2rem;
+  position:relative;overflow:hidden;
+}
+.cat-box:active{transform:scale(.98);}
+.cat-box.cat-fresh{background:rgba(46,204,113,.07);border-color:rgba(46,204,113,.3);}
+.cat-box.cat-warn{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.3);}
+.cat-box.cat-crit{background:rgba(231,76,60,.09);border-color:rgba(231,76,60,.35);}
+.cat-icon{font-size:28px;grid-row:1/3;}
+.cat-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;grid-column:2;}
+.cat-fresh .cat-label{color:var(--green);}
+.cat-warn .cat-label{color:var(--amber);}
+.cat-crit .cat-label{color:var(--red);}
+.cat-count{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1;grid-column:2;}
+.cat-fresh .cat-count{color:var(--green);}
+.cat-warn .cat-count{color:var(--amber);}
+.cat-crit .cat-count{color:var(--red);}
+.cat-sub{font-size:10px;color:var(--text3);display:none;}
+
+/* Drilldown */
+.drilldown-overlay{display:none;position:absolute;inset:0;background:var(--bg0);z-index:50;flex-direction:column;overflow:hidden;}
+.drilldown-overlay.open{display:flex;}
+.drill-header{display:flex;align-items:center;gap:10px;padding:.65rem .9rem;border-bottom:1px solid var(--border);flex-shrink:0;}
+.drill-back{background:none;border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;min-height:34px;}
+.drill-back:hover{border-color:var(--purple);color:var(--text1);}
+.drill-title{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;}
+.drill-list{flex:1;overflow-y:auto;padding:.65rem;}
+.drill-list::-webkit-scrollbar{width:3px;}
+.drill-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;margin-bottom:5px;border:1px solid var(--border);background:var(--bg1);}
+.drill-num{font-family:var(--mono);font-size:16px;font-weight:700;min-width:44px;}
+.drill-fresh .drill-num{color:var(--green);}
+.drill-warn .drill-num{color:var(--amber);}
+.drill-crit .drill-num{color:var(--red);}
+.drill-body{flex:1;min-width:0;}
+.drill-name{font-size:12px;font-weight:500;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.drill-meta{font-size:10px;color:var(--text3);margin-top:1px;}
+.drill-wait{font-family:var(--mono);font-size:11px;font-weight:700;flex-shrink:0;}
+.drill-actions{display:flex;gap:4px;flex-shrink:0;}
+.board-empty{grid-column:1/-1;text-align:center;padding:3rem 1rem;color:var(--text3);font-size:13px;letter-spacing:.06em;}
+
+/* Card states */
+.q-card{border-radius:8px;padding:9px 11px;border:1px solid;display:flex;flex-direction:column;gap:4px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;animation:cardIn .3s ease both;}
+@keyframes cardIn{from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);}}
+.q-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;}
+.q-card.wait-fresh{background:rgba(46,204,113,.06);border-color:rgba(46,204,113,.22);}
+.q-card.wait-fresh::before{background:var(--green);}
+.q-card.wait-fresh .card-num,.q-card.wait-fresh .card-wait-badge{color:var(--green);}
+.q-card.wait-warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.22);}
+.q-card.wait-warn::before{background:var(--amber);}
+.q-card.wait-warn .card-num,.q-card.wait-warn .card-wait-badge{color:var(--amber);}
+.q-card.wait-crit{background:rgba(231,76,60,.08);border-color:rgba(231,76,60,.3);}
+.q-card.wait-crit::before{background:var(--red);}
+.q-card.wait-crit .card-num,.q-card.wait-crit .card-wait-badge{color:var(--red);}
+.q-card.card-attended{background:rgba(46,204,113,.03);border-color:rgba(46,204,113,.1);opacity:.5;}
+.q-card.card-attended::before{background:var(--green);}
+.q-card.card-missed{background:rgba(231,76,60,.03);border-color:rgba(231,76,60,.1);opacity:.4;}
+.q-card.card-missed::before{background:var(--red);}
+.q-card:active{transform:scale(.98);}
+.card-row1{display:flex;align-items:center;justify-content:space-between;}
+.card-num{font-family:var(--mono);font-size:20px;font-weight:700;line-height:1;}
+.card-status-badge{font-size:9px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:10px;text-transform:uppercase;}
+.card-waiting .card-status-badge{background:rgba(245,158,11,.18);color:var(--amber);}
+.card-attended .card-status-badge{background:rgba(46,204,113,.15);color:var(--green);}
+.card-missed .card-status-badge{background:rgba(231,76,60,.12);color:var(--red);}
+.card-name{font-size:12px;font-weight:500;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-klinik{font-size:10px;color:var(--text3);}
+.card-row3{display:flex;align-items:center;justify-content:space-between;margin-top:2px;}
+.card-wait-badge{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:11px;font-weight:700;}
+.card-wait-icon{font-size:11px;}
+.card-reg-time{font-size:10px;color:var(--text3);font-family:var(--mono);}
+.card-actions{display:flex;gap:5px;margin-top:4px;opacity:1;}
+.card-btn{flex:1;padding:7px 0;border-radius:6px;border:1px solid;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;background:transparent;letter-spacing:.04em;min-height:34px;}
+.card-btn.attend{border-color:rgba(46,204,113,.4);color:var(--green);}
+.card-btn.attend:hover{background:rgba(46,204,113,.2);}
+.card-btn.miss{border-color:rgba(231,76,60,.35);color:var(--red);}
+.card-btn.miss:hover{background:rgba(231,76,60,.15);}
+.card-btn.recall{border-color:rgba(123,104,238,.4);color:#A99FFF;}
+.card-btn.recall:hover{background:rgba(123,104,238,.18);}
+
+/* ── FOOTER ── */
+footer{display:flex;align-items:center;justify-content:space-between;padding:.4rem 1rem;background:rgba(13,24,48,.9);border-top:1px solid var(--border);flex-shrink:0;}
+.foot-left{font-size:9px;color:var(--text3);letter-spacing:.03em;}
+.foot-right{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text3);font-family:var(--mono);}
+.foot-dot{width:5px;height:5px;border-radius:50%;background:var(--green);}
+
+/* ── LIVE PILL ── */
+#live-pill{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;background:rgba(26,107,74,.12);border:1px solid rgba(26,107,74,.3);font-size:10px;font-weight:600;color:#6DE3A8;letter-spacing:.04em;}
+#live-dot{width:6px;height:6px;border-radius:50%;background:#2ECC71;animation:dotPulse 2s ease-in-out infinite;flex-shrink:0;}
+
+/* ── TOAST ── */
+.ns-toast{
+  position:fixed;
+  bottom:-80px;
+  left:50%;
+  transform:translateX(-50%);
+  min-width:260px;max-width:90vw;
+  padding:11px 16px;border-radius:12px;
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;font-weight:600;color:#fff;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);
+  z-index:99999;
+  transition:bottom .45s cubic-bezier(.34,1.3,.64,1);
+  pointer-events:none;
+  white-space:nowrap;
+}
+.ns-toast.show{bottom:16px;}
+.ns-toast.success{background:linear-gradient(135deg,#0F4A2E,#1A6B4A);border:1px solid rgba(46,204,113,.4);}
+.ns-toast.error{background:linear-gradient(135deg,#4A1A1A,#7A2525);border:1px solid rgba(231,76,60,.4);}
+.ns-toast.info{background:linear-gradient(135deg,#1C1550,#3D3580);border:1px solid rgba(123,104,238,.4);}
+.toast-icon{font-size:17px;flex-shrink:0;}
+
+/* ══════════════════════════════════════════════
+   MODAL — THE FIX
+   Root cause: parent containers had overflow:hidden
+   or transform which created new stacking contexts,
+   clipping position:fixed children on mobile.
+   Solution: modal lives outside layout stacking,
+   uses body-level fixed with safe-area insets.
+   ══════════════════════════════════════════════ */
+/* ══ MODAL — compact fit ══ */
+.modal-overlay{
+
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.82);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+  padding:16px;
+}
+.modal-overlay.active{display:flex;}
+
+.modal-box{
+  background:var(--bg1);
+  border:1px solid var(--border);
+  border-radius:14px;
+  width:100%;
+  max-width:340px;
+  /* Never taller than viewport — all content must fit */
+  max-height:calc(100vh - 32px);
+  overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.65);
+  animation:modalIn .25s cubic-bezier(.34,1.3,.64,1) both;
+  /* Compact padding */
+  padding:1.1rem 1.2rem;
+}
+@keyframes modalIn{
+  from{opacity:0;transform:scale(.9);}
+  to{opacity:1;transform:scale(1);}
+}
+
+/* Single row: icon + title side by side to save vertical space */
+.modal-header-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:.5rem;
+}
+.modal-icon{font-size:22px;flex-shrink:0;margin:0;}
+.modal-title{font-size:14px;font-weight:700;color:var(--text1);margin:0;text-align:left;}
+.modal-sub{
+  font-size:11px;color:var(--text2);
+  margin-bottom:.8rem;line-height:1.5;
+  text-align:left;
+}
+/* Compact entry box */
+.modal-entry{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:8px 14px;
+  margin-bottom:.8rem;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.modal-entry-num{
+  font-family:var(--mono);
+  font-size:28px;font-weight:700;
+  color:var(--purple);line-height:1;
+  flex-shrink:0;
+}
+.modal-entry-name{
+  font-size:12px;color:var(--text2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.modal-btns{display:flex;gap:8px;}
+.modal-btn{
+  flex:1;padding:12px;border-radius:9px;border:none;
+  font-size:13px;font-weight:700;cursor:pointer;
+  transition:all .18s;letter-spacing:.04em;
+  min-height:46px;
+}
+.modal-btn.cancel{background:var(--bg2);color:var(--text2);}
+.modal-btn.confirm{background:linear-gradient(135deg,#4A3DB5,#7B68EE);color:#fff;}
+
+/* Wait time */
+.wait-ok{color:var(--green);}
+.wait-warn{color:var(--amber);}
+.wait-crit{color:var(--red);}
+
+/* Recall flash */
+@keyframes recallFlash{0%{box-shadow:0 0 0 0 rgba(123,104,238,.6);}50%{box-shadow:0 0 0 8px rgba(123,104,238,0);}100%{box-shadow:0 0 0 0 rgba(123,104,238,0);}}
+.recalled{animation:recallFlash .6s ease 3;}
+
+/* ══ DESKTOP: side-by-side layout ══ */
+@media(min-width:900px){
+  .ns-body{
+    flex-direction:row;
+    overflow:hidden;
+  }
+  .panel-call{
+    width:420px;
+    min-width:380px;
+    max-width:460px;
+    flex-shrink:0;
+    border-bottom:none;
+    border-right:1px solid var(--border);
+    overflow:hidden;
+  }
+  .call-history{
+    /* On desktop, history scrolls within panel */
+    max-height:none;
+  }
+  .panel-board{
+    flex:1;
+    min-width:0;
+  }
+  /* Desktop: card actions visible only on hover */
+  .card-actions{opacity:0;transition:opacity .18s;}
+  .q-card:hover .card-actions{opacity:1;}
+  .q-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3);}
+  .cat-box:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.35);}
+  header{padding:.65rem 1.4rem;}
+  .clk-time{font-size:20px;}
+  .clk-date{font-size:10px;}
+  .hdr-name{font-size:13px;}
+}
+
+/* ══ TABLET ══ */
+@media(min-width:600px) and (max-width:899px){
+  .ns-body{flex-direction:column;}
+  .panel-call{max-height:45vh;}
+  .panel-board{flex:1;}
+  .board-grid{grid-template-columns:repeat(3,1fr);}
+}
+
+/* ══ PHONE ══ */
+@media(max-width:599px){
+  .ns-badge{display:none;}
+  .hdr-sub{display:none;}
+  .hdr-div{display:none;}
+  .clk-date{display:none;}
+  header{padding:.45rem .75rem;gap:8px;}
+  .logo{height:28px;}
+  .clk-time{font-size:15px;}
+  .panel-call{
+    /* On phone: call pad is compact, history collapses */
+    flex-shrink:0;
+    max-height:58vh;
+  }
+  .call-history{max-height:160px;}
+  .board-grid{grid-template-columns:repeat(3,1fr);gap:8px;padding:.6rem;}
+  .cat-box{min-height:80px;padding:.7rem .8rem;}
+  .cat-icon{font-size:22px;}
+  .cat-count{font-size:20px;}
+  .cat-label{font-size:9px;}
+  .board-pills{padding:.45rem .7rem;gap:5px;}
+  .pill{padding:5px 9px;font-size:10px;min-height:30px;}
+  footer{padding:.35rem .75rem;}
+  .foot-left{font-size:8.5px;}
+  .name-input, .num-input {
+    font-size: 16px !important; 
+  }
+  
+  /* Keeps the input boxes looking compact on smaller screens */
+  .name-input {
+    padding: 10px 12px;
+    min-height: 40px;
+  }
+  .num-input {
+    min-height: 46px;
+    padding: 8px 12px;
+  }
+}
+.med-row{
+  display:grid;
+  grid-template-columns:1fr 80px 90px 70px 50px 28px;
+  gap:5px;margin-bottom:6px;align-items:center;
+}
+.med-input{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:7px;padding:7px 9px;font-size:12px;
+  color:var(--text1);outline:none;width:100%;
+}
+.med-input:focus{border-color:var(--purple);}
+.med-select{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:7px;padding:7px 4px;font-size:11px;
+  color:var(--text1);outline:none;width:100%;
+}
+.med-del{
+  background:none;border:1px solid rgba(231,76,60,.3);
+  border-radius:6px;color:var(--red);font-size:14px;
+  cursor:pointer;width:28px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+}
+.med-suggest{
+  position:absolute;background:var(--bg2);
+  border:1px solid var(--border);border-radius:8px;
+  max-height:140px;overflow-y:auto;z-index:9999;
+  min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+.med-suggest-item{
+  padding:8px 12px;font-size:12px;cursor:pointer;
+  color:var(--text1);border-bottom:1px solid var(--border);
+}
+.med-suggest-item:hover{background:rgba(123,104,238,.15);}
+.med-row-wrap{position:relative;}
+/* ══ LOOKUP LOADING OVERLAY ══ */
+.lookup-overlay{
+  display:none;position:fixed;inset:0;z-index:200000;
+  background:rgba(8,15,30,.92);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+  animation:lookupFadeIn .25s ease;
+}
+.lookup-overlay.active{display:flex;}
+@keyframes lookupFadeIn{from{opacity:0;}to{opacity:1;}}
+
+.lookup-box{
+  display:flex;flex-direction:column;align-items:center;gap:1.2rem;
+  animation:lookupBoxIn .35s cubic-bezier(.34,1.3,.64,1);
+}
+@keyframes lookupBoxIn{
+  from{opacity:0;transform:scale(.85) translateY(10px);}
+  to{opacity:1;transform:scale(1) translateY(0);}
+}
+
+.lookup-ring-wrap{
+  position:relative;width:96px;height:96px;
+  display:flex;align-items:center;justify-content:center;
+}
+.lookup-ring{
+  position:absolute;inset:0;border-radius:50%;
+  border:4px solid rgba(123,104,238,.15);
+  border-top:4px solid var(--purple);
+  border-right:4px solid var(--purple);
+  animation:lookupSpin .9s linear infinite;
+}
+.lookup-ring-inner{
+  position:absolute;inset:14px;border-radius:50%;
+  border:3px solid rgba(46,204,113,.12);
+  border-bottom:3px solid var(--green);
+  animation:lookupSpin 1.4s linear infinite reverse;
+}
+@keyframes lookupSpin{to{transform:rotate(360deg);}}
+
+.lookup-icon{
+  font-size:30px;z-index:2;
+  animation:lookupPulse 1.6s ease-in-out infinite;
+}
+@keyframes lookupPulse{
+  0%,100%{transform:scale(1);opacity:.9;}
+  50%{transform:scale(1.12);opacity:1;}
+}
+
+.lookup-num{
+  font-family:var(--mono);font-size:32px;font-weight:700;
+  color:var(--purple);letter-spacing:.1em;
+  text-shadow:0 0 24px rgba(123,104,238,.5);
+}
+
+.lookup-text{
+  font-size:13px;color:var(--text2);letter-spacing:.03em;
+}
+
+.lookup-dots{display:flex;gap:6px;}
+.lookup-dots span{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--purple);
+  animation:lookupDotBob 1s ease-in-out infinite;
+}
+.lookup-dots span:nth-child(2){animation-delay:.15s;}
+.lookup-dots span:nth-child(3){animation-delay:.3s;}
+@keyframes lookupDotBob{
+  0%,60%,100%{transform:translateY(0);opacity:.4;}
+  30%{transform:translateY(-8px);opacity:1;}
+}
+.acc-wrap { display:flex; flex-direction:column; gap:8px; margin-top:.8rem; }
+
+.acc-section { border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--bg1); }
+.acc-section.disabled { opacity:.45; }
+
+.acc-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; cursor:pointer; user-select:none;
+  background:var(--bg2); transition:background .15s;
+}
+.acc-header:hover { background:var(--bg3); }
+.acc-section.disabled .acc-header { cursor:not-allowed; }
+
+.acc-title { display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700; color:var(--text1); text-align:left; }
+.acc-title-icon { font-size:16px; }
+.acc-badge-soon { font-size:9px; font-weight:700; padding:2px 8px; border-radius:10px; background:rgba(255,255,255,.08); color:var(--text3); letter-spacing:.05em; }
+
+.acc-chevron { font-size:12px; color:var(--text3); transition:transform .3s ease; }
+.acc-section.open .acc-chevron { transform:rotate(180deg); }
+
+.acc-body { max-height:0; overflow:hidden; transition:max-height .35s cubic-bezier(.4,0,.2,1); }
+.acc-section.open .acc-body { max-height:1000px; }
+.acc-body-inner { padding:14px 16px 18px; border-top:1px solid var(--border); }
+
+.acc-field { width:100%; padding:10px; border-radius:8px; margin-bottom:.6rem;
+  background:var(--bg2); border:1px solid var(--border); color:var(--text1); font-size:13px; }
+.acc-textarea { resize:vertical; min-height:70px; }
+.dd-wrap { position:relative; margin-bottom:.6rem; }
+.dd-wrap select { width:100%; }
+
+.dd-loading {
+  position:absolute; inset:0;
+  display:flex; align-items:center; gap:8px;
+  padding:10px; border-radius:8px;
+  background:var(--bg2); border:1px solid var(--border);
+  font-size:12px; color:var(--text3);
+  opacity:0; pointer-events:none;
+  transition:opacity .2s ease;
+}
+.dd-wrap.loading .dd-loading { opacity:1; pointer-events:auto; }
+.dd-wrap.loading select { opacity:0; }
+
+.dd-spinner {
+  width:14px; height:14px; border-radius:50%;
+  border:2px solid rgba(0,200,150,.2);
+  border-top:2px solid var(--accent, #00C896);
+  animation:ddSpin .7s linear infinite; flex-shrink:0;
+}
+.test-check-row { display:flex; align-items:center; gap:8px; padding:6px 4px; font-size:12.5px; color:var(--text1); border-bottom:1px solid rgba(255,255,255,.04); }
+.test-check-row:last-child { border-bottom:none; }
+.test-check-row input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent,#00C896); cursor:pointer; }
+.test-check-row label { cursor:pointer; flex:1; }
+@keyframes ddSpin { to { transform:rotate(360deg); } }
+/* ── Section 4: Prosedur & Ubat Kecemasan ── */
+.acc-section.open#acc-procedure .acc-body{max-height:1600px;}
+.proc-lbl{font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--text3);text-transform:uppercase;margin:2px 0 6px;display:flex;justify-content:space-between;}
+.proc-search{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--text1);outline:none;margin-bottom:6px;}
+.proc-list{max-height:150px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:4px 8px;margin-bottom:.8rem;}
+.proc-list .test-check-row.hide{display:none;}
+.proc-empty{font-size:11.5px;color:var(--text3);padding:8px 2px;}
+.proc-urgent{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--amber);margin:.2rem 0 .8rem;cursor:pointer;}
+.proc-urgent input{width:16px;height:16px;accent-color:#F59E0B;}
+.proc-send{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,#C0392B,#E74C3C);color:#fff;font-weight:800;font-size:14px;cursor:pointer;}
+.proc-send:disabled{opacity:.55;cursor:wait;}
+.proc-state{border-radius:12px;padding:14px;border:1px solid var(--border);background:var(--bg2);font-size:13px;line-height:1.5;}
+.proc-state.wait{border-color:rgba(245,158,11,.5);}
+.proc-state.taken{border-color:rgba(74,144,226,.6);}
+.proc-state.done{border-color:rgba(46,204,113,.6);background:rgba(46,204,113,.08);}
+.proc-state.fail{border-color:rgba(231,76,60,.6);background:rgba(231,76,60,.08);}
+.proc-state b{display:block;font-size:14px;margin-bottom:2px;}
+.proc-state .ps-sum{margin-top:6px;font-size:11.5px;color:var(--text2);}
+.proc-state button{margin-top:10px;width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text1);font-weight:700;cursor:pointer;}
+
+@media print {
+  body > *:not(#labFormPrintArea) { display:none !important; }
+  #labFormPrintArea { display:block !important; width:210mm; padding:8mm; font-family:Arial,sans-serif; color:#000; background:#fff; }
+  .lf-header-row { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:2mm; }
+  .lf-logo-qr { display:flex; align-items:center; gap:4mm; }
+  .lf-logo-qr img.lf-logo { width:16mm; height:16mm; }
+  .lf-logo-qr img.lf-qr { width:14mm; height:14mm; }
+  .lf-title { text-align:center; font-size:10pt; font-weight:bold; color:#0B6E4F; flex:1; }
+  .lf-hospital-line { border-bottom:1px solid #0B6E4F; padding-bottom:1mm; margin-bottom:1mm; font-size:8pt; }
+  .lf-barcode-row { display:flex; justify-content:flex-end; margin-bottom:2mm; }
+  .lf-barcode-row svg { height:8mm; }
+  .lf-grid-row { display:flex; border:1px solid #0B6E4F; }
+  .lf-cell { border-right:1px solid #0B6E4F; padding:1.5mm 2mm; font-size:8pt; flex:1; }
+  .lf-cell:last-child { border-right:none; }
+  .lf-label { font-weight:bold; font-size:7.5pt; }
+  .lf-value { font-size:9pt; margin-top:.5mm; }
+  .lf-box14 { border:1px solid #0B6E4F; border-top:none; min-height:35mm; padding:2mm; font-size:8pt; }
+  .lf-lain-lain { border:1px solid #0B6E4F; border-top:none; padding:2mm; font-size:8pt; min-height:8mm; }
+  .lf-footer-row { display:flex; justify-content:space-between; margin-top:4mm; font-size:8pt; }
+  .lf-cop-img { width:28mm; height:auto; }
+}
+.ns-layout{display:none !important;}
+body{background:var(--bg0);}
+</style>
+</head>
+<body>
+
+<div class="ns-layout">
+
+  <!-- HEADER -->
+  <header>
+    <img src="https://drive.google.com/thumbnail?id=1d0dxkKNXrGvh1x8h86TtyyrHodiHIgPb"
+         class="logo" alt="Logo" onerror="this.style.display='none'">
+    <div class="hdr-div"></div>
+    <div class="hdr-info">
+      <div class="hdr-name" id="hdr-room-label">Klinik Kesihatan Ayer Hitam — Bilik Doktor</div>
+      <div class="hdr-sub">PKD Kubang Pasu · Panggil &amp; Urus Giliran Pesakit</div>
+    </div>
+    <div class="hdr-right">
+      <div class="ns-badge">
+        <div class="ns-badge-dot"></div>
+        <span id="ns-badge-txt">DOKTOR</span>
+      </div>
+      <div id="live-pill" style="display:flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;background:rgba(26,107,74,.12);border:1px solid rgba(26,107,74,.3);font-size:11px;font-weight:600;color:#6DE3A8;letter-spacing:.04em;">
+        <div id="live-dot" style="width:7px;height:7px;border-radius:50%;background:#2ECC71;animation:dotPulse 2s ease-in-out infinite;flex-shrink:0;"></div>
+        <span id="live-txt">Menghubung...</span>
+      </div>
+      <div class="hdr-clock">
+        <div class="clk-time" id="clk-time">--:--:--</div>
+        <div class="clk-date" id="clk-date"></div>
+      </div>
+    </div>
+  </header>
+  <!-- BODY -->
+  <div class="ns-body">
+
+    <!-- LEFT: Call Pad + History -->
+    <div class="panel-call">
+      <div class="call-top">
+        <div class="section-lbl">Panggil Pesakit</div>
+
+        <!-- Number input -->
+        <div class="num-input-row">
+          <input type="text" id="call-num" class="num-input"
+            placeholder="No. Giliran"
+            maxlength="4"
+            inputmode="numeric"
+            oninput="this.value=this.value.replace(/\D/g,'').slice(0,4);
+  if(this.value.length===4) autoLookup(this.value);
+  else { document.getElementById('call-name').value='';
+         document.getElementById('btn-call').disabled=true; }">
+        </div>
+
+        <!-- Name input -->
+        <input type="text" id="call-name" class="name-input"
+          placeholder="Nama pesakit (auto-isi dari senarai)"
+          style="text-transform:uppercase;"
+          oninput="this.value=this.value.toUpperCase()">
+
+        <!-- Call button -->
+        <button class="btn-call" id="btn-call" onclick="doNurseCall()" disabled>
+          <span class="btn-call-icon">🔔</span>
+          <span>Panggil Masuk Bilik</span>
+        </button>
+
+        <div style="display:flex;align-items:center;gap:8px;margin:.7rem 0 .5rem;">
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+          <span style="font-size:9px;color:var(--text3);letter-spacing:.1em;">ATAU</span>
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="retro-num" class="num-input" style="font-size:18px;min-height:42px;flex:0 0 100px;"
+            placeholder="No." maxlength="4" inputmode="numeric"
+            oninput="this.value=this.value.replace(/\D/g,'').slice(0,4);">
+        <button onclick="openRetroEntry()"
+          style="flex:1;border-radius:8px;border:1px solid rgba(123,104,238,.4);background:rgba(123,104,238,.08);
+           color:#A99FFF;font-size:12px;font-weight:700;cursor:pointer;min-height:42px;">
+            📋 Rekod Retrospektif
+        </button>
+      </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-cell waiting">
+          <div class="stat-num" id="stat-waiting">0</div>
+          <div class="stat-lbl">Menunggu</div>
+        </div>
+        <div class="stat-cell attended">
+          <div class="stat-num" id="stat-attended">0</div>
+          <div class="stat-lbl">Hadir</div>
+        </div>
+        <div class="stat-cell missed">
+          <div class="stat-num" id="stat-missed">0</div>
+          <div class="stat-lbl">Tidak Hadir</div>
+        </div>
+      </div>
+
+      <!-- Today's nurse calls -->
+      <div class="call-history">
+        <div class="section-lbl" style="margin-bottom:.6rem;">Panggilan Hari Ini</div>
+        <div id="hist-list">
+          <div class="hist-empty">Tiada panggilan lagi</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Waiting board -->
+    <div class="panel-board">
+      <div class="board-header">
+        <div class="board-title">Papan Giliran — Menunggu Jururawat</div>
+        <div class="board-refresh">
+          <div class="refresh-dot"></div>
+          <span>Dikemaskini setiap <span id="countdown-sec">10</span>s &nbsp;·&nbsp; <span id="foot-ts">--:--</span></span>
+        </div>
+      </div>
+
+      <!-- Filter pills -->
+      <div class="board-pills">
+        <div class="pill all" onclick="setFilter('all',this)">
+          <span>Semua</span>
+          <span class="pill-count" id="cnt-all">0</span>
+        </div>
+        <div class="pill waiting active" onclick="setFilter('WAITING',this)">
+          <span>⏳ Menunggu</span>
+          <span class="pill-count" id="cnt-waiting">0</span>
+        </div>
+        <div class="pill attended" onclick="setFilter('ATTENDED',this)">
+          <span>✅ Hadir</span>
+          <span class="pill-count" id="cnt-attended">0</span>
+        </div>
+        <div class="pill missed" onclick="setFilter('MISSED',this)">
+          <span>❌ Tidak Hadir</span>
+          <span class="pill-count" id="cnt-missed">0</span>
+        </div>
+      </div>
+
+      <!-- Grid -->
+      <!-- Category summary grid -->
+      <div class="board-grid" id="board-grid"></div>
+
+      <!-- Drilldown overlay (covers full right panel) -->
+      <div class="drilldown-overlay" id="drilldown-overlay">
+        <div class="drill-header">
+          <button class="drill-back" onclick="closeDrill()">← Kembali</button>
+          <div class="drill-title" id="drill-title">—</div>
+          <div style="flex:1"></div>
+          <div style="font-size:10px;color:var(--text3)" id="drill-count"></div>
+        </div>
+        <div class="drill-list" id="drill-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="foot-left">Sistem PRIMA · Stesen Jururawat · Klinik Kesihatan Ayer Hitam</div>
+    <div class="foot-right">
+      <div class="foot-dot"></div>
+      <span>Live · Jururawat Stesen</span>
+    </div>
+  </footer>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header-row">
+    <div class="modal-icon">🔔</div>
+    <div class="modal-title">Sahkan Panggilan Semula</div>
+  </div>
+    <div class="modal-sub">Pesakit berikut akan dipanggil semula melalui<br>papan giliran utama dan queue2</div>
+    <div class="modal-entry">
+      <div class="modal-entry-num" id="modal-num">—</div>
+      <div class="modal-entry-name" id="modal-name">—</div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModal()">Batal</button>
+      <button class="modal-btn confirm" onclick="confirmCall()">🔔 &nbsp;Panggil Sekarang</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="ns-toast" id="ns-toast">
+  <span class="toast-icon" id="toast-icon">✅</span>
+  <span id="toast-msg">—</span>
+</div>
+<!-- LOOKUP LOADING OVERLAY -->
+<div class="lookup-overlay" id="lookup-overlay">
+  <div class="lookup-box">
+    <div class="lookup-ring-wrap">
+      <div class="lookup-ring"></div>
+      <div class="lookup-ring-inner"></div>
+      <div class="lookup-icon">🔍</div>
+    </div>
+    <div class="lookup-num" id="lookup-num-display">—</div>
+    <div class="lookup-text">Mencari rekod pesakit...</div>
+    <div class="lookup-dots">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+<script>
+/* SIAGA bridge: this page runs inside SIAGA, so the PRIMA calls go  browser → SIAGA → PRIMA (server to server).
+   It replaces Apps Script's google.script.run with the same chaining API, so the overlay code below is unchanged. */
+(function(){
+  var API = "https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec";
+  var TOKEN = sessionStorage.getItem("kkah_session_token");
+  if(!TOKEN){ location.replace("./login.html"); }
+  function call(fn, args, ok, fail){
+    var body = fn === "primaRoomWho" ? { action:"primaRoomWho", token:TOKEN } : { action:"primaRoomCall", token:TOKEN, fn:fn, args:args };
+    var ctl = new AbortController(), t = setTimeout(function(){ ctl.abort(); }, 45000);
+    fetch(API, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body:JSON.stringify(body), signal:ctl.signal })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        clearTimeout(t);
+        if(d && d.ok){ if(ok) ok(d.result); }
+        else if(d && /expired/i.test(d.error || "")){ location.replace("./login.html"); }
+        else if(fail) fail(new Error((d && d.error) || "Ralat"));
+      })
+      .catch(function(e){ clearTimeout(t); if(fail) fail(new Error(e && e.name === "AbortError" ? "Masa tamat. Semak sambungan." : (e && e.message) || "Ralat sambungan")); });
+  }
+  function make(ok, fail){
+    var base = { withSuccessHandler:function(f){ return make(f, fail); }, withFailureHandler:function(f){ return make(ok, f); } };
+    return new Proxy(base, { get:function(t, k){ if(k in t) return t[k]; return function(){ call(String(k), Array.prototype.slice.call(arguments), ok, fail); }; } });
+  }
+  window.google = { script:{ run: make(null, null) } };
+})();
+</script>
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════
+var POLL_INTERVAL_MS  = 30000;  // refresh board every 30s
+var WAIT_WARN_MIN     = 15;     // amber after 15 min
+var WAIT_CRIT_MIN     = 30;     // red after 30 min
+// Queue number prefixes to EXCLUDE from nurse board (MCH, dental, admin series)
+// Add or remove prefixes as needed — matched against first digit(s) of the number
+var EXCLUDED_PREFIXES = ["7","8","9"];
+var _filter           = "WAITING";
+var _allEntries       = [];     // full list from server (all callTypes)
+var _queueLookup      = {};     // num → { name, klinik } for auto-fill
+var _selectedKlinik   = "OPD";
+var _pendingCall      = null;   // data waiting for modal confirm
+var _countdownVal     = 10;
+var _countdownTimer   = null;
+var _pollTimer        = null;
+var _nurseCalls       = [];     // local history of nurse calls today
+var _histShowAll = false;
+
+var ROOM_NUM   = (new URLSearchParams(location.search).get("room") || "1").replace(/\D/g,"").slice(0,1) || "1";
+console.log("ROOM_NUM value:", ROOM_NUM); 
+var ROOM_ID    = "DOKTOR_" + ROOM_NUM;
+var ROOM_LABEL = "Bilik Doktor " + ROOM_NUM;
+
+// ── CLOCK ──
+var DAYS   = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
+var MONTHS = ["Jan","Feb","Mac","Apr","Mei","Jun","Jul","Ogos","Sep","Okt","Nov","Dis"];
+function pad(n){ return n<10?"0"+n:""+n; }
+var _currentDoctor = null; // { name, copFileId }
+
+var _who = null;
+function normName(n){ return String(n||"").toUpperCase().replace(/\bDR\.?\b/g,"").replace(/[^A-Z ]/g," ").replace(/\s+/g," ").trim(); }
+function matchDoctor(docs, name){
+  var me = normName(name); if(!me) return null;
+  for(var i=0;i<docs.length;i++){ var d = normName(docs[i].name); if(d && (d === me || (d.length > 5 && me.indexOf(d) >= 0) || (me.length > 5 && d.indexOf(me) >= 0))) return docs[i]; }
+  return null;
+}
+function fatal_(msg){
+  document.getElementById("doctor-lock-overlay").innerHTML = "<div style='color:#fff;text-align:center;padding:2rem;max-width:340px;'><div style='font-size:40px'>⚠️</div><div style='font-weight:700;margin:.6rem 0'>"+msg+"</div><button onclick='location.href=\"./dashboard.html\"' style='padding:12px 18px;border-radius:10px;border:none;font-weight:700'>Kembali ke SIAGA</button></div>";
+  document.getElementById("doctor-lock-overlay").style.display = "flex";
+}
+window.addEventListener("DOMContentLoaded", function(){
+  var lock = document.getElementById("doctor-lock-overlay");
+  lock.style.display = "none";
+  var roomEl = document.getElementById("lab-popup-room"); if(roomEl) roomEl.textContent = "Bilik " + ROOM_NUM;
+  google.script.run.withSuccessHandler(function(w){
+    if(!w || w.status !== "success"){ fatal_("Akaun anda tidak dikenali."); return; }
+    _who = w;
+    if(ROOM_NUM === "5"){                           // Bilik 5 = Penolong Pegawai Perubatan: no doctor to pick (SIAGA still knows who is ordering)
+      _currentDoctor = { name:"Penolong Pegawai Perubatan", copFileId:"", by:w.name };
+      openFromParam_(); return;
+    }
+    google.script.run.withSuccessHandler(function(res){
+      var docs = (res && res.status === "success") ? res.doctors : [];
+      var hit = matchDoctor(docs, w.name);
+      // every other room: the doctor confirms their name first (pre-selected when SIAGA recognises the login), so the order always has a name
+      var sel = document.getElementById("doctor-select");
+      sel.innerHTML = "<option value=''>— Pilih Doktor —</option>";
+      docs.forEach(function(d){ var o = document.createElement("option"); o.value = d.name; o.textContent = d.name; o.dataset.copFileId = d.copFileId; sel.appendChild(o); });
+      if(hit) sel.value = hit.name;
+      lock.style.display = "flex";
+    }).withFailureHandler(function(e){ fatal_("Senarai doktor tidak dapat dimuatkan: " + e.message); }).getDoctorList();
+  }).withFailureHandler(function(e){ fatal_(e.message); }).primaRoomWho();
+});
+
+function confirmDoctorLock(){
+  var sel = document.getElementById("doctor-select");
+  var val = sel.value;
+  if(!val){ alert("Sila pilih nama doktor."); return; }
+  var opt = sel.options[sel.selectedIndex];
+  _currentDoctor = { name: val, copFileId: opt.dataset.copFileId || "", by: _who ? _who.name : val };
+  document.getElementById("doctor-lock-overlay").style.display = "none";
+  openFromParam_();   // opened from SIAGA with ?num=… → show that patient's overlay straight away
+}
+var _doctorListCache = null;
+
+// In your DOMContentLoaded doctor-lock fetch, wrap similarly:
+function loadDoctorList(){
+  if(_doctorListCache){ populateDoctorSelect(_doctorListCache); return; }
+  google.script.run.withSuccessHandler(function(res){
+    if(res && res.status === "success"){
+      _doctorListCache = res.doctors;
+      populateDoctorSelect(res.doctors);
+    }
+  }).getDoctorList();
+}
+
+function populateDoctorSelect(doctors){
+  var sel = document.getElementById("doctor-select");
+  sel.innerHTML = "<option value=''>— Pilih Doktor —</option>";
+  doctors.forEach(function(d){
+    var opt = document.createElement("option");
+    opt.value = d.name; opt.textContent = d.name;
+    opt.dataset.copFileId = d.copFileId;
+    sel.appendChild(opt);
+  });
+}
+var _diagnosisTestCache = null; // null = not loaded yet, object = cached
+
+function loadDiagnosisTestOptions(){
+  // Already cached — populate instantly, no loading UI
+  if(_diagnosisTestCache){
+    populateDiagnosisTestSelects(_diagnosisTestCache);
+    return;
+  }
+
+  // Show loading state
+  document.getElementById("dd-wrap-diagnosis").classList.add("loading");
+  document.getElementById("dd-wrap-test").classList.add("loading");
+  console.log("[DD] Fetching diagnosis/test list (first time)...");
+
+  google.script.run
+    .withSuccessHandler(function(res){
+      console.log("[DD] Loaded:", res && res.status, res ? res.diagnoses.length+" diagnoses, "+res.tests.length+" tests" : "");
+      if(res && res.status === "success"){
+        _diagnosisTestCache = res; // cache for subsequent popup opens
+        populateDiagnosisTestSelects(res);
+      } else {
+        console.error("[DD] Load failed:", res);
+      }
+      document.getElementById("dd-wrap-diagnosis").classList.remove("loading");
+      document.getElementById("dd-wrap-test").classList.remove("loading");
+    })
+    .withFailureHandler(function(err){
+      console.error("[DD] Load error:", err.message);
+      document.getElementById("dd-wrap-diagnosis").classList.remove("loading");
+      document.getElementById("dd-wrap-test").classList.remove("loading");
+    })
+    .getDiagnosisTestOptions();
+}
+
+function populateDiagnosisTestSelects(res){
+  var dSel = document.getElementById("lab-diagnosis-select");
+  dSel.innerHTML = "<option value=''>— Pilih Diagnosis —</option>";
+  res.diagnoses.forEach(function(d){
+    var o = document.createElement("option"); o.value=d; o.textContent=d;
+    dSel.appendChild(o);
+  });
+
+  var checklist = document.getElementById("lab-test-checklist");
+  checklist.innerHTML = "";
+  res.tests.forEach(function(t, idx){
+    var id = "test-chk-" + idx;
+    var row = document.createElement("div");
+    row.className = "test-check-row";
+    row.innerHTML =
+      "<input type='checkbox' id='"+id+"' value='"+t.replace(/'/g,"&#39;")+"'>"+
+      "<label for='"+id+"'>"+t+"</label>";
+    checklist.appendChild(row);
+  });
+}
+
+function getSelectedTests(){
+  var checked = document.querySelectorAll("#lab-test-checklist input[type=checkbox]:checked");
+  return Array.prototype.map.call(checked, function(cb){ return cb.value; }).join(", ");
+}
+var _labPopupRowIndex = null;
+var _pendingLabQueueNum = null;
+
+function openLabPopup(patientData){
+  document.getElementById("lab-popup-patient").textContent =
+    patientData.name + " · " + patientData.num;
+  document.getElementById("lab-popup-doctor").textContent = _currentDoctor ? _currentDoctor.name : "—";
+  _labPopupRowIndex = patientData.rowIndex || null;
+  _pendingLabQueueNum = patientData.num;
+  _medCurrentCall = { num: patientData.num, name: patientData.name };
+
+  document.getElementById("acc-lab").classList.add("open");
+  document.getElementById("acc-diagnosis").classList.remove("open");
+  document.getElementById("acc-medicine").classList.remove("open");
+
+  document.getElementById("lab-clinical-input").value = "";
+  document.getElementById("lab-diagnosis-select").value = "";
+  var checks = document.querySelectorAll("#lab-test-checklist input[type=checkbox]");
+  Array.prototype.forEach.call(checks, function(cb){ cb.checked = false; });
+
+  resetMedicineFields("", []);
+  if(_procPatient !== patientData.num || !_procOrderId){ _procPatient = null; resetProcSection(); }
+  else { document.getElementById("acc-procedure").classList.remove("open"); }
+  loadDiagnosisTestOptions();
+
+  document.getElementById("lab-popup-overlay").classList.add("active");
+}
+
+function closeLabPopup(){
+  document.getElementById("lab-popup-overlay").classList.remove("active");
+  location.href = "./dashboard.html";     // back to SIAGA — the call box stays active (Mod Kaunter) for the next number
+}
+function revealSection2(){
+  document.getElementById("lab-section-2").style.display = "block";
+}
+
+function printLabForm(){
+  if(!_labPopupRowIndex && !_pendingLabQueueNum){
+    alert("Data pesakit tidak lengkap.");
+    return;
+  }
+  var queueNum = _pendingLabQueueNum || document.getElementById("lab-popup-patient").textContent.split("·")[1].trim();
+  console.log("[LABFORM] Fetching data for queue:", queueNum);
+
+  google.script.run.withSuccessHandler(function(patient){
+    console.log("[LABFORM] patient data:", patient);
+    if(!patient || patient.status !== "success"){
+      alert("Gagal mendapatkan data pesakit: " + (patient ? patient.message : "ralat"));
+      return;
+    }
+
+    var diagnosis = document.getElementById("lab-diagnosis-select").value || "";
+    var test = getSelectedTests();
+    var clinical  = document.getElementById("lab-clinical-input").value || patient.clinical || "";
+
+    // Fetch doctor cop image (async), then build + print
+    var copFileId = _currentDoctor ? _currentDoctor.copFileId : "";
+    if(copFileId){
+      google.script.run.withSuccessHandler(function(copRes){
+        console.log("[LABFORM] cop image result:", copRes && copRes.status);
+        buildAndPrintLabForm(patient, diagnosis, test, clinical, copRes && copRes.status==="success" ? copRes.dataUrl : "");
+      }).getDoctorCopImageBase64(copFileId);
+    } else {
+      buildAndPrintLabForm(patient, diagnosis, test, clinical, "");
+    }
+  }).getLabFormData(queueNum);
+}
+
+function buildAndPrintLabForm(patient, diagnosis, test, clinical, copDataUrl){
+  var qrDataUrl  = generateQrDataUrl(patient.nama); // reuses your existing working function
+  console.log("[LABFORM] QR ready:", !!qrDataUrl);
+
+  var todayStr = _todayDateStr(); // reuses existing helper
+
+  var html =
+    "<div class='lf-header-row'>"+
+      "<div class='lf-logo-qr'>"+
+        "<img class='lf-logo' src='https://raw.githubusercontent.com/opdkktu/trial1/main/jata.png'>"+
+        (qrDataUrl ? "<img class='lf-qr' src='"+qrDataUrl+"'>" : "")+
+      "</div>"+
+      "<div class='lf-title'>KEMENTERIAN KESIHATAN MALAYSIA<br>PERKHIDMATAN PATOLOGI</div>"+
+      "<div style='font-size:7pt;'>(PER. PAT 301)</div>"+
+    "</div>"+
+    "<div class='lf-hospital-line'>HOSPITAL: KLINIK KESIHATAN AYER HITAM</div>";
+
+  // Barcode under hospital line, right-aligned, not overlapping name section below
+  var icClean = String(patient.ic || "NOIC").trim();
+  var barcodeSvgId = "lf-barcode-" + Date.now();
+  html += "<div class='lf-barcode-row'><svg id='"+barcodeSvgId+"'></svg></div>";
+
+  html +=
+    "<div class='lf-grid-row'>"+
+      "<div class='lf-cell' style='flex:2;'><div class='lf-label'>1. Nama</div><div class='lf-value'>"+(patient.nama||"—")+"</div></div>"+
+      "<div class='lf-cell'><div class='lf-label'>3. No. K/P</div><div class='lf-value'>"+icClean+"</div></div>"+
+    "</div>"+
+    "<div class='lf-grid-row'>"+
+      "<div class='lf-cell'><div class='lf-label'>4. Jantina</div><div class='lf-value'>"+(patient.gender||"—")+"</div></div>"+
+      "<div class='lf-cell'><div class='lf-label'>5. Umur</div><div class='lf-value'>"+(patient.age||"—")+"</div></div>"+
+      "<div class='lf-cell'><div class='lf-label'>6. Keturunan</div><div class='lf-value'>"+(patient.keturunan||"—")+"</div></div>"+
+    "</div>"+
+    "<div class='lf-box14'><div class='lf-label'>14. Ringkasan Klinikal / Riwayat Keluarga:</div><div style='margin-top:2mm;'>"+clinical.replace(/\n/g,"<br>")+"</div></div>"+
+    "<div class='lf-lain-lain'><span class='lf-label'>16. Lain-lain:</span> "+diagnosis+(diagnosis&&test?" — ":"")+test+"</div>"+
+    "<div class='lf-footer-row'>"+
+      "<div>18. Nama Doktor: <strong>"+(_currentDoctor?_currentDoctor.name:"—")+"</strong><br>19. Tarikh: "+todayStr+"</div>"+
+      (copDataUrl ? "<img class='lf-cop-img' src='"+copDataUrl+"'>" : "<div style='font-size:7pt;'>[Cop/Tandatangan]</div>")+
+    "</div>";
+
+  var area = document.getElementById("labFormPrintArea");
+  area.innerHTML = html;
+
+  // Render barcode after DOM insert (synchronous, same as sticker system)
+  setTimeout(function(){
+    try{
+      JsBarcode("#"+barcodeSvgId, icClean, { format:"CODE128", width:1.2, height:30, displayValue:false, margin:0 });
+      console.log("[LABFORM] barcode rendered");
+    }catch(e){ console.error("[LABFORM] barcode error:", e); }
+
+    setTimeout(function(){
+      console.log("[LABFORM] triggering print");
+      window.print();
+      area.innerHTML = "";
+    }, 200);
+  }, 50);
+}
+function tickClock(){
+  var d = new Date();
+  document.getElementById("clk-time").textContent =
+    pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds());
+  document.getElementById("clk-date").textContent =
+    DAYS[d.getDay()]+", "+pad(d.getDate())+" "+MONTHS[d.getMonth()]+" "+d.getFullYear();
+}
+tickClock(); setInterval(tickClock, 1000);
+
+// ── Live countdown badge ──
+function startCountdown(){
+  clearInterval(_countdownTimer);
+  _countdownVal = Math.round(POLL_INTERVAL_MS / 1000);
+  function _updateCd(){
+    var el = document.getElementById("countdown-sec");
+    if(el) el.textContent = _countdownVal;
+  }
+  _updateCd();
+  _countdownTimer = setInterval(function(){
+    _countdownVal = Math.max(0, _countdownVal - 1);
+    _updateCd();
+  }, 1000);
+}
+
+// ── CONNECTION STATUS ──
+function setStatus(ok, msg){
+  var pill = document.getElementById("live-pill");
+  var dot  = document.getElementById("live-dot");
+  var txt  = document.getElementById("live-txt");
+  if(ok){
+    pill.style.background = "rgba(26,107,74,.12)";
+    pill.style.borderColor = "rgba(26,107,74,.3)";
+    pill.style.color = "#6DE3A8";
+    dot.style.background = "#2ECC71";
+    dot.style.animation = "dotPulse 2s ease-in-out infinite";
+  } else {
+    pill.style.background = "rgba(192,57,43,.1)";
+    pill.style.borderColor = "rgba(192,57,43,.3)";
+    pill.style.color = "#F4A0A0";
+    dot.style.background = "#E74C3C";
+    dot.style.animation = "none";
+  }
+  txt.textContent = msg;
+}
+
+// ══════════════════════════════════════════════════════
+//  KLINIK CHIP SELECTOR
+// ══════════════════════════════════════════════════════
+function selectKlinik(el){
+  document.querySelectorAll(".klinik-chip").forEach(function(c){ c.classList.remove("active"); });
+  el.classList.add("active");
+  _selectedKlinik = el.dataset.klinik;
+}
+
+// ══════════════════════════════════════════════════════
+//  AUTO-LOOKUP: fill name from QUEUE data when typing number
+// ══════════════════════════════════════════════════════
+function autoLookup(val){
+  var btn = document.getElementById("btn-call");
+  btn.disabled = true;
+  document.getElementById("call-name").value = "";
+
+  if(!val || val.length === 0){ return; }
+  if(val.length < 4){ return; }
+
+  // Show loading overlay immediately
+  showLookupOverlay(val);
+
+  google.script.run
+    .withSuccessHandler(function(result){
+      hideLookupOverlay(function(){
+        if(result && result.status === "success"){
+          var nameEl = document.getElementById("call-name");
+          nameEl.value = result.nama || "";
+          nameEl.dataset.manual = "";
+          btn.disabled = false;
+          showToast("✅ " + result.nama + " — " + result.klinik, "success");
+        } else {
+          document.getElementById("call-name").value = "";
+          btn.disabled = true;
+          showToast("❌ " + (result ? result.message : "Nombor tidak dijumpai. Sila daftar dahulu."), "error");
+        }
+      });
+    })
+    .withFailureHandler(function(){
+      hideLookupOverlay(function(){
+        btn.disabled = true;
+        showToast("❌ Ralat sambungan.", "error");
+      });
+    })
+    .getPatientFromTodayList(val.padStart(4,"0"));
+}
+
+var _lookupMinShowTime = null;
+
+function showLookupOverlay(num){
+  document.getElementById("lookup-num-display").textContent = String(num).padStart(4,"0");
+  document.getElementById("lookup-overlay").classList.add("active");
+  _lookupMinShowTime = Date.now();
+}
+
+function hideLookupOverlay(cb){
+  // Ensure overlay shows for at least 500ms so it doesn't flash/feel jarring
+  var elapsed = Date.now() - (_lookupMinShowTime || 0);
+  var remaining = Math.max(0, 500 - elapsed);
+  setTimeout(function(){
+    document.getElementById("lookup-overlay").classList.remove("active");
+    if(cb) cb();
+  }, remaining);
+}
+
+// Track manual name edits
+  var el = document.getElementById("hdr-room-label");
+  if(el) el.textContent = "Klinik Kesihatan Ayer Hitam — " + ROOM_LABEL;
+  var badge = document.getElementById("ns-badge-txt"); 
+  if(badge) badge.textContent = "BILIK " + ROOM_NUM; 
+
+// ══════════════════════════════════════════════════════
+//  CALL FLOW — opens confirm modal
+// ══════════════════════════════════════════════════════
+function doNurseCall(){
+  var num  = (document.getElementById("call-num").value  || "").trim();
+  var name = (document.getElementById("call-name").value || "").trim();
+
+  if(!num){ showToast("Masukkan nombor giliran dahulu.", "error"); return; }
+
+  // Pad to 4 digits for display
+  var padded = num.padStart(4, "0");
+  var displayName = name || "(Nama tidak dimasukkan)";
+
+  _pendingCall = { num: padded, name: name.toUpperCase(), klinik: _selectedKlinik };
+
+  document.getElementById("modal-num").textContent  = padded;
+  document.getElementById("modal-name").textContent = displayName + " · " + _selectedKlinik;
+  document.getElementById("modal-overlay").classList.add("active");
+}
+
+function closeModal(){
+  document.getElementById("modal-overlay").classList.remove("active");
+}
+
+// ══════════════════════════════════════════════════════
+//  CONFIRM — send to saveNurseCall()
+// ══════════════════════════════════════════════════════
+function confirmCall(){ 
+  if(!_currentDoctor){ alert("Sila pilih nama doktor terlebih dahulu."); return;}
+  if(!_pendingCall) return;
+
+  // Capture data BEFORE closeModal() nulls _pendingCall
+  var data = {
+    num    : _pendingCall.num,
+    name   : _pendingCall.name,
+    klinik : _pendingCall.klinik
+  };
+  _pendingCall = null;
+  closeModal();
+
+  var btn = document.getElementById("btn-call");
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span><span>Menghantar...</span>';
+
+  google.script.run
+    .withSuccessHandler(function(result){
+  btn.disabled = false;
+  btn.innerHTML = '<span class="btn-call-icon">🔔</span><span>Panggil Semula Pesakit</span>';
+
+  if(result && result.status === "success"){
+    showToast("🔔 No. "+data.num+" — "+data.name+" dipanggil!", "success");
+    // Auto-mark the most recent WAITING row for this num as ATTENDED
+    var prevEntry = _allEntries.filter(function(e){
+      return String(e.num||"").replace(/\D/g,"") === String(data.num||"").replace(/\D/g,"")
+        && String(e.status||"WAITING").toUpperCase() === "WAITING"
+        && String(e.callType||"").toUpperCase() === "NURSE";
+    }).sort(function(a,b){ return String(b.time||"").localeCompare(String(a.time||"")); })[0];
+
+    if(prevEntry && prevEntry.rowIndex){
+      google.script.run.markQueueAttended(prevEntry.rowIndex);
+    }
+    // Clear inputs
+    document.getElementById("call-num").value  = "";
+    document.getElementById("call-name").value = "";
+    document.getElementById("call-name").dataset.manual = "";
+    btn.disabled = true;
+    // Refresh board immediately
+    clearTimeout(_pollTimer);
+    pollBoard();
+
+    google.script.run.withSuccessHandler(function(rowIdx){
+  openLabPopup({ name: data.name, num: data.num, rowIndex: rowIdx });
+}).getTodayListRowIndex(data.num);
+
+  } else {
+    showToast("❌ Gagal: "+(result && result.message ? result.message : "Ralat tidak diketahui"), "error");
+  }
+})
+.withFailureHandler(function(err){
+  btn.disabled = false;
+  btn.innerHTML = '<span class="btn-call-icon">🔔</span><span>Panggil Semula Pesakit</span>';
+  showToast("❌ Ralat sambungan: "+err.message, "error");
+})
+.saveDoctorCall({
+  num      : data.num,
+  name     : data.name,
+  klinik   : data.klinik,
+  room     : ROOM_ID,
+  calledBy : ROOM_ID
+});
+}
+
+// ══════════════════════════════════════════════════════
+//  BOARD ACTIONS — attend / miss / recall from card
+// ══════════════════════════════════════════════════════
+function attendEntry(rowIndex, num){
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r && r.status === "success"){
+        showToast("✅ No. "+String(num).padStart(4,"0")+" telah hadir.", "success");
+        pollBoard();
+      }
+    })
+    .withFailureHandler(function(){ showToast("❌ Ralat sambungan.", "error"); })
+    .markQueueAttended(rowIndex);
+}
+
+function missEntry(rowIndex, num){
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r && r.status === "success"){
+        showToast("⚠️ No. "+String(num).padStart(4,"0")+" ditandakan tidak hadir.", "info");
+        pollBoard();
+      }
+    })
+    .withFailureHandler(function(){ showToast("❌ Ralat sambungan.", "error"); })
+    .markQueueMissed(rowIndex);
+}
+
+function recallFromCard(rowIndex, num, name, klinik){
+  // Quick-fill the call pad and trigger confirm
+  document.getElementById("call-num").value  = String(num).replace(/\D/g,"");
+  document.getElementById("call-name").value = name || "";
+  document.getElementById("call-name").dataset.manual = "1";
+  var chip = document.querySelector(".klinik-chip[data-klinik='"+(klinik||"OPD")+"']");
+  if(chip) selectKlinik(chip);
+  document.getElementById("btn-call").disabled = false;
+  doNurseCall();
+}
+
+// ══════════════════════════════════════════════════════
+//  WAIT TIME CALCULATION + COLOUR
+// ══════════════════════════════════════════════════════
+function calcWaitMin(regTimeStr){
+  // Handles: "HH:MM:SS", "H:MM:SS", Date objects, ISO strings
+  if(!regTimeStr) return null;
+  var now = new Date();
+  var regMs;
+
+  // If it looks like a time string HH:MM:SS
+  var str = String(regTimeStr).trim();
+  var timeMatch = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if(timeMatch){
+    regMs = new Date(
+      now.getFullYear(), now.getMonth(), now.getDate(),
+      parseInt(timeMatch[1]), parseInt(timeMatch[2]), parseInt(timeMatch[3]||0)
+    ).getTime();
+  } else {
+    // Try parsing as a full date/datetime
+    var d = new Date(regTimeStr);
+    if(isNaN(d.getTime())) return null;
+    regMs = d.getTime();
+  }
+  var diff = Math.max(0, now.getTime() - regMs);
+  return Math.floor(diff / 60000);
+}
+
+function waitStr(min){
+  if(min === null) return "—";
+  if(min < 1) return "< 1 min";
+  return min + " min";
+}
+
+function waitClass(min){
+  if(min === null || min < WAIT_WARN_MIN) return "wait-ok";
+  if(min < WAIT_CRIT_MIN) return "wait-warn";
+  return "wait-crit";
+}
+
+// ══════════════════════════════════════════════════════
+//  BOARD FILTER
+// ══════════════════════════════════════════════════════
+function setFilter(f, el){
+  _filter = f;
+  document.querySelectorAll(".pill").forEach(function(p){ p.classList.remove("active"); });
+  if(el) el.classList.add("active");
+  renderBoard(_allEntries);
+}
+
+// ── Excluded series check — shared by renderBoard + renderHistory ──
+function isExcluded(num){
+  var clean = String(num||"").replace(/\D/g,"").replace(/^0+/,"");
+  for(var x=0;x<EXCLUDED_PREFIXES.length;x++){
+    if(clean.indexOf(EXCLUDED_PREFIXES[x]) === 0) return true;
+  }
+  return false;
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER BOARD
+// ══════════════════════════════════════════════════════
+function renderBoard(entries){
+  _allEntries = entries || [];
+
+  // Rebuild lookup
+  _queueLookup = {};
+  _allEntries.forEach(function(e){
+    var clean = String(e.num||"").replace(/\D/g,"").padStart(4,"0");
+    if(clean) _queueLookup[clean] = { name:e.name, klinik:e.klinik };
+  });
+
+  // Only WAITING + not excluded
+  var waiting = _allEntries.filter(function(e){
+    return !isExcluded(e.num)
+    && String(e.status||"WAITING").toUpperCase() === "WAITING"
+    && String(e.callType||"").toUpperCase() === "NURSE"; // only post-nurse patients
+  });
+
+  // Bucket by wait time
+  var fresh=[], warn=[], crit=[];
+  waiting.forEach(function(e){
+    var m = calcWaitMin(e.time);
+    e._waitMin = m;
+    if(m === null || m <= 10)     fresh.push(e);// 0 - 10 mins
+    else if(m <= 20)              warn.push(e);// 11 - 20 mins
+    else                          crit.push(e);// Anything over 20 mins
+  });
+
+  // Update stat counters (left panel)
+  document.getElementById("stat-waiting").textContent  = waiting.length;
+  document.getElementById("stat-attended").textContent =
+    _allEntries.filter(function(e){ return String(e.status||"").toUpperCase()==="ATTENDED"; }).length;
+  document.getElementById("stat-missed").textContent =
+    _allEntries.filter(function(e){ return String(e.status||"").toUpperCase()==="MISSED"; }).length;
+  // pill counts unused now but keep for compat
+  document.getElementById("cnt-all").textContent      = waiting.length;
+  document.getElementById("cnt-waiting").textContent  = waiting.length;
+  document.getElementById("cnt-attended").textContent = _allEntries.filter(function(e){ return String(e.status||"").toUpperCase()==="ATTENDED"; }).length;
+  document.getElementById("cnt-missed").textContent   = _allEntries.filter(function(e){ return String(e.status||"").toUpperCase()==="MISSED"; }).length;
+
+  var grid = document.getElementById("board-grid");
+  grid.innerHTML =
+    catBox("cat-fresh","🟢","0 – 10 min", fresh.length, "fresh", fresh) +
+    catBox("cat-warn", "🟡","11 – 20 min", warn.length,  "warn",  warn)  +
+    catBox("cat-crit", "🔴","20+ min",     crit.length,  "crit",  crit);
+
+  // If drilldown is open, refresh its content
+  if(document.getElementById("drilldown-overlay").classList.contains("open")){
+    var cur = document.getElementById("drill-title").dataset.cat;
+    var map = {fresh:fresh, warn:warn, crit:crit};
+    if(map[cur]) renderDrill(cur, map[cur]);
+  }
+}
+
+function catBox(cls, icon, label, count, catKey, rows){
+  // Stringify rows into data attribute to pass to drill
+  return "<div class='cat-box "+cls+"' onclick='openDrill(\""+catKey+"\")'>"+
+    "<div class='cat-icon'>"+icon+"</div>"+
+    "<div class='cat-count'>"+count+"</div>"+
+    "<div class='cat-label'>"+label+"</div>"+
+    "<div class='cat-sub'>pesakit menunggu</div>"+
+  "</div>";
+}
+function openRetroEntry(){
+  var raw = (document.getElementById("retro-num").value || "").trim();
+  if(!raw){ showToast("Masukkan nombor giliran dahulu.", "error"); return; }
+  var padded = raw.padStart(4, "0");
+  var known  = _queueLookup[padded];
+  var name   = known ? known.name : "";
+
+  google.script.run
+    .withSuccessHandler(function(r){
+      document.getElementById("retro-num").value = "";
+      google.script.run.withSuccessHandler(function(rowIdx){
+        openLabPopup({ name: name, num: padded, rowIndex: rowIdx });
+        if(r && r.status === "success" && r.diagnosis){
+          resetMedicineFields(r.diagnosis, r.medicines || []);
+        }
+      }).getTodayListRowIndex(padded);
+    })
+    .withFailureHandler(function(){
+      document.getElementById("retro-num").value = "";
+      google.script.run.withSuccessHandler(function(rowIdx){
+        openLabPopup({ name: name, num: padded, rowIndex: rowIdx });
+      }).getTodayListRowIndex(padded);
+    })
+    .getMedicineRecord(padded);
+}
+var _autoSaveTimer = null;
+
+function setupAutoSave(){
+  var textarea = document.getElementById("lab-clinical-input");
+  textarea.addEventListener("input", function(){
+    clearTimeout(_autoSaveTimer);
+    var val = textarea.value;
+    _autoSaveTimer = setTimeout(function(){
+      if(_labPopupRowIndex){
+        console.log("[AUTOSAVE] Saving clinical input for row:", _labPopupRowIndex);
+        google.script.run
+          .withSuccessHandler(function(){ console.log("[AUTOSAVE] Saved"); })
+          .withFailureHandler(function(err){ console.error("[AUTOSAVE] Failed:", err.message); })
+          .saveClinicalInput(_labPopupRowIndex, val);
+      } else {
+        console.warn("[AUTOSAVE] No rowIndex yet — skipping save");
+      }
+    }, 1200); // 1.2s after typing stops
+  });
+}
+
+// Call once on page load:
+document.addEventListener("DOMContentLoaded", setupAutoSave);
+var _drillData = {}; // store buckets for drilldown access
+
+function openDrill(cat){
+  // Re-bucket from _allEntries fresh
+  var waiting = _allEntries.filter(function(e){
+    return !isExcluded(e.num) && String(e.status||"WAITING").toUpperCase() === "WAITING";
+  });
+  var fresh=[], warn=[], crit=[];
+  waiting.forEach(function(e){
+    var m = e._waitMin !== undefined ? e._waitMin : calcWaitMin(e.time);
+    e._waitMin = m;
+    if(m === null || m <= 10) fresh.push(e);
+    else if(m <= 20)          warn.push(e);
+    else                      crit.push(e);
+  });
+  _drillData = {fresh:fresh, warn:warn, crit:crit};
+
+  var labels = {fresh:"0–10 min", warn:"11–20 min", crit:"20+ min"};
+  var rows = _drillData[cat] || [];
+  document.getElementById("drill-title").textContent = "⏳ Menunggu · "+labels[cat];
+  document.getElementById("drill-title").dataset.cat = cat;
+  document.getElementById("drill-count").textContent = rows.length+" pesakit";
+  renderDrill(cat, rows);
+  document.getElementById("drilldown-overlay").classList.add("open");
+}
+
+function closeDrill(){
+  document.getElementById("drilldown-overlay").classList.remove("open");
+}
+
+function renderDrill(cat, rows){
+  var cls = "drill-"+cat;
+  var list = document.getElementById("drill-list");
+  if(!rows.length){
+    list.innerHTML = "<div style='text-align:center;padding:3rem;color:var(--text3);font-size:12px;'>Tiada pesakit dalam kategori ini</div>";
+    return;
+  }
+  // Sort oldest first (longest wait at top)
+  rows.sort(function(a,b){ return (b._waitMin||0) - (a._waitMin||0); });
+  list.innerHTML = rows.map(function(e,i){
+    var numPad   = String(e.num||"").padStart(4,"0");
+    var numClean = String(e.num||"").replace(/\D/g,"");
+    var safeName = (e.name||"—").replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+    var safeKlin = (e.klinik||"OPD").replace(/'/g,"&#39;");
+    var rowIdx   = e.rowIndex||0;
+    var wMin     = e._waitMin !== null ? e._waitMin : "—";
+    var wStr     = wMin === "—" ? "—" : (wMin < 1 ? "< 1 min" : wMin+" min");
+    return "<div class='drill-row "+cls+"'>"+
+      "<div class='drill-num'>"+numPad+"</div>"+
+      "<div class='drill-body'>"+
+        "<div class='drill-name'>"+(e.name||"—")+"</div>"+
+        "<div class='drill-meta'>"+(e.klinik||"")+" · "+(e.time||"")+"</div>"+
+      "</div>"+
+      "<div class='drill-wait'>"+wStr+"</div>"+
+      "<div class='drill-actions'>"+
+        "<button class='hist-btn btn-attend' onclick='attendEntry("+rowIdx+",\""+numClean+"\");closeDrill()'>✅</button>"+
+        "<button class='hist-btn btn-miss'   onclick='missEntry("+rowIdx+",\""+numClean+"\");closeDrill()'>✗</button>"+
+        "<button class='hist-btn btn-recall' onclick='recallFromCard("+rowIdx+",\""+numClean+"\",\""+safeName+"\",\""+safeKlin+"\")'>🔔</button>"+
+      "</div>"+
+    "</div>";
+  }).join("");
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER LEFT HISTORY
+// ══════════════════════════════════════════════════════
+function renderHistory(entries){
+  // Show all today's entries in history — exclude same series as board
+  var list = (entries||[]).filter(function(e){ return !isExcluded(e.num); })
+    .slice().reverse().slice(0, 20);
+  var container = document.getElementById("hist-list");
+
+  if(!list.length){
+    container.innerHTML = "<div class='hist-empty'>Tiada rekod giliran hari ini</div>";
+    return;
+  }
+  var HIST_PAGE = 20;
+
+  // Show first 20, rest hidden
+  var visible = _histShowAll ? list : list.slice(0, HIST_PAGE);
+  container.innerHTML = visible.map(function(e, i){
+    var status   = String(e.status||"WAITING").toUpperCase();
+    var cls      = "status-"+status.toLowerCase();
+    var numPad   = String(e.num||"").padStart(4,"0");
+    var waitMin  = status === "WAITING" ? calcWaitMin(e.time) : null;
+    var wStr     = waitMin !== null ? waitStr(waitMin) : "";
+    var rowIdx   = e.rowIndex || 0;
+    var numClean = String(e.num||"").replace(/\D/g,"");
+    var safeName = (e.name||"—").replace(/'/g,"&#39;");
+    var safeKlin = (e.klinik||"OPD").replace(/'/g,"&#39;");
+    var srcLabel = e.callType === "NURSE" ? "🏥" : e.callType === "DOCTOR" ? "👨‍⚕️" : "📋";
+
+    var actionHtml = "";
+    if(status === "WAITING"){
+      actionHtml =
+        "<button class='hist-btn btn-attend' title='Hadir' onclick='attendEntry("+rowIdx+",\""+numClean+"\")'>✅</button>" +
+        "<button class='hist-btn btn-miss'   title='Tidak Hadir' onclick='missEntry("+rowIdx+",\""+numClean+"\")'>✗</button>";
+    } else {
+      actionHtml =
+        "<button class='hist-btn btn-recall' title='Panggil Semula' onclick='recallFromCard("+rowIdx+",\""+numClean+"\",\""+safeName+"\",\""+safeKlin+"\")'>🔔</button>";
+    }
+
+    return "<div class='hist-item "+cls+"' style='animation-delay:"+(i*0.04)+"s'>" +
+      "<div class='hist-num'>"+numPad+"</div>" +
+      "<div class='hist-body'>" +
+        "<div class='hist-name'>"+srcLabel+" "+(e.name||"—")+"</div>" +
+        "<div class='hist-meta'><span>"+(e.klinik||"")+"</span><span>"+(e.time||"")+"</span></div>" +
+      "</div>" +
+      (wStr ? "<div class='hist-wait'>"+wStr+"</div>" : "") +
+      "<div class='hist-actions'>"+actionHtml+"</div>" +
+    "</div>";
+  }).join("");
+
+  // Add Load More button if list > 20
+if(list.length > HIST_PAGE && !_histShowAll){
+  container.innerHTML +=
+    "<div style='text-align:center;padding:.6rem;'>"+
+    "<button onclick='_histShowAll=true;renderHistory(_allEntries)' "+
+    "style='background:var(--bg2);border:1px solid var(--border);color:var(--text2);"+
+    "border-radius:8px;padding:7px 20px;font-size:11px;font-weight:600;cursor:pointer;'>"+
+    "⬇ Papar Semua ("+list.length+")</button></div>";
+} else if(_histShowAll && list.length > HIST_PAGE){
+  container.innerHTML +=
+    "<div style='text-align:center;padding:.6rem;'>"+
+    "<button onclick='_histShowAll=false;renderHistory(_allEntries)' "+
+    "style='background:var(--bg2);border:1px solid var(--border);color:var(--text2);"+
+    "border-radius:8px;padding:7px 20px;font-size:11px;font-weight:600;cursor:pointer;'>"+
+    "⬆ Ringkas</button></div>";
+}
+}
+
+// ══════════════════════════════════════════════════════
+//  MEDICINE MODAL
+// ══════════════════════════════════════════════════════
+var _medCurrentCall = null;  // { num, name }
+var _diagList       = [];
+var _medList        = [];
+var _selectedDiag   = "";
+var _medRowCount    = 0;
+
+// Load lists once on page load
+function loadMedicineLists(){
+  google.script.run
+    .withSuccessHandler(function(r){
+      console.log("[MED] loadMedicineLists response:", r);
+      if(r && r.status === "success"){
+        _diagList = r.diagnosis || [];
+        _medList  = r.medicines || [];
+        console.log("[MED] loaded", _diagList.length, "diagnoses,", _medList.length, "medicines");
+      }
+    })
+    .withFailureHandler(function(err){
+      console.error("[MED] loadMedicineLists FAILED:", err.message);
+    })
+    .getMedicineLists();
+}
+function resetMedicineFields(existingDiag, existingMeds){
+  _selectedDiag = existingDiag || "";
+  _medRowCount  = 0;
+  _tcaDuration  = null;
+  document.getElementById("med-tca-date").value = "";
+  document.getElementById("tca-duration-label").textContent = "";
+  document.getElementById("med-diag-search").value = _selectedDiag;
+  document.getElementById("med-diag-dropdown").style.display = "none";
+
+  var sel = document.getElementById("med-diag-selected");
+  if(_selectedDiag){ sel.textContent = "✓ " + _selectedDiag; sel.style.display = "block"; }
+  else { sel.style.display = "none"; }
+
+  document.getElementById("med-rows-container").innerHTML = "";
+  if(existingMeds && existingMeds.length){
+    existingMeds.forEach(function(m){ addMedRow(m); });
+  } else {
+    addMedRow();
+  }
+}
+function printLabForm(){
+  if(!_labPopupRowIndex && !_pendingLabQueueNum){
+    alert("Data pesakit tidak lengkap.");
+    return;
+  }
+  var queueNum = _pendingLabQueueNum || document.getElementById("lab-popup-patient").textContent.split("·")[1].trim();
+  console.log("[LABFORM] Fetching data for queue:", queueNum);
+
+  google.script.run.withSuccessHandler(function(patient){
+    console.log("[LABFORM] patient data:", patient);
+    if(!patient || patient.status !== "success"){
+      alert("Gagal mendapatkan data pesakit: " + (patient ? patient.message : "ralat"));
+      return;
+    }
+
+    var diagnosis = document.getElementById("lab-diagnosis-select").value || "";
+    var test      = document.getElementById("lab-test-select").value || "";
+    var clinical  = document.getElementById("lab-clinical-input").value || patient.clinical || "";
+
+    // Fetch doctor cop image (async), then build + print
+    var copFileId = _currentDoctor ? _currentDoctor.copFileId : "";
+    if(copFileId){
+      google.script.run.withSuccessHandler(function(copRes){
+        console.log("[LABFORM] cop image result:", copRes && copRes.status);
+        buildAndPrintLabForm(patient, diagnosis, test, clinical, copRes && copRes.status==="success" ? copRes.dataUrl : "");
+      }).getDoctorCopImageBase64(copFileId);
+    } else {
+      buildAndPrintLabForm(patient, diagnosis, test, clinical, "");
+    }
+  }).getLabFormData(queueNum);
+}
+
+function buildAndPrintLabForm(patient, diagnosis, test, clinical, copDataUrl){
+  var qrDataUrl  = generateQrDataUrl(patient.nama); // reuses your existing working function
+  console.log("[LABFORM] QR ready:", !!qrDataUrl);
+
+  var todayStr = _todayDateStr(); // reuses existing helper
+
+  var html =
+    "<div class='lf-header-row'>"+
+      "<div class='lf-logo-qr'>"+
+        "<img class='lf-logo' src='https://drive.google.com/thumbnail?id=1d0dxkKNXrGvh1x8h86TtyyrHodiHIgPb'>"+
+        (qrDataUrl ? "<img class='lf-qr' src='"+qrDataUrl+"'>" : "")+
+      "</div>"+
+      "<div class='lf-title'>KEMENTERIAN KESIHATAN MALAYSIA<br>PERKHIDMATAN PATOLOGI</div>"+
+      "<div style='font-size:7pt;'>(PER. PAT 301)</div>"+
+    "</div>"+
+    "<div class='lf-hospital-line'>HOSPITAL: KLINIK KESIHATAN AYER HITAM</div>";
+
+  // Barcode under hospital line, right-aligned, not overlapping name section below
+  var icClean = String(patient.ic || "NOIC").trim();
+  var barcodeSvgId = "lf-barcode-" + Date.now();
+  html += "<div class='lf-barcode-row'><svg id='"+barcodeSvgId+"'></svg></div>";
+
+  html +=
+    "<div class='lf-grid-row'>"+
+      "<div class='lf-cell' style='flex:2;'><div class='lf-label'>1. Nama</div><div class='lf-value'>"+(patient.nama||"—")+"</div></div>"+
+      "<div class='lf-cell'><div class='lf-label'>3. No. K/P</div><div class='lf-value'>"+icClean+"</div></div>"+
+    "</div>"+
+    "<div class='lf-grid-row'>"+
+      "<div class='lf-cell'><div class='lf-label'>4. Jantina</div><div class='lf-value'>"+(patient.gender||"—")+"</div></div>"+
+      "<div class='lf-cell'><div class='lf-label'>5. Umur</div><div class='lf-value'>"+(patient.age||"—")+"</div></div>"+
+      "<div class='lf-cell'><div class='lf-label'>6. Keturunan</div><div class='lf-value'>"+(patient.keturunan||"—")+"</div></div>"+
+    "</div>"+
+    "<div class='lf-box14'><div class='lf-label'>14. Ringkasan Klinikal / Riwayat Keluarga:</div><div style='margin-top:2mm;'>"+clinical.replace(/\n/g,"<br>")+"</div></div>"+
+    "<div class='lf-lain-lain'><span class='lf-label'>16. Lain-lain:</span> "+diagnosis+(diagnosis&&test?" — ":"")+test+"</div>"+
+    "<div class='lf-footer-row'>"+
+      "<div>18. Nama Doktor: <strong>"+(_currentDoctor?_currentDoctor.name:"—")+"</strong><br>19. Tarikh: "+todayStr+"</div>"+
+      (copDataUrl ? "<img class='lf-cop-img' src='"+copDataUrl+"'>" : "<div style='font-size:7pt;'>[Cop/Tandatangan]</div>")+
+    "</div>";
+
+  var area = document.getElementById("labFormPrintArea");
+  area.innerHTML = html;
+
+  // Render barcode after DOM insert (synchronous, same as sticker system)
+  setTimeout(function(){
+    try{
+      JsBarcode("#"+barcodeSvgId, icClean, { format:"CODE128", width:1.2, height:30, displayValue:false, margin:0 });
+      console.log("[LABFORM] barcode rendered");
+    }catch(e){ console.error("[LABFORM] barcode error:", e); }
+
+    setTimeout(function(){
+      console.log("[LABFORM] triggering print");
+      window.print();
+      area.innerHTML = "";
+    }, 200);
+  }, 50);
+}
+// ── Diagnosis search ──
+function filterDiagList(val){
+  _selectedDiag = "";
+  document.getElementById("med-diag-selected").style.display = "none";
+  var dd = document.getElementById("med-diag-dropdown");
+  if(!val || val.length < 1){ dd.style.display = "none"; return; }
+  if(!Array.isArray(_diagList)){ dd.style.display = "none"; return; }
+  var filtered = _diagList.filter(function(d){
+    return d.toLowerCase().indexOf(val.toLowerCase()) >= 0;
+  }).slice(0, 10);
+
+  if(!filtered.length){ dd.style.display = "none"; return; }
+
+  dd.innerHTML = filtered.map(function(d){
+    return "<div class='med-suggest-item' onclick='selectDiag(\""+
+      d.replace(/"/g,"&quot;")+"\")'>" + d + "</div>";
+  }).join("");
+  dd.style.display = "block";
+}
+
+function selectDiag(val){
+  _selectedDiag = val;
+  document.getElementById("med-diag-search").value = val;
+  document.getElementById("med-diag-dropdown").style.display = "none";
+  var sel = document.getElementById("med-diag-selected");
+  sel.textContent = "✓ " + val;
+  sel.style.display = "block";
+}
+
+// ── Add medicine row ──
+function addMedRow(prefill){
+  var id = _medRowCount++;
+  var p  = prefill || {};
+  var esc = function(s){ return (s||"").toString().replace(/'/g,"&#39;").replace(/"/g,"&quot;"); };
+  var routeOpts = ["Oral","Suntikan","Topical","Titisan","Inhaler"];
+  var freqOpts  = ["OD","BD","TDS","QID","ON"];
+
+  var div = document.createElement("div");
+  div.className = "med-row-wrap";
+  div.id = "med-row-wrap-" + id;
+  div.innerHTML =
+    "<div class='med-row'>" +
+      "<div style='position:relative;'>" +
+        "<input class='med-input' id='med-name-"+id+"' placeholder='Nama ubat...' value='"+esc(p.name)+"' " +
+          "oninput='filterMedList(this.value,"+id+")'>" +
+        "<div class='med-suggest' id='med-suggest-"+id+"' style='display:none;'></div>" +
+      "</div>" +
+      "<input class='med-input' id='med-dose-"+id+"' placeholder='Dos' value='"+esc(p.dosage)+"'>" +
+      "<select class='med-select' id='med-route-"+id+"'>" +
+        routeOpts.map(function(o){ return "<option"+(p.route===o?" selected":"")+">"+o+"</option>"; }).join("") +
+      "</select>" +
+      "<select class='med-select' id='med-freq-"+id+"'>" +
+        freqOpts.map(function(o){ return "<option"+(p.frequency===o?" selected":"")+">"+o+"</option>"; }).join("") +
+      "</select>" +
+      "<input class='med-input' id='med-days-"+id+"' placeholder='Hari' type='number' min='1' max='365' " +
+        "style='text-align:center;' value='"+esc(p.days|| _tcaDuration ||"")+"'>" +
+      "<button class='med-del' onclick='delMedRow("+id+")'>✕</button>" +
+    "</div>";
+  document.getElementById("med-rows-container").appendChild(div);
+}
+
+function delMedRow(id){
+  var el = document.getElementById("med-row-wrap-"+id);
+  if(el) el.remove();
+}
+
+// ── Medicine search ──
+function filterMedList(val, id){
+  var dd = document.getElementById("med-suggest-"+id);
+  if(!val || val.length < 2){ dd.style.display="none"; return; }
+  if(!Array.isArray(_medList)){
+    console.warn("[MED] _medList not loaded yet");
+    dd.style.display = "none";
+    return;
+  }
+
+  var filtered = _medList.filter(function(m){
+    return m.toLowerCase().indexOf(val.toLowerCase()) >= 0;
+  }).slice(0, 8);
+
+  if(!filtered.length){ dd.style.display="none"; return; }
+
+  dd.innerHTML = filtered.map(function(m){
+    return "<div class='med-suggest-item' onclick='selectMed(\""+
+      m.replace(/"/g,"&quot;")+"\","+id+")'>"+m+"</div>";
+  }).join("");
+  dd.style.display = "block";
+}
+function toggleAccordion(name){
+  var el = document.getElementById("acc-" + name);
+  if(!el || el.classList.contains("disabled")) return;
+  el.classList.toggle("open");
+  if(name === "procedure" && el.classList.contains("open")) loadBkLists();
+}
+function selectMed(val, id){
+  document.getElementById("med-name-"+id).value = val;
+  document.getElementById("med-suggest-"+id).style.display = "none";
+}
+
+// ── Save medicine ──
+function saveMedicine(){
+  if(!_medCurrentCall) return;
+
+  if(!_selectedDiag){
+    showToast("Sila pilih diagnosis dahulu.", "error"); return;
+  }
+
+  // Collect medicine rows
+  var medicines = [];
+  var wraps = document.querySelectorAll(".med-row-wrap");
+  for(var i = 0; i < wraps.length; i++){
+    var wid   = wraps[i].id.replace("med-row-wrap-","");
+    var name  = (document.getElementById("med-name-"+wid)||{}).value || "";
+    var dose  = (document.getElementById("med-dose-"+wid)||{}).value || "";
+    var route = (document.getElementById("med-route-"+wid)||{}).value || "";
+    var freq  = (document.getElementById("med-freq-"+wid)||{}).value || "";
+    var days  = (document.getElementById("med-days-"+wid)||{}).value || "1";
+    if(!name.trim()) continue; // skip empty rows
+    medicines.push({ name:name, dosage:dose, route:route, frequency:freq, days:days });
+  }
+
+  if(!medicines.length){
+    showToast("Sila tambah sekurang-kurangnya 1 ubat.", "error"); return;
+  }
+
+  // Save diagnosis to TODAY LIST
+  google.script.run
+    .withSuccessHandler(function(){})
+    .saveDiagnosis(_medCurrentCall.num, _selectedDiag);
+
+  // Save medicine list to PRIMA_Medicine file
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r && r.status === "success"){
+        showToast("💊 Ubat disimpan. Peringatan bermula esok.", "success");
+        closeMedModal();
+      } else {
+        showToast("❌ Gagal simpan: "+(r ? r.message : "Ralat"), "error");
+      }
+    })
+    .withFailureHandler(function(err){
+      showToast("❌ Ralat: "+err.message, "error");
+    })
+    .saveMedicineReminders(
+      _medCurrentCall.num,
+      _medCurrentCall.name,
+      _selectedDiag,
+      medicines
+    );
+}
+var _tcaDuration = null; // duration in days, applied as default to new/updated rows
+
+function calcTcaDuration(){
+  var val   = document.getElementById("med-tca-date").value; // yyyy-mm-dd
+  var label = document.getElementById("tca-duration-label");
+  if(!val){ _tcaDuration = null; label.textContent = ""; return; }
+
+  var tca   = new Date(val + "T00:00:00");
+  var today = new Date();
+  today.setHours(0,0,0,0);
+
+  var days = Math.round((tca.getTime() - today.getTime()) / 86400000) + 1; // inclusive of TCA day
+
+  if(days < 1){
+    showToast("Tarikh TCA mesti selepas hari ini.", "error");
+    _tcaDuration = null;
+    label.textContent = "";
+    return;
+  }
+
+  _tcaDuration = days;
+  label.textContent = days + " hari";
+
+  // Apply to every medicine row currently in the form
+  document.querySelectorAll(".med-row-wrap").forEach(function(wrap){
+    var id = wrap.id.replace("med-row-wrap-","");
+    var daysInput = document.getElementById("med-days-"+id);
+    if(daysInput) daysInput.value = days;
+  });
+}
+// ══════════════════════════════════════════════════════
+//  POLLING — getQueueWithWait() every 10s
+// ══════════════════════════════════════════════════════
+function pollBoard(){
+  clearTimeout(_pollTimer);
+  startCountdown();
+
+  google.script.run
+    .withSuccessHandler(function(data){
+      setStatus(true, "Bersambung ✓");
+      console.log("[NS] pollBoard response:", JSON.stringify(data));
+      if(data && data.status === "success" && Array.isArray(data.entries)){
+        // Normalise status — if cols G/H not yet added, default to WAITING
+        var normalised = data.entries.map(function(e){
+          return {
+            rowIndex : e.rowIndex  || 0,
+            num      : e.num       || "",
+            name     : e.name      || "",
+            klinik   : e.klinik    || "",
+            time     : e.time      || "",
+            calledAt : e.calledAt  || "",
+            calledBy : e.calledBy  || "KAUNTER",
+            callType : e.callType  || "KAUNTER",
+            status   : (e.status && e.status.trim()) ? e.status.trim().toUpperCase() : "WAITING",
+            waitMin  : e.waitMin   || 0,
+            waitStr  : e.waitStr   || ""
+          };
+        });
+        renderBoard(normalised);
+        renderHistory(normalised);
+      } else {
+        console.warn("[NS] Unexpected response structure:", data);
+      }
+      // TO — add random 0-3s jitter so pages don't poll simultaneously:
+      _pollTimer = setTimeout(pollBoard, POLL_INTERVAL_MS + Math.floor(Math.random()*3000));
+    })
+    .withFailureHandler(function(err){
+      setStatus(false, "Ralat — cuba semula...");
+      console.error("[NS] pollBoard error:", err.message);
+      _pollTimer = setTimeout(pollBoard, 15000);
+    })
+    .getQueueWithWait();
+}
+
+// ── Live wait time ticker (updates card wait times every 30s without re-poll) ──
+setInterval(function(){
+  // Re-render board with existing data to refresh wait times
+  if(_allEntries.length) renderBoard(_allEntries);
+}, 30000);
+
+
+// ══════════════════════════════════════════════════════
+//  SECTION 4 — Prosedur & Ubat Kecemasan  (notifies every AMO via SIAGA)
+// ══════════════════════════════════════════════════════
+var _bk = null, _bkLoading = false;
+var _procPatient = null, _procOrderId = null, _procSending = false, _procPoll = null, _procPollCount = 0, _procLastState = "";
+
+function loadBkLists(){
+  if(_bk || _bkLoading) return;
+  _bkLoading = true;
+  google.script.run
+    .withSuccessHandler(function(r){
+      _bkLoading = false;
+      if(r && r.status === "success"){ _bk = r; renderBkList("p", r.procedures || []); renderBkList("m", r.medications || []); }
+      else { setBkEmpty("Gagal memuatkan senarai: " + (r && r.message ? r.message : "ralat")); }
+    })
+    .withFailureHandler(function(err){ _bkLoading = false; setBkEmpty("Ralat sambungan: " + err.message); })
+    .getProcedureOptions();
+}
+function setBkEmpty(msg){
+  ["p","m"].forEach(function(k){
+    var el = document.getElementById("proc-list-" + k);
+    el.innerHTML = ""; var d = document.createElement("div"); d.className = "proc-empty"; d.textContent = msg + " "; 
+    var b = document.createElement("a"); b.href = "#"; b.textContent = "Cuba lagi"; b.style.color = "var(--accent,#00C896)";
+    b.onclick = function(e){ e.preventDefault(); loadBkLists(); }; d.appendChild(b); el.appendChild(d);
+  });
+}
+function renderBkList(kind, items){
+  var box = document.getElementById("proc-list-" + kind);
+  box.innerHTML = "";
+  if(!items.length){ var e = document.createElement("div"); e.className = "proc-empty"; e.textContent = "Tiada senarai dalam sheet RANGE."; box.appendChild(e); return; }
+  items.forEach(function(v, i){
+    var id = "proc-" + kind + "-" + i;
+    var row = document.createElement("div"); row.className = "test-check-row";
+    var cb = document.createElement("input"); cb.type = "checkbox"; cb.id = id; cb.value = v; cb.onchange = procCount;
+    var lb = document.createElement("label"); lb.htmlFor = id; lb.textContent = v;
+    row.appendChild(cb); row.appendChild(lb); box.appendChild(row);
+  });
+}
+function filterBkList(kind, q){
+  q = String(q || "").toLowerCase();
+  var rows = document.querySelectorAll("#proc-list-" + kind + " .test-check-row");
+  Array.prototype.forEach.call(rows, function(r){ r.classList.toggle("hide", q && r.textContent.toLowerCase().indexOf(q) < 0); });
+}
+function procPicked(kind){
+  var c = document.querySelectorAll("#proc-list-" + kind + " input[type=checkbox]:checked");
+  return Array.prototype.map.call(c, function(x){ return x.value; });
+}
+function procCount(){
+  document.getElementById("proc-cnt-p").textContent = procPicked("p").length + " dipilih";
+  document.getElementById("proc-cnt-m").textContent = procPicked("m").length + " dipilih";
+}
+function procState(cls, html){
+  var st = document.getElementById("proc-state");
+  st.style.display = "block"; st.className = "proc-state " + cls; st.innerHTML = html;
+  return st;
+}
+function procEsc(t){ return String(t == null ? "" : t).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+/** Called every time the overlay opens for a patient. */
+function resetProcSection(){
+  clearInterval(_procPoll); _procPoll = null;
+  _procOrderId = null; _procSending = false; _procLastState = "";
+  var f = document.getElementById("proc-form"); if(f) f.style.display = "";
+  var st = document.getElementById("proc-state"); if(st){ st.style.display = "none"; st.innerHTML = ""; }
+  Array.prototype.forEach.call(document.querySelectorAll("#procedure-fields-slot input[type=checkbox]"), function(c){ c.checked = false; });
+  ["proc-search-p","proc-search-m","proc-note"].forEach(function(id){ var e = document.getElementById(id); if(e) e.value = ""; });
+  filterBkList("p", ""); filterBkList("m", ""); procCount();
+  var b = document.getElementById("proc-send"); if(b){ b.disabled = false; b.innerHTML = "📣 Simpan &amp; Panggil AMO"; }
+  document.getElementById("acc-procedure").classList.remove("open");
+  loadBkLists();   // fetch in the background so the section is instant when opened
+}
+
+function sendProcOrder(){
+  if(_procSending || !_medCurrentCall) return;
+  var procs = procPicked("p"), meds = procPicked("m");
+  if(!procs.length && !meds.length){ showToast("Pilih sekurang-kurangnya satu prosedur atau ubat.", "error"); return; }
+  if(!_currentDoctor){ showToast("Sila pilih nama doktor dahulu.", "error"); return; }
+  if(!_procOrderId) _procOrderId = "PO" + Date.now() + Math.random().toString(36).slice(2, 6);   // same id on every retry = never a double order
+  _procSending = true;
+  var btn = document.getElementById("proc-send"); btn.disabled = true; btn.innerHTML = "⏳ Memanggil AMO...";
+  var orderId = _procOrderId;
+  var summary = { p: procs, m: meds };
+  google.script.run
+    .withSuccessHandler(function(r){
+      _procSending = false;
+      if(r && r.status === "success"){
+        document.getElementById("proc-form").style.display = "none"; _procPatient = _medCurrentCall ? _medCurrentCall.num : null;
+        if(navigator.vibrate) try{ navigator.vibrate(60); }catch(e){}
+        showToast("✅ " + (r.notified || 0) + " AMO telah dimaklumkan.", "success");
+        procShowState("wait", r, summary);
+        startProcPoll(orderId, summary);
+      } else {
+        btn.disabled = false; btn.innerHTML = "🔁 Cuba lagi — panggil AMO";
+        procState("fail", "<b>❌ AMO belum dimaklumkan</b>" + procEsc(r && r.message ? r.message : "Ralat tidak diketahui") +
+          "<div class='ps-sum'>Pesanan belum dihantar. Tekan butang di atas untuk cuba lagi, atau hubungi AMO terus.</div>");
+      }
+    })
+    .withFailureHandler(function(err){
+      _procSending = false; btn.disabled = false; btn.innerHTML = "🔁 Cuba lagi — panggil AMO";
+      procState("fail", "<b>❌ Ralat sambungan</b>" + procEsc(err.message) + "<div class='ps-sum'>Tekan butang untuk cuba lagi (tiada pesanan berganda).</div>");
+    })
+    .saveProcedureOrder({
+      orderId: orderId, num: _medCurrentCall.num, name: _medCurrentCall.name,
+      doctor: (_currentDoctor.by && _currentDoctor.by !== _currentDoctor.name) ? _currentDoctor.name + " (" + _currentDoctor.by + ")" : _currentDoctor.name, room: ROOM_ID, procedures: procs, medications: meds,
+      note: document.getElementById("proc-note").value, urgent: document.getElementById("proc-urgent").checked
+    });
+}
+
+function procSummaryHtml(s){
+  var out = "";
+  if(s.p.length) out += "🔧 " + s.p.map(procEsc).join(", ");
+  if(s.m.length) out += (out ? "<br>" : "") + "💊 " + s.m.map(procEsc).join(", ");
+  return "<div class='ps-sum'>" + out + "</div>";
+}
+function procShowState(kind, r, summary){
+  if(kind === "wait"){
+    procState("wait", "<b>⏳ Menunggu AMO</b>" + (r && r.notified ? r.notified + " AMO telah dimaklumkan." : "AMO telah dimaklumkan.") + procSummaryHtml(summary) +
+      "<button onclick='resetProcSection()'>➕ Pesanan baharu</button>");
+  } else if(kind === "taken"){
+    procState("taken", "<b>🏃 " + procEsc(r.claimBy) + " sedang menguruskan</b>Sejak " + procEsc(String(r.claimAt).slice(0,5)) + procSummaryHtml(summary) +
+      "<button onclick='resetProcSection()'>➕ Pesanan baharu</button>");
+  } else if(kind === "done"){
+    procState("done", "<b>✅ Selesai oleh " + procEsc(r.doneBy) + "</b>Pada " + procEsc(String(r.doneAt).slice(0,5)) + procSummaryHtml(summary) +
+      "<button onclick='resetProcSection()'>➕ Pesanan baharu</button>");
+  }
+}
+function startProcPoll(orderId, summary){
+  clearInterval(_procPoll); _procPollCount = 0; _procLastState = "DIHANTAR";
+  _procPoll = setInterval(function(){
+    if(_procOrderId !== orderId){ clearInterval(_procPoll); return; }
+    if(++_procPollCount > 900){ clearInterval(_procPoll); return; }          // ~2 hours
+    google.script.run.withSuccessHandler(function(r){
+      if(!r || r.status !== "success" || _procOrderId !== orderId) return;
+      if(r.state === _procLastState) return;
+      _procLastState = r.state;
+      if(r.state === "DIAMBIL"){ procShowState("taken", r, summary); showToast("🏃 " + r.claimBy + " menguruskan prosedur.", "info"); }
+      if(r.state === "SELESAI"){
+        procShowState("done", r, summary); clearInterval(_procPoll);
+        showToast("✅ Prosedur selesai — " + r.doneBy, "success");
+        if(navigator.vibrate) try{ navigator.vibrate([120,60,120]); }catch(e){}
+      }
+    }).getProcedureOrderStatus(orderId);
+  }, 8000);
+}
+
+var OPEN_NUM = (new URLSearchParams(location.search).get("num") || "").replace(/\D/g,"").slice(0,4);
+function openFromParam_(){
+  if(!OPEN_NUM) return;
+  var n = OPEN_NUM; OPEN_NUM = "";
+  google.script.run.withSuccessHandler(function(p){
+    if(!p || p.status !== "success"){ showToast("Nombor " + n + " tidak dijumpai.", "error"); return; }
+    google.script.run.withSuccessHandler(function(rowIdx){
+      openLabPopup({ name: p.nama, num: n, rowIndex: rowIdx });
+    }).getTodayListRowIndex(n);
+  }).getPatientFromTodayList(n);
+}
+
+// ══════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════
+var _toastTimer = null;
+function showToast(msg, type){
+  var el  = document.getElementById("ns-toast");
+  var ico = document.getElementById("toast-icon");
+  var txt = document.getElementById("toast-msg");
+  el.className = "ns-toast " + (type||"info");
+  ico.textContent = type === "success" ? "✅" : type === "error" ? "❌" : "ℹ️";
+  txt.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){
+    el.classList.remove("show");
+  }, 3500);
+}
+
+// ── ESC closes modal ──
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape") closeModal();
+  // Enter on number input triggers call
+  if(e.key === "Enter"){
+    if(document.getElementById("modal-overlay").classList.contains("active")){
+      confirmCall(); // Enter also confirms modal
+    } else {
+      if(!document.getElementById("btn-call").disabled) doNurseCall();
+    }
+  }
+});
+
+// ── START ──
+loadMedicineLists();
+// ── iOS viewport height fix ──
+function fixVh(){
+  document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+}
+fixVh();
+window.addEventListener('resize', fixVh);
+window.addEventListener('orientationchange', function(){ setTimeout(fixVh, 300); });
+</script>
+<div id="doctor-lock-overlay" style="position:fixed;inset:0;z-index:99999;
+  background:rgba(8,15,30,.97);display:flex;align-items:center;justify-content:center;">
+  <div style="background:var(--bg1);border:1px solid var(--border);border-radius:16px;
+    padding:2rem;width:340px;text-align:center;">
+    <div style="font-size:14px;font-weight:700;letter-spacing:.1em;
+      color:var(--text3);margin-bottom:1rem;text-transform:uppercase;">
+      Pilih Nama Doktor
+    </div>
+    <select id="doctor-select" style="width:100%;padding:12px;border-radius:10px;
+      background:var(--bg2);border:1px solid var(--border);color:var(--text1);
+      font-size:14px;margin-bottom:1rem;">
+      <option value="">— Memuatkan senarai —</option>
+    </select>
+    <button onclick="confirmDoctorLock()" style="width:100%;padding:12px;
+      border-radius:10px;border:none;background:linear-gradient(135deg,#4A3DB5,#7B68EE);
+      color:#fff;font-weight:700;cursor:pointer;">Mula Sesi</button>
+  </div>
+</div>
+<div class="modal-overlay" id="lab-popup-overlay">
+  <div class="modal-box" style="width:min(500px,92vw);max-height:88vh;overflow-y:auto;">
+
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px;" id="lab-popup-patient">—</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:1rem;"><span id="lab-popup-room"></span> · <span id="lab-popup-doctor">—</span></div>
+
+    <div class="acc-wrap">
+
+      <!-- SECTION 1: Ujian Makmal -->
+      <div class="acc-section open" id="acc-lab" data-section="lab">
+        <div class="acc-header" onclick="toggleAccordion('lab')">
+          <div class="acc-title"><span class="acc-title-icon">🧪</span> Ujian Makmal</div>
+          <span class="acc-chevron">▾</span>
+        </div>
+        <div class="acc-body">
+          <div class="acc-body-inner">
+<div class="dd-wrap" id="dd-wrap-diagnosis">
+  <select id="lab-diagnosis-select" class="acc-field">
+    <option value="">— Pilih Diagnosis —</option>
+  </select>
+  <div class="dd-loading" id="dd-loading-diagnosis">
+    <span class="dd-spinner"></span> Memuatkan senarai...
+  </div>
+</div>
+
+<div class="dd-wrap" id="dd-wrap-test">
+  <div class="acc-field" style="max-height:160px;overflow-y:auto;padding:8px;" id="lab-test-checklist">
+  <div style="font-size:11px;color:var(--text3);">Memuatkan...</div>
+</div>
+  <div class="dd-loading" id="dd-loading-test">
+    <span class="dd-spinner"></span> Memuatkan senarai...
+  </div>
+</div>
+            <textarea id="lab-clinical-input" class="acc-field acc-textarea"
+              placeholder="Ringkasan Klinikal (Q14)"></textarea>
+            <button onclick="printLabForm()" style="width:100%;padding:11px;border-radius:8px;
+              border:none;background:linear-gradient(135deg,#008F6A,#00C896);
+              color:#fff;font-weight:700;cursor:pointer;">🖨️ Cetak Borang Makmal</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: Diagnosis -->
+      <div class="acc-section" id="acc-diagnosis" data-section="diagnosis">
+        <div class="acc-header" onclick="toggleAccordion('diagnosis')">
+          <div class="acc-title"><span class="acc-title-icon">📋</span> Diagnosis</div>
+          <span class="acc-chevron">▾</span>
+        </div>
+        <div class="acc-body">
+          <div class="acc-body-inner" id="diagnosis-fields-slot">
+          <!-- Diagnosis -->
+    <div style="margin-bottom:.8rem;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--text3);
+                  text-transform:uppercase;margin-bottom:6px;">Diagnosis</div>
+      <input type="text" id="med-diag-search"
+        placeholder="Taip untuk cari diagnosis..."
+        style="width:100%;background:var(--bg2);border:1px solid var(--border);
+               border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text1);
+               outline:none;"
+        oninput="filterDiagList(this.value)">
+      <div id="med-diag-dropdown"
+        style="display:none;background:var(--bg2);border:1px solid var(--border);
+               border-radius:8px;margin-top:4px;max-height:150px;overflow-y:auto;
+               z-index:999;position:relative;">
+      </div>
+      <div id="med-diag-selected"
+        style="display:none;margin-top:6px;padding:7px 12px;border-radius:8px;
+               background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);
+               font-size:12px;font-weight:600;color:var(--green);">
+      </div>
+    </div>
+    <div style="margin-bottom:.8rem;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--text3);
+              text-transform:uppercase;margin-bottom:6px;">Tarikh TCA (Temujanji)</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="date" id="med-tca-date"
+      style="flex:1;background:var(--bg2);border:1px solid var(--border);
+             border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text1);outline:none;"
+      onchange="calcTcaDuration()">
+      <span id="tca-duration-label" style="font-size:11px;color:var(--text2);white-space:nowrap;"></span>
+    </div>
+  </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: Rawatan (Medicine) -->
+      <div class="acc-section" id="acc-medicine" data-section="medicine">
+        <div class="acc-header" onclick="toggleAccordion('medicine')">
+          <div class="acc-title"><span class="acc-title-icon">💊</span> Rawatan</div>
+          <span class="acc-chevron">▾</span>
+        </div>
+        <div class="acc-body">
+          <div class="acc-body-inner" id="medicine-fields-slot">
+          <!-- MEDICINE MODAL -->
+<div class="acc-body-inner" id="medicine-fields-slot">
+  <div style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--text3);
+              text-transform:uppercase;margin-bottom:8px;">Senarai Ubat</div>
+  <div id="med-rows-container"></div>
+  <button onclick="addMedRow()"
+    style="width:100%;padding:9px;border-radius:8px;margin-bottom:.8rem;
+           border:1px dashed var(--border);background:transparent;
+           color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;">
+    + Tambah Ubat
+  </button>
+  <button class="modal-btn confirm" style="width:100%;" onclick="saveMedicine()">💊 Simpan Ubat</button>
+</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: Prosedur & Ubat Kecemasan → notifies every AMO -->
+      <div class="acc-section" id="acc-procedure" data-section="procedure">
+        <div class="acc-header" onclick="toggleAccordion('procedure')">
+          <div class="acc-title"><span class="acc-title-icon">🔧</span> Prosedur</div>
+          <span class="acc-chevron">▾</span>
+        </div>
+        <div class="acc-body">
+          <div class="acc-body-inner" id="procedure-fields-slot">
+            <div id="proc-form">
+              <div class="proc-lbl"><span>Prosedur</span><span id="proc-cnt-p">0 dipilih</span></div>
+              <input type="text" class="proc-search" id="proc-search-p" placeholder="Cari prosedur..." oninput="filterBkList('p', this.value)">
+              <div class="proc-list" id="proc-list-p"><div class="proc-empty">Memuatkan senarai...</div></div>
+
+              <div class="proc-lbl"><span>Ubat (AMO sediakan)</span><span id="proc-cnt-m">0 dipilih</span></div>
+              <input type="text" class="proc-search" id="proc-search-m" placeholder="Cari ubat..." oninput="filterBkList('m', this.value)">
+              <div class="proc-list" id="proc-list-m"><div class="proc-empty">Memuatkan senarai...</div></div>
+
+              <textarea id="proc-note" class="acc-field acc-textarea" style="min-height:52px;" maxlength="300" placeholder="Catatan untuk AMO (pilihan)"></textarea>
+              <label class="proc-urgent"><input type="checkbox" id="proc-urgent"> ⚡ Segera</label>
+              <button class="proc-send" id="proc-send" onclick="sendProcOrder()">📣 Simpan &amp; Panggil AMO</button>
+            </div>
+            <div id="proc-state" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-btns" style="margin-top:1.2rem;">
+      <button class="modal-btn cancel" onclick="closeLabPopup()">Tutup &amp; kembali ke SIAGA</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
