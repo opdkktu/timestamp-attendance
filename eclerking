@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SIAGA · e-Clerking</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0F4530">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F3EE;--sf:#fff;--sf2:#F0EDE7;--bd:#D9D5CC;
+  --tx:#1C1C1A;--tx2:#6B6860;--tx3:#9B9890;
+  --ac:#1A6B4A;--acl:#E3F0EB;--acd:#0F4530;
+  --dg:#C0392B;--r:10px;--rl:14px;
+  --blue:#185FA5;--warn:#D97706;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"IBM Plex Sans",sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding-bottom:6rem;}
+
+/* ── LOADING OVERLAY ── */
+#loadOverlay{position:fixed;inset:0;background:rgba(15,69,48,.92);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;}
+.loadSpin{width:44px;height:44px;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loadOverlay.hide{display:none;}
+#loadOverlay p{font-size:13px;color:rgba(255,255,255,.75);letter-spacing:.03em;}
+
+/* ── HEADER / PATIENT BANNER ── */
+header{background:var(--acd);color:#fff;padding:14px 18px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.15);}
+header h1{font-size:15px;font-weight:700;letter-spacing:.02em;}
+.patient-banner{background:var(--sf);margin:14px;border-radius:var(--rl);padding:16px 18px;border:1px solid var(--bd);display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.pat-avatar{width:48px;height:48px;border-radius:50%;background:var(--acl);color:var(--acd);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;}
+.pat-info{flex:1;min-width:180px;}
+.pat-name{font-size:16px;font-weight:700;}
+.pat-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:var(--tx2);}
+.pat-meta span{background:var(--sf2);border-radius:20px;padding:3px 10px;font-family:"IBM Plex Mono",monospace;}
+.pat-age{background:var(--acl)!important;color:var(--acd);font-weight:600;font-family:"IBM Plex Sans",sans-serif!important;}
+.save-status{font-size:11px;color:var(--tx3);white-space:nowrap;}
+.save-status.ok{color:var(--ac);font-weight:600;}
+.save-status.err{color:var(--dg);font-weight:600;}
+
+/* ── SECTION NAV ── */
+.qnav{display:flex;gap:6px;overflow-x:auto;padding:0 14px 10px;-webkit-overflow-scrolling:touch;}
+.qnav::-webkit-scrollbar{display:none;}
+.qnav-btn{flex-shrink:0;padding:8px 14px;border-radius:20px;border:1px solid var(--bd);background:var(--sf);font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer;white-space:nowrap;transition:all .15s;}
+.qnav-btn.active{background:var(--acd);color:#fff;border-color:var(--acd);}
+.qnav-btn.filled::after{content:" ✓";color:var(--ac);}
+.qnav-btn.active.filled::after{color:#9BE8C4;}
+
+/* ── SECTIONS ── */
+.qsection{display:none;margin:0 14px 14px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rl);padding:18px;}
+.qsection.active{display:block;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.qtitle{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:4px;}
+.qsub{font-size:11.5px;color:var(--tx3);margin-bottom:14px;}
+.q-error{display:none;color:var(--dg);font-size:12px;font-weight:600;margin-top:10px;padding:8px 12px;background:#FDECEA;border-radius:var(--r);}
+.q-error.show{display:block;}
+.q-divider{margin:22px 0 14px;padding-top:18px;border-top:1px solid var(--sf2);}
+
+/* ── MULTI-TICK CHIPS ── */
+.chip-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.chip{padding:9px 15px;border-radius:20px;border:1.5px solid var(--bd);background:var(--sf);font-size:13px;font-weight:500;color:var(--tx2);cursor:pointer;transition:all .15s;user-select:none;}
+.chip.checked{background:var(--acd);border-color:var(--acd);color:#fff;}
+.chip-days{display:none;margin-top:6px;padding:8px 10px;background:var(--sf2);border-radius:var(--r);align-items:center;gap:8px;font-size:12px;}
+.chip-days.show{display:flex;}
+.chip-days input{width:60px;padding:6px 8px;border:1px solid var(--bd);border-radius:6px;font-size:13px;text-align:center;font-family:"IBM Plex Mono",monospace;}
+.chip-wrap{margin-bottom:6px;}
+
+/* ── Q2 VITALS ── */
+.vital-grid{display:flex;flex-direction:column;gap:14px;}
+.vital-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--sf2);}
+.vital-row:last-child{border-bottom:none;padding-bottom:0;}
+.vital-row label{width:110px;flex-shrink:0;font-size:13px;font-weight:600;color:var(--tx);}
+.vital-input-pair{display:flex;align-items:center;gap:6px;}
+.vital-input-pair input{width:78px;padding:9px 10px;border:1.5px solid var(--bd);border-radius:var(--r);font-family:"IBM Plex Mono",monospace;font-size:15px;text-align:center;outline:none;transition:border-color .15s;}
+.vital-input-pair input:focus{border-color:var(--acd);box-shadow:0 0 0 3px rgba(15,69,48,.12);}
+.vital-sep{font-weight:700;color:var(--tx3);}
+.vital-unit{font-size:11px;color:var(--tx3);}
+.vital-flag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.vital-flag.normal{background:var(--acl);color:var(--acd);}
+.vital-flag.abnormal{background:#FDECEA;color:var(--dg);animation:blinkFlag 1s ease-in-out infinite;}
+.vital-flag.nodata{background:var(--sf2);color:var(--tx3);}
+@keyframes blinkFlag{0%,100%{opacity:1;}50%{opacity:.45;}}
+.glu-flags{display:flex;flex-direction:column;gap:4px;}
+.glu-flags .vital-flag{width:fit-content;}
+.pain-scale{display:flex;flex-wrap:wrap;gap:6px;}
+.pain-btn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--bd);background:var(--sf);font-size:13px;font-weight:700;color:var(--tx2);cursor:pointer;transition:all .15s;}
+.pain-btn.sel-mild{background:var(--acl);border-color:var(--ac);color:var(--acd);}
+.pain-btn.sel-mod{background:#FEF3E7;border-color:var(--warn);color:#8A4900;}
+.pain-btn.sel-sev{background:#FDECEA;border-color:var(--dg);color:var(--dg);}
+.pain-label{margin-top:6px;font-size:12px;font-weight:600;}
+.req-mark{color:var(--dg);font-weight:700;}
+
+/* ── PLAIN TEXT ── */
+.plain-textarea{width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:var(--r);font-family:"IBM Plex Sans",sans-serif;font-size:14px;color:var(--tx);outline:none;resize:vertical;min-height:120px;transition:border-color .15s;}
+.plain-textarea:focus{border-color:var(--acd);box-shadow:0 0 0 3px rgba(15,69,48,.12);}
+
+/* ── Q7 PROCEDURE / MANAGEMENT ── */
+.q7-kes-row{display:flex;gap:10px;margin-bottom:16px;}
+.q7-kes-btn{flex:1;padding:11px;border:2px solid var(--bd);border-radius:var(--r);background:var(--sf);font-family:"IBM Plex Sans",sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center;}
+.q7-kes-btn.sel-ya{background:#FEF2F2;border-color:var(--dg);color:var(--dg);}
+.q7-kes-btn.sel-tidak{background:var(--acl);border-color:var(--ac);color:var(--acd);}
+.q7-subtitle{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx2);margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--sf2);display:flex;align-items:center;gap:8px;}
+.q7-add-btn{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;font-size:10px;font-weight:600;border:1px solid rgba(15,69,48,.25);border-radius:4px;background:var(--acl);color:var(--acd);cursor:pointer;font-family:"IBM Plex Sans",sans-serif;text-transform:uppercase;letter-spacing:.04em;margin-left:auto;}
+.q7-add-btn:hover{background:var(--acd);color:#fff;}
+.q7-add-form{display:none;margin-bottom:10px;padding:10px;background:var(--sf2);border-radius:var(--r);}
+.q7-add-form.show{display:block;}
+.q7-add-row{display:flex;gap:8px;}
+.q7-add-input{flex:1;padding:8px 10px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;outline:none;}
+.q7-add-save{padding:8px 14px;background:var(--acd);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;}
+.q7-add-cancel{padding:8px 12px;border:1px solid var(--bd);border-radius:var(--r);background:var(--sf);font-size:12px;cursor:pointer;}
+.q7-add-status{margin-top:6px;font-size:11px;font-weight:500;}
+.q7-add-status.err{color:var(--dg);} .q7-add-status.ok{color:var(--ac);}
+.q7-multi-wrap{border:1px solid var(--bd);border-radius:var(--r);max-height:180px;overflow-y:auto;}
+.q7-multi-search{width:100%;padding:8px 10px;border:none;border-bottom:1px solid var(--bd);background:var(--sf2);font-size:13px;outline:none;position:sticky;top:0;}
+.q7-multi-item{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;font-size:13px;}
+.q7-multi-item:hover{background:var(--sf2);}
+.q7-multi-item.checked{background:var(--acl);}
+.q7-multi-item input{width:18px;height:18px;flex-shrink:0;}
+.q7-sel-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;min-height:18px;}
+.q7-sel-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:var(--acl);border-radius:20px;font-size:11px;color:var(--acd);font-weight:500;}
+.q7-sel-tag .rm{cursor:pointer;opacity:.7;}
+.q7-performer-sel{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:var(--r);font-size:14px;outline:none;background:var(--sf);}
+.q7b-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.q7b-note{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:var(--r);font-size:13px;outline:none;margin-top:4px;font-family:"IBM Plex Sans",sans-serif;resize:vertical;min-height:70px;}
+.q7-submit-btn{width:100%;margin-top:18px;padding:13px;background:var(--acd);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:700;cursor:pointer;}
+.q7-submit-btn:disabled{background:var(--tx3);cursor:not-allowed;}
+.q7-status{margin-top:8px;font-size:12px;font-weight:600;text-align:center;}
+.q7-status.err{color:var(--dg);} .q7-status.ok{color:var(--ac);}
+.btn-print{width:100%;margin-top:10px;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;}
+
+.q8-add-row{display:flex;gap:8px;margin-bottom:10px;}
+.q8-add-row select, .q8-add-row input{flex:1;}
+.q8-add-row button{flex-shrink:0;padding:9px 16px;background:var(--acd);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;}
+.q8-sync-note{font-size:11px;color:var(--tx3);margin-top:8px;}
+
+/* ── STICKY FOOTER NAV ── */
+.footer-nav{position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--bd);padding:10px 14px;display:flex;gap:10px;z-index:90;}
+.fbtn{flex:1;padding:12px;border-radius:var(--r);border:none;font-size:14px;font-weight:600;cursor:pointer;transition:filter .15s;}
+.fbtn-prev{background:var(--sf2);color:var(--tx2);border:1px solid var(--bd);}
+.fbtn-next{background:var(--acd);color:#fff;}
+.fbtn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── SUCCESS OVERLAY (SMART-style) ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,69,48,.88);z-index:500;align-items:center;justify-content:center;}
+.overlay.show{display:flex;animation:fi .2s ease;}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+.obox{background:var(--sf);border-radius:var(--rl);padding:2.5rem 2.2rem;text-align:center;max-width:360px;width:90%;animation:overlayBounce .35s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes overlayBounce{0%{transform:scale(.8);opacity:0;}60%{transform:scale(1.05);}100%{transform:scale(1);opacity:1;}}
+.oicon{width:56px;height:56px;background:var(--acl);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;}
+.oicon svg{width:28px;height:28px;fill:var(--ac);}
+.obox h2{font-size:18px;font-weight:700;margin-bottom:.4rem;}
+.obox p{font-size:13px;color:var(--tx2);line-height:1.5;}
+.oname{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:500;color:var(--acd);background:var(--acl);border-radius:var(--r);padding:8px 14px;margin:1rem 0;word-break:break-word;}
+.bcls{margin-top:1.25rem;padding:9px 28px;background:var(--acd);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div id="loadOverlay">
+  <div class="loadSpin"></div>
+  <p id="loadMsg">Memuatkan rekod pesakit...</p>
+</div>
+
+<header style="display:flex;align-items:center;gap:12px;">
+  <a href="javascript:void(0)" onclick="goBackToKaunter()" style="color:#fff;font-size:13px;text-decoration:none;display:flex;align-items:center;gap:4px;opacity:.9;flex-shrink:0;">◀ Kaunter</a>
+  <h1 style="flex:1;">📋 E-Clerking — PRIMA</h1>
+</header>
+
+<div class="patient-banner">
+  <div class="pat-avatar" id="patAvatar">?</div>
+  <div class="pat-info">
+    <div class="pat-name" id="patName">—</div>
+    <div class="pat-meta">
+      <span id="patIc">—</span>
+      <span class="pat-age" id="patAge">— tahun</span>
+      <span id="patPhone" style="display:none;">—</span>
+    </div>
+  </div>
+  <div class="save-status" id="saveStatus"></div>
+</div>
+<div style="display:flex;gap:8px;align-items:center;margin:0 14px 10px;">
+  <button class="q7-add-btn" style="margin-left:0" onclick="openHistory()">🕘 Sejarah <span id="histCount"></span></button>
+  <button class="q7-add-btn" style="margin-left:0" onclick="startNewVisit()">➕ Kes Baru</button>
+  <span class="save-status" id="visitLabel"></span>
+</div>
+
+<div class="qnav" id="qnav">
+  <button class="qnav-btn active" data-q="1" onclick="showSection(1)">1. Simptom</button>
+  <button class="qnav-btn" data-q="2" onclick="showSection(2)">2. Vitals</button>
+  <button class="qnav-btn" data-q="3" onclick="showSection(3)">3. Sej. Perubatan/Alahan</button>
+  <button class="qnav-btn" data-q="4" onclick="showSection(4)">4. Pemeriksaan/Investigasi</button>
+  <button class="qnav-btn" data-q="5" onclick="showSection(5)">5. Prosedur</button>
+  <button class="qnav-btn" data-q="6" onclick="showSection(6)">6. Diagnosis</button>
+</div>
+
+<!-- Q1 — SYMPTOMS -->
+<div class="qsection active" id="qsec-1">
+  <div class="qtitle">1. Sign &amp; Symptoms <span class="req-mark">*</span></div>
+  <div class="qsub">Tandakan simptom yang berkaitan. Bilangan hari (pilihan) akan muncul selepas ditandakan. Wajib diisi.</div>
+  <div id="symptomChips"></div>
+  <div class="q-error" id="qErr-1"></div>
+</div>
+
+<!-- Q2 — VITALS -->
+<div class="qsection" id="qsec-2">
+  <div class="qtitle">2. Vital Signs</div>
+  <div class="qsub">RR dan Pain Score <b>wajib diisi</b>. Nilai lain pilihan. Nilai luar julat normal akan berkelip merah (sesetengah carta belum ditetapkan).</div>
+
+  <div class="vital-grid">
+    <div class="vital-row">
+      <label>Tekanan Darah (BP)</label>
+      <div class="vital-input-pair">
+        <input type="number" id="v-bp-sys" placeholder="Sistolik" inputmode="numeric" oninput="onVitalInput()">
+        <span class="vital-sep">/</span>
+        <input type="number" id="v-bp-dia" placeholder="Diastolik" inputmode="numeric" oninput="onVitalInput()">
+        <span class="vital-unit">mmHg</span>
+      </div>
+      <span class="vital-flag" id="flag-bp"></span>
+    </div>
+
+    <div class="vital-row">
+      <label>Pulse</label>
+      <div class="vital-input-pair">
+        <input type="number" id="v-pulse" placeholder="0" inputmode="numeric" oninput="onVitalInput()">
+        <span class="vital-unit">bpm</span>
+      </div>
+      <span class="vital-flag" id="flag-pulse"></span>
+    </div>
+
+    <div class="vital-row">
+      <label>SpO2</label>
+      <div class="vital-input-pair">
+        <input type="number" id="v-spo2" placeholder="0" inputmode="numeric" oninput="onVitalInput()">
+        <span class="vital-unit">%</span>
+      </div>
+      <span class="vital-flag" id="flag-spo2"></span>
+    </div>
+
+    <div class="vital-row">
+      <label>RR <span class="req-mark">*</span></label>
+      <div class="vital-input-pair">
+        <input type="number" id="v-rr" placeholder="0" inputmode="numeric" oninput="onVitalInput()">
+        <span class="vital-unit">/min</span>
+      </div>
+      <span class="vital-flag" id="flag-rr"></span>
+    </div>
+
+    <div class="vital-row">
+      <label>Glucometer</label>
+      <div class="vital-input-pair">
+        <input type="number" step="0.1" id="v-glu" placeholder="0.0" inputmode="decimal" oninput="onVitalInput()">
+        <span class="vital-unit">mmol/L</span>
+      </div>
+      <div class="glu-flags">
+        <span class="vital-flag" id="flag-glu-fast">Berpuasa: —</span>
+        <span class="vital-flag" id="flag-glu-rand">Rawak: —</span>
+      </div>
+    </div>
+
+    <div class="vital-row" style="align-items:flex-start;">
+      <label>Pain Score <span class="req-mark">*</span></label>
+      <div class="pain-scale" id="painScale"></div>
+    </div>
+  </div>
+  <div class="q-error" id="qErr-2"></div>
+</div>
+
+<!-- Q3+Q4 — MEDICAL HISTORY + DRUG ALLERGY (merged page) -->
+<div class="qsection" id="qsec-3">
+  <div class="qtitle">3. Sejarah Perubatan</div>
+  <div class="qsub">Tandakan sejarah perubatan berkaitan.</div>
+  <div class="chip-grid" id="medHxChips"></div>
+  <div class="chip-days" id="medHxOthersBox">
+    <input type="text" id="medHxOthersInput" placeholder="Nyatakan sejarah perubatan lain..." style="flex:1;" oninput="MEDHX_OTHERS.text=this.value; saveQ3();">
+  </div>
+
+  <div class="q-divider"></div>
+  <div class="qtitle">4. Alahan Ubat</div>
+  <div class="qsub">Tandakan alahan ubat berkaitan.</div>
+  <div class="chip-grid" id="allergyChips"></div>
+  <div class="chip-days" id="allergyOthersBox">
+    <input type="text" id="allergyOthersInput" placeholder="Nyatakan alahan ubat lain..." style="flex:1;" oninput="ALLERGY_OTHERS.text=this.value; saveQ4();">
+  </div>
+</div>
+
+<!-- Q5+Q6 — PHYSICAL EXAM + INVESTIGATION (merged page) -->
+<div class="qsection" id="qsec-4">
+  <div class="qtitle">5. Pemeriksaan Fizikal</div>
+  <div class="qsub">Tulis dapatan pemeriksaan fizikal.</div>
+  <textarea class="plain-textarea" id="q5-text" rows="6" placeholder="cth: Alert, tidak pucat, tiada distress pernafasan..." oninput="onQ5Input(this.value)"></textarea>
+
+  <div class="q-divider"></div>
+  <div class="qtitle">6. Investigasi</div>
+  <div class="qsub">Ada investigasi dijalankan?</div>
+  <div class="q7-kes-row">
+    <button type="button" class="q7-kes-btn sel-tidak" id="inv-no-btn" onclick="setInvestigation(false)">Tiada</button>
+    <button type="button" class="q7-kes-btn" id="inv-yes-btn" onclick="setInvestigation(true)">Ada</button>
+  </div>
+  <textarea class="plain-textarea" id="q6-text" rows="4" placeholder="cth: FBC, RP, CXR..." style="display:none;" oninput="onQ6Input()"></textarea>
+</div>
+
+<!-- Q7A/Q7B — PROCEDURE, MANAGEMENT, REFER/DISCHARGE -->
+<div class="qsection" id="qsec-5">
+  <div class="qtitle">7. Prosedur &amp; Pengurusan</div>
+  <div class="qsub">Sama seperti SMART — direkod serentak ke fail SMART dan rekod e-clerking pesakit ini.</div>
+
+  <div class="q7-subtitle">Kes Kecemasan</div>
+  <div class="q7-kes-row">
+    <button type="button" class="q7-kes-btn" id="q7-kes-ya" onclick="selectQ7Kes('ya')">✅ Ya</button>
+    <button type="button" class="q7-kes-btn" id="q7-kes-tidak" onclick="selectQ7Kes('tidak')">❌ Tidak</button>
+  </div>
+
+  <div class="q7-subtitle">Procedure(s)
+    <button class="q7-add-btn" onclick="toggleQ7AddForm('proc')">+ Tambah Baru</button>
+  </div>
+  <div class="q7-add-form" id="q7-add-proc">
+    <div class="q7-add-row">
+      <input type="text" class="q7-add-input" id="q7-add-proc-input" placeholder="Nama prosedur baru...">
+      <button class="q7-add-save" onclick="saveNewQ7Range('proc')">Simpan</button>
+      <button class="q7-add-cancel" onclick="toggleQ7AddForm('proc')">Batal</button>
+    </div>
+    <div class="q7-add-status" id="q7-add-proc-status"></div>
+  </div>
+  <div class="q7-multi-wrap">
+    <input type="text" class="q7-multi-search" id="q7-proc-search" placeholder="Cari procedure..." oninput="renderQ7Multi('proc', this.value)">
+    <div id="q7-proc-list"></div>
+  </div>
+  <div class="q7-sel-tags" id="q7-proc-tags"></div>
+
+  <div class="q7-subtitle">Medication(s)
+    <button class="q7-add-btn" onclick="toggleQ7AddForm('med')">+ Tambah Baru</button>
+  </div>
+  <div class="q7-add-form" id="q7-add-med">
+    <div class="q7-add-row">
+      <input type="text" class="q7-add-input" id="q7-add-med-input" placeholder="Nama ubat baru...">
+      <button class="q7-add-save" onclick="saveNewQ7Range('med')">Simpan</button>
+      <button class="q7-add-cancel" onclick="toggleQ7AddForm('med')">Batal</button>
+    </div>
+    <div class="q7-add-status" id="q7-add-med-status"></div>
+  </div>
+  <div class="q7-multi-wrap">
+    <input type="text" class="q7-multi-search" id="q7-med-search" placeholder="Cari medication..." oninput="renderQ7Multi('med', this.value)">
+    <div id="q7-med-list"></div>
+  </div>
+  <div class="q7-sel-tags" id="q7-med-tags"></div>
+
+  <div class="q7-subtitle">Performer
+    <button class="q7-add-btn" onclick="toggleQ7AddForm('perf')">+ Tambah Baru</button>
+  </div>
+  <div class="q7-add-form" id="q7-add-perf">
+    <div class="q7-add-row">
+      <input type="text" class="q7-add-input" id="q7-add-perf-input" placeholder="Nama staf baru...">
+      <button class="q7-add-save" onclick="saveNewQ7Range('perf')">Simpan</button>
+      <button class="q7-add-cancel" onclick="toggleQ7AddForm('perf')">Batal</button>
+    </div>
+    <div class="q7-add-status" id="q7-add-perf-status"></div>
+  </div>
+  <select class="q7-performer-sel" id="q7-performer" onchange="if(Q7_KES!==null && this.value!=='') showSectionError(5,'');"><option value="">— Pilih performer —</option></select>
+
+  <div class="q7-subtitle" style="margin-top:22px;">7b. Refer / Discharge</div>
+  <div class="q7b-chips" id="q7bChips">
+    <div class="chip" data-key="refer" onclick="toggleQ7bChip('refer',this)">Refer</div>
+    <div class="chip" data-key="discharge" onclick="toggleQ7bChip('discharge',this)">Allow Discharged</div>
+  </div>
+  <textarea class="q7b-note" id="q7b-note" rows="3" placeholder="Nota..." oninput="onQ7bNoteInput()"></textarea>
+
+  <div class="q-error" id="qErr-5"></div>
+</div>
+
+<!-- Q8 — DIAGNOSIS -->
+<div class="qsection" id="qsec-6">
+  <div class="qtitle">8. Diagnosis</div>
+  <div class="qsub">Tandakan diagnosis dari senarai, atau taip yang baru dan tambah.</div>
+  <div class="q7-multi-wrap">
+    <input type="text" class="q7-multi-search" id="q8-search" placeholder="Cari diagnosis..." oninput="renderQ8List(this.value)">
+    <div id="q8-list"></div>
+  </div>
+  <div class="q8-add-row" style="margin-top:10px;">
+    <input type="text" class="q7-add-input" id="q8-custom-input" placeholder="Atau taip diagnosis baru...">
+    <button onclick="addQ8Custom()">+ Tambah</button>
+  </div>
+  <div class="q7-sel-tags" id="q8Tags"></div>
+  <div class="q8-sync-note" id="q8SyncNote"></div>
+  <button class="q7-add-btn" style="margin-top:10px;margin-left:0;" onclick="testPrimaConnection()">🔧 Uji Sambungan PRIMA</button>
+
+  <div class="q-divider"></div>
+  <button class="q7-submit-btn" id="q7SubmitBtn" onclick="submitQ7()">Simpan Prosedur &amp; Pengurusan</button>
+  <div class="q7-status" id="q7Status"></div>
+  <button class="btn-print" onclick="printRecord()">🖨️ Cetak / PDF Rekod</button>
+</div>
+
+<div class="footer-nav">
+  <button class="fbtn fbtn-prev" id="btnPrev" onclick="navStep(-1)">◀ Sebelum</button>
+  <button class="fbtn fbtn-next" id="btnNext" onclick="goNext()">Seterusnya ▶</button>
+</div>
+
+<!-- SUCCESS OVERLAY (shared — used by Q7 submit + finish) -->
+<div class="overlay" id="successOverlay" onclick="if(event.target===this) closeSuccessOverlay()">
+  <div class="obox">
+    <div class="oicon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+    <h2 id="ovTitle">Berjaya Disimpan</h2>
+    <div class="oname" id="ovName">—</div>
+    <p id="ovMsg">Data telah direkodkan.</p>
+    <button class="bcls" onclick="closeSuccessOverlay()">Tutup</button>
+  </div>
+</div>
+
+<div class="overlay" id="histOverlay" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="obox" style="max-height:80vh;overflow:auto;text-align:left;max-width:440px;">
+    <h2 style="text-align:center">Sejarah Clerking</h2>
+    <div id="histList" style="margin-top:10px"></div>
+    <button class="bcls" onclick="document.getElementById('histOverlay').classList.remove('show')">Tutup</button>
+  </div>
+</div>
+
+<!-- NEW: chooser shown on load when patient has previous records -->
+<div class="overlay" id="chooseOverlay">
+  <div class="obox" style="text-align:left;max-width:440px;max-height:85vh;overflow:auto;">
+    <h2 style="text-align:center">Rekod terdahulu dijumpai</h2>
+    <div class="oname" id="chName" style="text-align:center"></div>
+    <button class="q7-submit-btn" style="margin-top:0" onclick="toggleChList()">🕘 Lihat Rekod Lama</button>
+    <div id="chList" style="display:none;margin-top:12px"></div>
+    <button class="q7-submit-btn" style="background:var(--blue)" onclick="chooseNew()">➕ Kes Baru</button>
+  </div>
+</div>
+<audio id="sndSuccess" preload="auto"><source src="https://opdkktu.github.io/trial1/BookingSuccess.mp3" type="audio/mpeg"></audio>
+
+<script>
+/* SIAGA bridge: this page runs inside SIAGA, so e-Clerking calls go  browser → SIAGA → e-Clerking project (server to server).
+   It replaces Apps Script's google.script.run with the same chaining API, so the form code below is unchanged. */
+(function(){
+  var API = "https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec";
+  var TOKEN = sessionStorage.getItem("kkah_session_token");
+  if(!TOKEN){ location.replace("./login.html"); }
+  var STATIC = { getPickLists:1, getVitalsConfig:1, getBilikKecemasanRanges:1, getDiagnosisList:1 };   // pick-lists: remembered 10 min on this phone
+  function sget(k){ try{ var v = JSON.parse(sessionStorage.getItem("kkah_ec_"+k)||"null"); return v && Date.now()-v.t < 600000 ? v.d : null; }catch(e){ return null; } }
+  function sset(k,d){ try{ sessionStorage.setItem("kkah_ec_"+k, JSON.stringify({t:Date.now(),d:d})); }catch(e){} }
+  function call(fn, args, ok, fail){
+    if(STATIC[fn]){ var c = sget(fn); if(c){ if(ok) setTimeout(function(){ ok(c); },0); return; } }
+    var ctl = new AbortController(), t = setTimeout(function(){ ctl.abort(); }, 45000);
+    fetch(API, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body:JSON.stringify({ action:"eclerkCall", token:TOKEN, fn:fn, args:args }), signal:ctl.signal })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        clearTimeout(t);
+        if(d && d.ok){
+          if(STATIC[fn] && d.result && d.result.status==="success") sset(fn, d.result);
+          if(fn==="addBkRange"){ try{ sessionStorage.removeItem("kkah_ec_getBilikKecemasanRanges"); }catch(e){} }
+          if(ok) ok(d.result);
+        }
+        else if(d && /expired/i.test(d.error || "")){ location.replace("./login.html"); }
+        else if(fail) fail(new Error((d && d.error) || "Ralat"));
+      })
+      .catch(function(e){ clearTimeout(t); if(fail) fail(new Error(e && e.name === "AbortError" ? "Masa tamat. Semak sambungan." : (e && e.message) || "Ralat sambungan")); });
+  }
+  function make(ok, fail){
+    var base = { withSuccessHandler:function(f){ return make(f, fail); }, withFailureHandler:function(f){ return make(ok, f); } };
+    return new Proxy(base, { get:function(t, k){ if(k in t) return t[k]; return function(){ call(String(k), Array.prototype.slice.call(arguments), ok, fail); }; } });
+  }
+  window.google = { script:{ run: make(null, null) } };
+})();
+</script>
+<script>
+var TOTAL_Q = 6;
+var curQ = 1;
+var CURRENT = { rowIndex:null, identifier:"", nama:"" };
+var OTHERS_LABEL = "Lain-lain";
+var SYMPTOM_LIST = [];
+var SEL_SYMPTOMS = {};
+var OTHERS_SYM = { checked:false, text:"" };
+
+// ── init from server-rendered params ──
+function stripQuotesClient(s){
+  return String(s==null?"":s).trim().replace(/^["'\u2018\u2019\u201C\u201D\u00AB\u00BB]+|["'\u2018\u2019\u201C\u201D\u00AB\u00BB]+$/g,"").trim();
+}
+function goBackToKaunter(){ location.href = "./eclerk-find.html"; }
+var __Q = new URLSearchParams(location.search);
+var NAMA     = stripQuotesClient((__Q.get("nama")||""));
+var IC       = stripQuotesClient((__Q.get("ic")||""));
+var PASSPORT = stripQuotesClient((__Q.get("passport")||""));
+var TLAHIR   = (__Q.get("tlahir")||"");
+var PHONE    = stripQuotesClient((__Q.get("phone")||""));
+var PATIENT_AGE = null;
+
+function calcAgeFromIcClient(ic){
+  ic = String(ic||"").replace(/\D/g,"");
+  if(ic.length!==12) return null;
+  var yy=parseInt(ic.substring(0,2)),mm=parseInt(ic.substring(2,4)),dd=parseInt(ic.substring(4,6));
+  var now=new Date(),fy=yy<=(now.getFullYear()%100)?2000+yy:1900+yy;
+  var dob=new Date(fy,mm-1,dd),age=now.getFullYear()-dob.getFullYear();
+  if(now.getMonth()<dob.getMonth()||(now.getMonth()===dob.getMonth()&&now.getDate()<dob.getDate())) age--;
+  return age;
+}
+
+function renderPatientBanner(){
+  document.getElementById("patName").textContent = NAMA || "—";
+  var initials=(NAMA||"?").split(" ").map(function(w){return w[0]||"";}).slice(0,2).join("").toUpperCase();
+  document.getElementById("patAvatar").textContent = initials || "?";
+
+  var identifier = IC && IC.length ? IC : PASSPORT;
+  CURRENT.identifier = identifier;
+  document.getElementById("patIc").textContent = IC ? IC : ("Pasport: "+(PASSPORT||"—"));
+
+  var age = null;
+  if(IC && IC.replace(/\D/g,"").length===12){ age = calcAgeFromIcClient(IC); }
+  else if(TLAHIR){ var y=parseInt(TLAHIR,10); if(y) age = new Date().getFullYear()-y; }
+  PATIENT_AGE = age;
+  document.getElementById("patAge").textContent = age!==null ? (age+" tahun") : "Umur tidak diketahui";
+
+  if(PHONE){ var ph=document.getElementById("patPhone"); ph.textContent="📞 "+PHONE; ph.style.display=""; }
+}
+
+function setSaveStatus(type,msg){
+  var el=document.getElementById("saveStatus");
+  el.className="save-status "+(type||"");
+  el.textContent=msg||"";
+  if(type==="ok") setTimeout(function(){ if(el.textContent===msg) el.textContent=""; },2000);
+}
+
+// ── SUCCESS OVERLAY (SMART-style, shared) ──
+function showSuccessOverlay(title,name,msg){
+  try{ var a=document.getElementById("sndSuccess"); a.currentTime=0; a.play(); }catch(ex){}
+  document.getElementById("ovTitle").textContent=title;
+  document.getElementById("ovName").textContent=name||"";
+  document.getElementById("ovMsg").textContent=msg||"";
+  document.getElementById("successOverlay").classList.add("show");
+}
+function closeSuccessOverlay(){ document.getElementById("successOverlay").classList.remove("show"); }
+
+// ── SECTION NAV + VALIDATION + ENTER-TO-NEXT ──
+function showSection(n){
+  curQ=n;
+  document.querySelectorAll(".qsection").forEach(function(s){ s.classList.remove("active"); });
+  document.getElementById("qsec-"+n).classList.add("active");
+  document.querySelectorAll(".qnav-btn").forEach(function(b){ b.classList.toggle("active", parseInt(b.dataset.q,10)===n); });
+  document.getElementById("btnPrev").disabled = (n===1);
+  document.getElementById("btnNext").textContent = (n===TOTAL_Q) ? "Selesai ✓" : "Seterusnya ▶";
+  var activeBtn=document.querySelector(".qnav-btn.active");
+  if(activeBtn) activeBtn.scrollIntoView({inline:"center",behavior:"smooth"});
+}
+function navStep(dir){
+  var next=curQ+dir;
+  if(next<1||next>TOTAL_Q) return;
+  showSection(next);
+}
+function showSectionError(n,msg){
+  var el=document.getElementById("qErr-"+n);
+  if(!el) return;
+  el.textContent=msg;
+  el.classList.toggle("show", !!msg);
+}
+function validateSection(n){
+  if(n===1){
+    var ok = Object.keys(SEL_SYMPTOMS).length>0 || (OTHERS_SYM.checked && OTHERS_SYM.text.trim().length>0);
+    showSectionError(1, ok?"":"Sila tandakan sekurang-kurangnya satu simptom sebelum teruskan.");
+    return ok;
+  }
+  if(n===2){
+    var rr=document.getElementById("v-rr").value;
+    var ok2 = rr!=="" && PAIN_SCORE!==null;
+    showSectionError(2, ok2?"":"RR dan Pain Score wajib diisi sebelum teruskan.");
+    return ok2;
+  }
+  if(n===5){
+    var performerVal=document.getElementById("q7-performer").value;
+    var ok5 = Q7_KES!==null && performerVal!=="";
+    showSectionError(5, ok5?"":"Kes Kecemasan dan Performer wajib diisi sebelum teruskan.");
+    return ok5;
+  }
+  return true;
+}
+function goNext(){
+  if(curQ===TOTAL_Q){ finishClerking(); return; }
+  if(!validateSection(curQ)) return;
+  showSection(curQ+1);
+}
+function getFocusableInSection(sectionEl){
+  return Array.prototype.slice.call(sectionEl.querySelectorAll("input,select")).filter(function(el){
+    return el.offsetParent!==null && el.type!=="checkbox" && el.type!=="radio";
+  });
+}
+document.addEventListener("keydown", function(e){
+  if(e.key!=="Enter") return;
+  var tag=(e.target.tagName||"").toUpperCase();
+  if(tag==="TEXTAREA") return; // allow newline in free-text areas
+  if(tag!=="INPUT" && tag!=="SELECT") return;
+  if(document.getElementById("successOverlay").classList.contains("show")) return;
+  e.preventDefault();
+  var activeSection=document.querySelector(".qsection.active");
+  if(!activeSection) return;
+  var focusables=getFocusableInSection(activeSection);
+  var idx=focusables.indexOf(e.target);
+  if(idx>-1 && idx<focusables.length-1){
+    var nextEl=focusables[idx+1];
+    nextEl.focus(); if(nextEl.select) nextEl.select();
+  } else {
+    goNext();
+  }
+});
+function markFilled(qNum, filled){
+  var btn=document.querySelector('.qnav-btn[data-q="'+qNum+'"]');
+  if(btn) btn.classList.toggle("filled", !!filled);
+}
+
+// ── Q1 SYMPTOMS (+ "Lain-lain" free text) ──
+function renderSymptomChips(){
+  var wrap=document.getElementById("symptomChips");
+  wrap.innerHTML="";
+  SYMPTOM_LIST.forEach(function(name){
+    var div=document.createElement("div");
+    div.className="chip-wrap";
+    var chip=document.createElement("div");
+    chip.className="chip"+(SEL_SYMPTOMS.hasOwnProperty(name)?" checked":"");
+    chip.textContent=name;
+    chip.onclick=function(){ toggleSymptom(name,div); };
+    var daysBar=document.createElement("div");
+    daysBar.className="chip-days"+(SEL_SYMPTOMS.hasOwnProperty(name)?" show":"");
+    daysBar.innerHTML="Bilangan hari: <input type='number' min='0' max='60' placeholder='—' value='"+(SEL_SYMPTOMS[name]||"")+"'>";
+    daysBar.querySelector("input").oninput=function(){ SEL_SYMPTOMS[name]=this.value; saveQ1(); };
+    div.appendChild(chip); div.appendChild(daysBar);
+    wrap.appendChild(div);
+  });
+  var oDiv=document.createElement("div");
+  oDiv.className="chip-wrap";
+  var oChip=document.createElement("div");
+  oChip.className="chip"+(OTHERS_SYM.checked?" checked":"");
+  oChip.textContent=OTHERS_LABEL;
+  oChip.onclick=function(){ OTHERS_SYM.checked=!OTHERS_SYM.checked; renderSymptomChips(); saveQ1(); };
+  var oBox=document.createElement("div");
+  oBox.className="chip-days"+(OTHERS_SYM.checked?" show":"");
+  var oInp=document.createElement("input");
+  oInp.type="text"; oInp.placeholder="Nyatakan simptom lain..."; oInp.style.flex="1"; oInp.value=OTHERS_SYM.text||"";
+  oInp.oninput=function(){ OTHERS_SYM.text=this.value; saveQ1(); };
+  oBox.appendChild(oInp);
+  oDiv.appendChild(oChip); oDiv.appendChild(oBox);
+  wrap.appendChild(oDiv);
+}
+function toggleSymptom(name){
+  if(SEL_SYMPTOMS.hasOwnProperty(name)) delete SEL_SYMPTOMS[name];
+  else SEL_SYMPTOMS[name]="";
+  renderSymptomChips();
+  saveQ1();
+}
+function buildQ1String(){
+  var parts=[];
+  Object.keys(SEL_SYMPTOMS).forEach(function(name){
+    var d=SEL_SYMPTOMS[name];
+    parts.push(d ? (name+" ("+d+" hari)") : name);
+  });
+  if(OTHERS_SYM.checked) parts.push(OTHERS_SYM.text ? (OTHERS_LABEL+": "+OTHERS_SYM.text) : OTHERS_LABEL);
+  return parts.join(", ");
+}
+var _q1Timer=null;
+function saveQ1(immediate){
+  var run=function(){
+    if(!CURRENT.rowIndex) return;
+    var str=buildQ1String();
+    setSaveStatus("","Menyimpan...");
+    google.script.run
+      .withSuccessHandler(function(r){ if(r&&r.status==="success"){ setSaveStatus("ok","✓ Disimpan"); markFilled(1, str.length>0); showSectionError(1,""); } else setSaveStatus("err","Ralat simpan"); })
+      .withFailureHandler(function(){ setSaveStatus("err","Ralat simpan"); })
+      .saveField(CURRENT.rowIndex, "q1", str);
+  };
+  clearTimeout(_q1Timer);
+  if(immediate) run(); else _q1Timer=setTimeout(run,500);
+}
+function restoreQ1(str){
+  if(!str) return;
+  var idx=str.indexOf(OTHERS_LABEL);
+  var mainPart = idx===-1 ? str : str.substring(0,idx);
+  mainPart.split(",").forEach(function(part){
+    part=part.trim(); if(!part) return;
+    var m=part.match(/^(.*?)\s*\((\d+)\s*hari\)$/);
+    if(m){ SEL_SYMPTOMS[m[1].trim()] = m[2]; }
+    else { SEL_SYMPTOMS[part] = ""; }
+  });
+  if(idx!==-1){
+    OTHERS_SYM.checked=true;
+    OTHERS_SYM.text = str.substring(idx+OTHERS_LABEL.length).replace(/^:\s*/,"").replace(/^,\s*/,"").trim();
+  }
+  renderSymptomChips();
+  markFilled(1,true);
+}
+
+// ── Q2 VITALS ──
+var VITALS_CONFIG = null;
+var PAIN_SCORE = null;
+
+function loadVitalsConfig(cb){
+  google.script.run
+    .withSuccessHandler(function(cfg){ VITALS_CONFIG = cfg; renderPainScale(); if(cb) cb(); })
+    .withFailureHandler(function(){ VITALS_CONFIG = {bp:[],rr:[],glucose:{},pulse:{min:60,max:100},spo2:{min:95}}; renderPainScale(); if(cb) cb(); })
+    .getVitalsConfig();
+}
+function findAgeBand(list, age){
+  if(age===null || !list) return null;
+  for(var i=0;i<list.length;i++){
+    if(age >= list[i].ageMin && age <= list[i].ageMax) return list[i];
+  }
+  return null;
+}
+function setFlag(elId, state, text){
+  var el=document.getElementById(elId);
+  el.className="vital-flag "+state;
+  el.textContent=text;
+}
+function evalBP(){
+  var sys=document.getElementById("v-bp-sys").value, dia=document.getElementById("v-bp-dia").value;
+  if(!sys && !dia){ setFlag("flag-bp","",""); return; }
+  var sysBand=findAgeBand((VITALS_CONFIG.bp||[]).filter(function(b){return b.param==="Systolic";}), PATIENT_AGE);
+  var diaBand=findAgeBand((VITALS_CONFIG.bp||[]).filter(function(b){return b.param==="Diastolic";}), PATIENT_AGE);
+  if(!sysBand || sysBand.min===null || !diaBand || diaBand.min===null){
+    setFlag("flag-bp","nodata","Carta belum ditetapkan"); return;
+  }
+  var sysAbnormal = sys!=="" && (Number(sys)<sysBand.min || Number(sys)>sysBand.max);
+  var diaAbnormal = dia!=="" && (Number(dia)<diaBand.min || Number(dia)>diaBand.max);
+  if(sysAbnormal||diaAbnormal) setFlag("flag-bp","abnormal","⚠ Abnormal");
+  else setFlag("flag-bp","normal","Normal");
+}
+function evalPulse(){
+  var v=document.getElementById("v-pulse").value;
+  if(v==="") { setFlag("flag-pulse","",""); return; }
+  var p=VITALS_CONFIG.pulse;
+  var ab = Number(v)<p.min || Number(v)>p.max;
+  setFlag("flag-pulse", ab?"abnormal":"normal", ab?"⚠ Abnormal":"Normal");
+}
+function evalSpo2(){
+  var v=document.getElementById("v-spo2").value;
+  if(v==="") { setFlag("flag-spo2","",""); return; }
+  var ab = Number(v) < VITALS_CONFIG.spo2.min;
+  setFlag("flag-spo2", ab?"abnormal":"normal", ab?"⚠ Abnormal":"Normal");
+}
+function evalRR(){
+  var v=document.getElementById("v-rr").value;
+  if(v===""){ setFlag("flag-rr","",""); return; }
+  var band=findAgeBand(VITALS_CONFIG.rr, PATIENT_AGE);
+  if(!band || band.min===null){ setFlag("flag-rr","nodata","Carta belum ditetapkan"); return; }
+  var ab = Number(v)<band.min || Number(v)>band.max;
+  setFlag("flag-rr", ab?"abnormal":"normal", ab?"⚠ Abnormal":"Normal");
+}
+function evalGlucose(){
+  var v=document.getElementById("v-glu").value;
+  var g=VITALS_CONFIG.glucose||{};
+  if(v===""){ setFlag("flag-glu-fast","nodata","Berpuasa: —"); setFlag("flag-glu-rand","nodata","Rawak: —"); return; }
+  var val=Number(v);
+  if(g.fastingMin===null||g.fastingMin===undefined){ setFlag("flag-glu-fast","nodata","Berpuasa: belum ditetapkan"); }
+  else{ var fAb = val<g.fastingMin || val>g.fastingMax; setFlag("flag-glu-fast", fAb?"abnormal":"normal", "Berpuasa: "+(fAb?"⚠ Abnormal":"Normal")); }
+  if(g.randomMin===null||g.randomMin===undefined){ setFlag("flag-glu-rand","nodata","Rawak: belum ditetapkan"); }
+  else{ var rAb = val<g.randomMin || val>g.randomMax; setFlag("flag-glu-rand", rAb?"abnormal":"normal", "Rawak: "+(rAb?"⚠ Abnormal":"Normal")); }
+}
+function renderPainScale(){
+  var wrap=document.getElementById("painScale");
+  wrap.innerHTML="";
+  for(var i=0;i<=10;i++){
+    (function(n){
+      var b=document.createElement("button");
+      b.type="button"; b.className="pain-btn"; b.textContent=n;
+      if(PAIN_SCORE===n) b.classList.add(painClass(n));
+      b.onclick=function(){ PAIN_SCORE=n; renderPainScale(); onVitalInput(); };
+      wrap.appendChild(b);
+    })(i);
+  }
+  var lbl=document.getElementById("painLabel");
+  if(!lbl){
+    lbl=document.createElement("div"); lbl.id="painLabel"; lbl.className="pain-label";
+    wrap.parentNode.appendChild(lbl);
+  }
+  lbl.textContent = PAIN_SCORE!==null ? painText(PAIN_SCORE) : "";
+  lbl.style.color = PAIN_SCORE!==null ? painColor(PAIN_SCORE) : "";
+}
+function painClass(n){ return n<=3?"sel-mild":(n<=7?"sel-mod":"sel-sev"); }
+function painText(n){ return n<=3?("Sakit Ringan ("+n+"/10)"):(n<=7?("Sakit Sederhana ("+n+"/10)"):("Sakit Teruk ("+n+"/10)")); }
+function painColor(n){ return n<=3?"var(--acd)":(n<=7?"#8A4900":"var(--dg)"); }
+function buildQ2String(){
+  var sys=document.getElementById("v-bp-sys").value, dia=document.getElementById("v-bp-dia").value;
+  var pulse=document.getElementById("v-pulse").value, spo2=document.getElementById("v-spo2").value;
+  var rr=document.getElementById("v-rr").value, glu=document.getElementById("v-glu").value;
+  var parts=[];
+  if(sys||dia) parts.push("BP: "+(sys||"—")+"/"+(dia||"—")+" mmHg");
+  if(pulse!=="") parts.push("Pulse: "+pulse+" bpm ("+document.getElementById("flag-pulse").textContent.replace("⚠ ","")+")");
+  if(spo2!=="") parts.push("SpO2: "+spo2+"% ("+document.getElementById("flag-spo2").textContent.replace("⚠ ","")+")");
+  if(rr!=="") parts.push("RR: "+rr+"/min ("+document.getElementById("flag-rr").textContent.replace("⚠ ","")+")");
+  if(glu!=="") parts.push("Glucometer: "+glu+" mmol/L ["+document.getElementById("flag-glu-fast").textContent+", "+document.getElementById("flag-glu-rand").textContent+"]");
+  if(PAIN_SCORE!==null) parts.push("Pain Score: "+painText(PAIN_SCORE));
+  return parts.join(" | ");
+}
+var _q2Timer=null;
+function onVitalInput(){
+  evalBP(); evalPulse(); evalSpo2(); evalRR(); evalGlucose();
+  clearTimeout(_q2Timer);
+  _q2Timer=setTimeout(saveQ2, 500);
+}
+function saveQ2(immediate){
+  var run=function(){
+    if(!CURRENT.rowIndex) return;
+    var str=buildQ2String();
+    setSaveStatus("","Menyimpan...");
+    google.script.run
+      .withSuccessHandler(function(r){ if(r&&r.status==="success"){ setSaveStatus("ok","✓ Disimpan"); markFilled(2, str.length>0); showSectionError(2,""); } else setSaveStatus("err","Ralat simpan"); })
+      .withFailureHandler(function(){ setSaveStatus("err","Ralat simpan"); })
+      .saveField(CURRENT.rowIndex, "q2", str);
+  };
+  clearTimeout(_q2Timer);
+  if(immediate) run(); else _q2Timer=setTimeout(run,500);
+}
+function restoreQ2(str){
+  if(!str) return;
+  var mBp=str.match(/BP:\s*([\d.]+|—)\/([\d.]+|—)\s*mmHg/);
+  if(mBp){ if(mBp[1]!=="—") document.getElementById("v-bp-sys").value=mBp[1]; if(mBp[2]!=="—") document.getElementById("v-bp-dia").value=mBp[2]; }
+  var mPulse=str.match(/Pulse:\s*([\d.]+)\s*bpm/); if(mPulse) document.getElementById("v-pulse").value=mPulse[1];
+  var mSpo2=str.match(/SpO2:\s*([\d.]+)%/); if(mSpo2) document.getElementById("v-spo2").value=mSpo2[1];
+  var mRR=str.match(/RR:\s*([\d.]+)\/min/); if(mRR) document.getElementById("v-rr").value=mRR[1];
+  var mGlu=str.match(/Glucometer:\s*([\d.]+)\s*mmol\/L/); if(mGlu) document.getElementById("v-glu").value=mGlu[1];
+  var mPain=str.match(/\((\d+)\/10\)/); if(mPain) PAIN_SCORE=parseInt(mPain[1],10);
+  renderPainScale();
+  evalBP(); evalPulse(); evalSpo2(); evalRR(); evalGlucose();
+  markFilled(2, true);
+}
+
+// ── Q3 MEDICAL HISTORY / Q4 DRUG ALLERGY (chips + "Lain-lain") ──
+var MEDHX_LIST = [], ALLERGY_LIST = [];
+var SEL_MEDHX = {}, MEDHX_OTHERS = { checked:false, text:"" };
+var SEL_ALLERGY = {}, ALLERGY_OTHERS = { checked:false, text:"" };
+
+function renderMedHxChips(){
+  var wrap=document.getElementById("medHxChips"); wrap.innerHTML="";
+  MEDHX_LIST.forEach(function(name){
+    var chip=document.createElement("div");
+    chip.className="chip"+(SEL_MEDHX[name]?" checked":"");
+    chip.textContent=name;
+    chip.onclick=function(){ if(SEL_MEDHX[name]) delete SEL_MEDHX[name]; else SEL_MEDHX[name]=true; renderMedHxChips(); saveQ3(); };
+    wrap.appendChild(chip);
+  });
+  var oChip=document.createElement("div");
+  oChip.className="chip"+(MEDHX_OTHERS.checked?" checked":"");
+  oChip.textContent=OTHERS_LABEL;
+  oChip.onclick=function(){ MEDHX_OTHERS.checked=!MEDHX_OTHERS.checked; renderMedHxChips(); saveQ3(); };
+  wrap.appendChild(oChip);
+  document.getElementById("medHxOthersBox").classList.toggle("show", MEDHX_OTHERS.checked);
+}
+function buildQ3String(){
+  var parts=Object.keys(SEL_MEDHX);
+  if(MEDHX_OTHERS.checked) parts.push(MEDHX_OTHERS.text ? (OTHERS_LABEL+": "+MEDHX_OTHERS.text) : OTHERS_LABEL);
+  return parts.join(", ");
+}
+var _q3Timer=null;
+function saveQ3(immediate){
+  var run=function(){
+    if(!CURRENT.rowIndex) return;
+    var str=buildQ3String();
+    setSaveStatus("","Menyimpan...");
+    google.script.run
+      .withSuccessHandler(function(r){ if(r&&r.status==="success"){ setSaveStatus("ok","✓ Disimpan"); markFilled(3,str.length>0); } else setSaveStatus("err","Ralat simpan"); })
+      .withFailureHandler(function(){ setSaveStatus("err","Ralat simpan"); })
+      .saveField(CURRENT.rowIndex,"q3",str);
+  };
+  clearTimeout(_q3Timer);
+  if(immediate) run(); else _q3Timer=setTimeout(run,500);
+}
+function parseChipString(str, othersLabel){
+  var result={items:{}, othersChecked:false, othersText:""};
+  if(!str) return result;
+  var idx = str.indexOf(othersLabel);
+  var mainPart = idx===-1 ? str : str.substring(0, idx);
+  mainPart.split(",").forEach(function(p){ p=p.trim(); if(p) result.items[p]=true; });
+  if(idx!==-1){
+    result.othersChecked=true;
+    result.othersText = str.substring(idx+othersLabel.length).replace(/^:\s*/,"").replace(/^,\s*/,"").trim();
+  }
+  return result;
+}
+function restoreQ3(str){
+  if(!str) return;
+  var p=parseChipString(str, OTHERS_LABEL);
+  SEL_MEDHX=p.items; MEDHX_OTHERS.checked=p.othersChecked; MEDHX_OTHERS.text=p.othersText;
+  document.getElementById("medHxOthersInput").value=p.othersText;
+  renderMedHxChips();
+  markFilled(3,true);
+}
+
+function renderAllergyChips(){
+  var wrap=document.getElementById("allergyChips"); wrap.innerHTML="";
+  ALLERGY_LIST.forEach(function(name){
+    var chip=document.createElement("div");
+    chip.className="chip"+(SEL_ALLERGY[name]?" checked":"");
+    chip.textContent=name;
+    chip.onclick=function(){ if(SEL_ALLERGY[name]) delete SEL_ALLERGY[name]; else SEL_ALLERGY[name]=true; renderAllergyChips(); saveQ4(); };
+    wrap.appendChild(chip);
+  });
+  var oChip=document.createElement("div");
+  oChip.className="chip"+(ALLERGY_OTHERS.checked?" checked":"");
+  oChip.textContent=OTHERS_LABEL;
+  oChip.onclick=function(){ ALLERGY_OTHERS.checked=!ALLERGY_OTHERS.checked; renderAllergyChips(); saveQ4(); };
+  wrap.appendChild(oChip);
+  document.getElementById("allergyOthersBox").classList.toggle("show", ALLERGY_OTHERS.checked);
+}
+function buildQ4String(){
+  var parts=Object.keys(SEL_ALLERGY);
+  if(ALLERGY_OTHERS.checked) parts.push(ALLERGY_OTHERS.text ? (OTHERS_LABEL+": "+ALLERGY_OTHERS.text) : OTHERS_LABEL);
+  return parts.join(", ");
+}
+var _q4Timer=null;
+function saveQ4(immediate){
+  var run=function(){
+    if(!CURRENT.rowIndex) return;
+    var str=buildQ4String();
+    setSaveStatus("","Menyimpan...");
+    google.script.run
+      .withSuccessHandler(function(r){ if(r&&r.status==="success"){ setSaveStatus("ok","✓ Disimpan"); markFilled(3,str.length>0); } else setSaveStatus("err","Ralat simpan"); })
+      .withFailureHandler(function(){ setSaveStatus("err","Ralat simpan"); })
+      .saveField(CURRENT.rowIndex,"q4",str);
+  };
+  clearTimeout(_q4Timer);
+  if(immediate) run(); else _q4Timer=setTimeout(run,500);
+}
+function restoreQ4(str){
+  if(!str) return;
+  var p=parseChipString(str, OTHERS_LABEL);
+  SEL_ALLERGY=p.items; ALLERGY_OTHERS.checked=p.othersChecked; ALLERGY_OTHERS.text=p.othersText;
+  document.getElementById("allergyOthersInput").value=p.othersText;
+  renderAllergyChips();
+  markFilled(3,true);
+}
+
+// ── Q5 PHYSICAL EXAM (plain text) ──
+var _q5Timer=null;
+function onQ5Input(val){
+  clearTimeout(_q5Timer);
+  _q5Timer=setTimeout(function(){ saveQ5(); },600);
+}
+function saveQ5(immediate){
+  var run=function(){
+    if(!CURRENT.rowIndex) return;
+    var val=document.getElementById("q5-text").value;
+    setSaveStatus("","Menyimpan...");
+    google.script.run
+      .withSuccessHandler(function(r){ if(r&&r.status==="success"){ setSaveStatus("ok","✓ Disimpan"); markFilled(4, val.trim().length>0); } else setSaveStatus("err","Ralat simpan"); })
+      .withFailureHandler(function(){ setSaveStatus("err","Ralat simpan"); })
+      .saveField(CURRENT.rowIndex,"q5",val);
+  };
+  clearTimeout(_q5Timer);
+  if(immediate) run(); else run();
+}
+
+// ── Q6 INVESTIGATION (Yes/No + conditional text) ──
+var INVESTIGATION_YES = false;
+function setInvestigation(yes){
+  INVESTIGATION_YES=yes;
+  updateInvUI(yes);
+  saveQ6();
+}
+function updateInvUI(yes){
+  document.getElementById("inv-no-btn").className="q7-kes-btn"+(!yes?" sel-tidak":"");
+  document.getElementById("inv-yes-btn").className="q7-kes-btn"+(yes?" sel-ya":"");
+  document.getElementById("q6-text").style.display = yes?"block":"none";
+}
+var _q6Timer=null;
+function onQ6Input(){ clearTimeout(_q6Timer); _q6Timer=setTimeout(saveQ6,600); }
+function saveQ6(immediate){
+  var run=function(){
+    if(!CURRENT.rowIndex) return;
+    var str = INVESTIGATION_YES ? ("Ada: "+(document.getElementById("q6-text").value||"").trim()) : "Tiada";
+    setSaveStatus("","Menyimpan...");
+    google.script.run
+      .withSuccessHandler(function(r){ if(r&&r.status==="success"){ setSaveStatus("ok","✓ Disimpan"); markFilled(4,true); } else setSaveStatus("err","Ralat simpan"); })
+      .withFailureHandler(function(){ setSaveStatus("err","Ralat simpan"); })
+      .saveField(CURRENT.rowIndex,"q6",str);
+  };
+  clearTimeout(_q6Timer);
+  if(immediate) run(); else _q6Timer=setTimeout(run,500);
+}
+function restoreQ6(str){
+  if(!str) return;
+  if(str.indexOf("Ada")===0){
+    INVESTIGATION_YES=true;
+    document.getElementById("q6-text").value = str.replace(/^Ada:\s*/,"");
+    updateInvUI(true);
+  } else {
+    updateInvUI(false);
+  }
+  markFilled(4,true);
+}
+
+// ── Q7A/Q7B — PROCEDURE, MEDICATION, MANAGEMENT ──
+var Q7_RANGES = { procedures:[], medications:[], performers:[] };
+var Q7_SEL = { proc:{}, med:{} };
+var Q7_KES = null;
+var Q7B_SEL = { refer:false, discharge:false };
+
+function loadQ7Ranges(cb){
+  google.script.run
+    .withSuccessHandler(function(data){
+      if(data && data.status==="success"){ Q7_RANGES.procedures=data.procedures||[]; Q7_RANGES.medications=data.medications||[]; Q7_RANGES.performers=data.performers||[]; }
+      renderQ7Multi("proc",""); renderQ7Multi("med",""); renderQ7Performer();
+      if(cb) cb();
+    })
+    .withFailureHandler(function(){ if(cb) cb(); })
+    .getBilikKecemasanRanges();
+}
+function selectQ7Kes(val){
+  Q7_KES = val;
+  document.getElementById("q7-kes-ya").className="q7-kes-btn"+(val==="ya"?" sel-ya":"");
+  document.getElementById("q7-kes-tidak").className="q7-kes-btn"+(val==="tidak"?" sel-tidak":"");
+  if(Q7_KES!==null && document.getElementById("q7-performer").value!=="") showSectionError(5,"");
+}
+function renderQ7Multi(type, q){
+  var listEl=document.getElementById("q7-"+type+"-list");
+  var items = type==="proc" ? Q7_RANGES.procedures : Q7_RANGES.medications;
+  var sel = Q7_SEL[type];
+  var qLow=(q||"").toLowerCase().trim();
+  var filtered = qLow ? items.filter(function(x){ return x.toLowerCase().indexOf(qLow)!==-1; }) : items.slice();
+  filtered.sort(function(a,b){ var aC=!!sel[a],bC=!!sel[b]; if(aC&&!bC) return -1; if(!aC&&bC) return 1; return a.localeCompare(b); });
+  if(!filtered.length){ listEl.innerHTML="<div style='padding:10px;font-size:12px;color:var(--tx3);'>Tiada padanan</div>"; return; }
+  listEl.innerHTML="";
+  filtered.forEach(function(item){
+    var checked=!!sel[item];
+    var div=document.createElement("div");
+    div.className="q7-multi-item"+(checked?" checked":"");
+    var chk=document.createElement("input"); chk.type="checkbox"; if(checked) chk.checked=true;
+    var lbl=document.createElement("span"); lbl.textContent=item; lbl.style.flex="1";
+    div.appendChild(chk); div.appendChild(lbl);
+    div.onclick=function(){
+      chk.checked=!chk.checked;
+      if(chk.checked) sel[item]=true; else delete sel[item];
+      renderQ7Multi(type, document.getElementById("q7-"+type+"-search").value);
+      renderQ7Tags(type);
+    };
+    listEl.appendChild(div);
+  });
+}
+function renderQ7Tags(type){
+  var tagsEl=document.getElementById("q7-"+type+"-tags");
+  var keys=Object.keys(Q7_SEL[type]);
+  if(!keys.length){ tagsEl.innerHTML="<span style='font-size:12px;color:var(--tx3);font-style:italic;'>Tiada dipilih</span>"; return; }
+  tagsEl.innerHTML=keys.map(function(k){
+    return "<span class='q7-sel-tag'>"+k+"<span class='rm' onclick=\"removeQ7Sel('"+type+"','"+k.replace(/'/g,"\\'")+"')\">✕</span></span>";
+  }).join("");
+}
+function removeQ7Sel(type,item){
+  delete Q7_SEL[type][item];
+  renderQ7Multi(type, document.getElementById("q7-"+type+"-search").value);
+  renderQ7Tags(type);
+}
+function renderQ7Performer(){
+  var sel=document.getElementById("q7-performer");
+  sel.innerHTML="<option value=''>— Pilih performer —</option>";
+  Q7_RANGES.performers.forEach(function(p){ var o=document.createElement("option"); o.value=p; o.textContent=p; sel.appendChild(o); });
+}
+function toggleQ7AddForm(type){
+  var form=document.getElementById("q7-add-"+type);
+  var isOpen=form.classList.contains("show");
+  ["proc","med","perf"].forEach(function(t){ var f=document.getElementById("q7-add-"+t); if(f) f.classList.remove("show"); });
+  if(!isOpen){ form.classList.add("show"); var inp=document.getElementById("q7-add-"+type+"-input"); inp.value=""; setTimeout(function(){inp.focus();},50); }
+}
+function saveNewQ7Range(type){
+  var typeMap={proc:"procedure",med:"medication",perf:"performer"};
+  var input=document.getElementById("q7-add-"+type+"-input");
+  var statusEl=document.getElementById("q7-add-"+type+"-status");
+  var value=(input.value||"").trim();
+  if(!value){ statusEl.className="q7-add-status err"; statusEl.textContent="Sila masukkan nama."; return; }
+  statusEl.className="q7-add-status"; statusEl.textContent="Menyimpan...";
+  google.script.run
+    .withSuccessHandler(function(result){
+      if(result && result.status==="success"){
+        statusEl.className="q7-add-status ok"; statusEl.textContent="✓ Ditambah.";
+        if(type==="proc"){ Q7_RANGES.procedures.push(result.value); renderQ7Multi("proc", document.getElementById("q7-proc-search").value); }
+        else if(type==="med"){ Q7_RANGES.medications.push(result.value); renderQ7Multi("med", document.getElementById("q7-med-search").value); }
+        else { Q7_RANGES.performers.push(result.value); renderQ7Performer(); document.getElementById("q7-performer").value=result.value; }
+        input.value="";
+        setTimeout(function(){ toggleQ7AddForm(type); statusEl.textContent=""; }, 1200);
+      } else {
+        statusEl.className="q7-add-status err"; statusEl.textContent=result&&result.message?result.message:"Gagal.";
+      }
+    })
+    .withFailureHandler(function(err){ statusEl.className="q7-add-status err"; statusEl.textContent="Ralat: "+(err&&err.message?err.message:""); })
+    .addBkRange(typeMap[type], value);
+}
+function toggleQ7bChip(key, el){
+  Q7B_SEL[key] = !Q7B_SEL[key];
+  el.classList.toggle("checked", Q7B_SEL[key]);
+  if(Q7B_SEL[key]) applyQ7bTemplate(key);
+}
+function applyQ7bTemplate(key){
+  var noteEl=document.getElementById("q7b-note");
+  var tmpl = key==="refer" ? "1. Refer to \n2. " : "1. Allow discharged with \n2. ";
+  var firstLine = tmpl.split("\n")[0];
+  if(noteEl.value.indexOf(firstLine)===-1){
+    noteEl.value = noteEl.value.trim() ? (noteEl.value.trim()+"\n\n"+tmpl) : tmpl;
+  }
+  noteEl.focus();
+}
+function onQ7bNoteInput(){ /* Q7 saves as one unit via the explicit submit button */ }
+
+function submitQ7(){
+  var statusEl=document.getElementById("q7Status");
+  var btn=document.getElementById("q7SubmitBtn");
+  if(!Q7_KES){ statusEl.className="q7-status err"; statusEl.textContent="Sila pilih Kes Kecemasan (Ya/Tidak)."; return; }
+  var performer=document.getElementById("q7-performer").value;
+  if(!performer){ statusEl.className="q7-status err"; statusEl.textContent="Sila pilih Performer."; return; }
+
+  btn.disabled=true;
+  statusEl.className="q7-status"; statusEl.textContent="Menyimpan...";
+
+  var payload = {
+    rowIndex: CURRENT.rowIndex,
+    nama: NAMA, ic: CURRENT.identifier,
+    kesYa: Q7_KES==="ya", kesTidak: Q7_KES==="tidak",
+    procedures: Object.keys(Q7_SEL.proc),
+    medications: Object.keys(Q7_SEL.med),
+    performer: performer,
+    referTicked: !!Q7B_SEL.refer,
+    dischargeTicked: !!Q7B_SEL.discharge,
+    q7bNote: (document.getElementById("q7b-note").value||"").trim()
+  };
+
+  google.script.run
+    .withSuccessHandler(function(result){
+      btn.disabled=false;
+      if(result && result.status==="success"){
+        statusEl.className="q7-status ok"; statusEl.textContent="✓ Disimpan ke SMART & rekod e-clerking.";
+        markFilled(5, true);
+        showSuccessOverlay("✓ Prosedur & Pengurusan Disimpan", NAMA, "Direkod serentak ke SMART dan rekod e-clerking pesakit ini.");
+      } else {
+        statusEl.className="q7-status err"; statusEl.textContent="Ralat: "+(result&&result.message?result.message:"Gagal.");
+      }
+    })
+    .withFailureHandler(function(err){
+      btn.disabled=false;
+      statusEl.className="q7-status err"; statusEl.textContent="Ralat: "+(err&&err.message?err.message:"Gagal.");
+    })
+    .saveEclerkingQ7(payload);
+}
+
+function restoreQ7(q7aStr, q7bStr){
+  if(q7aStr){
+    var mKes=q7aStr.match(/Kes Kecemasan:\s*(Ya|Tidak)/);
+    if(mKes) selectQ7Kes(mKes[1]==="Ya"?"ya":"tidak");
+    var mProc=q7aStr.match(/Procedure:\s*(.*)/);
+    if(mProc && mProc[1]!=="—"){ mProc[1].split(",").forEach(function(p){ p=p.trim(); if(p) Q7_SEL.proc[p]=true; }); }
+    var medLine = q7aStr.split("\n").filter(function(l){return l.indexOf("Medication:")===0;})[0]||"";
+    var medVal = medLine.replace("Medication:","").trim();
+    if(medVal && medVal!=="—") medVal.split(",").forEach(function(m){ m=m.trim(); if(m) Q7_SEL.med[m]=true; });
+    var mPerf=q7aStr.match(/Performer:\s*(.*)/);
+    if(mPerf && mPerf[1] && mPerf[1]!=="—") setTimeout(function(){ document.getElementById("q7-performer").value=mPerf[1].trim(); },300);
+    renderQ7Multi("proc",""); renderQ7Multi("med","");
+    renderQ7Tags("proc"); renderQ7Tags("med");
+    markFilled(5,true);
+  }
+  if(q7bStr){
+    if(q7bStr.indexOf("Refer: Ya")!==-1){ Q7B_SEL.refer=true; var c1=document.querySelector('.chip[data-key="refer"]'); if(c1) c1.classList.add("checked"); }
+    if(q7bStr.indexOf("Allow Discharged: Ya")!==-1){ Q7B_SEL.discharge=true; var c2=document.querySelector('.chip[data-key="discharge"]'); if(c2) c2.classList.add("checked"); }
+    var mNote=q7bStr.match(/Nota:\s*(.*)$/);
+    if(mNote) document.getElementById("q7b-note").value=mNote[1];
+  }
+}
+
+// ── PRINT / PDF ──
+function printRecord(rowIndex){
+  rowIndex = rowIndex || CURRENT.rowIndex;
+  if(!rowIndex){ alert("Rekod belum sedia."); return; }
+  var w = window.open("","_blank");
+  if(!w){ alert("Pop-up disekat. Benarkan pop-up untuk laman ini."); return; }
+  w.document.write("<p style='font-family:Arial'>Menjana rekod...</p>");
+  google.script.run
+    .withSuccessHandler(function(res){
+      if(res && res.status==="success") openPrintWindow(res.record, w);
+      else { w.close(); alert("Ralat: "+(res&&res.message||"Gagal.")); }
+    })
+    .withFailureHandler(function(err){ w.close(); alert("Ralat: "+(err&&err.message||"")); })
+    .getRecordForPrint(rowIndex);
+}
+function escapeHtml(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function openPrintWindow(record,w){
+  var w=window.open("","_blank");
+  var rows=[
+    ["Masa", record.timestamp],
+    ["1. Sign & Symptoms", record.q1],
+    ["2. Vital Signs", record.q2],
+    ["3. Sejarah Perubatan", record.q3],
+    ["4. Alahan Ubat", record.q4],
+    ["5. Pemeriksaan Fizikal", record.q5],
+    ["6. Investigasi", record.q6],
+    ["7a. Prosedur & Pengurusan", record.q7a],
+    ["7b. Refer/Discharge", record.q7b],
+    ["8. Diagnosis", record.q8]
+  ];
+  var body=rows.map(function(r){
+    return "<div class='row'><div class='lbl'>"+escapeHtml(r[0])+"</div><div class='val'>"+escapeHtml(r[1]||"—")+"</div></div>";
+  }).join("");
+  var html = "<html><head><title>E-Clerking - "+escapeHtml(record.nama)+"</title>"+
+    "<meta charset='utf-8'>"+
+    "<style>body{font-family:Arial,sans-serif;padding:24px;color:#111;} h1{font-size:18px;border-bottom:2px solid #0F4530;padding-bottom:8px;} .row{margin-bottom:14px;} .lbl{font-weight:700;font-size:12px;text-transform:uppercase;color:#555;margin-bottom:3px;} .val{font-size:14px;white-space:pre-wrap;}</style>"+
+    "</head><body>"+
+    "<h1>E-Clerking — "+escapeHtml(record.nama)+" ("+escapeHtml(record.ic)+")</h1>"+
+    body+
+    "<script>window.onload=function(){window.print();}<"+"/script>"+
+    "</body></html>";
+  w.document.write(html);
+  w.document.close();
+}
+
+// ── Q8 — DIAGNOSIS (tag list + PRIMA sync) ──
+var Q8_LIST = [];
+var Q8_SELECTED = [];
+function loadQ8List(cb){
+  google.script.run
+    .withSuccessHandler(function(res){
+      if(res && res.status==="success"){ Q8_LIST = res.diagnosis||[]; }
+      renderQ8List("");
+      if(res && res.note){ document.getElementById("q8SyncNote").textContent="ℹ "+res.note; }
+      if(cb) cb();
+    })
+    .withFailureHandler(function(){ if(cb) cb(); })
+    .getDiagnosisList();
+}
+function renderQ8List(q){
+  var listEl=document.getElementById("q8-list");
+  if(!listEl) return;
+  var qLow=(q||"").toLowerCase().trim();
+  var filtered = qLow ? Q8_LIST.filter(function(x){ return x.toLowerCase().indexOf(qLow)!==-1; }) : Q8_LIST.slice();
+  filtered.sort(function(a,b){
+    var aC=Q8_SELECTED.indexOf(a)!==-1, bC=Q8_SELECTED.indexOf(b)!==-1;
+    if(aC&&!bC) return -1; if(!aC&&bC) return 1; return a.localeCompare(b);
+  });
+  if(!filtered.length){ listEl.innerHTML="<div style='padding:10px;font-size:12px;color:var(--tx3);'>Tiada padanan</div>"; return; }
+  listEl.innerHTML="";
+  filtered.forEach(function(item){
+    var checked=Q8_SELECTED.indexOf(item)!==-1;
+    var div=document.createElement("div");
+    div.className="q7-multi-item"+(checked?" checked":"");
+    var chk=document.createElement("input"); chk.type="checkbox"; if(checked) chk.checked=true;
+    var lbl=document.createElement("span"); lbl.textContent=item; lbl.style.flex="1";
+    div.appendChild(chk); div.appendChild(lbl);
+    div.onclick=function(){
+      chk.checked=!chk.checked;
+      if(chk.checked){ if(Q8_SELECTED.indexOf(item)===-1) Q8_SELECTED.push(item); }
+      else { Q8_SELECTED = Q8_SELECTED.filter(function(x){ return x!==item; }); }
+      renderQ8List(document.getElementById("q8-search").value);
+      renderQ8Tags();
+      saveQ8();
+    };
+    listEl.appendChild(div);
+  });
+}
+function addQ8Custom(){
+  var inp=document.getElementById("q8-custom-input");
+  var v=(inp.value||"").trim();
+  if(!v) return;
+  addQ8Tag(v);
+  inp.value="";
+}
+function addQ8Tag(v){
+  if(Q8_SELECTED.indexOf(v)===-1) Q8_SELECTED.push(v);
+  renderQ8List(document.getElementById("q8-search")?document.getElementById("q8-search").value:"");
+  renderQ8Tags();
+  saveQ8();
+}
+function removeQ8Tag(v){
+  Q8_SELECTED = Q8_SELECTED.filter(function(x){ return x!==v; });
+  renderQ8List(document.getElementById("q8-search")?document.getElementById("q8-search").value:"");
+  renderQ8Tags();
+  saveQ8();
+}
+function renderQ8Tags(){
+  var wrap=document.getElementById("q8Tags");
+  if(!Q8_SELECTED.length){ wrap.innerHTML="<span style='font-size:12px;color:var(--tx3);font-style:italic;'>Tiada dipilih</span>"; return; }
+  wrap.innerHTML=Q8_SELECTED.map(function(v){
+    return "<span class='q7-sel-tag'>"+v+"<span class='rm' onclick=\"removeQ8Tag('"+v.replace(/'/g,"\\'")+"')\">✕</span></span>";
+  }).join("");
+}
+var _q8Timer=null;
+function saveQ8(immediate){
+  var run=function(){
+    if(!CURRENT.rowIndex) return;
+    var str=Q8_SELECTED.join(", ");
+    setSaveStatus("","Menyimpan...");
+    google.script.run
+      .withSuccessHandler(function(r){
+        if(r && r.status==="success"){
+          setSaveStatus("ok","✓ Disimpan");
+          markFilled(6, str.length>0);
+          var noteEl=document.getElementById("q8SyncNote");
+          if(r.primaSync==="skipped") noteEl.textContent="ℹ PRIMA belum disegerakkan (PRIMA_FILE_ID belum ditetapkan).";
+          else if(r.primaSync==="notfound") noteEl.textContent="⚠ Pesakit tidak dijumpai dalam PRIMA hari ini — disimpan di e-clerking sahaja.";
+          else if(r.primaSync==="success") noteEl.textContent="✓ Disegerakkan ke PRIMA (TODAY LIST).";
+          else if(r.primaSync==="error") noteEl.textContent="⚠ Ralat sync PRIMA: "+(r.primaSyncMessage||"Tidak diketahui.");
+        } else setSaveStatus("err","Ralat simpan");
+      })
+      .withFailureHandler(function(){ setSaveStatus("err","Ralat simpan"); })
+      .saveDiagnosisEverywhere(CURRENT.rowIndex, CURRENT.identifier, str);
+  };
+  clearTimeout(_q8Timer);
+  if(immediate) run(); else _q8Timer=setTimeout(run,500);
+}
+function restoreQ8(str){
+  if(!str) return;
+  Q8_SELECTED = str.split(",").map(function(s){return s.trim();}).filter(Boolean);
+  renderQ8List("");
+  renderQ8Tags();
+  markFilled(6, Q8_SELECTED.length>0);
+}
+function testPrimaConnection(){
+  var noteEl=document.getElementById("q8SyncNote");
+  noteEl.textContent="Menguji sambungan...";
+  google.script.run
+    .withSuccessHandler(function(res){
+      if(res && res.status==="success" && res.info){
+        var i=res.info;
+        var txt="[Fail PRIMA_FILE_ID ditetapkan: "+(i.primaFileIdSet?"Ya":"Tidak")+
+          "] [Sheet dijumpai: "+(i.sheetFound?"Ya":"Tidak")+
+          "] [Baris data: "+i.totalDataRows+"] — "+i.message;
+        if(i.identifierRaw !== i.identifierProvided){
+          txt += "\n(Nilai mentah diterima: '"+i.identifierRaw+"' → selepas dibersihkan: '"+i.identifierProvided+"')";
+        }
+        if(i.sampleRows && i.sampleRows.length){
+          txt += "\nContoh data tersimpan dalam PRIMA hari ini:";
+          i.sampleRows.forEach(function(r,idx){
+            txt += "\n  #"+(idx+1)+" IC='"+r.icRaw+"' Pasport='"+r.ppRaw+"'";
+          });
+        }
+        noteEl.textContent = txt;
+        noteEl.style.whiteSpace = "pre-line";
+      } else {
+        noteEl.textContent="⚠ Ralat menguji sambungan.";
+      }
+    })
+    .withFailureHandler(function(err){ noteEl.textContent="⚠ Ralat: "+(err&&err.message?err.message:""); })
+    .testPrimaConnection(CURRENT.identifier);
+}
+
+// ── FINISH ──
+function finishClerking(){
+  saveQ1(true); saveQ2(true); saveQ3(true); saveQ4(true); saveQ5(true); saveQ6(true); saveQ8(true);
+  showSuccessOverlay("✓ E-Clerking Selesai", NAMA, "Semua jawapan telah disimpan.");
+}
+
+// ── LOAD / INIT RECORD ──
+function initPage(){
+  renderPatientBanner();
+  loadVitalsConfig(function(){
+    loadQ7Ranges(function(){
+      loadQ8List(function(){
+        google.script.run
+          .withSuccessHandler(function(pl){
+            if(pl && pl.status==="success"){
+              SYMPTOM_LIST = pl.symptoms||[]; renderSymptomChips();
+              MEDHX_LIST = pl.medicalHistory||[]; renderMedHxChips();
+              ALLERGY_LIST = pl.drugAllergy||[]; renderAllergyChips();
+            }
+            loadOrCreateRecord();
+          })
+          .withFailureHandler(function(){ SYMPTOM_LIST=[]; loadOrCreateRecord(); })
+          .getPickLists();
+      });
+    });
+  });
+}
+// ── RESET + APPLY RECORD ──
+function resetForm(){
+  [_q1Timer,_q2Timer,_q3Timer,_q4Timer,_q5Timer,_q6Timer,_q8Timer].forEach(clearTimeout);
+  SEL_SYMPTOMS={}; OTHERS_SYM={checked:false,text:""};
+  SEL_MEDHX={}; MEDHX_OTHERS={checked:false,text:""};
+  SEL_ALLERGY={}; ALLERGY_OTHERS={checked:false,text:""};
+  PAIN_SCORE=null; INVESTIGATION_YES=false; Q7_KES=null;
+  Q7B_SEL={refer:false,discharge:false}; Q7_SEL={proc:{},med:{}}; Q8_SELECTED=[];
+  ["v-bp-sys","v-bp-dia","v-pulse","v-spo2","v-rr","v-glu","q5-text","q6-text",
+   "q7b-note","medHxOthersInput","allergyOthersInput","q7-performer"]
+    .forEach(function(id){ document.getElementById(id).value=""; });
+  document.querySelectorAll("#q7bChips .chip").forEach(function(c){ c.classList.remove("checked"); });
+  document.getElementById("q7-kes-ya").className="q7-kes-btn";
+  document.getElementById("q7-kes-tidak").className="q7-kes-btn";
+  for(var i=1;i<=6;i++) markFilled(i,false);
+  renderSymptomChips(); renderMedHxChips(); renderAllergyChips(); renderPainScale();
+  renderQ7Multi("proc",""); renderQ7Multi("med",""); renderQ7Tags("proc"); renderQ7Tags("med");
+  renderQ8List(""); renderQ8Tags(); updateInvUI(false);
+  onVitalInput(); clearTimeout(_q2Timer);
+  showSection(1);
+}
+
+function applyRecord(rec, applyDefaults){
+  resetForm();
+  CURRENT.rowIndex = rec.rowIndex;
+  CURRENT.readOnlyOld = !applyDefaults;
+  document.getElementById("visitLabel").textContent =
+    (applyDefaults ? "Kes semasa" : "Rekod lama") + (rec.timestamp ? " · "+rec.timestamp : "");
+
+  if(rec.q1) restoreQ1(rec.q1);
+  if(rec.q2) restoreQ2(rec.q2);
+  if(rec.q3) restoreQ3(rec.q3);
+  else if(applyDefaults){ SEL_MEDHX["Unknown Medical History"]=true; renderMedHxChips(); saveQ3(true); }
+  if(rec.q4) restoreQ4(rec.q4);
+  else if(applyDefaults){ SEL_ALLERGY["Unknown Drug Allergy"]=true; renderAllergyChips(); saveQ4(true); }
+  if(rec.q5){ document.getElementById("q5-text").value=rec.q5; markFilled(4,true); }
+  if(rec.q6) restoreQ6(rec.q6);
+  else if(applyDefaults){ updateInvUI(false); saveQ6(true); }
+  if(rec.q7a || rec.q7b) restoreQ7(rec.q7a, rec.q7b);
+  else if(applyDefaults){
+    var vs=Q7_RANGES.procedures.filter(function(p){return p.toLowerCase()==="vital sign";})[0];
+    if(vs){ Q7_SEL.proc[vs]=true; renderQ7Multi("proc",""); renderQ7Tags("proc"); }
+  }
+  if(rec.q8) restoreQ8(rec.q8);
+  // performer is restored by restoreQ7 (remove its setTimeout and set value directly)
+}
+function todayStr(){
+  var d=new Date(), p=function(n){return String(n).padStart(2,"0");};
+  return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear();
+}
+function loadOrCreateRecord(){
+  google.script.run
+    .withSuccessHandler(function(r){
+      VISITS=(r&&r.visits)||[];
+      document.getElementById("histCount").textContent="("+VISITS.length+")";
+      if(!VISITS.length){ createVisit(); return; }
+      document.getElementById("loadOverlay").classList.add("hide");
+      showChooser();
+    })
+    .withFailureHandler(function(err){
+      document.getElementById("loadOverlay").classList.add("hide");
+      setSaveStatus("err","Gagal memuatkan: "+(err&&err.message||""));
+    })
+    .getVisitHistory(CURRENT.identifier);
+}
+function showChooser(){
+  document.getElementById("chName").textContent = NAMA+" · "+CURRENT.identifier;
+  var today=todayStr();
+  document.getElementById("chList").innerHTML = VISITS.map(function(v){
+    var isToday = v.timestamp.substring(0,10)===today;
+    return "<div style='border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:8px;cursor:pointer' onclick='chooseVisit("+v.rowIndex+")'>"+
+      "<b style='font-size:13px'>"+escapeHtml(v.timestamp)+(isToday?" · HARI INI (sambung)":"")+"</b>"+
+      "<div style='font-size:12px;color:var(--tx2);margin-top:4px'>Simptom: "+escapeHtml(v.q1||"—")+"<br>Diagnosis: "+escapeHtml(v.q8||"—")+"</div></div>";
+  }).join("");
+  document.getElementById("chooseOverlay").classList.add("show");
+}
+function toggleChList(){
+  var el=document.getElementById("chList");
+  el.style.display = el.style.display==="none" ? "block" : "none";
+}
+function chooseVisit(row){ document.getElementById("chooseOverlay").classList.remove("show"); openVisit(row); }
+function chooseNew(){ document.getElementById("chooseOverlay").classList.remove("show"); createVisit(); }
+
+function createVisit(){
+  document.getElementById("loadOverlay").classList.remove("hide");
+  google.script.run
+    .withSuccessHandler(function(res){
+      document.getElementById("loadOverlay").classList.add("hide");
+      if(res&&res.status==="success"){ applyRecord(res.record,true); loadHistory(); }
+      else alert(res&&res.message||"Gagal.");
+    })
+    .withFailureHandler(function(e){ document.getElementById("loadOverlay").classList.add("hide"); alert(e.message); })
+    .getOrInitRecord(NAMA, CURRENT.identifier, true);
+}
+function startNewVisit(){
+  if(!confirm("Mulakan rekod clerking BARU untuk pesakit ini?")) return;
+  createVisit();
+}
+function openVisit(rowIndex){
+  document.getElementById("histOverlay").classList.remove("show");
+  if(rowIndex===CURRENT.rowIndex) return;
+  var v = VISITS.filter(function(x){return x.rowIndex===rowIndex;})[0];
+  var isToday = v && v.timestamp.substring(0,10)===todayStr();
+  document.getElementById("loadOverlay").classList.remove("hide");
+  google.script.run
+    .withSuccessHandler(function(res){
+      document.getElementById("loadOverlay").classList.add("hide");
+      if(res&&res.status==="success") applyRecord(res.record, isToday); // defaults only for today's
+      else alert(res&&res.message||"Gagal.");
+    })
+    .withFailureHandler(function(e){ document.getElementById("loadOverlay").classList.add("hide"); alert(e.message); })
+    .getRecordByRow(rowIndex, CURRENT.identifier);
+}
+
+// ── HISTORY ──
+var VISITS=[];
+function loadHistory(){
+  google.script.run.withSuccessHandler(function(r){
+    VISITS=(r&&r.visits)||[];
+    document.getElementById("histCount").textContent="("+VISITS.length+")";
+  }).getVisitHistory(CURRENT.identifier);
+}
+function openHistory(){
+  var el=document.getElementById("histList");
+  if(!VISITS.length){ el.innerHTML="<p style='font-size:13px;color:var(--tx3)'>Tiada sejarah.</p>"; }
+  else el.innerHTML=VISITS.map(function(v){
+    var cur = v.rowIndex===CURRENT.rowIndex ? " (dibuka)" : "";
+    return "<div style='border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:8px'>"+
+      "<b style='font-size:13px'>"+escapeHtml(v.timestamp)+cur+"</b>"+
+      "<div style='font-size:12px;color:var(--tx2);margin:4px 0'>Simptom: "+escapeHtml(v.q1||"—")+"<br>Diagnosis: "+escapeHtml(v.q8||"—")+"</div>"+
+      "<button class='q7-add-btn' style='margin-left:0' onclick='openVisit("+v.rowIndex+")'>Buka</button> "+
+      "<button class='q7-add-btn' style='margin-left:0' onclick='printRecord("+v.rowIndex+")'>Cetak</button></div>";
+  }).join("");
+  document.getElementById("histOverlay").classList.add("show");
+}
+function openVisit(rowIndex){
+  document.getElementById("histOverlay").classList.remove("show");
+  if(rowIndex===CURRENT.rowIndex) return;
+  var latest = VISITS.length && VISITS[0].rowIndex===rowIndex;
+  google.script.run.withSuccessHandler(function(res){
+    if(res&&res.status==="success") applyRecord(res.record, latest); // defaults only for newest
+    else alert(res&&res.message||"Gagal.");
+  }).getRecordByRow(rowIndex, CURRENT.identifier);
+}
+function startNewVisit(){
+  if(!confirm("Mulakan rekod clerking BARU untuk pesakit ini?")) return;
+  document.getElementById("loadOverlay").classList.remove("hide");
+  google.script.run.withSuccessHandler(function(res){
+    document.getElementById("loadOverlay").classList.add("hide");
+    if(res&&res.status==="success"){ applyRecord(res.record, true); loadHistory(); }
+  }).withFailureHandler(function(e){
+    document.getElementById("loadOverlay").classList.add("hide"); alert(e.message);
+  }).getOrInitRecord(NAMA, CURRENT.identifier, true);
+}
+
+initPage();
+</script>
+<script src="./emergency-alert.js"></script>
+<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
+</body>
+</html>
