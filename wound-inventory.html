@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Inventori Luka</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<link rel="apple-touch-icon" href="./siaga-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --g9:#0B3D3A; --g7:#0F5C56; --g5:#1C8F84; --mint:#EAF6F2; --bg:#F6FBF9; --ink:#1E2B29; --ink2:#5B6B68; --line:#DCEAE6;
+    --in:#0a8f5a; --out:#C2570C; --red:#C62839; --gold:#C9A227; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; min-height:100vh; background:radial-gradient(1200px 800px at 50% -10%, var(--mint), var(--bg)); font-family:'Inter',sans-serif; color:var(--ink); padding:14px 14px 40px; }
+  .wrap{ max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .head{ border-radius:24px; padding:18px 20px; color:#fff; background:linear-gradient(135deg,var(--g9),var(--g7)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .head .eyebrow{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:700; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; margin:3px 0 0; }
+  .head small{ display:block; font-size:11.5px; opacity:.75; margin-top:3px; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
+  .tabs{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; background:#fff; border:1px solid var(--line); border-radius:18px; padding:5px; }
+  .tab{ min-height:46px; border:none; border-radius:13px; background:transparent; font:700 13.5px 'Manrope',sans-serif; color:var(--ink2); cursor:pointer; }
+  .tab[aria-selected="true"]{ background:var(--g9); color:#fff; }
+  .panel{ display:none; flex-direction:column; gap:14px; } .panel.show{ display:flex; }
+  .toggle{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .tg{ min-height:56px; border-radius:16px; border:2px solid var(--line); background:#fff; font:800 15px 'Manrope',sans-serif; color:var(--ink2); cursor:pointer; }
+  .tg.out[aria-pressed="true"]{ border-color:var(--out); color:var(--out); background:#FFF3E8; }
+  .tg.in[aria-pressed="true"]{ border-color:var(--in); color:var(--in); background:#E6F7EE; }
+  .search{ width:100%; height:52px; border-radius:14px; border:1.5px solid var(--line); padding:0 15px; font:inherit; font-size:16px; background:#fff; }
+  .search:focus,.fld:focus,textarea:focus{ outline:none; border-color:var(--g5); box-shadow:0 0 0 3px rgba(28,143,132,.15); }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:12px; }
+  .it{ background:#fff; border:2px solid var(--line); border-radius:18px; overflow:hidden; cursor:pointer; text-align:left; padding:0; font:inherit; color:inherit; display:flex; flex-direction:column; }
+  .it:active{ transform:scale(.98); }
+  .it .ph{ width:100%; aspect-ratio:1/1; background:var(--mint); display:flex; align-items:center; justify-content:center; font-size:38px; overflow:hidden; }
+  .it .ph img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .it .bd{ padding:9px 11px 11px; }
+  .it .nm{ font-size:13px; font-weight:700; line-height:1.3; min-height:34px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .pill{ display:inline-block; margin-top:6px; font-size:11.5px; font-weight:800; padding:3px 9px; border-radius:99px; }
+  .pill.ok{ background:#E0F5E8; color:var(--in); } .pill.low{ background:#FFF3D6; color:#8a6d0a; } .pill.zero{ background:#FDE0E3; color:var(--red); }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:20px; padding:16px; }
+  .card h2{ margin:0 0 4px; font-family:'Manrope',sans-serif; font-size:16px; font-weight:800; }
+  .stats{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .st{ font-size:11px; font-weight:700; padding:3px 8px; border-radius:8px; background:var(--mint); color:var(--g7); }
+  .addbar{ display:grid; grid-template-columns:1fr 110px; gap:8px; margin-top:8px; }
+  .fld{ width:100%; height:50px; border-radius:12px; border:1.5px solid var(--line); padding:0 13px; font:inherit; font-size:16px; background:#fff; }
+  .btn{ min-height:52px; border-radius:15px; border:none; font:800 15px 'Manrope',sans-serif; cursor:pointer; background:linear-gradient(135deg,var(--g9),var(--g5)); color:#fff; padding:0 18px; }
+  .btn:disabled{ opacity:.5; cursor:default; }
+  .btn.out{ background:linear-gradient(135deg,#8a3a08,var(--out)); } .btn.in{ background:linear-gradient(135deg,#075f3b,var(--in)); }
+  .empty{ text-align:center; padding:30px 12px; color:var(--ink2); font-size:14px; line-height:1.6; grid-column:1/-1; }
+  .lg{ display:flex; gap:11px; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--line); }
+  .lg:last-child{ border-bottom:none; }
+  .lg .t{ min-width:46px; text-align:center; font-weight:800; font-size:12px; padding:6px 0; border-radius:10px; }
+  .lg .t.IN{ background:#E0F5E8; color:var(--in); } .lg .t.OUT{ background:#FFF3E8; color:var(--out); }
+  .lg .m{ flex:1; min-width:0; } .lg .n{ font-weight:700; font-size:14px; } .lg .s{ font-size:12px; color:var(--ink2); margin-top:2px; line-height:1.45; }
+  .sheet{ position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.5); display:none; align-items:flex-end; justify-content:center; padding:14px; overflow:auto; }
+  .sheet.show{ display:flex; }
+  .box{ width:min(540px,100%); background:#fff; border-radius:24px; padding:20px 18px 18px; margin:auto 0 0; }
+  .box h3{ margin:0 0 12px; font-family:'Manrope',sans-serif; font-size:19px; }
+  .sel{ display:flex; gap:12px; align-items:center; background:var(--mint); border-radius:16px; padding:10px; margin-bottom:14px; }
+  .sel .ph{ width:56px; height:56px; border-radius:12px; background:#fff; display:flex; align-items:center; justify-content:center; font-size:26px; overflow:hidden; flex-shrink:0; }
+  .sel .ph img{ width:100%; height:100%; object-fit:cover; }
+  .sel b{ display:block; font-size:15px; line-height:1.3; } .sel small{ color:var(--ink2); font-size:12.5px; font-weight:600; }
+  label{ display:block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink2); margin:12px 0 6px; }
+  .qty{ display:flex; align-items:center; justify-content:center; gap:10px; }
+  .qty button{ width:56px; height:56px; border-radius:16px; border:1.5px solid var(--line); background:#fff; font-size:26px; font-weight:800; color:var(--g7); cursor:pointer; }
+  .qty input{ width:100px; height:56px; text-align:center; border-radius:16px; border:1.5px solid var(--line); font:800 24px 'Manrope',sans-serif; }
+  textarea{ width:100%; border-radius:12px; border:1.5px solid var(--line); padding:11px 13px; font:inherit; font-size:15px; resize:none; height:64px; }
+  .btns{ display:grid; grid-template-columns:1fr 1.6fr; gap:10px; margin-top:16px; }
+  .btn.ghost{ background:#fff; border:1.5px solid var(--line); color:var(--ink); }
+  .toast{ position:fixed; left:50%; bottom:30px; transform:translate(-50%,30px); background:var(--g9); color:#fff; font-weight:700; font-size:14px; padding:13px 20px; border-radius:99px; opacity:0; pointer-events:none; transition:all .3s; z-index:80; max-width:92vw; text-align:center; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); } .toast.err{ background:var(--red); }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+  @media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div><div class="eyebrow">Klinik Kesihatan Ayer Hitam</div><h1>🩹 Inventori Luka</h1><small id="upd">Memuatkan…</small></div>
+    <a class="back" href="./dashboard.html">← Dashboard</a>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-t="tx" aria-selected="true">📦 Transaksi</button>
+    <button class="tab" role="tab" data-t="inv" aria-selected="false">📋 Stok</button>
+    <button class="tab" role="tab" data-t="log" aria-selected="false">🕘 Rekod</button>
+  </div>
+
+  <div class="panel show" id="p-tx">
+    <div class="toggle">
+      <button class="tg out" id="tgOut" aria-pressed="true">↓ AMBIL KELUAR</button>
+      <button class="tg in" id="tgIn" aria-pressed="false">↑ STOK MASUK</button>
+    </div>
+    <input class="search" id="q" type="search" placeholder="Cari item…" aria-label="Cari item" enterkeyhint="search">
+    <div class="grid" id="grid"><div class="empty">Memuatkan item…</div></div>
+  </div>
+
+  <div class="panel" id="p-inv">
+    <div class="card" id="addCard">
+      <h2>Tambah item baharu</h2>
+      <div class="addbar"><input class="fld" id="nName" placeholder="Nama item" maxlength="80"><input class="fld" id="nStock" type="number" inputmode="numeric" min="0" placeholder="Stok awal"></div>
+      <button class="btn" id="nAdd" style="width:100%;margin-top:10px" type="button">＋ Tambah item</button>
+    </div>
+    <input class="search" id="q2" type="search" placeholder="Tapis item…" aria-label="Tapis item">
+    <div class="grid" id="invGrid"></div>
+  </div>
+
+  <div class="panel" id="p-log">
+    <div class="card"><h2>Transaksi terkini</h2><div id="logBox"><div class="empty">Memuatkan…</div></div></div>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shT"><div class="box">
+  <h3 id="shT">Ambil keluar</h3>
+  <div class="sel"><div class="ph" id="shPh">🩹</div><div><b id="shNm">—</b><small id="shSt"></small></div></div>
+  <label>Kuantiti</label>
+  <div class="qty"><button type="button" id="qm" aria-label="Kurang">−</button><input id="qty" type="number" inputmode="numeric" min="1" value="1"><button type="button" id="qp" aria-label="Tambah">＋</button></div>
+  <label for="rem">Catatan (pilihan)</label>
+  <textarea id="rem" maxlength="120" placeholder="Wad, no. batch, catatan…"></textarea>
+  <div class="btns"><button class="btn ghost" id="shX" type="button">Batal</button><button class="btn out" id="shOk" type="button">Sahkan</button></div>
+</div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const token = sessionStorage.getItem('kkah_session_token');
+if(!token) location.href = './login.html';
+const IC = sessionStorage.getItem('kkah_ic') || '';
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(m, err){ const t = $('toast'); t.textContent = m; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(toast._t); toast._t = setTimeout(() => t.className = 'toast', 3400); }
+async function call(fn, args, reqId){
+  const r = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'woundCall', token, fn, args, reqId }) });
+  const d = await r.json();
+  if(!d.ok && /expired/i.test(d.error || '')){ location.href = './login.html'; throw new Error('expired'); }
+  return d;
+}
+const CK = 'kkah_cache_' + IC + '_wound_items';
+let items = [], type = 'OUT', sel = null, saving = false, reqId = '';
+
+function cls(n){ return n <= 0 ? 'zero' : n < 5 ? 'low' : 'ok'; }
+function ph(it){ return it.imageUrl ? '<img src="' + esc(it.imageUrl) + '" alt="" loading="lazy" onerror="this.parentNode.textContent=\'🩹\'">' : '🩹'; }
+
+function load(){
+  let hit = null; try{ hit = JSON.parse(localStorage.getItem(CK) || 'null'); }catch(e){}
+  if(hit && hit.d){ items = hit.d; renderAll(); $('upd').textContent = 'Disimpan ' + new Date(hit.t).toLocaleTimeString('ms-MY', { hour:'2-digit', minute:'2-digit' }) + ' · mengemas kini…'; }
+  return call('getItems', []).then(d => {
+    if(!d.ok){ if(!hit) $('grid').innerHTML = '<div class="empty">' + esc(d.error || 'Gagal memuatkan') + '</div>'; $('upd').textContent = ''; return; }
+    items = d.result || []; try{ localStorage.setItem(CK, JSON.stringify({ t: Date.now(), d: items })); }catch(e){}
+    $('upd').textContent = 'Dikemas kini ' + new Date().toLocaleTimeString('ms-MY', { hour:'2-digit', minute:'2-digit' });
+    renderAll();
+  }).catch(() => { if(!hit) $('grid').innerHTML = '<div class="empty">Sambungan gagal. Cuba lagi.</div>'; });
+}
+function renderAll(){ renderGrid(); renderInv(); }
+function renderGrid(){
+  const q = $('q').value.trim().toLowerCase(), list = items.filter(i => i.name.toLowerCase().includes(q));
+  $('grid').innerHTML = list.length ? list.map(it => {
+    const i = items.indexOf(it);
+    return '<button type="button" class="it" data-i="' + i + '"><div class="ph">' + ph(it) + '</div><div class="bd"><div class="nm">' + esc(it.name) + '</div><span class="pill ' + cls(it.current) + '">' + it.current + ' baki</span></div></button>';
+  }).join('') : '<div class="empty">Tiada item dijumpai.</div>';
+}
+function renderInv(){
+  const q = $('q2').value.trim().toLowerCase(), list = items.filter(i => i.name.toLowerCase().includes(q));
+  $('invGrid').innerHTML = list.length ? list.map(it =>
+    '<div class="it" style="cursor:default"><div class="ph">' + ph(it) + '</div><div class="bd"><div class="nm">' + esc(it.name) + '</div><div class="stats"><span class="st">MASUK ' + it.stockIn + '</span><span class="st">KELUAR ' + it.stockOut + '</span></div><span class="pill ' + cls(it.current) + '">SEKARANG ' + it.current + '</span></div></div>').join('') : '<div class="empty">Tiada item.</div>';
+}
+$('q').addEventListener('input', renderGrid); $('q2').addEventListener('input', renderInv);
+$('grid').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if(b) openSheet(items[+b.dataset.i]); });
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === b));
+  ['tx','inv','log'].forEach(k => $('p-' + k).classList.toggle('show', k === b.dataset.t));
+  if(b.dataset.t === 'log') loadLog(); if(b.dataset.t === 'inv') load();
+}));
+function setType(t){ type = t; $('tgOut').setAttribute('aria-pressed', t === 'OUT'); $('tgIn').setAttribute('aria-pressed', t === 'IN'); }
+$('tgOut').onclick = () => setType('OUT'); $('tgIn').onclick = () => setType('IN');
+
+function openSheet(it){
+  sel = it; reqId = 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  $('shT').textContent = type === 'IN' ? '↑ Stok masuk' : '↓ Ambil keluar';
+  $('shNm').textContent = it.name; $('shSt').textContent = 'Stok semasa: ' + it.current;
+  $('shPh').innerHTML = ph(it); $('qty').value = 1; $('rem').value = '';
+  $('shOk').className = 'btn ' + (type === 'IN' ? 'in' : 'out'); $('shOk').textContent = type === 'IN' ? '↑ Sahkan stok masuk' : '↓ Sahkan ambil keluar';
+  $('sheet').classList.add('show'); document.body.style.overflow = 'hidden';
+}
+function closeSheet(){ if(saving) return; $('sheet').classList.remove('show'); document.body.style.overflow = ''; sel = null; }
+$('shX').onclick = closeSheet; $('sheet').addEventListener('pointerdown', e => { if(e.target === $('sheet')) closeSheet(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeSheet(); });
+$('qm').onclick = () => { $('qty').value = Math.max(1, (parseInt($('qty').value) || 1) - 1); };
+$('qp').onclick = () => { $('qty').value = Math.min(100000, (parseInt($('qty').value) || 0) + 1); };
+
+$('shOk').onclick = async () => {
+  if(saving || !sel) return;
+  const qty = parseInt($('qty').value);
+  if(!qty || qty < 1){ toast('Masukkan kuantiti yang sah', true); return; }
+  if(type === 'OUT' && qty > sel.current){ toast('Stok tidak cukup (baki ' + sel.current + ')', true); return; }
+  const name = sel.name;
+  saving = true; $('shOk').disabled = true; $('shOk').textContent = 'Menyimpan…';
+  try{
+    const d = await call('updateStock', [name, type, qty, $('rem').value.trim()], reqId);
+    if(d.ok && d.result && d.result.success){
+      const it = items.find(x => x.name === name);
+      if(it){ it.current = d.result.current != null ? d.result.current : it.current + (type === 'IN' ? qty : -qty); if(type === 'IN') it.stockIn += qty; else it.stockOut += qty; }
+      try{ localStorage.setItem(CK, JSON.stringify({ t: Date.now(), d: items })); }catch(e){}
+      saving = false; closeSheet(); renderAll(); toast('✓ ' + (type === 'IN' ? 'Stok masuk' : 'Diambil keluar') + ': ' + qty + ' × ' + name);
+    }else toast((d.result && d.result.message) || d.error || 'Gagal menyimpan', true);
+  }catch(err){ if(String(err.message) !== 'expired') toast('Sambungan gagal — tekan Sahkan sekali lagi (tidak akan direkod dua kali)', true); }
+  saving = false; $('shOk').disabled = false; $('shOk').textContent = type === 'IN' ? '↑ Sahkan stok masuk' : '↓ Sahkan ambil keluar';
+};
+
+$('nAdd').onclick = async () => {
+  const n = $('nName').value.trim(), s = parseInt($('nStock').value) || 0;
+  if(!n){ toast('Masukkan nama item', true); return; }
+  $('nAdd').disabled = true;
+  try{ const d = await call('addNewItem', [n, s]);
+    if(d.ok && d.result && d.result.success){ toast('Item ditambah ✓'); $('nName').value = ''; $('nStock').value = ''; load(); }
+    else toast((d.result && d.result.message) || d.error || 'Gagal', true);
+  }catch(e){ toast('Sambungan gagal', true); }
+  $('nAdd').disabled = false;
+};
+
+function loadLog(){
+  call('getRecentLog', [40]).then(d => {
+    if(!d.ok){ $('logBox').innerHTML = '<div class="empty">' + esc(d.error || 'Gagal') + '</div>'; return; }
+    const r = d.result || [];
+    $('logBox').innerHTML = r.length ? r.map(x => '<div class="lg"><div class="t ' + esc(x.type) + '">' + (x.type === 'IN' ? '＋' : '−') + x.qty + '</div><div class="m"><div class="n">' + esc(x.item) + '</div><div class="s">' + esc(x.time) + (x.by ? ' · ' + esc(x.by) : '') + (x.remarks ? '<br>' + esc(x.remarks) : '') + '</div></div></div>').join('') : '<div class="empty">Belum ada transaksi.</div>';
+  }).catch(() => { $('logBox').innerHTML = '<div class="empty">Sambungan gagal.</div>'; });
+}
+load();
+</script>
+<script src="./emergency-alert.js"></script>
+<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
+</body>
+</html>
