@@ -207,7 +207,7 @@
 
   <label>Gambar resit</label>
   <div class="photo">
-    <img id="shPrev" alt="Pratonton resit">
+    <img id="shPrev" alt="Pratonton resit" data-zoom>
     <button type="button" class="pbtn" id="shPhotoBtn">📤 Upload<small style="display:block;font-weight:600;font-size:12px;opacity:.75;margin-top:2px">Ambil gambar dengan kamera atau pilih dari galeri</small></button>
     <input type="file" id="shFile" accept="image/*" hidden>
   </div>
@@ -502,7 +502,7 @@ function renderLogs(){
       '<div class="rm">' + rm(l.amount) + ' <span style="font-weight:600;font-size:13px;color:var(--ink-500)">· ' + nf(l.litres, 2) + ' L</span></div>' +
       '<div class="meta">RM ' + nf(l.price, 2) + '/L' + (l.type ? ' · ' + esc(l.type) : '') + (l.odo ? ' · ' + nf(l.odo, 0) + ' km' : '') + '<br>' + esc(l.driver) + '</div>' +
       '<div style="margin-top:5px">' + badge + '</div>' +
-      '<div class="acts">' + (l.photo ? '<a class="lnk" href="' + esc(l.photo) + '" target="_blank" rel="noopener">🧾 Lihat resit</a>' : '') +
+      '<div class="acts">' + (l.photo ? '<a class="lnk" href="' + esc(l.photo) + '" data-lb="fuel" data-title="Resit minyak" target="_blank" rel="noopener">🧾 Lihat resit</a>' : '') +
       (l.canVoid ? '<button class="lnk del" type="button" data-void="' + esc(l.id) + '">Padam</button>' : '') + '</div></div></div>';
   }).join('');
 }
@@ -643,5 +643,6 @@ loadMonth();
 </script>
 <script src="./emergency-alert.js"></script>
 <script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
+<script src="./lightbox.js"></script>
 </body>
 </html>
