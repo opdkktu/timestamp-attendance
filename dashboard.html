@@ -1324,6 +1324,7 @@ async function setupSupervisorAndLog(){
   logAct('Buka dashboard');
   addModuleCard('Mata & Ranking', '🏆', './points.html');
   addModuleCard('Log Aktiviti', '🧾', './activity.html');
+  addModuleCard('Inventori Luka', '🩹', './wound-inventory.html');
   try{
     const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'getSupervisorScope', token: sessionStorage.getItem('kkah_session_token') }) });
