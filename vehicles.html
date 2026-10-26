@@ -114,7 +114,7 @@
   <input type="date" id="shExpiry">
   <label>Gambar dokumen (pilihan)</label>
   <div class="photo">
-    <img id="shPreview" alt="">
+    <img id="shPreview" alt="Pratonton" data-zoom>
     <button type="button" class="pbtn" onclick="document.getElementById('shFile').click()">📷 Ambil gambar / pilih dari galeri</button>
     <input type="file" id="shFile" accept="image/*" hidden>
   </div>
@@ -166,14 +166,14 @@ async function load(){
 function render(){
   $('vehicles').innerHTML = ov.vehicles.map((v, i) =>
     '<div class="card" style="margin-bottom:10px"><div class="ic">' + (/ambulan/i.test(v.name) ? '🚑' : '🚐') + '</div><div class="mid"><div class="nm">' + esc(v.name) + '</div><div class="sub">' + esc(v.plate) + '</div><div>' + pill(v) +
-    (v.doc ? '<a class="doc" href="' + esc(v.doc) + '" target="_blank" rel="noopener">Lihat gambar</a>' : '') + '</div></div>' +
+    (v.doc ? '<a class="doc" href="' + esc(v.doc) + '" data-lb="veh" data-title="' + esc(v.name) + ' — ' + esc(v.plate) + '" target="_blank" rel="noopener">Lihat gambar</a>' : '') + '</div></div>' +
     (v.canEdit ? '<button class="edit" onclick="editVeh(' + i + ')">Kemas kini</button>' : '') + '</div>').join('') || '<div class="empty">Tiada kenderaan.</div>';
 
   const showAll = ov.role.isPic || ov.role.isTop;
   $('licTitle').textContent = showAll ? 'Lesen memandu — semua pemandu' : 'Lesen memandu saya';
   $('licences').innerHTML = ov.licences.map((l, i) =>
     '<div class="card" style="margin-bottom:10px"><div class="ic">🪪</div><div class="mid"><div class="nm">' + esc(l.name) + '</div><div class="sub">' + (l.cls ? 'Kelas ' + esc(l.cls) : 'Kelas belum diisi') + '</div><div>' + pill(l) +
-    (l.doc ? '<a class="doc" href="' + esc(l.doc) + '" target="_blank" rel="noopener">Lihat gambar</a>' : '') + '</div></div>' +
+    (l.doc ? '<a class="doc" href="' + esc(l.doc) + '" data-lb="lic" data-title="Lesen — ' + esc(l.name) + '" target="_blank" rel="noopener">Lihat gambar</a>' : '') + '</div></div>' +
     (l.canEdit ? '<button class="edit" onclick="editLic(' + i + ')">' + (l.level === 'none' ? 'Isi' : 'Kemas kini') + '</button>' : '') + '</div>').join('') ||
     '<div class="empty">Tiada pemandu berdaftar. Tetapkan unit “Pemandu” pada staf di sheet DATABASE (lajur Q).</div>';
 }
@@ -337,5 +337,6 @@ loadMaint();
 </script>
 <script src="./emergency-alert.js"></script>
 <script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
+<script src="./lightbox.js"></script>
 </body>
 </html>
