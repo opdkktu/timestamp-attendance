@@ -183,7 +183,7 @@ async function loadRecords(){
       card.className = 'card record-card';
       let docAction = '';
       if(row.lampiran && row.lampiran.indexOf('http') !== -1){
-        docAction = '<a class="mini-btn" href="' + row.lampiran + '" target="_blank">👁 Lihat Bukti</a>';
+        docAction = '<a class="mini-btn" href="' + row.lampiran + '" data-lb="lampiran" data-title="Bukti" target="_blank">👁 Lihat Bukti</a>';
       }else{
         docAction = '<label class="mini-btn">📎 Muat Naik<input type="file" onchange="doRetroUpload(this, ' + i + ')"></label>';
       }
@@ -269,7 +269,7 @@ async function loadSchedule(){
         let action = '';
         if(needsEvidence){
           action = hasProof
-            ? '<a href="' + proofMap[key] + '" target="_blank" class="chip-upload-btn uploaded" title="Lihat dokumen">✓</a>'
+            ? '<a href="' + proofMap[key] + '" data-lb="bukti" data-title="Dokumen" target="_blank" class="chip-upload-btn uploaded" title="Lihat dokumen">✓</a>'
             : '<label class="chip-upload-btn" id="lbl_' + chipId + '" title="Muat naik bukti">📎<input type="file" style="display:none" onchange="doPerDateUpload(this,\'' + type + '\',\'' + d.date + '\',\'' + chipId + '\')"></label>';
         }
         return '<span class="chip' + (hasProof ? ' uploaded' : '') + '" id="' + chipId + '">' + d.date + ' <span class="chip-val">' + d.value + '</span>' + action + '</span>';
@@ -312,7 +312,7 @@ function doPerDateUpload(el, leaveType, date, chipId){
         const chip = document.getElementById(chipId);
         chip.classList.add('uploaded');
         const lbl = document.getElementById('lbl_' + chipId);
-        if(lbl) lbl.outerHTML = '<a href="' + data.url + '" target="_blank" class="chip-upload-btn uploaded">✓</a>';
+        if(lbl) lbl.outerHTML = '<a href="' + data.url + '" data-lb="bukti" data-title="Dokumen" target="_blank" class="chip-upload-btn uploaded">✓</a>';
       }else{
         document.getElementById('lbl_' + chipId).innerHTML = '⚠️';
         alert('Gagal: ' + (data.error || ''));
@@ -326,5 +326,6 @@ function doPerDateUpload(el, leaveType, date, chipId){
 </script>
 <script src="./emergency-alert.js"></script>
 <script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
+<script src="./lightbox.js"></script>
 </body>
 </html>
