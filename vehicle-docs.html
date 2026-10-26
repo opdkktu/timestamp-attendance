@@ -243,7 +243,7 @@ function render(){
     const dd = d.date.split('-');
     return '<div class="doc"><div class="ic">📄<small>' + d.pages + ' h</small></div><div class="mid"><div class="nm">' + esc(d.type) + '</div>' +
       '<div class="meta">' + (+dd[2]) + ' ' + MONTHS[+dd[1] - 1] + ' ' + dd[0] + (d.ref ? ' · ' + esc(d.ref) : '') + '<br>Oleh ' + esc(d.by) + (d.notes ? '<br>' + esc(d.notes) : '') + '</div>' +
-      '<div class="pgs">' + d.urls.map((u, i) => '<a href="' + esc(u) + '" target="_blank" rel="noopener" aria-label="Buka halaman ' + (i + 1) + '">' + (d.urls.length > 1 ? 'H' + (i + 1) : 'Buka') + '</a>').join('') +
+      '<div class="pgs">' + d.urls.map((u, i) => '<a href="' + esc(u) + '" data-lb="' + esc(d.id) + '" data-title="' + esc(d.type) + (d.urls.length > 1 ? ' — halaman ' + (i + 1) + '/' + d.urls.length : '') + '" target="_blank" rel="noopener" aria-label="Buka halaman ' + (i + 1) + '">' + (d.urls.length > 1 ? 'H' + (i + 1) : 'Buka') + '</a>').join('') +
       (d.canVoid ? '<a href="#" class="del" data-del="' + esc(d.id) + '" style="color:var(--red-600)">Padam</a>' : '') + '</div></div></div>';
   }).join('') : '<div class="empty">Tiada dokumen' + (filt ? ' “' + esc(filt) + '”' : '') + ' bagi kenderaan ini pada bulan ini.' + (ov.role.canAdd ? '<br>Ketik <b>＋ Muat naik dokumen</b>.' : '') + '</div>';
   $('fab').classList.toggle('show', !!ov.role.canAdd);
@@ -268,7 +268,7 @@ function renderTypes(){
     '<button type="button" class="tc add" id="addTypeBtn">＋ Tambah nama baharu</button>';
 }
 function renderThumbs(){
-  $('thumbs').innerHTML = pages.map((p, i) => '<div class="th"><img src="' + p + '" alt="Halaman ' + (i + 1) + '"><span class="no">H' + (i + 1) + '</span>' +
+  $('thumbs').innerHTML = pages.map((p, i) => '<div class="th"><img src="' + p + '" alt="Halaman ' + (i + 1) + '" data-zoom><span class="no">H' + (i + 1) + '</span>' +
     '<button type="button" class="x" data-rm="' + i + '" aria-label="Buang halaman ' + (i + 1) + '">✕</button>' +
     (i > 0 ? '<button type="button" class="lf" data-lf="' + i + '" aria-label="Alih halaman ' + (i + 1) + ' ke depan">←</button>' : '') + '</div>').join('') +
     (pages.length < MAXP ? '<button type="button" class="addpg" id="addPg"><b>＋</b>' + (pages.length ? 'Halaman seterusnya' : 'Imbas halaman') + '</button>' : '');
@@ -362,5 +362,6 @@ load();
 </script>
 <script src="./emergency-alert.js"></script>
 <script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
+<script src="./lightbox.js"></script>
 </body>
 </html>
