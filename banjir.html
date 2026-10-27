@@ -647,7 +647,5 @@ function renderAll(){ renderHome(); if(view === 'fam') renderFam(); if(view === 
 document.querySelectorAll('#nav button').forEach(b => b.addEventListener('click', () => setTimeout(renderAll, 0)));
 renderAll(); show('home'); updSync(); schedSync(200);
 </script>
-<script src="./emergency-alert.js"></script>
-<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
 </body>
 </html>
