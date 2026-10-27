@@ -458,6 +458,11 @@
   .sb-act.sb-game{ background:linear-gradient(135deg,#4c1d95,#a21caf 55%,#f59e0b); animation:gmPulse 2.2s ease-in-out infinite; }
   @keyframes gmPulse{ 0%,100%{ box-shadow:0 8px 22px -10px rgba(162,28,175,.55); } 50%{ box-shadow:0 10px 30px -6px rgba(245,158,11,.85); } }
   @media (prefers-reduced-motion:reduce){ .sb-act.sb-game{ animation:none; } }
+  .pr-trio{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:-4px 0 14px; }
+  .pr-trio[hidden]{ display:none; }
+  .pr-trio button{ border:none; border-radius:18px; padding:12px 6px 10px; min-height:96px; background:linear-gradient(160deg,#0B3D3A,#1C8F84); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; font:800 12.5px Manrope,sans-serif; line-height:1.2; text-align:center; cursor:pointer; box-shadow:0 12px 24px -16px rgba(11,61,58,.8); }
+  .pr-trio button .ai{ width:40px; height:40px; border-radius:13px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-size:21px; }
+  .pr-trio button:active{ transform:scale(.97); } .pr-trio button:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
   .sb-pair{ grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .sb-pair .sb-act{ grid-column:auto; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:8px; padding:14px; min-height:132px; }
   .sb-pair .sb-act .go{ display:none; } .sb-pair .sb-act small{ line-height:1.35; }
@@ -811,6 +816,8 @@
     </div>
   </div>
 
+  <div class="pr-trio" id="prTrio" hidden></div>
+
   <div class="tr-box" id="trBox" aria-live="polite"></div>
 
   <button class="cme-scan-tile" onclick="openCmeScanner()" aria-label="Imbas QR kehadiran CME">
@@ -1133,17 +1140,23 @@ async function loadExtraTiles_(){
     try{ localStorage.setItem('kkah_nochk_' + (sessionStorage.getItem('kkah_ic') || ''), nochk ? '1' : '0'); }catch(e){}
     const slot = document.getElementById('actSlot'); if(!slot) return;
     slot.innerHTML = '';
+    const TRIO = { primareg: ['📝', 'Registration'], eclerk: ['📋', 'e-Clerking'], kaunterhist: ['🔎', 'Search visit'] };
+    const trio = document.getElementById('prTrio'); if(trio){ trio.innerHTML = ''; trio.hidden = true; }
     (d.tiles || []).forEach(t => {
+      if(TRIO[t.id] && trio){                                   // PRIMA big box → 3 small boxes under it
+        const b = document.createElement('button'); b.type = 'button';
+        b.innerHTML = '<span class="ai">' + TRIO[t.id][0] + '</span><span></span>';
+        b.lastChild.textContent = TRIO[t.id][1]; b.setAttribute('aria-label', TRIO[t.id][1]);
+        b.onclick = () => { window.location.href = t.href; };
+        trio.appendChild(b); trio.hidden = false; return;
+      }
+      if(t.id === 'bersih'){ addModuleCard(t.name, t.icon, t.href, false); return; }   // BERSIH → icon grid
       const b = document.createElement('button'); b.type = 'button'; b.className = 'status-box sb-act';
-      const sub = t.id === 'bersih' ? 'Tandakan tugasan kebersihan hari ini' : t.id === 'amo' ? 'Buka borang \u2014 nama anda telah diisi' : t.id === 'primareg' ? 'Daftar pesakit OPD / MCH \u2014 perlu PIN' : t.id === 'eclerk' ? 'Cari IC pesakit hari ini, kemudian buka e-Clerking' : t.id === 'kaunterhist' ? 'Cari IC \u2014 10 lawatan terakhir ke kaunter' : '';
+      const sub = t.id === 'amo' ? 'Buka borang \u2014 nama anda telah diisi' : '';
       b.innerHTML = '<span class="ai">' + t.icon + '</span><span><b></b><small>' + sub + '</small></span><span class="go">\u203A</span>';
       b.querySelector('b').textContent = t.name;
       b.onclick = () => { if(t.ext) window.open(t.href, '_blank', 'noopener'); else window.location.href = t.href; };
-      if(t.id === 'primareg' || t.id === 'eclerk'){          // PRIMA Pendaftaran (left) + e-Clerking (right) share one row
-        let pr = slot.querySelector('.sb-pair');
-        if(!pr){ pr = document.createElement('div'); pr.className = 'sb-pair'; slot.appendChild(pr); }
-        pr.appendChild(b);
-      }else slot.appendChild(b);
+      slot.appendChild(b);
     });
   }catch(e){ /* optional */ }
 }
@@ -1430,9 +1443,9 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(() => { if(!saverNow_()) loadTodayAttendance(); }, 5 * 60 * 1000); // pick up a check-in/out made elsewhere (e.g. kiosk) without a refresh
   setInterval(() => { if(!saverNow_() && window._coLocked && coOpenNowLocal_()) loadTodayAttendance(); }, 30 * 1000); // Check Out unlocks by itself at 1:00 PM
 
-  // Emergency: if an alert is live when the dashboard opens or comes back to the foreground, show it + siren.
+  // Emergency: push only (same route as the check-in notification). A push that arrives while SIAGA is open shows the alert + siren.
   if(!VIEW_NAME && window.SiagaEmergency){
-    SiagaEmergency.watch(API_URL_DASHBOARD);
+    SiagaEmergency.ready();          // sound unlock + push listener only — no server polling
   }
   warmFaceAssets_(); // pre-download the face models in the background so Check In starts fast
 });
