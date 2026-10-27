@@ -291,7 +291,5 @@ load();
 setInterval(() => { if(document.visibilityState === 'visible' && !$('viewList').classList.contains('hide')) load(true); }, 45000);
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') load(true); });
 </script>
-<script src="./emergency-alert.js"></script>
-<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
 </body>
 </html>
