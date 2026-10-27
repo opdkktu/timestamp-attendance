@@ -2253,9 +2253,10 @@ const CHECKLIST_SOURCES = {
 };
 
 /* --- Checklists: live status from SIAGA's backend (reads each checklist's LOGS sheet); CSV is only the fallback --- */
-const CHK_ORDER = ['trolley', 'bag', 'ambulance'];
-const CHK_BOX = { trolley: 'box_trolley', bag: 'box_bag', ambulance: 'box_ambulance' };
+const CHK_ORDER = ['temperature', 'trolley', 'bag', 'ambulance'];
+const CHK_BOX = { temperature: 'box_temperature', trolley: 'box_trolley', bag: 'box_bag', ambulance: 'box_ambulance' };
 const CHK_URL = {   // fallback copy of the links (the backend also returns them)
+  temperature: 'https://script.google.com/a/macros/moh.gov.my/s/AKfycbyUcI4q1NcV_IpiM_30mZ55d1N1C1mW6nOTbGbjaGZdcAm9_cY7i9692nGZyxvi5CSCRA/exec',
   trolley:   'https://script.google.com/macros/s/AKfycbwj634nbrqJzMJyK8y33BTXHgc_HbVjiv56a7X6xM6yZVpsIfIKQs4UWiW6iIsfw1QvEw/exec',
   bag:       'https://script.google.com/macros/s/AKfycbw-o5cHk5NyfsPRGmB7KjGcTmSiUxBQGb-byiH2XYMNQVTc1F68mLEqjvrmT-ztDkO_/exec',
   ambulance: 'https://script.google.com/macros/s/AKfycbwYhOAPrNBkp4qypwd0I8Fi1bpUa09dinQAPyOx6D6W8p9fyVJAIOjvCyGYfiL1WA4oow/exec'
@@ -2263,19 +2264,42 @@ const CHK_URL = {   // fallback copy of the links (the backend also returns them
 let chkLastLoad = 0, chkOpenedAt = 0, chkData = {};
 
 /** Opens a checklist in a new tab with the logged-in person's name preselected (?name=…). */
-function openChecklist(key){
+function openChecklist(key, slot){
   if(VIEW_NAME) return;                                   // a supervisor viewing a staff member must not check on their behalf
   const base = (chkData[key] && chkData[key].url) || CHK_URL[key];
   const name = sessionStorage.getItem('kkah_name') || '';
   chkOpenedAt = Date.now();
   try{ logAct('Buka checklist', key); }catch(e){}
-  window.open(base + (name ? '?name=' + encodeURIComponent(name) : ''), '_blank', 'noopener');
+  const qs = [name ? 'name=' + encodeURIComponent(name) : '', slot ? 'slot=' + slot : ''].filter(Boolean).join('&');
+  window.open(base + (qs ? '?' + qs : ''), '_blank', 'noopener');
 }
 
 function escHtml_(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+/* Temperature (OPD) is checked twice a day (AM 8:00, PM 16:00): show both sessions, red only when one is due and still missing. */
+function renderTemperatureBox(item, el){
+  const name = item.icon + ' ' + item.label, S = item.slots || {};
+  const line = (k, ic) => { const s = S[k]; if(!s) return '';
+    const t = s.state === 'done' ? '✓ ' + escHtml_(s.time) + ' · ' + escHtml_(String(s.by).split(' ').slice(0, 2).join(' '))
+      : s.state === 'due' ? '<b>BELUM</b> — sepatutnya ' + escHtml_(s.dueTxt) : 'dibuka ' + escHtml_(s.dueTxt);
+    return '<div class="sb-sub" style="margin-top:3px;">' + ic + ' ' + s.label + ': ' + t + '</div>'; };
+  const btn = (txt, soft) => VIEW_NAME ? '' : '<button class="sb-btn' + (soft ? ' soft' : '') + '" onclick="openChecklist(\'temperature\',\'' + (item.next || '') + '\')">' + txt + ' →</button>';
+  if(item.error){
+    el.className = 'status-box sb-neutral';
+    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">Tiada data</div><div class="sb-sub">Status tidak dapat dibaca</div>' + btn('Buka rekod', true);
+  }else if(item.next){
+    el.className = 'status-box sb-alert';
+    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">BELUM DIREKOD</div>' + line('am', '☀️') + line('pm', '🌙') + btn('Rekod ' + S[item.next].label + ' sekarang');
+  }else{
+    const bothDone = S.am && S.pm && S.am.state === 'done' && S.pm.state === 'done';
+    el.className = 'status-box ' + (bothDone || (S.am && S.am.state === 'done') ? 'sb-ok' : 'sb-neutral');
+    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">' + (bothDone ? 'AM &amp; PM ✓' : (S.am && S.am.state === 'done' ? 'AM disemak ✓' : 'Belum waktunya')) + '</div>' + line('am', '☀️') + line('pm', '🌙') + (S.am && S.am.state === 'upcoming' ? btn('Rekod awal', true) : '');
+  }
+}
+
 function renderChecklistBox(item){
   const el = document.getElementById(CHK_BOX[item.key]); if(!el) return;
+  if(item.key === 'temperature'){ renderTemperatureBox(item, el); return; }
   const name = item.icon + ' ' + item.label;
   // Ambulance: the driver types the odometer inside the checklist — show the latest reading here.
   const odo = (item.key === 'ambulance' && item.odo) ? '<div class="sb-sub" style="margin-top:3px;">🛣️ ' + Number(item.odo).toLocaleString('en-MY') + ' km</div>' : '';
@@ -2299,7 +2323,6 @@ function renderChecklistBox(item){
 
 async function loadChecklistBoxes(fresh){
   if(document.body.classList.contains('no-chk')) return;   // PPK / PRA: no checklist status boxes
-  csvLoadBox_('box_temperature');   // temperature checklist still comes from its published sheet
   chkLastLoad = Date.now();
   try{
     const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -2311,7 +2334,7 @@ async function loadChecklistBoxes(fresh){
     CHK_ORDER.forEach(k => { const b = document.getElementById(CHK_BOX[k]); if(b) b.style.display = shown.indexOf(k) === -1 ? 'none' : ''; });   // e.g. ordinary staff do not see Ambulance
     data.lists.forEach(it => { chkData[it.key] = it; renderChecklistBox(it); });
   }catch(err){
-    CHK_ORDER.forEach(key => csvLoadBox_(CHK_BOX[key]));   // backend unreachable → old published-CSV method
+    CHK_ORDER.forEach(key => { if(key === 'temperature'){ const e = document.getElementById('box_temperature'); if(e) renderBoxError(e, '🌡️ Temperature (OPD)'); } else csvLoadBox_(CHK_BOX[key]); });   // backend unreachable → old published-CSV method (not for Temperature)
   }
 }
 
