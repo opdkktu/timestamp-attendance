@@ -54,6 +54,23 @@
 
   .section-title{ font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; color:var(--ink-500); margin:22px 4px 10px; }
 
+  /* Banjir Team box (under the working zone) */
+  .bj-open{ display:flex; align-items:center; justify-content:center; min-height:46px; margin-top:10px; border-radius:14px; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35); color:#fff; font-weight:800; font-size:13px; text-decoration:none; text-align:center; padding:0 10px; }
+  .bj-card{ border-radius:22px; padding:14px 16px 12px; color:#fff; background:linear-gradient(135deg,#0b3b5c,#0e7490); box-shadow:0 14px 28px -18px rgba(11,59,92,.7); margin-bottom:14px; }
+  .bj-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+  .bj-t{ font:800 15px Manrope,sans-serif; letter-spacing:.01em; } .bj-d{ font-size:11.5px; font-weight:700; opacity:.85; text-align:right; }
+  .bj-d.stale{ color:#FFD9A0; opacity:1; }
+  .bj-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .bj-r{ background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.18); border-radius:14px; padding:8px 11px; min-width:0; }
+  .bj-r.me{ background:rgba(255,255,255,.28); border-color:#fff; }
+  .bj-r .rl{ font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; opacity:.8; }
+  .bj-r .nm{ font-size:13.5px; font-weight:700; margin-top:2px; line-height:1.3; word-break:break-word; }
+  .bj-r .nm.none{ font-weight:600; opacity:.6; font-style:italic; }
+  .bj-r .you{ display:inline-block; margin-left:5px; font-size:10px; font-weight:800; background:#fff; color:#0b3b5c; border-radius:99px; padding:1px 7px; vertical-align:middle; }
+  .bj-r.wide{ grid-column:1 / -1; }
+  .bj-sk{ height:50px; border-radius:14px; background:linear-gradient(90deg,rgba(255,255,255,.1) 25%,rgba(255,255,255,.22) 50%,rgba(255,255,255,.1) 75%); background-size:200% 100%; animation:bjsk 1.4s infinite; }
+  @keyframes bjsk{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
+  @media (prefers-reduced-motion:reduce){ .bj-sk{ animation:none; } }
   .schedule-card{
     background:linear-gradient(135deg, var(--teal-700), var(--teal-500)); color:#fff;
     border-radius:20px; padding:18px 20px; margin-top:4px; display:none;
@@ -772,6 +789,12 @@
     </div>
   </div>
 
+  <div class="bj-card loading" id="box_banjir" aria-live="polite">
+    <div class="bj-head"><span class="bj-t">🌊 Banjir Team</span><span class="bj-d" id="bjDate">&nbsp;</span></div>
+    <div class="bj-grid" id="bjGrid"><div class="bj-sk"></div><div class="bj-sk"></div><div class="bj-sk"></div></div>
+    <a class="bj-open" href="./banjir.html">📋 Buka Banjir PPS — rekod mangsa &amp; laporan WhatsApp ›</a>
+  </div>
+
   <div class="kc-box" id="kcBox" onclick="kcOpen()" role="button" aria-label="Panggil nombor giliran">
     <button class="kc-close" onclick="event.stopPropagation(); kcDismiss()" aria-label="Tutup">✕</button>
     <button class="kc-pin" id="kcPin" onclick="event.stopPropagation(); kcTogglePin()" aria-pressed="false" aria-label="Kekalkan kaunter aktif">📌 Aktif</button>
@@ -805,13 +828,13 @@
 
   <div class="status-boxes-grid">
     <div id="gameSlot" style="display:contents"></div>
+    <div class="status-box loading" id="box_oncall" style="grid-column:1 / -1;"><div class="sb-label">🚑 On-Call Ambulance Crew</div><div class="sb-main">&nbsp;</div></div>
     <div id="actSlot" style="display:contents"></div>
     <div class="status-box loading" id="box_bls"><div class="sb-label">BLS Validity</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_temperature"><div class="sb-label">Temperature</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_trolley"><div class="sb-label">Emergency Trolley</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_bag"><div class="sb-label">Ambulance Bag</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_ambulance"><div class="sb-label">Ambulance</div><div class="sb-main">&nbsp;</div></div>
-    <div class="status-box loading" id="box_oncall" style="grid-column:1 / -1;"><div class="sb-label">🚑 On-Call Ambulance Crew</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_portfolio" style="grid-column:1 / -1;"><div class="sb-label">Portfolio Saya</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_apps"><div class="sb-label">Jumlah Permohonan</div><div class="sb-main">&nbsp;</div></div>
     <div class="status-box loading" id="box_hours"><div class="sb-label">Jumlah Jam</div><div class="sb-main">&nbsp;</div></div>
@@ -1382,6 +1405,7 @@ window.addEventListener('DOMContentLoaded', () => {
   loadTodaySchedule();
   loadTodayAttendance();
   loadOnCallBox();
+  loadBanjirBox();
   checkSpecialDayPopup();
   if(!VIEW_NAME) loadBirthdayAlerts();
   loadHeroPoints();
@@ -1402,7 +1426,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if(document.visibilityState !== 'visible') return;
     if(!saverNow_() && Date.now() - chkLastLoad > 20 * 1000) loadChecklistBoxes(chkOpenedAt && Date.now() - chkOpenedAt < 30 * 60 * 1000);
   });
-  setInterval(() => { if(!saverNow_()) loadOnCallBox(); }, 5 * 60 * 1000); // on-call crew can change during the day
+  setInterval(() => { if(!saverNow_()){ loadOnCallBox(); loadBanjirBox(); } }, 5 * 60 * 1000); // on-call crew can change during the day
   setInterval(() => { if(!saverNow_()) loadTodayAttendance(); }, 5 * 60 * 1000); // pick up a check-in/out made elsewhere (e.g. kiosk) without a refresh
   setInterval(() => { if(!saverNow_() && window._coLocked && coOpenNowLocal_()) loadTodayAttendance(); }, 30 * 1000); // Check Out unlocks by itself at 1:00 PM
 
@@ -2651,6 +2675,50 @@ async function loadOnCallBox(){
         crew.map(line).join('<br>') +
       '</div>' + sub;
   }catch(err){ renderBoxError(el, '🚑 On-Call Ambulance Crew'); }
+}
+
+/**
+ * 🌊 Banjir Team — reads the "BANJIR" tab of the same schedule spreadsheet (published like "today list").
+ *   Row 1 = headings · Row 2 = TODAY: A date | C MO | D AMO | E SN/JM | F PPK | G Pemandu.  Empty cell = not assigned.
+ * Only row 2 is used. The last good copy is kept on the phone so the box appears instantly, then refreshes.
+ */
+const BANJIR_ROLES = [['MO','🩺 MO',2],['AMO','🧑‍⚕️ AMO',3],['SN','👩‍⚕️ SN / JM',4],['PPK','🧹 PPK',5],['PEMANDU','🚑 Pemandu',6]];
+function bjNormDate_(s){
+  s = String(s || '').trim(); if(!s) return '';
+  let m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/); if(m) return m[1].padStart(2,'0') + '/' + m[2].padStart(2,'0') + '/' + m[3];
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[3] + '/' + m[2] + '/' + m[1];
+  return s;
+}
+function bjRender_(row){
+  const card = document.getElementById('box_banjir'); if(!card) return;
+  const me = (sessionStorage.getItem('kkah_name') || '').trim().toUpperCase();
+  const dt = bjNormDate_(row[0]), today = new Date().toLocaleDateString('en-GB');
+  const stale = dt && dt !== today;
+  const de = document.getElementById('bjDate');
+  de.textContent = dt ? (stale ? '⚠ Senarai ' + dt + ' — belum dikemas kini' : 'Hari ini · ' + dt) : '';
+  de.className = 'bj-d' + (stale ? ' stale' : '');
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  document.getElementById('bjGrid').innerHTML = BANJIR_ROLES.map((r, i) => {
+    const nm = String(row[r[2]] || '').trim(), mine = me && nm && nm.toUpperCase() === me;
+    return '<div class="bj-r' + (mine ? ' me' : '') + (i === 4 ? ' wide' : '') + '"><div class="rl">' + r[1] + '</div><div class="nm' + (nm ? '' : ' none') + '">' +
+      (nm ? esc(nm) + (mine ? '<span class="you">Anda</span>' : '') : 'Belum ditetapkan') + '</div></div>';
+  }).join('');
+  card.classList.remove('loading');
+}
+async function loadBanjirBox(){
+  const card = document.getElementById('box_banjir'); if(!card) return;
+  try{ const c = JSON.parse(localStorage.getItem('kkah_banjir') || 'null'); if(c && c.row) bjRender_(c.row); }catch(e){}
+  try{
+    const url = `https://docs.google.com/spreadsheets/d/${SCHEDULE_SHEET_ID}/gviz/tq?tqx=out:csv&headers=0&sheet=${encodeURIComponent('BANJIR')}`;
+    const res = await fetch(url); if(!res.ok) throw new Error('http ' + res.status);
+    const rows = parseCsv(await res.text(), true);
+    const row = (rows[1] || []).map(c => String(c || '').trim());          // sheet row 2 only
+    if(!row.length) throw new Error('no row 2');
+    try{ localStorage.setItem('kkah_banjir', JSON.stringify({ t: Date.now(), row: row })); }catch(e){}
+    bjRender_(row);
+  }catch(err){
+    if(card.classList.contains('loading')){ document.getElementById('bjGrid').innerHTML = '<div class="bj-r wide"><div class="nm none">Tiada data Banjir Team</div></div>'; card.classList.remove('loading'); }
+  }
 }
 
 function parseCsv(text, keepHeader){
