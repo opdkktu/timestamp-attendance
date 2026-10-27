@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Banjir PPS</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<link rel="apple-touch-icon" href="./siaga-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0b3b5c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --b9:#0b3b5c; --b7:#0e5a7e; --b5:#0e7490; --sky:#E4F3F8; --bg:#F3F9FB; --ink:#18262c; --ink2:#566970; --line:#D5E5EB;
+    --ok:#0a8f5a; --warn:#B7791F; --red:#C62839; --gold:#C9A227; --pink:#B8326E; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; min-height:100vh; background:radial-gradient(1200px 800px at 50% -10%, var(--sky), var(--bg)); font-family:'Inter',sans-serif; color:var(--ink); padding:12px 12px 100px; }
+  .wrap{ max-width:680px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
+  .head{ border-radius:22px; padding:16px 18px; color:#fff; background:linear-gradient(135deg,var(--b9),var(--b5)); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .head .eb{ font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:700; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:20px; font-weight:800; margin:2px 0 0; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; cursor:pointer; font-family:inherit; }
+  .sync{ font-size:11.5px; font-weight:700; padding:5px 11px; border-radius:99px; background:rgba(255,255,255,.18); display:inline-block; margin-top:6px; }
+  .sync.pend{ background:#FFE3A8; color:#6b4a00; } .sync.off{ background:#FFD0D5; color:#7a0f1d; }
+  .nav{ position:fixed; left:0; right:0; bottom:0; z-index:30; background:#fff; border-top:1px solid var(--line); display:grid; grid-template-columns:repeat(4,1fr); padding:6px 8px max(8px,env(safe-area-inset-bottom)); gap:4px; box-shadow:0 -10px 30px -20px rgba(11,59,92,.5); }
+  .nav button{ border:none; background:none; padding:8px 2px; border-radius:14px; font:700 11.5px 'Manrope',sans-serif; color:var(--ink2); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; min-height:52px; }
+  .nav button span{ font-size:20px; } .nav button[aria-selected="true"]{ background:var(--sky); color:var(--b9); }
+  .view{ display:none; flex-direction:column; gap:12px; } .view.show{ display:flex; }
+  .chips{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; scrollbar-width:none; } .chips::-webkit-scrollbar{ display:none; }
+  .chip{ flex:0 0 auto; min-height:44px; padding:0 15px; border-radius:99px; border:1.5px solid var(--line); background:#fff; font:700 13.5px 'Manrope',sans-serif; color:var(--ink); cursor:pointer; }
+  .chip[aria-pressed="true"]{ background:var(--b9); border-color:var(--b9); color:#fff; }
+  .chip.add{ border-style:dashed; border-color:var(--b5); color:var(--b7); background:var(--sky); }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:18px; padding:14px; }
+  .card h2{ margin:0 0 6px; font:800 15px 'Manrope',sans-serif; }
+  .sub{ font-size:12.5px; color:var(--ink2); line-height:1.5; }
+  .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .stat{ background:var(--sky); border-radius:14px; padding:9px 4px; text-align:center; }
+  .stat b{ display:block; font:800 20px 'Manrope',sans-serif; color:var(--b9); line-height:1.1; } .stat small{ font-size:10px; font-weight:700; color:var(--ink2); text-transform:uppercase; letter-spacing:.03em; }
+  .search{ width:100%; height:48px; border-radius:14px; border:1.5px solid var(--line); padding:0 14px; font:inherit; font-size:16px; background:#fff; }
+  .search:focus,.fld:focus,textarea:focus,select:focus{ outline:none; border-color:var(--b5); box-shadow:0 0 0 3px rgba(14,116,144,.15); }
+  .fam{ background:#fff; border:1.5px solid var(--line); border-radius:18px; padding:12px 14px; display:flex; gap:12px; align-items:center; cursor:pointer; text-align:left; font:inherit; color:inherit; width:100%; }
+  .fam:active{ transform:scale(.99); }
+  .fam .no{ min-width:54px; text-align:center; background:var(--b9); color:#fff; border-radius:14px; padding:8px 4px; font:800 11px 'Manrope',sans-serif; } .fam .no b{ display:block; font-size:20px; line-height:1.1; }
+  .fam .mid{ flex:1; min-width:0; } .fam .nm{ font-weight:800; font-size:15px; } .fam .mt{ font-size:12px; color:var(--ink2); margin-top:2px; }
+  .bd{ display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:800; padding:2px 8px; border-radius:99px; margin:3px 4px 0 0; background:var(--sky); color:var(--b7); }
+  .bd.pink{ background:#FCE4EF; color:var(--pink); } .bd.red{ background:#FDE0E3; color:var(--red); } .bd.amb{ background:#FFF3D6; color:#8a6d0a; } .bd.grn{ background:#E0F5E8; color:var(--ok); }
+  .btn{ min-height:50px; border-radius:15px; border:none; font:800 14.5px 'Manrope',sans-serif; cursor:pointer; background:linear-gradient(135deg,var(--b9),var(--b5)); color:#fff; padding:0 18px; }
+  .btn:disabled{ opacity:.5; } .btn.ghost{ background:#fff; border:1.5px solid var(--line); color:var(--ink); } .btn.red{ background:#fff; border:1.5px solid #f3c1c7; color:var(--red); }
+  .btn.wa{ background:linear-gradient(135deg,#128c7e,#25d366); }
+  .fab{ position:fixed; right:16px; bottom:84px; z-index:25; min-height:56px; padding:0 22px; border-radius:99px; border:none; background:linear-gradient(135deg,var(--b9),var(--b5)); color:#fff; font:800 15px 'Manrope',sans-serif; box-shadow:0 14px 30px -10px rgba(11,59,92,.7); cursor:pointer; display:none; }
+  .fab.show{ display:block; }
+  .empty{ text-align:center; padding:26px 12px; color:var(--ink2); font-size:14px; line-height:1.6; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; } .row3{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  label.l{ display:block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink2); margin:12px 0 5px; }
+  .fld,select{ width:100%; height:48px; border-radius:12px; border:1.5px solid var(--line); padding:0 12px; font:inherit; font-size:16px; background:#fff; color:var(--ink); }
+  textarea{ width:100%; min-height:62px; border-radius:12px; border:1.5px solid var(--line); padding:10px 12px; font:inherit; font-size:15px; resize:vertical; }
+  .tg{ display:flex; flex-wrap:wrap; gap:7px; }
+  .tg button{ min-height:42px; padding:0 13px; border-radius:99px; border:1.5px solid var(--line); background:#fff; font:700 13px 'Inter',sans-serif; color:var(--ink); cursor:pointer; }
+  .tg button[aria-pressed="true"]{ background:var(--b5); border-color:var(--b5); color:#fff; }
+  .tg.red button[aria-pressed="true"]{ background:var(--red); border-color:var(--red); }
+  /* sheets */
+  .sheet{ position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.5); display:none; align-items:flex-end; justify-content:center; } .sheet.show{ display:flex; }
+  .box{ width:min(680px,100%); max-height:94vh; background:#fff; border-radius:24px 24px 0 0; display:flex; flex-direction:column; }
+  .box .bh{ padding:16px 18px 8px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .box .bh h3{ margin:0; font:800 18px 'Manrope',sans-serif; } .x{ width:42px; height:42px; border-radius:50%; border:none; background:var(--sky); font-size:18px; cursor:pointer; color:var(--b9); }
+  .box .bb{ padding:0 18px 12px; overflow:auto; flex:1; -webkit-overflow-scrolling:touch; }
+  .box .bf{ padding:10px 18px max(14px,env(safe-area-inset-bottom)); border-top:1px solid var(--line); display:grid; grid-template-columns:1fr 1.6fr; gap:10px; background:#fff; }
+  details.sec{ border:1.5px solid var(--line); border-radius:16px; margin:10px 0; background:#fff; }
+  details.sec > summary{ list-style:none; cursor:pointer; padding:13px 14px; font:800 14.5px 'Manrope',sans-serif; display:flex; align-items:center; justify-content:space-between; min-height:50px; }
+  details.sec > summary::-webkit-details-marker{ display:none; } details.sec > summary::after{ content:'▾'; color:var(--ink2); } details.sec[open] > summary::after{ content:'▴'; }
+  details.sec > .in{ padding:0 14px 14px; }
+  .vit{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; } .vit label.l{ margin-top:4px; font-size:10px; }
+  .vit .fld{ height:44px; padding:0 8px; text-align:center; } .vit .fld.ab{ border-color:var(--red); background:#FFF1F3; }
+  .toast{ position:fixed; left:50%; bottom:90px; transform:translate(-50%,30px); background:var(--b9); color:#fff; font-weight:700; font-size:14px; padding:12px 20px; border-radius:99px; opacity:0; pointer-events:none; transition:all .3s; z-index:90; max-width:92vw; text-align:center; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); } .toast.err{ background:var(--red); }
+  .part{ display:flex; gap:10px; align-items:center; border:1.5px solid var(--line); border-radius:16px; padding:10px 12px; margin-top:10px; }
+  .part .pt{ flex:1; min-width:0; font-size:12.5px; color:var(--ink2); } .part .pt b{ display:block; color:var(--ink); font-size:14px; }
+  pre.prev{ white-space:pre-wrap; word-break:break-word; font:12.5px/1.5 'Inter',sans-serif; background:#F7FAFB; border:1px solid var(--line); border-radius:14px; padding:12px; margin:0; max-height:320px; overflow:auto; }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+  @media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div><div class="eb">Pasukan Kesihatan · PPS Banjir</div><h1>🌊 Banjir PPS</h1><span class="sync" id="sync">…</span></div>
+    <a class="back" id="backBtn" href="./dashboard.html">← Dashboard</a>
+  </div>
+
+  <!-- HOME: PPS + kem -->
+  <div class="view show" id="v-home">
+    <div class="chips" id="ppsChips" role="group" aria-label="Pilih PPS"></div>
+    <div class="card" id="ppsCard"></div>
+    <input class="search" id="q" type="search" placeholder="Cari nama, IC atau no. kem…" aria-label="Cari">
+    <div id="famList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+
+  <!-- FAMILY -->
+  <div class="view" id="v-fam">
+    <div class="card" id="famCard"></div>
+    <div id="memList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+
+  <!-- UBAT -->
+  <div class="view" id="v-med">
+    <div class="card"><h2>💊 Keperluan ubat</h2><div class="sub" id="medSub"></div></div>
+    <div id="medList"></div>
+  </div>
+
+  <!-- SUSULAN -->
+  <div class="view" id="v-fu">
+    <div class="card"><h2>📅 Susulan</h2><div class="sub">Mangsa yang masih perlu susulan, tarikh paling hampir dahulu.</div></div>
+    <div id="fuList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+
+  <!-- LAPORAN -->
+  <div class="view" id="v-rep">
+    <div class="card">
+      <h2>📤 Laporan harian WhatsApp</h2>
+      <div class="sub">Semak angka di bawah, isi butiran laporan, kemudian tekan butang WhatsApp. Laporan dihantar ke nombor telefon anda sendiri (dibahagi 2–3 mesej) untuk anda <i>forward</i>.</div>
+      <label class="l">PPS yang dimasukkan dalam laporan</label><div class="tg" id="repPps"></div>
+    </div>
+    <div class="card">
+      <div class="row2">
+        <div><label class="l" for="rJenis">Pasukan</label><select id="rJenis"><option>PASUKAN KESIHATAN</option><option>PASUKAN PERUBATAN</option></select></div>
+        <div><label class="l" for="rDaerah">Daerah</label><input class="fld" id="rDaerah" placeholder="cth. Kubang Pasu"></div>
+        <div><label class="l" for="rTarikh">Tarikh</label><input class="fld" id="rTarikh" type="date"></div>
+        <div><label class="l" for="rJam">Jam</label><input class="fld" id="rJam" type="time"></div>
+      </div>
+      <label class="l" for="rAkt">Aktiviti Pasukan Kesihatan</label><textarea id="rAkt" placeholder="cth. Saringan kesihatan, pemberian ubat, kaunseling, pemantauan ibu mengandung…"></textarea>
+      <div class="row2">
+        <div><label class="l" for="rNama">Disediakan oleh — Nama</label><input class="fld" id="rNama"></div>
+        <div><label class="l" for="rJaw">Jawatan</label><input class="fld" id="rJaw"></div>
+      </div>
+      <label class="l" for="rTempat">Tempat bertugas</label><input class="fld" id="rTempat">
+      <label class="l" for="rPhone">No. WhatsApp anda (penerima)</label><input class="fld" id="rPhone" inputmode="tel" placeholder="cth. 0123456789">
+    </div>
+    <div class="card"><h2>Pratonton</h2><pre class="prev" id="repPrev"></pre></div>
+    <button class="btn wa" id="waBtn" type="button" style="min-height:60px;font-size:16px">🟢 Hantar ke WhatsApp saya</button>
+  </div>
+</div>
+
+<button class="fab" id="fab" type="button">＋ PPS</button>
+<nav class="nav" id="nav">
+  <button data-v="home" aria-selected="true"><span>🏕️</span>PPS & Kem</button>
+  <button data-v="med" aria-selected="false"><span>💊</span>Ubat</button>
+  <button data-v="fu" aria-selected="false"><span>📅</span>Susulan</button>
+  <button data-v="rep" aria-selected="false"><span>📤</span>Laporan</button>
+</nav>
+
+<!-- PPS sheet -->
+<div class="sheet" id="shPps" role="dialog" aria-modal="true"><div class="box">
+  <div class="bh"><h3 id="ppsT">PPS baharu</h3><button class="x" data-close aria-label="Tutup">✕</button></div>
+  <div class="bb">
+    <label class="l" for="pName">Nama PPS</label><input class="fld" id="pName" maxlength="80">
+    <div class="row2"><div><label class="l" for="pOpen">Tarikh buka</label><input class="fld" id="pOpen" type="date"></div><div><label class="l" for="pClose">Tarikh tutup</label><input class="fld" id="pClose" type="date"></div></div>
+    <label class="l" for="pCoord">Pegawai Penyelaras Banjir</label><input class="fld" id="pCoord" maxlength="80">
+    <label class="l" for="pTeam">Team Klinik Kesihatan</label><input class="fld" id="pTeam" maxlength="80" placeholder="cth. Klinik Kesihatan Ayer Hitam">
+    <label class="l" for="pCount">Bil. anggota</label><input class="fld" id="pCount" type="number" inputmode="numeric" min="0">
+  </div>
+  <div class="bf"><button class="btn red" id="pDel" type="button">Padam PPS</button><button class="btn" id="pSave" type="button">Simpan PPS</button></div>
+</div></div>
+
+<!-- Family sheet -->
+<div class="sheet" id="shFam" role="dialog" aria-modal="true"><div class="box">
+  <div class="bh"><h3 id="fT">Kem baharu</h3><button class="x" data-close aria-label="Tutup">✕</button></div>
+  <div class="bb">
+    <div class="row2"><div><label class="l" for="fNo">No. kem</label><input class="fld" id="fNo" maxlength="10" inputmode="text"></div><div><label class="l" for="fPhone">No. telefon</label><input class="fld" id="fPhone" inputmode="tel"></div></div>
+    <label class="l" for="fName">Nama ketua keluarga</label><input class="fld" id="fName" maxlength="80">
+    <label class="l" for="fAddr">Alamat rumah</label><textarea id="fAddr" maxlength="200"></textarea>
+    <label class="l">Status keluarga</label><div class="tg" id="fLeft"><button type="button" data-v="0" aria-pressed="true">Di PPS</button><button type="button" data-v="1" aria-pressed="false">Telah pulang</button></div>
+    <label class="l" for="fNote">Catatan</label><textarea id="fNote" maxlength="200"></textarea>
+  </div>
+  <div class="bf"><button class="btn red" id="fDel" type="button">Padam kem</button><button class="btn" id="fSave" type="button">Simpan kem</button></div>
+</div></div>
+
+<!-- Member sheet -->
+<div class="sheet" id="shMem" role="dialog" aria-modal="true"><div class="box" style="max-height:97vh">
+  <div class="bh"><h3 id="mT">Ahli baharu</h3><button class="x" data-close aria-label="Tutup">✕</button></div>
+  <div class="bb" id="mBody"></div>
+  <div class="bf"><button class="btn red" id="mDel" type="button">Padam</button><button class="btn" id="mSave" type="button">Simpan</button></div>
+</div></div>
+
+<!-- WhatsApp sheet -->
+<div class="sheet" id="shWa" role="dialog" aria-modal="true"><div class="box">
+  <div class="bh"><h3>🟢 Hantar ke WhatsApp</h3><button class="x" data-close aria-label="Tutup">✕</button></div>
+  <div class="bb"><div class="sub" id="waSub"></div><div id="waParts"></div></div>
+  <div class="bf" style="grid-template-columns:1fr"><button class="btn ghost" id="waCopy" type="button">📋 Salin semua teks</button></div>
+</div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const token = sessionStorage.getItem('kkah_session_token');
+if(!token) location.href = './login.html';
+const IC = sessionStorage.getItem('kkah_ic') || '';
+const MY_NAME = sessionStorage.getItem('kkah_name') || '';
+const CHILD_LT = 12, ELDER_GE = 60;                 // kanak-kanak = bawah 12 tahun · bayi = bawah 1 tahun (subset) · warga emas = 60+ (subset dewasa)
+const HIST = ['DM','HPT','Asthma','ESRF','Jantung','Epilepsi','Kanser','TB','Strok','Lain'];
+const SYMP = ['Demam','Batuk','Selsema / sakit tekak','Sesak nafas','Cirit-birit','Muntah','Sakit perut','Ruam / gatal','Luka / cedera','Sakit mata','Sakit kepala','Lain'];
+const MEDS = ['Metformin','Insulin','Amlodipine','Ubat darah tinggi lain','Salbutamol (inhaler)','Ubat jantung','Ubat sawan','Paracetamol','ORS','Antihistamin','Ubat luka / dressing','Vitamin / hematinik','Lain'];
+const FU_ST = ['Tiada','Perlu susulan','Dalam rawatan','Selesai','Rujuk hospital'];
+const DX = [['','—'],['COVID19','COVID-19'],['URTI','URTI'],['AGE','AGE'],['NCD','NCD (DM/HPT/Asthma)'],['Lain','Lain-lain']];
+
+/* ---------------- helpers ---------------- */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m, err){ const t = $('toast'); t.textContent = m; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(toast._t); toast._t = setTimeout(() => t.className = 'toast', 3200); }
+const uid = () => 'B' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad = n => String(n).padStart(2, '0');
+const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+const dmy = iso => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; };
+const dayDiff = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+
+/* ---------------- local database + sync (works with no signal) ---------------- */
+const KEY = 'kkah_bj_' + IC;
+let DB = { rows: {}, outbox: {}, cursor: 0 };
+try{ const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if(s && s.rows) DB = s; }catch(e){}
+function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){ toast('Storan telefon penuh', true); } }
+function put(kind, id, pps, parent, d, del){
+  const row = { id, kind, pps: pps || '', parent: parent || '', d: d || {}, ct: Date.now(), del: !!del };
+  DB.rows[id] = row; DB.outbox[id] = row; persist(); schedSync(); updSync();
+  return row;
+}
+const live = (kind, f) => Object.values(DB.rows).filter(r => r.kind === kind && !r.del && (!f || f(r)));
+let syncing = false, syncT = null, lastOk = 0;
+function schedSync(ms){ clearTimeout(syncT); syncT = setTimeout(sync, ms == null ? 1200 : ms); }
+function updSync(){
+  const n = Object.keys(DB.outbox).length, el = $('sync');
+  if(!navigator.onLine){ el.className = 'sync off'; el.textContent = '📴 Luar talian' + (n ? ' · ' + n + ' belum dihantar' : ''); }
+  else if(n){ el.className = 'sync pend'; el.textContent = '⏳ ' + n + ' belum dihantar'; }
+  else { el.className = 'sync'; el.textContent = lastOk ? '✓ Disegerak ' + new Date(lastOk).toLocaleTimeString('ms-MY', { hour:'2-digit', minute:'2-digit' }) : '…'; }
+}
+async function api(body){
+  const r = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)) });
+  const d = await r.json();
+  if(!d.ok && /expired/i.test(d.error || '')){ location.href = './login.html'; throw new Error('expired'); }
+  return d;
+}
+async function sync(){
+  if(syncing || !navigator.onLine){ updSync(); return; }
+  syncing = true;
+  try{
+    for(let guard = 0; guard < 20; guard++){                         // push in batches until the queue is empty
+      const ops = Object.values(DB.outbox).slice(0, 50);
+      if(!ops.length) break;
+      const d = await api({ action:'banjirPush', ops: ops.map(o => ({ id:o.id, kind:o.kind, pps:o.pps, parent:o.parent, d:o.d, ct:o.ct, del:o.del })) });
+      if(!d.ok){ toast(d.error || 'Gagal menghantar', true); syncing = false; updSync(); return; }
+      ops.forEach(o => { if(DB.outbox[o.id] && DB.outbox[o.id].ct === o.ct) delete DB.outbox[o.id]; });
+      persist();
+    }
+    const p = await api({ action:'banjirPull', since: DB.cursor });
+    if(p.ok){
+      let changed = false;
+      p.rows.forEach(r => {
+        const mine = DB.outbox[r.id];
+        if(mine && mine.ct > r.ct) return;                            // my unsent edit is newer
+        const cur = DB.rows[r.id];
+        if(!cur || r.ct >= cur.ct){ DB.rows[r.id] = { id:r.id, kind:r.kind, pps:r.pps, parent:r.parent, d:r.d, ct:r.ct, del:r.del }; changed = true; }
+      });
+      DB.cursor = p.now || DB.cursor; persist(); lastOk = Date.now();
+      if(changed) renderAll();
+    }else if(p.error) toast(p.error, true);
+  }catch(e){ /* offline or expired — stays queued */ }
+  syncing = false; updSync();
+}
+window.addEventListener('online', () => { updSync(); schedSync(300); }); window.addEventListener('offline', updSync);
+setInterval(() => { if(document.visibilityState === 'visible') sync(); }, 45000);
+
+/* ---------------- person maths ---------------- */
+function icInfo(ic){
+  const d = String(ic || '').replace(/\D/g, ''); if(d.length !== 12) return null;
+  const yy = +d.slice(0, 2), mm = +d.slice(2, 4), dd = +d.slice(4, 6), now = new Date().getFullYear() % 100;
+  const y = (yy <= now ? 2000 : 1900) + yy;
+  if(mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
+  return { dob: y + '-' + pad(mm) + '-' + pad(dd), sex: (+d.slice(-1)) % 2 ? 'L' : 'P' };
+}
+function ageY(m){
+  if(m.dob){ const b = new Date(m.dob + 'T00:00:00'), n = new Date(); let a = n.getFullYear() - b.getFullYear(); if(n.getMonth() < b.getMonth() || (n.getMonth() === b.getMonth() && n.getDate() < b.getDate())) a--; return Math.max(0, a + (a < 1 ? ((n - b) / 31557600000) : 0)); }
+  const v = parseFloat(m.age); if(isNaN(v)) return 0; return m.ageUnit === 'b' ? v / 12 : v;
+}
+function ageTxt(m){ const a = ageY(m); if(a < 1) return Math.max(0, Math.round(a * 12)) + ' bln'; return Math.floor(a) + ' thn'; }
+const gestNow = m => (+m.gestWeeks || 0) + Math.floor(Math.max(0, dayDiff(m.gestAt || todayIso(), todayIso())) / 7);
+const postNow = m => (+m.postDay || 0) + Math.max(0, dayDiff(m.postAt || todayIso(), todayIso()));
+function vitAb(m){
+  const v = m.vit || {}, o = {};
+  if(v.sbp && (+v.sbp >= 140 || +v.sbp < 90)) o.sbp = 1; if(v.dbp && (+v.dbp >= 90 || +v.dbp < 60)) o.dbp = 1;
+  if(v.pr && (+v.pr > 100 || +v.pr < 60)) o.pr = 1; if(v.spo2 && +v.spo2 < 95) o.spo2 = 1;
+  if(v.temp && +v.temp >= 37.5) o.temp = 1; if(v.rr && +v.rr > 24) o.rr = 1; if(v.hgt && (+v.hgt >= 11.1 || +v.hgt < 4)) o.hgt = 1;
+  return o;
+}
+const hasSymp = m => !!((m.symp && m.symp.length) || (m.sympNote || '').trim());
+const isSeen = m => !!(m.seen || hasSymp(m) || m.dx || Object.values(m.vit || {}).some(Boolean) || m.rtk);
+const isRef = m => !!(m.ref && m.ref.on);
+
+/* ---------------- state + navigation ---------------- */
+let curPps = localStorage.getItem('kkah_bj_pps_' + IC) || '', curFam = '', view = 'home';
+function show(v){
+  view = v;
+  ['home','fam','med','fu','rep'].forEach(k => $('v-' + k).classList.toggle('show', k === v));
+  document.querySelectorAll('#nav button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === (v === 'fam' ? 'home' : v)));
+  $('fab').className = 'fab' + (v === 'home' ? ' show' : v === 'fam' ? ' show' : ''); $('fab').textContent = v === 'fam' ? '＋ Ahli' : '＋ Kem';
+  $('backBtn').textContent = v === 'fam' ? '← Senarai kem' : '← Dashboard';
+  if(v === 'rep') renderReport();
+  window.scrollTo(0, 0);
+}
+$('nav').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; if(view === 'fam' && b.dataset.v === 'home'){ curFam = ''; } show(b.dataset.v); renderAll(); });
+$('backBtn').addEventListener('click', e => { if(view === 'fam'){ e.preventDefault(); curFam = ''; show('home'); renderAll(); } });
+window.addEventListener('popstate', () => { if(view === 'fam'){ curFam = ''; show('home'); renderAll(); } });
+function openFam(id){ curFam = id; history.pushState({ f: 1 }, ''); show('fam'); renderAll(); }
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('.sheet').classList.remove('show')));
+document.querySelectorAll('.sheet').forEach(s => s.addEventListener('pointerdown', e => { if(e.target === s && s.id !== 'shMem') s.classList.remove('show'); }));
+const openSheet = id => { $(id).classList.add('show'); };
+const closeSheet = id => { $(id).classList.remove('show'); };
+
+/* ---------------- rendering: home ---------------- */
+const ppsList = () => live('pps').sort((a, b) => (a.d.open || '') < (b.d.open || '') ? 1 : -1);
+const famsOf = ppsId => live('family', r => r.pps === ppsId);
+const memsOfFam = fid => live('member', r => r.parent === fid);
+const memsOfPps = ppsId => live('member', r => r.pps === ppsId);
+function badges(m){
+  const a = ageY(m), o = [];
+  if(m.preg === 'ante') o.push('<span class="bd pink">🤰 ANC ' + gestNow(m) + 'mg</span>');
+  if(m.preg === 'post') o.push('<span class="bd pink">🍼 PNC hari ' + postNow(m) + '</span>');
+  if(a < 1) o.push('<span class="bd">👶 Bayi</span>'); else if(a < CHILD_LT) o.push('<span class="bd">🧒 Kanak</span>');
+  if(a >= ELDER_GE) o.push('<span class="bd">👴 Warga emas</span>');
+  if(m.oku) o.push('<span class="bd">♿ OKU</span>');
+  if((m.hist || []).indexOf('ESRF') >= 0) o.push('<span class="bd red">🩸 ESRF</span>');
+  if(hasSymp(m)) o.push('<span class="bd amb">⚠ Bergejala</span>');
+  if((m.medNeeds || []).length) o.push('<span class="bd grn">💊 Ubat</span>');
+  if(m.fuStatus && m.fuStatus !== 'Tiada' && m.fuStatus !== 'Selesai') o.push('<span class="bd amb">📅 ' + esc(m.fuDate ? dmy(m.fuDate).slice(0, 5) : 'Susulan') + '</span>');
+  if(isRef(m)) o.push('<span class="bd red">🚑 Rujuk</span>');
+  if(m.dead) o.push('<span class="bd red">† Meninggal</span>');
+  return o.join('');
+}
+function renderHome(){
+  const list = ppsList();
+  if(!list.some(p => p.id === curPps)) curPps = list[0] ? list[0].id : '';
+  try{ localStorage.setItem('kkah_bj_pps_' + IC, curPps); }catch(e){}
+  $('ppsChips').innerHTML = list.map(p => '<button class="chip" data-p="' + p.id + '" aria-pressed="' + (p.id === curPps) + '">🏕️ ' + esc(p.d.name || 'PPS') + '</button>').join('') + '<button class="chip add" data-p="+">＋ PPS</button>';
+  const pps = DB.rows[curPps];
+  if(!pps){ $('ppsCard').innerHTML = '<div class="empty">Belum ada PPS.<br>Tekan <b>＋ PPS</b> untuk mula.</div>'; $('famList').innerHTML = ''; return; }
+  const fams = famsOf(curPps), mem = memsOfPps(curPps).filter(m => !m.d.dead || true);
+  const here = fams.filter(f => !f.d.left);
+  $('ppsCard').innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><h2 style="margin:0">' + esc(pps.d.name) + '</h2><div class="sub">' + (pps.d.open ? 'Buka ' + dmy(pps.d.open) : '') + (pps.d.close ? ' · Tutup ' + dmy(pps.d.close) : '') + '</div></div><button class="lnk btn ghost" style="min-height:40px;padding:0 14px" id="ppsEdit">✎ Edit</button></div>' +
+    '<div class="stats" style="margin-top:10px"><div class="stat"><b>' + here.length + '</b><small>Kem</small></div><div class="stat"><b>' + mem.length + '</b><small>Mangsa</small></div><div class="stat"><b>' + mem.filter(m => m.d.preg === 'ante' || m.d.preg === 'post').length + '</b><small>Ibu</small></div><div class="stat"><b>' + mem.filter(m => hasSymp(m.d)).length + '</b><small>Bergejala</small></div></div>';
+  $('ppsEdit').onclick = () => editPps(curPps);
+  const q = $('q').value.trim().toLowerCase();
+  const out = fams.filter(f => {
+    if(!q) return true;
+    if(((f.d.no || '') + ' ' + (f.d.name || '')).toLowerCase().includes(q)) return true;
+    return memsOfFam(f.id).some(m => ((m.d.name || '') + ' ' + (m.d.ic || '')).toLowerCase().includes(q));
+  }).sort((a, b) => String(a.d.no || '').localeCompare(String(b.d.no || ''), 'ms', { numeric: true }));
+  $('famList').innerHTML = out.length ? out.map(f => {
+    const ms = memsOfFam(f.id), b = [];
+    const c = { anc: 0, sym: 0, ref: 0 }; ms.forEach(m => { if(m.d.preg) c.anc++; if(hasSymp(m.d)) c.sym++; if(isRef(m.d)) c.ref++; });
+    if(c.anc) b.push('<span class="bd pink">🤰🍼 ' + c.anc + '</span>'); if(c.sym) b.push('<span class="bd amb">⚠ ' + c.sym + '</span>'); if(c.ref) b.push('<span class="bd red">🚑 ' + c.ref + '</span>'); if(f.d.left) b.push('<span class="bd">Telah pulang</span>');
+    return '<button class="fam" data-f="' + f.id + '" style="' + (f.d.left ? 'opacity:.6' : '') + '"><div class="no">KEM<b>' + esc(f.d.no || '–') + '</b></div><div class="mid"><div class="nm">' + esc(f.d.name || 'Keluarga') + '</div><div class="mt">' + ms.length + ' orang' + (f.d.phone ? ' · ' + esc(f.d.phone) : '') + '</div><div>' + b.join('') + '</div></div><span style="font-size:22px;color:var(--ink2)">›</span></button>';
+  }).join('') : '<div class="empty">' + (q ? 'Tiada padanan.' : 'Belum ada kem. Tekan <b>＋ Kem</b> (1 kem = 1 keluarga).') + '</div>';
+}
+$('ppsChips').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if(!b) return; if(b.dataset.p === '+') editPps(''); else { curPps = b.dataset.p; renderAll(); } });
+$('famList').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if(b) openFam(b.dataset.f); });
+$('q').addEventListener('input', renderHome);
+$('fab').onclick = () => { if(view === 'fam') editMem('', curFam); else editFam(''); };
+
+/* PPS editor */
+let editPpsId = '';
+function editPps(id){
+  editPpsId = id; const p = id ? DB.rows[id].d : {};
+  $('ppsT').textContent = id ? 'Edit PPS' : 'PPS baharu';
+  $('pName').value = p.name || ''; $('pOpen').value = p.open || todayIso(); $('pClose').value = p.close || ''; $('pCoord').value = p.coord || ''; $('pTeam').value = p.team || 'Klinik Kesihatan Ayer Hitam'; $('pCount').value = p.count || '';
+  $('pDel').style.display = id ? '' : 'none'; openSheet('shPps');
+}
+$('pSave').onclick = () => {
+  const name = $('pName').value.trim(); if(!name){ toast('Masukkan nama PPS', true); return; }
+  const id = editPpsId || uid();
+  put('pps', id, id, '', { name, open: $('pOpen').value, close: $('pClose').value, coord: $('pCoord').value.trim(), team: $('pTeam').value.trim(), count: $('pCount').value });
+  curPps = id; closeSheet('shPps'); renderAll(); toast('PPS disimpan');
+};
+$('pDel').onclick = () => {
+  if(!editPpsId || !confirm('Padam PPS ini beserta semua kem dan mangsa di dalamnya?')) return;
+  const id = editPpsId; const r = DB.rows[id]; put('pps', id, id, '', r.d, true);
+  famsOf(id).forEach(f => put('family', f.id, id, '', f.d, true)); memsOfPps(id).forEach(m => put('member', m.id, id, m.parent, m.d, true));
+  closeSheet('shPps'); renderAll();
+};
+
+/* Family editor */
+let editFamId = '';
+function editFam(id){
+  if(!curPps){ toast('Tambah PPS dahulu', true); return; }
+  editFamId = id; const f = id ? DB.rows[id].d : {};
+  $('fT').textContent = id ? 'Edit kem' : 'Kem baharu';
+  const nextNo = String(famsOf(curPps).reduce((mx, x) => Math.max(mx, parseInt(x.d.no) || 0), 0) + 1);
+  $('fNo').value = f.no || nextNo; $('fName').value = f.name || ''; $('fPhone').value = f.phone || ''; $('fAddr').value = f.addr || ''; $('fNote').value = f.note || '';
+  setTg('fLeft', f.left ? '1' : '0'); $('fDel').style.display = id ? '' : 'none'; openSheet('shFam');
+}
+function setTg(id, v){ document.querySelectorAll('#' + id + ' button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === String(v))); }
+function getTg(id){ const b = document.querySelector('#' + id + ' button[aria-pressed="true"]'); return b ? b.dataset.v : ''; }
+$('fLeft').addEventListener('click', e => { const b = e.target.closest('button'); if(b) setTg('fLeft', b.dataset.v); });
+$('fSave').onclick = () => {
+  const name = $('fName').value.trim(); if(!name){ toast('Masukkan nama ketua keluarga', true); return; }
+  const id = editFamId || uid();
+  put('family', id, curPps, '', { no: $('fNo').value.trim(), name, phone: $('fPhone').value.trim(), addr: $('fAddr').value.trim(), note: $('fNote').value.trim(), left: getTg('fLeft') === '1' });
+  closeSheet('shFam'); renderAll(); toast('Kem disimpan');
+  if(!editFamId && !confirm('Kem disimpan. Tambah ahli keluarga sekarang?')) return; if(!editFamId){ openFam(id); }
+};
+$('fDel').onclick = () => {
+  if(!editFamId || !confirm('Padam kem ini beserta semua ahli?')) return;
+  const id = editFamId; put('family', id, curPps, '', DB.rows[id].d, true); memsOfFam(id).forEach(m => put('member', m.id, curPps, id, m.d, true));
+  closeSheet('shFam'); curFam = ''; show('home'); renderAll();
+};
+
+/* ---------------- family view ---------------- */
+function renderFam(){
+  const f = DB.rows[curFam]; if(!f || f.del){ $('famCard').innerHTML = ''; $('memList').innerHTML = ''; return; }
+  const ms = memsOfFam(curFam).sort((a, b) => ageY(b.d) - ageY(a.d));
+  $('famCard').innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px"><div><div class="sub" style="font-weight:800">KEM ' + esc(f.d.no || '') + '</div><h2 style="margin:0;font-size:18px">' + esc(f.d.name) + '</h2><div class="sub">' + esc(f.d.addr || '') + (f.d.phone ? '<br>📞 ' + esc(f.d.phone) : '') + (f.d.note ? '<br>' + esc(f.d.note) : '') + '</div></div><button class="btn ghost" style="min-height:40px;padding:0 14px;height:40px" id="famEdit">✎ Edit</button></div><div class="sub" style="margin-top:8px"><b>' + ms.length + '</b> orang dalam kem ini</div>';
+  $('famEdit').onclick = () => editFam(curFam);
+  $('memList').innerHTML = ms.length ? ms.map(m => '<button class="fam" data-m="' + m.id + '"><div class="no" style="background:' + (m.d.sex === 'P' ? 'var(--pink)' : 'var(--b7)') + '">' + (m.d.sex === 'P' ? '♀' : '♂') + '<b style="font-size:15px">' + esc(ageTxt(m.d)) + '</b></div><div class="mid"><div class="nm">' + esc(m.d.name || 'Tanpa nama') + '</div><div class="mt">' + esc(m.d.ic || '') + '</div><div>' + badges(m.d) + '</div></div><span style="font-size:22px;color:var(--ink2)">›</span></button>').join('') : '<div class="empty">Belum ada ahli.<br>Tekan <b>＋ Ahli</b> untuk tambah ahli keluarga.</div>';
+}
+$('memList').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if(b) editMem(b.dataset.m, curFam); });
+
+/* ---------------- member editor ---------------- */
+let editMemId = '', M = {}, memFam = '';
+const tg = (id, opts, sel, cls) => '<div class="tg ' + (cls || '') + '" id="' + id + '" data-multi="1">' + opts.map(o => '<button type="button" data-v="' + esc(o) + '" aria-pressed="' + ((sel || []).indexOf(o) >= 0) + '">' + esc(o) + '</button>').join('') + '</div>';
+const one = (id, opts, sel) => '<div class="tg" id="' + id + '">' + opts.map(o => '<button type="button" data-v="' + esc(o[0]) + '" aria-pressed="' + (o[0] === sel) + '">' + esc(o[1]) + '</button>').join('') + '</div>';
+function editMem(id, famId){
+  memFam = famId; editMemId = id; M = id ? JSON.parse(JSON.stringify(DB.rows[id].d)) : { sex: '', symp: [], hist: [], medNeeds: [], vit: {}, fuStatus: 'Tiada', preg: '' };
+  $('mT').textContent = id ? (M.name || 'Ahli') : 'Ahli baharu'; $('mDel').style.display = id ? '' : 'none';
+  const v = M.vit || {}, r = M.ref || {};
+  $('mBody').innerHTML =
+  '<details class="sec" open><summary>👤 Maklumat asas</summary><div class="in">' +
+    '<label class="l" for="mName">Nama</label><input class="fld" id="mName" maxlength="80" autocapitalize="characters" value="' + esc(M.name || '') + '">' +
+    '<label class="l" for="mIc">No. IC / pasport (pilihan)</label><input class="fld" id="mIc" maxlength="20" value="' + esc(M.ic || '') + '">' +
+    '<div class="row2"><div><label class="l">Jantina</label>' + one('mSex', [['L', 'Lelaki'], ['P', 'Perempuan']], M.sex) + '</div>' +
+    '<div><label class="l" for="mAge">Umur</label><div style="display:flex;gap:6px"><input class="fld" id="mAge" type="number" inputmode="decimal" min="0" style="flex:1" value="' + esc(M.dob && icInfo(M.ic) ? Math.floor(ageY(M)) : (M.age || '')) + '"><select id="mAgeU" style="width:84px"><option value="t">thn</option><option value="b"' + (M.ageUnit === 'b' ? ' selected' : '') + '>bln</option></select></div></div></div>' +
+    '<div class="sub" id="mAgeHint" style="margin-top:6px"></div>' +
+    '<label class="l">Ciri khas</label><div class="tg" id="mOku"><button type="button" data-v="1" aria-pressed="' + !!M.oku + '">♿ OKU</button></div>' +
+    '<input class="fld" id="mOkuT" placeholder="Jenis OKU (jika ada)" style="margin-top:8px;' + (M.oku ? '' : 'display:none') + '" value="' + esc(M.okuType || '') + '">' +
+  '</div></details>' +
+  '<details class="sec"><summary>🩺 Sejarah perubatan</summary><div class="in">' + tg('mHist', HIST, M.hist) +
+    '<input class="fld" id="mHistO" placeholder="Penyakit lain / catatan" style="margin-top:8px" value="' + esc(M.histNote || '') + '">' +
+    '<label class="l" for="mAlg">Alahan ubat / makanan</label><input class="fld" id="mAlg" value="' + esc(M.allergy || '') + '">' +
+    '<label class="l" for="mRegMed">Ubat yang diambil sekarang</label><textarea id="mRegMed" placeholder="cth. Metformin 500mg BD">' + esc(M.regMeds || '') + '</textarea></div></details>' +
+  '<details class="sec"><summary>💊 Keperluan ubat</summary><div class="in"><div class="sub">Pilih ubat yang PERLU dibekalkan kepada mangsa ini.</div><div style="margin-top:8px">' + tg('mMed', MEDS, M.medNeeds) + '</div>' +
+    '<label class="l" for="mMedN">Catatan ubat (dos / kuantiti)</label><textarea id="mMedN">' + esc(M.medNote || '') + '</textarea></div></details>' +
+  '<details class="sec"><summary>📅 Susulan</summary><div class="in"><label class="l">Status</label>' + one('mFu', FU_ST.map(x => [x, x]), M.fuStatus || 'Tiada') +
+    '<label class="l" for="mFuD">Tarikh susulan</label><input class="fld" id="mFuD" type="date" value="' + esc(M.fuDate || '') + '">' +
+    '<label class="l" for="mFuN">Catatan susulan</label><textarea id="mFuN">' + esc(M.fuNote || '') + '</textarea></div></details>' +
+  '<details class="sec" id="secCare"><summary>🤰👶 Penjagaan ibu & anak</summary><div class="in" id="careIn"></div></details>' +
+  '<details class="sec"><summary>⚠️ Simptom semasa & tanda vital</summary><div class="in"><div class="sub">Simptom akut sekarang</div><div style="margin-top:6px">' + tg('mSymp', SYMP, M.symp, 'red') + '</div>' +
+    '<label class="l" for="mSympN">Catatan simptom / bila mula</label><textarea id="mSympN">' + esc(M.sympNote || '') + '</textarea>' +
+    '<label class="l">Tanda vital (jika perlu)</label><div class="vit" id="mVit">' +
+      [['sbp','Sistolik','mmHg'],['dbp','Diastolik','mmHg'],['pr','Nadi','/min'],['spo2','SpO₂','%'],['temp','Suhu','°C'],['rr','RR','/min'],['hgt','HGT','mmol/L']].map(a => '<div><label class="l">' + a[1] + '</label><input class="fld" data-k="' + a[0] + '" inputmode="decimal" placeholder="' + a[2] + '" value="' + esc(v[a[0]] || '') + '"></div>').join('') + '</div>' +
+    '<div class="row2"><div><label class="l" for="mDx">Diagnosis (untuk laporan)</label><select id="mDx">' + DX.map(d => '<option value="' + d[0] + '"' + (M.dx === d[0] ? ' selected' : '') + '>' + d[1] + '</option>').join('') + '</select></div>' +
+    '<div><label class="l" for="mRtk">RTK COVID-19</label><select id="mRtk"><option value="">Tidak dibuat</option><option' + (M.rtk === 'Negatif' ? ' selected' : '') + '>Negatif</option><option' + (M.rtk === 'Positif' ? ' selected' : '') + '>Positif</option></select></div></div>' +
+    '<input class="fld" id="mDxN" placeholder="Diagnosis / catatan klinikal" style="margin-top:8px" value="' + esc(M.dxText || '') + '">' +
+    '<div class="tg" style="margin-top:10px" id="mSeen"><button type="button" data-v="1" aria-pressed="' + !!M.seen + '">✔ Telah diperiksa pasukan</button></div></div></details>' +
+  '<details class="sec"><summary>🚑 Rujukan hospital / kematian</summary><div class="in"><div class="tg" id="mRefOn"><button type="button" data-v="1" aria-pressed="' + !!r.on + '">🚑 Dirujuk ke hospital</button></div>' +
+    '<div id="refIn" style="' + (r.on ? '' : 'display:none') + '">' +
+    '<label class="l" for="rDoa">DOA @ lokasi hospital</label><input class="fld" id="rDoa" value="' + esc(r.where || '') + '">' +
+    '<label class="l" for="rDx">Diagnosis</label><input class="fld" id="rDx" value="' + esc(r.dx || '') + '">' +
+    '<label class="l" for="rTx">Rawatan awal</label><textarea id="rTx">' + esc(r.tx || '') + '</textarea>' +
+    '<label class="l" for="rTel">No. telefon</label><input class="fld" id="rTel" inputmode="tel" value="' + esc(r.tel || '') + '">' +
+    '<div class="row2"><div><label class="l" for="rDis">Tarikh discaj</label><input class="fld" id="rDis" type="date" value="' + esc(r.disDate || '') + '"></div><div><label class="l" for="rDisTo">Discaj ke mana</label><input class="fld" id="rDisTo" value="' + esc(r.disTo || '') + '"></div></div></div>' +
+    '<div class="tg red" style="margin-top:12px" id="mDead"><button type="button" data-v="1" aria-pressed="' + !!M.dead + '">† Kes kematian</button></div></div></details>';
+  bindMem(); refreshCare(); openSheet('shMem');
+}
+function bindMem(){
+  const root = $('mBody');
+  root.querySelectorAll('.tg').forEach(g => g.addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    if(g.dataset.multi || ['mOku','mSeen','mRefOn','mDead'].indexOf(g.id) >= 0) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true');
+    else { g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); }
+    if(g.id === 'mOku') $('mOkuT').style.display = b.getAttribute('aria-pressed') === 'true' ? '' : 'none';
+    if(g.id === 'mRefOn') $('refIn').style.display = b.getAttribute('aria-pressed') === 'true' ? '' : 'none';
+    if(g.id === 'mSex') refreshCare();
+  }));
+  $('mIc').addEventListener('input', () => { const i = icInfo($('mIc').value); if(i){ setOne('mSex', i.sex); $('mAge').value = Math.floor(ageY({ dob: i.dob })); $('mAgeU').value = 't'; $('mAgeHint').textContent = 'Umur & jantina diambil daripada IC.'; refreshCare(); } });
+  $('mAge').addEventListener('input', refreshCare); $('mAgeU').addEventListener('change', refreshCare);
+  root.querySelectorAll('#mVit input').forEach(i => i.addEventListener('input', () => { const m = { vit: collectVit() }, ab = vitAb(m); root.querySelectorAll('#mVit input').forEach(x => x.classList.toggle('ab', !!ab[x.dataset.k])); }));
+  const m0 = { vit: M.vit || {} }, ab0 = vitAb(m0); root.querySelectorAll('#mVit input').forEach(x => x.classList.toggle('ab', !!ab0[x.dataset.k]));
+}
+const setOne = (id, v) => document.querySelectorAll('#' + id + ' button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v));
+const pressed = id => Array.from(document.querySelectorAll('#' + id + ' button[aria-pressed="true"]')).map(b => b.dataset.v);
+function collectVit(){ const o = {}; document.querySelectorAll('#mVit input').forEach(i => { if(i.value.trim()) o[i.dataset.k] = i.value.trim(); }); return o; }
+function curAge(){ const v = parseFloat($('mAge').value); if(isNaN(v)) return null; const i = icInfo($('mIc').value); return i ? ageY({ dob: i.dob }) : ($('mAgeU').value === 'b' ? v / 12 : v); }
+function refreshCare(){
+  const a = curAge(), sex = pressed('mSex')[0] || '', box = $('careIn'); if(!box) return;
+  const old = { preg: (document.querySelector('#mPreg button[aria-pressed="true"]') || {}).dataset ? (document.querySelector('#mPreg button[aria-pressed="true"]').dataset.v) : (M.preg || '') };
+  const preg = old.preg, can = sex === 'P' && (a === null || (a >= 10 && a <= 55));
+  let h = '';
+  if(a !== null && a < CHILD_LT){
+    h += '<div class="sub">Penjagaan kanak-kanak</div><div class="row2"><div><label class="l" for="cWt">Berat (kg)</label><input class="fld" id="cWt" type="number" inputmode="decimal" value="' + esc(M.wt || '') + '"></div>' +
+      '<div><label class="l" for="cImm">Imunisasi</label><select id="cImm">' + ['', 'Lengkap', 'Tidak lengkap', 'Tidak pasti'].map(x => '<option' + (M.imm === x ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></div></div>' +
+      '<label class="l" for="cNote">Catatan (pemakanan, susu, tumbesaran)</label><textarea id="cNote">' + esc(M.childNote || '') + '</textarea>';
+  }
+  if(can){
+    h += '<div class="sub" style="margin-top:6px">Status ibu</div>' + one('mPreg', [['', 'Tiada'], ['ante', '🤰 Antenatal'], ['post', '🍼 Postnatal']], preg);
+    if(preg === 'ante') h += '<div class="row3"><div><label class="l" for="gG">Gravida</label><input class="fld" id="gG" type="number" inputmode="numeric" value="' + esc(M.gravida || '') + '"></div><div><label class="l" for="gW">Minggu (hari ini)</label><input class="fld" id="gW" type="number" inputmode="numeric" value="' + esc(M.preg === 'ante' && M.gestAt ? gestNow(M) : (M.gestWeeks || '')) + '"></div><div><label class="l" for="gP">Para</label><input class="fld" id="gP" type="number" inputmode="numeric" value="' + esc(M.para || '') + '"></div></div>' +
+      '<label class="l" for="gN">Catatan (kad antenatal, risiko, kandungan berisiko…)</label><textarea id="gN">' + esc(M.ancNote || '') + '</textarea>';
+    if(preg === 'post') h += '<div class="row2"><div><label class="l" for="pD">Hari postnatal (hari ini)</label><input class="fld" id="pD" type="number" inputmode="numeric" value="' + esc(M.preg === 'post' && M.postAt ? postNow(M) : (M.postDay || '')) + '"></div><div><label class="l" for="pM">Cara bersalin</label><select id="pM">' + ['', 'Normal', 'Caesarean', 'Lain'].map(x => '<option' + (M.delivery === x ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></div></div>' +
+      '<label class="l" for="pN">Catatan (penyusuan, jahitan, bayi bersama)</label><textarea id="pN">' + esc(M.pncNote || '') + '</textarea>';
+  }
+  if(!h) h = '<div class="sub">Bahagian ini muncul untuk kanak-kanak (bawah ' + CHILD_LT + ' tahun) dan wanita usia subur. Isi umur & jantina dahulu.</div>';
+  box.innerHTML = h;
+  const pg = $('mPreg'); if(pg) pg.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; setOne('mPreg', b.dataset.v); M.preg = b.dataset.v; refreshCare(); });
+}
+$('mSave').onclick = () => {
+  const name = $('mName').value.trim(); if(!name){ toast('Masukkan nama', true); return; }
+  const sex = pressed('mSex')[0] || ''; if(!sex){ toast('Pilih jantina', true); return; }
+  const ageV = $('mAge').value.trim(); const info = icInfo($('mIc').value);
+  if(!info && ageV === ''){ toast('Masukkan umur atau IC', true); return; }
+  const d = Object.assign({}, M, { name, ic: $('mIc').value.trim(), sex });
+  if(info){ d.dob = info.dob; delete d.age; delete d.ageUnit; } else { delete d.dob; d.age = ageV; d.ageUnit = $('mAgeU').value; }
+  d.oku = pressed('mOku').length > 0; d.okuType = d.oku ? $('mOkuT').value.trim() : '';
+  d.hist = pressed('mHist'); d.histNote = $('mHistO').value.trim(); d.allergy = $('mAlg').value.trim(); d.regMeds = $('mRegMed').value.trim();
+  d.medNeeds = pressed('mMed'); d.medNote = $('mMedN').value.trim();
+  d.fuStatus = pressed('mFu')[0] || 'Tiada'; d.fuDate = $('mFuD').value; d.fuNote = $('mFuN').value.trim();
+  d.symp = pressed('mSymp'); d.sympNote = $('mSympN').value.trim(); d.vit = collectVit(); d.vitAt = Object.keys(d.vit).length ? (d.vitAt || Date.now()) : '';
+  d.dx = $('mDx').value; d.dxText = $('mDxN').value.trim(); d.rtk = $('mRtk').value; d.seen = pressed('mSeen').length > 0;
+  const a = info ? ageY({ dob: info.dob }) : (d.ageUnit === 'b' ? parseFloat(ageV) / 12 : parseFloat(ageV));
+  if($('cWt')){ d.wt = $('cWt').value; d.imm = $('cImm').value; d.childNote = $('cNote').value.trim(); }
+  const pr = (document.querySelector('#mPreg button[aria-pressed="true"]') || {}).dataset;
+  d.preg = sex === 'P' && pr ? pr.v : (sex === 'P' ? (M.preg || '') : '');
+  if(d.preg === 'ante' && $('gW')){ d.gravida = $('gG').value; d.para = $('gP').value; d.gestWeeks = $('gW').value; d.gestAt = todayIso(); d.ancNote = $('gN').value.trim(); }
+  if(d.preg === 'post' && $('pD')){ d.postDay = $('pD').value; d.postAt = todayIso(); d.delivery = $('pM').value; d.pncNote = $('pN').value.trim(); }
+  d.ref = { on: pressed('mRefOn').length > 0, where: $('rDoa').value.trim(), dx: $('rDx').value.trim(), tx: $('rTx').value.trim(), tel: $('rTel').value.trim(), disDate: $('rDis').value, disTo: $('rDisTo').value.trim() };
+  d.dead = pressed('mDead').length > 0; if(d.dead && !d.deadAt) d.deadAt = todayIso();
+  if(d.rtk) d.covidScreened = true; if(isSeen(d)) d.seen = true;
+  const id = editMemId || uid();
+  put('member', id, curPps, memFam, d); closeSheet('shMem'); renderAll(); toast('Disimpan' + (navigator.onLine ? '' : ' (luar talian — akan dihantar kemudian)'));
+};
+$('mDel').onclick = () => { if(!editMemId || !confirm('Padam rekod ini?')) return; put('member', editMemId, curPps, memFam, DB.rows[editMemId].d, true); closeSheet('shMem'); renderAll(); };
+
+/* ---------------- ubat + susulan ---------------- */
+function renderMed(){
+  const ms = memsOfPps(curPps).filter(m => (m.d.medNeeds || []).length), by = {};
+  ms.forEach(m => (m.d.medNeeds || []).forEach(k => (by[k] = by[k] || []).push(m)));
+  $('medSub').textContent = ms.length ? ms.length + ' mangsa memerlukan ubat · ' + Object.keys(by).length + ' jenis' : 'Tiada keperluan ubat direkodkan untuk PPS ini.';
+  $('medList').innerHTML = Object.keys(by).sort((a, b) => by[b].length - by[a].length).map(k =>
+    '<details class="sec"><summary>' + esc(k) + ' <span class="bd grn" style="margin-left:auto;margin-right:8px">' + by[k].length + ' orang</span></summary><div class="in">' +
+    by[k].map(m => { const f = DB.rows[m.parent]; return '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>' + esc(m.d.name) + '</b> <span class="sub">· Kem ' + esc(f ? f.d.no : '') + ' · ' + esc(ageTxt(m.d)) + '</span>' + (m.d.medNote ? '<div class="sub">' + esc(m.d.medNote) + '</div>' : '') + '</div>'; }).join('') + '</div></details>').join('');
+}
+function renderFu(){
+  const ms = memsOfPps(curPps).filter(m => m.d.fuStatus && m.d.fuStatus !== 'Tiada' && m.d.fuStatus !== 'Selesai')
+    .sort((a, b) => (a.d.fuDate || '9999') < (b.d.fuDate || '9999') ? -1 : 1), t = todayIso();
+  $('fuList').innerHTML = ms.length ? ms.map(m => {
+    const late = m.d.fuDate && m.d.fuDate < t, now = m.d.fuDate === t, f = DB.rows[m.parent];
+    return '<button class="fam" data-m="' + m.id + '" data-fam="' + m.parent + '"><div class="no" style="background:' + (late ? 'var(--red)' : now ? 'var(--warn)' : 'var(--b7)') + '">' + (m.d.fuDate ? dmy(m.d.fuDate).slice(0, 5) : '—') + '<b style="font-size:11px">' + (late ? 'LEWAT' : now ? 'HARI INI' : '') + '</b></div><div class="mid"><div class="nm">' + esc(m.d.name) + '</div><div class="mt">Kem ' + esc(f ? f.d.no : '') + ' · ' + esc(m.d.fuStatus) + (m.d.fuNote ? ' · ' + esc(m.d.fuNote) : '') + '</div></div><span style="font-size:22px;color:var(--ink2)">›</span></button>';
+  }).join('') : '<div class="empty">Tiada susulan tertunggak.</div>';
+}
+$('fuList').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if(b){ curFam = b.dataset.fam; editMem(b.dataset.m, b.dataset.fam); } });
+
+/* ---------------- report ---------------- */
+const RS = 'kkah_bj_rep_' + IC;
+let rset = {}; try{ rset = JSON.parse(localStorage.getItem(RS) || '{}'); }catch(e){}
+let repSel = null, waParts = [];
+function saveR(){ try{ localStorage.setItem(RS, JSON.stringify(rset)); }catch(e){} }
+function compute(ids){
+  const mem = live('member', r => ids.indexOf(r.pps) >= 0 && (!DB.rows[r.parent] || !DB.rows[r.parent].d.left || true)).map(r => r.d);
+  const fams = live('family', r => ids.indexOf(r.pps) >= 0 && !r.d.left);
+  const here = live('member', r => ids.indexOf(r.pps) >= 0 && DB.rows[r.parent] && !DB.rows[r.parent].d.left).map(r => r.d);
+  const c = { fam: fams.length, tot: here.length, left: mem.length - here.length, adL: 0, adP: 0, chL: 0, chP: 0, okuL: 0, okuP: 0, esrf: 0, elL: 0, elP: 0, bayiL: 0, bayiP: 0, anc: [], pnc: [],
+    symp: 0, covid: 0, urti: 0, age: 0, dmhpt: 0, hpt: 0, dm: 0, asthma: 0, lain: 0, rtk: 0, adm: 0, dead: 0, seen: 0, scr: 0, refs: [] };
+  here.forEach(m => {
+    const a = ageY(m), L = m.sex === 'L';
+    if(a < CHILD_LT){ L ? c.chL++ : c.chP++; if(a < 1) L ? c.bayiL++ : c.bayiP++; } else { L ? c.adL++ : c.adP++; if(a >= ELDER_GE) L ? c.elL++ : c.elP++; }
+    if(m.oku) L ? c.okuL++ : c.okuP++;
+    const h = m.hist || []; if(h.indexOf('ESRF') >= 0) c.esrf++;
+    if(m.preg === 'ante') c.anc.push(m); if(m.preg === 'post') c.pnc.push(m);
+    if(hasSymp(m)) c.symp++;
+    if(m.dx === 'COVID19') c.covid++; if(m.dx === 'URTI') c.urti++; if(m.dx === 'AGE') c.age++; if(m.dx === 'Lain') c.lain++;
+    const dm = h.indexOf('DM') >= 0, hp = h.indexOf('HPT') >= 0; if(dm && hp) c.dmhpt++; else if(hp) c.hpt++; else if(dm) c.dm++; if(h.indexOf('Asthma') >= 0) c.asthma++;
+    if(m.rtk) c.rtk++; if(m.rtk || m.covidScreened) c.scr++; if(isRef(m)) { c.adm++; c.refs.push(m); } if(m.dead) c.dead++; if(isSeen(m)) c.seen++;
+  });
+  c.ncd = c.dmhpt + c.hpt + c.dm; return c;
+}
+function repIds(){ const all = ppsList().filter(p => !p.d.close || p.d.close >= todayIso()).map(p => p.id); if(!repSel) repSel = all.slice(); repSel = repSel.filter(id => DB.rows[id] && !DB.rows[id].del); return repSel; }
+function famOf(m){ const mm = Object.values(DB.rows).find(r => r.d === m); return mm ? DB.rows[mm.parent] : null; }
+function buildBlocks(){
+  const ids = repIds(), c = compute(ids), L = [];
+  const now = new Date(), tar = $('rTarikh').value ? dmy($('rTarikh').value) : dmy(todayIso()), jam = $('rJam').value || pad(now.getHours()) + ':' + pad(now.getMinutes());
+  const N = v => (v === '' || v == null) ? '' : v;
+  L.push(['*' + $('rJenis').value + '*\n*Laporan Ringkas Banjir/ Bencana Harian untuk setiap daerah*\n1.Tarikh : ' + tar + '\n2.Jam : ' + jam + '\n3.Daerah : ' + $('rDaerah').value + '\n4.Bilangan PPS dibuka : ' + ids.length]);
+  ids.forEach(id => { const p = DB.rows[id].d; L.push('*Perincian PPS*\na)Nama PPS : ' + (p.name || '') + '\nb)Tarikh Buka : ' + dmy(p.open) + '\nc)Tarikh Tutup : ' + (p.close ? dmy(p.close) : '-') + '\nd)Pegawai Penyelaras Banjir : ' + (p.coord || '') + '\ne)Team Klinik Kesihatan : ' + (p.team || '') + '\nf) Bil Anggota : ' + N(p.count)); });
+  L.push('*Data kumulatif daerah*\n*Demografi*\na)Bilangan Keluarga : ' + c.fam + '\nb)Bilangan Mangsa : ' + c.tot + (c.left ? ' (telah pulang: ' + c.left + ')' : '') + '\nc)Bilangan Dewasa : ' + (c.adL + c.adP) + '\n *Lelaki* : ' + c.adL + '\n*Perempuan*: ' + c.adP + '\nd)Bilangan Kanak-Kanak : ' + (c.chL + c.chP) + '\n *Lelaki*: ' + c.chL + '\n*Perempuan*: ' + c.chP +
+    '\ne)Bilangan Oku : ' + (c.okuL + c.okuP) + '\n lelaki : ' + c.okuL + '\n perempuan : ' + c.okuP);
+  L.push('f)Bilangan Antenatal *(+ Gravida & Gestation Week bagi setiap kes)* : ' + c.anc.length + c.anc.map((m, i) => '\n ' + (i + 1) + '. ' + m.name + ' — G' + (m.gravida || '?') + ', ' + gestNow(m) + ' minggu').join('') +
+    '\ng) Bilangan Post Natal *(+ Postnatal Day bagi setiap kes)* : ' + c.pnc.length + c.pnc.map((m, i) => '\n ' + (i + 1) + '. ' + m.name + ' — hari ke-' + postNow(m)).join('') +
+    '\ng)Bilangan penyakit ESRF : ' + c.esrf + '\nh) Bilangan warga emas : ' + (c.elL + c.elP) + '\n lelaki : ' + c.elL + '\n perempuan : ' + c.elP + '\ni) Bilangan bayi : ' + (c.bayiL + c.bayiP) + '\n lelaki : ' + c.bayiL + '\n perempuan : ' + c.bayiP);
+  L.push('*Saringan Kesihatan*\na)Bilangan Mangsa Bergejala : ' + c.symp + '\nb)Jumlah Kes Covid19 : ' + c.covid + '\nc)Jumlah Kes Urti : ' + c.urti + '\nd)Jumlah Kes AGE : ' + c.age + '\ne)Jumlah Kes NCD : ' + c.ncd + '\n-DM, HPT : ' + c.dmhpt + '\n-HPT : ' + c.hpt + '\n-DM : ' + c.dm + '\n-Asthma : ' + c.asthma + '\nf)Jumlah Kes Lain : ' + c.lain +
+    '\ng)Jumlah RTK yang dibuat : ' + c.rtk + '\nh)Bilangan Kes masuk Hospital : ' + c.adm + '\ni)BILANGAN KES KEMATIAN : ' + c.dead + '\nj) Bilangan Mangsa Diperiksa : ' + c.seen + '\nk) Jumlah mangsa disaring Covid19 : ' + c.scr);
+  if(!c.refs.length) L.push('*6) Maklumat mangsa referral ke hospital*\nTiada');
+  c.refs.forEach((m, i) => { const f = DB.rows && Object.values(DB.rows).find(r => r.d === m), fam = f ? DB.rows[f.parent] : null, r = m.ref || {};
+    L.push('*6) Maklumat mangsa referral ke hospital' + (c.refs.length > 1 ? ' (' + (i + 1) + ')' : '') + '*\nNama : ' + m.name + '\nIc : ' + (m.ic || '') + '\nAlamat : ' + (fam ? fam.d.addr || '' : '') + '\nNo.telefon : ' + (r.tel || (fam ? fam.d.phone || '' : '')) + '\nDOA@lokasi hospital : ' + (r.where || '') + '\nDiagnosis : ' + (r.dx || m.dxText || '') + '\nRawatan Awal : ' + (r.tx || '') + '\n\n*Tarikh Discaj:* ' + (r.disDate ? dmy(r.disDate) : '') + '\n*Discaj ke mana:* ' + (r.disTo || '')); });
+  L.push('*Aktiviti Pasukan Kesihatan:* ' + ($('rAkt').value.trim() || '-') + '\n\n*Disediakan oleh :*\nNama : ' + $('rNama').value + '\nJawatan : ' + $('rJaw').value + '\nTempat Bertugas: ' + $('rTempat').value);
+  return L.flat().filter(Boolean);
+}
+const PART_MAX = 1400;
+function packParts(blocks){
+  const parts = []; let cur = '';
+  blocks.forEach(b => { if(cur && (cur.length + b.length + 2) > PART_MAX){ parts.push(cur); cur = ''; } cur += (cur ? '\n\n' : '') + b; });
+  if(cur) parts.push(cur);
+  return parts.map((p, i) => parts.length > 1 ? (i ? '_(sambungan ' + (i + 1) + '/' + parts.length + ')_\n' : '') + p + (i === 0 ? '\n_(1/' + parts.length + ')_' : '') : p);
+}
+function renderReport(){
+  const ids = ppsList().filter(p => !p.d.close || p.d.close >= todayIso());
+  repIds();
+  $('repPps').innerHTML = ids.length ? ids.map(p => '<button type="button" data-p="' + p.id + '" aria-pressed="' + (repSel.indexOf(p.id) >= 0) + '">' + esc(p.d.name) + '</button>').join('') : '<span class="sub">Tiada PPS aktif.</span>';
+  $('rJenis').value = rset.jenis || 'PASUKAN KESIHATAN'; $('rDaerah').value = rset.daerah || 'Kubang Pasu';
+  if(!$('rTarikh').value) $('rTarikh').value = todayIso();
+  if(!$('rJam').value){ const n = new Date(); $('rJam').value = pad(n.getHours()) + ':' + pad(n.getMinutes()); }
+  $('rAkt').value = rset.akt || ''; $('rNama').value = rset.nama || MY_NAME; $('rJaw').value = rset.jaw || ''; $('rTempat').value = rset.tempat || 'Klinik Kesihatan Ayer Hitam'; $('rPhone').value = rset.phone || '';
+  if(!rset.phone) fetchPhone();
+  refreshPrev();
+}
+function refreshPrev(){ try{ waParts = packParts(buildBlocks()); $('repPrev').textContent = waParts.join('\n\n— — —\n\n'); }catch(e){ $('repPrev').textContent = 'Ralat menjana laporan: ' + e.message; } }
+$('repPps').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if(!b) return; const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); repSel = repSel.filter(x => x !== b.dataset.p); if(on) repSel.push(b.dataset.p); refreshPrev(); });
+['rJenis','rDaerah','rTarikh','rJam','rAkt','rNama','rJaw','rTempat','rPhone'].forEach(id => $(id).addEventListener('input', () => {
+  rset = { jenis: $('rJenis').value, daerah: $('rDaerah').value, akt: $('rAkt').value, nama: $('rNama').value, jaw: $('rJaw').value, tempat: $('rTempat').value, phone: $('rPhone').value }; saveR(); refreshPrev(); }));
+let phoneAsked = false;
+async function fetchPhone(){
+  if(phoneAsked) return; phoneAsked = true;
+  try{ const d = await api({ action:'getMyProfileFull' }); if(d.ok && d.phone && !$('rPhone').value){ $('rPhone').value = d.phone; rset.phone = d.phone; saveR(); } }catch(e){}
+}
+function waNumber(){ let n = String($('rPhone').value).replace(/\D/g, ''); if(n.startsWith('0')) n = '6' + n; return n; }
+$('waBtn').onclick = () => {
+  refreshPrev(); const num = waNumber();
+  if(num.length < 10){ toast('Isi No. WhatsApp anda dahulu', true); $('rPhone').focus(); return; }
+  $('waSub').innerHTML = 'Laporan dibahagi kepada <b>' + waParts.length + ' mesej</b>. Tekan setiap butang mengikut turutan — WhatsApp akan terbuka dengan teks sedia dihantar ke nombor anda sendiri.';
+  $('waParts').innerHTML = waParts.map((p, i) => '<div class="part"><div class="pt"><b>Bahagian ' + (i + 1) + ' / ' + waParts.length + '</b>' + esc(p.replace(/\*|_/g, '').slice(0, 70).replace(/\n/g, ' ')) + '…</div><button class="btn wa" style="min-height:48px" data-i="' + i + '">🟢 Hantar</button></div>').join('');
+  openSheet('shWa');
+};
+$('waParts').addEventListener('click', e => {
+  const b = e.target.closest('[data-i]'); if(!b) return;
+  window.open('https://wa.me/' + waNumber() + '?text=' + encodeURIComponent(waParts[+b.dataset.i]), '_blank', 'noopener');
+  b.textContent = '✓ Dibuka'; b.style.opacity = '.7';
+});
+$('waCopy').onclick = async () => { try{ await navigator.clipboard.writeText(waParts.join('\n\n')); toast('Teks disalin'); }catch(e){ toast('Tidak dapat menyalin', true); } };
+
+/* ---------------- start ---------------- */
+function renderAll(){ renderHome(); if(view === 'fam') renderFam(); if(view === 'med') renderMed(); if(view === 'fu') renderFu(); if(view === 'rep') refreshPrev(); }
+document.querySelectorAll('#nav button').forEach(b => b.addEventListener('click', () => setTimeout(renderAll, 0)));
+renderAll(); show('home'); updSync(); schedSync(200);
+</script>
+<script src="./emergency-alert.js"></script>
+<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
+</body>
+</html>
