@@ -1135,7 +1135,7 @@ async function loadExtraTiles_(){
     slot.innerHTML = '';
     (d.tiles || []).forEach(t => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'status-box sb-act';
-      const sub = t.id === 'bersih' ? 'Tandakan tugasan kebersihan hari ini' : t.id === 'amo' ? 'Buka borang \u2014 nama anda telah diisi' : t.id === 'primareg' ? 'Daftar pesakit OPD / MCH \u2014 perlu PIN' : t.id === 'eclerk' ? 'Cari IC pesakit hari ini, kemudian buka e-Clerking' : '';
+      const sub = t.id === 'bersih' ? 'Tandakan tugasan kebersihan hari ini' : t.id === 'amo' ? 'Buka borang \u2014 nama anda telah diisi' : t.id === 'primareg' ? 'Daftar pesakit OPD / MCH \u2014 perlu PIN' : t.id === 'eclerk' ? 'Cari IC pesakit hari ini, kemudian buka e-Clerking' : t.id === 'kaunterhist' ? 'Cari IC \u2014 10 lawatan terakhir ke kaunter' : '';
       b.innerHTML = '<span class="ai">' + t.icon + '</span><span><b></b><small>' + sub + '</small></span><span class="go">\u203A</span>';
       b.querySelector('b').textContent = t.name;
       b.onclick = () => { if(t.ext) window.open(t.href, '_blank', 'noopener'); else window.location.href = t.href; };
