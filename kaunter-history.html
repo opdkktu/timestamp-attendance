@@ -119,7 +119,5 @@ $('f').addEventListener('submit', e => { e.preventDefault(); search(false); });
 $('res').addEventListener('click', e => { if(e.target.closest('#rf')) search(true); });
 setTimeout(() => { try{ $('q').focus(); }catch(e){} }, 150);
 </script>
-<script src="./emergency-alert.js"></script>
-<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
 </body>
 </html>
