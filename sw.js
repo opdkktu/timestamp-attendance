@@ -7,7 +7,7 @@ self.addEventListener('push', (event) => {
     let raw = ''; try { raw = event.data ? event.data.text() : ''; } catch (e) {}
     if (!raw || raw.indexOf('emergency') < 0) return;
     let id = '', at = Date.now();
-    const m = raw.match(/"id"\s*:\s*"(SOS\d+)"/); if (m) id = m[1];
+    const m = raw.match(/"id"\s*:\s*"(SOS\d+)"/) || raw.match(/id=(SOS\d+)/); if (m) id = m[1];
     const a = raw.match(/"at"\s*:\s*"?(\d{12,})"?/); if (a) at = Number(a[1]);
     if (!id) return;
     event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
