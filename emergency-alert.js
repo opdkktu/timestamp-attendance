@@ -2,7 +2,7 @@
  * SIAGA — Emergency alert screen + siren (shared by dashboard.html and emergency.html)
  *
  *   SiagaEmergency.show({id, at})         full-screen red alert + siren
- *   SiagaEmergency.check(apiUrl)          asks the server "is there an emergency right now?" and shows it if so
+ *   SiagaEmergency.ready()                dashboard: unlock sound + listen for the push (no server polling)
  *   SiagaEmergency.page(apiUrl)           for emergency.html (shows the "no emergency" state too)
  *   SiagaEmergency.stop()                 silence the siren
  *
@@ -219,22 +219,17 @@
     });
   }
 
-  /** emergency.html: show the live alert, or the calm "no emergency" state. */
-  function page(apiUrl){
+  /**
+   * emergency.html (opened by tapping the push): NO server calls and NO polling.
+   * The notification link carries the alert id (SOS + time sent), so the page shows the alert straight away
+   * while it is still within 15 minutes, otherwise the calm "no emergency" screen.
+   */
+  function page(){
     pageMode = true;
-    build();
-    function tick(){
-      ask(apiUrl).then(function(d){
-        if(d && d.ok && d.active){
-          if(!current || current.id !== d.id){ overlay.style.background = ''; overlay.style.animation = ''; show({ id: d.id, at: d.at }); }
-        }else if(d && d.ok && !d.active && current){ showNone(); }
-        else if(d && d.ok && !d.active && !current && !overlay.classList.contains('show')){ showNone(); }
-      });
-    }
-    tick();
-    setInterval(tick, 5000);
-    armPrime(); listenSw();
-    document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') tick(); });
+    build(); armPrime(); listenSw();
+    var m = String(location.search || '').match(/[?&]id=SOS(\d{10,})/), at = m ? Number(m[1]) : 0;
+    if(at && Date.now() - at <= 15 * 60 * 1000 && !acked('SOS' + at)) show({ id: 'SOS' + at, at: at });
+    else showNone();
   }
 
   /** Dashboard: a push that arrives while the app is open. */
@@ -254,30 +249,15 @@
   }
 
   /**
-   * Every SIAGA page: stay ready for an emergency.
+   * Dashboard: get ready to receive an emergency PUSH — nothing is fetched from the server, ever.
    *  - primes sound on the first touch, so the siren can start by itself later
    *  - hears the service worker the instant a push arrives (even if the page is hidden)
-   *  - asks the server every 20 s while visible (+ right away on focus / back online / screen on) as a safety net
+   * (watch() is kept as an alias so an old page that still calls it does nothing harmful.)
    */
-  function watch(apiUrl){
-    apiUrl = apiUrl || window.SIAGA_API || DEFAULT_API;
+  function ready(){
     if(watching) return; watching = true;
     build(); armPrime(); listenSw();
-    // The 20-second server check only runs in office hours (Sun–Wed 07:00–17:00, Thu 07:00–15:30; never Fri, Sat or a public holiday).
-    // Outside those hours the push + service-worker route still alert instantly, and the check still runs once when the app opens.
-    function officeHours(){
-      var n = new Date(), d = n.getDay(), m = n.getHours() * 60 + n.getMinutes();
-      if(d === 5 || d === 6) return false;
-      try{ var k = n.getFullYear() + '-' + (n.getMonth() + 1) + '-' + n.getDate(); if(localStorage.getItem('kkah_offday') === k) return false; }catch(e){}
-      return m >= 7 * 60 && m < (d === 4 ? 15 * 60 + 30 : 17 * 60);
-    }
-    function go(){ check(apiUrl); }
-    function sched(){ clearTimeout(pollTimer); pollTimer = setTimeout(function(){ if(document.visibilityState === 'visible' && officeHours()) go(); sched(); }, 18000 + Math.random() * 4000); }
-    function goIf(){ if(officeHours()) go(); }
-    document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible') goIf(); });
-    window.addEventListener('focus', goIf); window.addEventListener('online', goIf); window.addEventListener('pageshow', goIf);
-    go(); sched();   // one check when the page opens, at any hour
   }
 
-  window.SiagaEmergency = { watch: watch, prime: prime, show: show, check: check, page: page, stop: stop, fromPush: fromPush, start: start };
+  window.SiagaEmergency = { ready: ready, watch: ready, prime: prime, show: show, check: check, page: page, stop: stop, fromPush: fromPush, start: start };
 })();
