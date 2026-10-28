@@ -1807,6 +1807,7 @@ async function openCmeScanner(){
   modal.classList.remove('res'); modal.classList.add('show');
   document.getElementById('scanTitle').textContent = 'Imbas QR CME';
   document.getElementById('scanHint').textContent = 'Halakan kamera ke kod QR yang dipaparkan oleh urusetia';
+  if(!('BarcodeDetector' in window)) cmeLoadJsQR().catch(() => {});
   try{
     cmeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
     const video = document.getElementById('scanVideo');
@@ -1831,7 +1832,11 @@ function cmeStopCamera(){
   const v = document.getElementById('scanVideo'); if(v) v.srcObject = null;
 }
 function closeCmeScanner(){ cmeStopCamera(); document.getElementById('scanModal').classList.remove('show', 'res'); }
-
+function cmeLoadJsQR(){
+  if(typeof jsQR === 'function') return Promise.resolve();
+  const urls = ['./jsQR.min.js?v=' + Date.now(), 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js', 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js'];
+  return urls.reduce((p, u) => p.catch(() => new Promise((res, rej) => { if(typeof jsQR === 'function') return res(); const s = document.createElement('script'); s.src = u; s.onload = () => typeof jsQR === 'function' ? res() : rej(); s.onerror = rej; document.head.appendChild(s); })), Promise.reject());
+}
 function cmeScanLoop(){
   if(!cmeScanning) return;
   const video = document.getElementById('scanVideo');
@@ -1844,9 +1849,9 @@ function cmeScanLoop(){
     return;
   }
   if(typeof jsQR !== 'function'){
-    cmeShowResult('bad', '⚠️', 'Pengimbas tidak dimuatkan', '<span>Komponen pengimbas QR gagal dimuat turun (internet lemah?). Muat semula halaman dan cuba lagi.</span>', false);
-    return;
-  }
+  cmeLoadJsQR().then(() => { if(cmeScanning) cmeScanLoop(); }).catch(() => cmeShowResult('bad','⚠️','Pengimbas tidak dimuatkan','<span>Komponen pengimbas QR gagal dimuat turun (internet lemah?). Muat semula halaman dan cuba lagi.</span>', true));
+  return;
+}
   const w = 480, h = Math.round(480 * (video.videoHeight / video.videoWidth)) || 360;
   cmeCanvas = cmeCanvas || document.createElement('canvas');
   cmeCanvas.width = w; cmeCanvas.height = h;
