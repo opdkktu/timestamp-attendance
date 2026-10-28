@@ -213,26 +213,26 @@ document.addEventListener('click', async e => {
 function renderLog(){
   const f = fr(S.fridge), d = S.days[S.day - 1] || {}, dateVal = S.y + '-' + pad(S.m) + '-' + pad(S.day), tv = NOW.getFullYear() + '-' + pad(NOW.getMonth() + 1) + '-' + pad(NOW.getDate());
   const tab = (k, l, sub) => '<button class="' + k + (S.slot === k ? ' on' : '') + '" data-slot="' + k + '" aria-pressed="' + (S.slot === k) + '">' + l + (d[k] ? ' ✓' : '') + '<small>' + sub + '</small></button>';
-  let html = '<div class="card"><h2>🧊 ' + esc(f.unit) + ' · ' + esc(f.name) + '</h2>' +
+  let html = '<div class="card"><h2>🧊 ' + esc(f.unit) + ' · ' + esc(f.name) + ' <span class="pts" style="margin-left:auto">🏅 +1 mata / sesi</span></h2>' +
     '<div class="dtrow"><button class="ib" data-d="-1" aria-label="Hari sebelum">‹</button><input class="fld" id="dt" type="date" value="' + dateVal + '" max="' + tv + '" style="text-align:center;font-weight:800"><button class="ib" data-d="1" aria-label="Hari seterusnya"' + (dateVal >= tv ? ' disabled' : '') + '>›</button></div></div>' +
     '<div class="seg">' + tab('am', '☀️ AM', '8:00 pagi') + tab('pm', '🌙 PM', '4:00 petang') + '</div>';
   const s = d[S.slot];
   if(s){
     html += '<div class="card"><h2 style="color:var(--green)">🔒 Sesi ' + S.slot.toUpperCase() + ' telah direkod &amp; dikunci</h2><div class="lockrow">' +
-      [['Maks', s.max, 'red'], ['Min', s.min, 'green'], ['Semasa', s.cur, 'blue']].map(x => '<div><small>' + x[0] + '</small><b style="color:var(--' + x[2] + ')">' + fmt(x[1]) + '°</b></div>').join('') + '</div>' +
+      [['Maks', s.max, 'red'], ['Min', s.min, 'green'], ['Semasa', s.cur, 'blue']].map(x => '<div><small>' + x[0] + '</small><b style="color:var(--' + x[2] + ')">' + (x[1] == null ? '—' : fmt(x[1]) + '°') + '</b></div>').join('') + '</div>' +
       '<div class="sub">👤 ' + esc(s.nurse) + ' · 🕒 ' + esc(String(s.time).slice(11, 16)) + '</div>' +
       ((d.events || []).length ? '<div class="msg warn">Insiden: ' + d.events.map(esc).join(', ') + '</div>' : '') + (d.note ? '<div class="msg info">' + esc(d.note) + '</div>' : '') + '</div>';
     const nx = dateVal === tv ? nextPending(S.slot, S.unit) : '';
     if(nx && nx !== S.fridge) html += '<button class="btn" data-go="' + nx + '">➡️ Seterusnya: ' + esc(fr(nx).unit) + ' ' + esc(fr(nx).name) + '</button>';
-    else if(dateVal === tv && !nx) html += '<div class="card done-all"><div class="big">🎉</div><b>Semua peti sejuk sesi ' + S.slot.toUpperCase() + ' telah direkod</b></div>';
+    else if(dateVal === tv && !nx) html += '<div class="card done-all"><div class="big">🎉</div><b>Semua peti sejuk sesi ' + S.slot.toUpperCase() + ' telah direkod</b><div class="sub" style="margin-top:6px">Terima kasih! Setiap rekod memberi +1 mata.</div></div>';
   }else{
     html += '<div class="card"><h2>' + (S.slot === 'am' ? '☀️ Bacaan AM — 8:00 pagi' : '🌙 Bacaan PM — 4:00 petang') + '</h2>' +
-      '<div class="msg info" style="margin:0 0 4px">Isi <b style="color:var(--red)">maksima</b> → <b style="color:var(--green)">minima</b> → <b style="color:var(--blue)">semasa</b>. Julat <b>' + esc(S.cfg.standard) + '</b>. Sesi hanya boleh disimpan <b>sekali</b>.</div>' +
+      '<div class="msg info" style="margin:0 0 4px">Isi <b>sekurang-kurangnya satu</b> bacaan: <b style="color:var(--red)">maksima</b>, <b style="color:var(--green)">minima</b> atau <b style="color:var(--blue)">semasa</b>. Julat <b>' + esc(S.cfg.standard) + '</b>. Sesi hanya boleh disimpan <b>sekali</b>.</div>' +
       '<div class="temps">' + [['max', 'Maks', 'red'], ['min', 'Min', 'green'], ['cur', 'Semasa', 'blue']].map(x => '<div class="temp ' + x[0] + '"><label for="f-' + x[0] + '"><span class="d" style="background:var(--' + x[2] + ')"></span>' + x[1] + '</label><input id="f-' + x[0] + '" type="number" inputmode="decimal" step="0.1" placeholder="—" autocomplete="off"><div class="hint" id="h-' + x[0] + '"></div></div>').join('') + '</div>' +
       '<label class="l">Direkod oleh</label><div class="who">👤 ' + esc(S.me) + '</div>' +
       (S.events.length ? '<label class="l">Insiden (jika ada)</label><div class="evs">' + S.events.map(e => '<label class="ev"><input type="checkbox" value="' + esc(e.code) + '"><span><b style="color:var(--ink)">' + esc(e.code) + '</b> – ' + esc(e.text) + '</span></label>').join('') + '</div>' : '') +
       '<label class="l" for="f-note">Catatan</label><textarea id="f-note" rows="2" maxlength="300" placeholder="Catatan tambahan jika perlu…"></textarea><div id="f-msg"></div></div>' +
-      '<button class="btn" id="f-save" disabled>💾 Simpan bacaan  + S.slot.toUpperCase() + </button>';
+      '<button class="btn" id="f-save" disabled>💾 Simpan bacaan ' + S.slot.toUpperCase() + ' · +1 mata</button>';
   }
   $('logBody').innerHTML = html;
   if(!s) bindForm();
@@ -252,11 +252,11 @@ function readForm(){
 function validate(){
   const v = readForm(), errs = []; let warn = false;
   ['max','min','cur'].forEach(k => { const bad = oor(v[k]); warn = warn || bad; $('f-' + k).classList.toggle('oor', !!bad); $('h-' + k).textContent = bad ? (v[k] > S.cfg.maxTemp ? '▲ Melebihi had' : '▼ Bawah had') : ''; });
-  const all = v.max != null && v.min != null && v.cur != null;
-  if(!all) errs.push('Isi ketiga-tiga suhu.');
-  else if(v.min > v.max) errs.push('Min tidak boleh lebih tinggi daripada Maks.');
-  else if(v.cur < v.min || v.cur > v.max) errs.push('Semasa mesti antara Min dan Maks.');
-  $('f-msg').innerHTML = (all ? errs.map(e => '<div class="msg err">' + e + '</div>').join('') : '') + (warn ? '<div class="msg warn">⚠ Suhu luar julat (' + esc(S.cfg.standard) + '). Pilih insiden jika berkaitan dan ambil tindakan segera. Emel amaran akan dihantar.</div>' : '');
+  const any = v.max != null || v.min != null || v.cur != null;            // one reading is enough
+  if(!any) errs.push('Isi sekurang-kurangnya satu bacaan.');
+  else if(v.max != null && v.min != null && v.min > v.max) errs.push('Min tidak boleh lebih tinggi daripada Maks.');
+  else if(v.cur != null && ((v.min != null && v.cur < v.min) || (v.max != null && v.cur > v.max))) errs.push('Semasa mesti antara Min dan Maks.');
+  $('f-msg').innerHTML = (any ? errs.map(e => '<div class="msg err">' + e + '</div>').join('') : '') + (warn ? '<div class="msg warn">⚠ Suhu luar julat (' + esc(S.cfg.standard) + '). Pilih insiden jika berkaitan dan ambil tindakan segera. Emel amaran akan dihantar.</div>' : '');
   $('f-save').disabled = errs.length > 0 || S.busy; return { v, ok: !errs.length };
 }
 function bindForm(){
@@ -265,7 +265,7 @@ function bindForm(){
     const { v, ok } = validate(); if(!ok) return;
     const row = (k, val, c) => '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span class="sub">' + k + '</span><b style="color:var(--' + c + ')">' + val + '°C</b></div>';
     $('confBox').innerHTML = '<h3>Sahkan simpan ' + S.slot.toUpperCase() + '?</h3><div class="sub" style="margin-bottom:8px">' + esc(fr(S.fridge).unit) + ' · ' + esc(fr(S.fridge).name) + ' · ' + S.day + '/' + S.m + '/' + S.y + '</div>' +
-      row('Maks', v.max, 'red') + row('Min', v.min, 'green') + row('Semasa', v.cur, 'blue') + '<div class="msg warn">🔒 Selepas disimpan, rekod <b>tidak boleh diubah</b>.</div>' +
+      (v.max != null ? row('Maks', v.max, 'red') : '') + (v.min != null ? row('Min', v.min, 'green') : '') + (v.cur != null ? row('Semasa', v.cur, 'blue') : '') + '<div class="msg warn">🔒 Selepas disimpan, rekod <b>tidak boleh diubah</b>.</div>' +
       '<div class="row2"><button class="btn ghost" data-close>Semak semula</button><button class="btn" id="confGo" type="button">Ya, simpan</button></div>';
     $('shConf').classList.add('show'); $('confGo').onclick = doSave;
   };
@@ -278,7 +278,7 @@ async function doSave(){
     if(!d.ok) throw new Error(d.error);
     S.days = d.days; S.cache[key()] = d.days; S.today = d.today || S.today;
     $('shConf').classList.remove('show');
-    toast('✓ Disimpan');
+    toast(d.pts ? '✓ Disimpan · +' + d.pts + ' mata 🎉' : '✓ Disimpan');
     S.busy = false; render();
     const nx = (S.day === NOW.getDate() && isCurMonth()) ? nextPending(S.slot, S.unit) : '';
     if(nx && nx !== S.fridge) setTimeout(async () => { S.fridge = nx; S.unit = fr(nx).unit; await loadMonth(); render(); window.scrollTo(0, 0); }, 900);   // straight on to the next fridge that still needs this session
@@ -293,7 +293,8 @@ const RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').m
 function stats(){
   const f = []; S.days.forEach(d => ['am','pm'].forEach(k => { if(d[k]) f.push(d[k]); }));
   const all = f.flatMap(s => [s.max, s.min, s.cur]);
-  return { n:f.length, avg:f.length ? (f.reduce((a, s) => a + s.cur, 0) / f.length).toFixed(1) : null, hi:f.length ? Math.max(...f.map(s => s.max)) : null, lo:f.length ? Math.min(...f.map(s => s.min)) : null, bad:all.filter(oor).length };
+  const cs = f.map(s => s.cur).filter(x => x != null), hs = f.map(s => s.max).filter(x => x != null), ls = f.map(s => s.min).filter(x => x != null);
+  return { n:f.length, avg:cs.length ? (cs.reduce((a, x) => a + x, 0) / cs.length).toFixed(1) : null, hi:hs.length ? Math.max(...hs) : null, lo:ls.length ? Math.min(...ls) : null, bad:all.filter(oor).length };
 }
 function renderGraph(){
   const f = fr(S.fridge), st = stats();
