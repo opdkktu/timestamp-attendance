@@ -40,7 +40,19 @@
   .cd{ font:900 110px Manrope,Inter,sans-serif; background:linear-gradient(#fde047,#fb923c); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; animation:pop .6s ease-out; }
   @keyframes pop{ from{ transform:scale(.4); opacity:0; } to{ transform:scale(1); opacity:1; } }
   .win{ font:900 64px Manrope,Inter,sans-serif; color:var(--gold); text-shadow:0 0 26px rgba(251,191,36,.6); animation:pop .5s ease-out; }
-  @media (prefers-reduced-motion:reduce){ .big,.spin,.cd,.win{ animation:none; } }
+  .scbox{ position:relative; width:100%; aspect-ratio:640/400; border-radius:18px; overflow:hidden; border:3px solid #cbd5e1; box-shadow:0 0 30px rgba(226,232,240,.25); margin-top:8px; }
+  .scbox canvas{ width:100%; height:100%; display:block; touch-action:none; cursor:grab; }
+  .scbar{ height:8px; border-radius:99px; background:rgba(255,255,255,.1); margin-top:10px; overflow:hidden; } .scbar i{ display:block; height:100%; width:0; background:linear-gradient(90deg,#22d3ee,#fbbf24); transition:width .15s; }
+  .clawctl{ display:grid; grid-template-columns:1fr 1.2fr 1fr; gap:12px; margin-top:12px; align-items:center; }
+  .cb{ min-height:64px; border-radius:18px; border:none; font:900 24px Manrope,sans-serif; color:#fff; background:linear-gradient(#475569,#1e293b); box-shadow:0 6px 0 #0f172a; cursor:pointer; touch-action:none; }
+  .cb:active:not(:disabled){ transform:translateY(4px); box-shadow:0 2px 0 #0f172a; } .cb:disabled{ opacity:.4; }
+  .cb.on{ background:radial-gradient(circle at 35% 30%,#fb7185,#be123c); box-shadow:0 6px 0 #6b0f2a,0 0 24px rgba(244,63,94,.55); min-height:74px; letter-spacing:.08em; }
+  .tapzone{ position:relative; width:100%; aspect-ratio:1/.8; border-radius:24px; overflow:hidden; background:radial-gradient(circle at 50% 45%,#134e5e,#0b1f2a); border:2px solid rgba(125,211,252,.5); margin-top:8px; touch-action:manipulation; display:flex; align-items:center; justify-content:center; }
+  .tapbtn{ width:62%; aspect-ratio:1; border-radius:50%; display:flex; align-items:center; justify-content:center; font:900 44px Manrope,sans-serif; color:#06222a; background:radial-gradient(circle at 35% 30%,#fde68a,#f59e0b); box-shadow:0 0 0 10px rgba(251,191,36,.18),0 0 50px rgba(251,191,36,.5); animation:beat 1.1s ease-in-out infinite; pointer-events:none; }
+  .tapzone.go .tapbtn{ animation:none; transition:transform .06s; } .tapzone.hit .tapbtn{ transform:scale(.9); }
+  @keyframes beat{ 50%{ transform:scale(1.06); } }
+  .rip{ position:absolute; width:20px; height:20px; margin:-10px 0 0 -10px; border-radius:50%; border:3px solid #fde68a; animation:rip .5s ease-out forwards; pointer-events:none; } @keyframes rip{ to{ transform:scale(7); opacity:0; } }
+  @media (prefers-reduced-motion:reduce){ .big,.spin,.cd,.win,.tapbtn{ animation:none; } }
 </style>
 </head>
 <body>
@@ -106,7 +118,7 @@ function render(){
   if(s.left < 1) return showInfo('✅', 'Anda sudah bermain hari ini', 'Mata telah ditambah ke akaun anda. Jumpa lagi esok!');
   if(s.before) return showInfo('⏳', 'Belum dibuka', 'Permainan dibuka jam ' + s.from + '. Masa sekarang ' + s.serverNow + '.');
   if(s.after) return showInfo('🌙', 'Permainan sudah ditutup', 'Dibuka setiap hari bermain jam ' + s.from + ' – ' + s.to + '.');
-  if(s.game === 'spin') readySpin(); else readyShake();
+  ({ spin:readySpin, scratch:readyScratch, claw:readyClaw, tap:readyTap })[s.game] ? ({ spin:readySpin, scratch:readyScratch, claw:readyClaw, tap:readyTap })[s.game]() : readyShake();
 }
 
 /* ====================================================== LUCKY SPIN ====================================================== */
@@ -188,9 +200,9 @@ async function doShake(){
     countdown(3);
   }catch(e){ busy = false; $('go').disabled = false; $('msg').textContent = e.message || 'Ralat. Cuba lagi.'; }
 }
-function countdown(n){
-  if(n > 0){ ov(true, '', '', '<div class="cd">' + n + '</div><div class="ovs">Bersedia untuk menggoncang!</div>'); buzz(30); setTimeout(() => countdown(n - 1), 1000); }
-  else{ ov(true, '', '', '<div class="cd" style="background:linear-gradient(#86efac,#16a34a);-webkit-background-clip:text;background-clip:text">GO!</div>'); setTimeout(() => { ov(false); runShake(); }, 550); }
+function countdown(n, cb){
+  if(n > 0){ ov(true, '', '', '<div class="cd">' + n + '</div><div class="ovs">Bersedia!</div>'); buzz(30); setTimeout(() => countdown(n - 1, cb), 1000); }
+  else{ ov(true, '', '', '<div class="cd" style="background:linear-gradient(#86efac,#16a34a);-webkit-background-clip:text;background-clip:text">GO!</div>'); setTimeout(() => { ov(false); (cb || runShake)(); }, 550); }
 }
 function runShake(){
   coins = 0; left = 10; playing = true; falling = []; gotMotion = false; dragMode = false; lastX = lastY = null; basket.x = cv.width / 2 - basket.w / 2;
@@ -239,6 +251,199 @@ async function endShake(){
     ov(true, '', '', '<div class="ovt" style="color:#fda4af">⚠️ Skor tidak dapat disimpan</div><div class="ovs">' + esc((r && r.error) || 'Sambungan bermasalah. Cuba lagi.') + '</div><button class="big" style="max-width:320px" onclick="goBack()">Kembali</button>');
   }
 }
+
+/* ====================================================== shared helpers (Scratch / Claw / Tap) ====================================================== */
+const tw = (d, f) => new Promise(r => { const t0 = performance.now(); (function s(n){ const k = Math.min(1, (n - t0) / d); f(k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2); k < 1 ? requestAnimationFrame(s) : r(); })(t0); });
+let ac = null;
+function beep(f, d, t, v){ try{ ac = ac || new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), g = ac.createGain(); o.type = t || 'square'; o.frequency.value = f; g.gain.value = v || .04; o.connect(g); g.connect(ac.destination); o.start(); g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + d); o.stop(ac.currentTime + d); }catch(e){} }
+async function begin(){                                           // location reading (counts for the 12–1 check) + server draws / opens the session
+  const p = await getPos(30000);
+  api({ action:'reportLocation', lat:p.lat, lng:p.lng, acc:p.acc, src:'app' }).catch(() => {});
+  return api({ action:'startGame', lat:p.lat, lng:p.lng, acc:p.acc });
+}
+function fireworks(cv){
+  const c = cv.getContext('2d'); cv.width = innerWidth; cv.height = innerHeight; let ps = [], t = 0;
+  const burst = (x, y) => { const h = Math.random() * 360; for(let i = 0; i < 48; i++){ const a = Math.random() * 6.283, v = 1.5 + Math.random() * 5; ps.push({ x, y, vx:Math.cos(a) * v, vy:Math.sin(a) * v, l:1, h:h + Math.random() * 50 }); } };
+  (function f(){
+    if(!cv.isConnected) return;
+    c.globalCompositeOperation = 'destination-out'; c.fillStyle = 'rgba(0,0,0,.22)'; c.fillRect(0, 0, cv.width, cv.height); c.globalCompositeOperation = 'lighter';
+    if(t % 26 === 0 && t < 330) burst(cv.width * (.15 + Math.random() * .7), cv.height * (.12 + Math.random() * .4)); t++;
+    ps = ps.filter(p => p.l > 0.02); ps.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .05; p.vx *= .985; p.l *= .975; c.fillStyle = 'hsla(' + p.h + ',100%,60%,' + p.l + ')'; c.beginPath(); c.arc(p.x, p.y, 2.4, 0, 6.283); c.fill(); });
+    requestAnimationFrame(f);
+  })();
+}
+function showWin(pts, icon, text){
+  buzz([60, 40, 120]);
+  ov(true, '', '', '<canvas id="fw" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas><div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px"><div style="font-size:84px;animation:pop .6s ease-out">' + icon + '</div><div class="ovt" style="color:#4ade80">🎉 TAHNIAH!</div><div class="win">+' + pts + '</div><div class="ovt">mata ditambah</div><div class="ovs">' + text + '</div><button class="big" style="max-width:320px" onclick="goBack()">Kembali ke Dashboard</button></div>');
+  fireworks($('fw'));
+}
+function failStart(r){ busy = false; $('go').disabled = false; $('msg').textContent = (r && r.error) || 'Tidak dapat bermula.'; }
+
+/* ====================================================== SCRATCH CARD (Tuesday) ====================================================== */
+let sc = {}, scratchOn = false;
+function readyScratch(){
+  $('ttl').textContent = 'Scratch Card';
+  $('card').innerHTML = '<h1>🎟️ Scratch Card</h1><p class="sub">Gosok kad berlapis aluminium sehingga habis untuk mendedahkan hadiah mata anda.</p><div class="scbox"><canvas id="sc" width="640" height="400"></canvas></div><div class="scbar"><i id="scp"></i></div><div class="msg" id="msg"></div>' +
+    '<button class="big" id="go" onclick="doScratch()">🎟️ Dapatkan kad</button><button class="ghost" onclick="goBack()">Kembali</button>';
+  const W = 640, H = 400, mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
+  sc = { W, H, cv:$('sc'), foil:mk(), mask:mk(), under:mk(), tex:mk(), last:null, prize:0 }; sc.x = sc.cv.getContext('2d');
+  const t = sc.tex.getContext('2d'); let g = t.createLinearGradient(0, 0, W, H);
+  [[0, '#aeb6bf'], [.25, '#f2f5f8'], [.5, '#c3cad2'], [.75, '#f7f9fb'], [1, '#9aa3ad']].forEach(s => g.addColorStop(s[0], s[1])); t.fillStyle = g; t.fillRect(0, 0, W, H);
+  for(let i = 0; i < 900; i++){ t.fillStyle = 'rgba(' + (Math.random() < .5 ? '255,255,255' : '70,80,92') + ',' + (Math.random() * .12) + ')'; t.fillRect(0, Math.random() * H, W, 1 + Math.random() * 1.6); }    // brushed-metal streaks
+  for(let i = 0; i < 1800; i++){ t.fillStyle = 'rgba(255,255,255,' + Math.random() * .35 + ')'; t.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+  t.textAlign = 'center'; t.font = '900 66px Manrope,Inter,sans-serif'; g = t.createLinearGradient(0, 130, 0, 210); g.addColorStop(0, '#fde047'); g.addColorStop(.5, '#f59e0b'); g.addColorStop(1, '#b45309');
+  t.lineWidth = 7; t.strokeStyle = 'rgba(255,255,255,.9)'; t.strokeText('HADIAH MATA', W / 2, 200); t.fillStyle = g; t.fillText('HADIAH MATA', W / 2, 200);
+  t.font = '700 28px Inter,sans-serif'; t.fillStyle = '#5b6670'; t.fillText('✨ gosok di sini ✨', W / 2, 262); t.strokeStyle = 'rgba(255,255,255,.95)'; t.lineWidth = 12; t.strokeRect(6, 6, W - 12, H - 12);
+  const m = sc.mask.getContext('2d'); m.fillStyle = '#000'; m.fillRect(0, 0, W, H); scDrawUnder('?');
+  const pt = e => { const r = sc.cv.getBoundingClientRect(); return { x:(e.clientX - r.left) * W / r.width, y:(e.clientY - r.top) * H / r.height }; };
+  const cut = (a, b) => { m.globalCompositeOperation = 'destination-out'; m.lineWidth = 78; m.lineCap = m.lineJoin = 'round'; m.beginPath(); m.moveTo(a.x, a.y); m.lineTo(b.x, b.y); m.stroke(); m.globalCompositeOperation = 'source-over'; };
+  sc.cv.addEventListener('pointerdown', e => { if(!scratchOn) return; sc.cv.setPointerCapture(e.pointerId); sc.last = pt(e); cut(sc.last, sc.last); beep(500, .05, 'sawtooth', .01); });
+  sc.cv.addEventListener('pointermove', e => { if(!scratchOn || !sc.last) return; const p = pt(e); cut(sc.last, p); sc.last = p; if(Math.random() < .15){ buzz(5); beep(380 + Math.random() * 200, .04, 'sawtooth', .008); } });
+  ['pointerup', 'pointercancel'].forEach(n => sc.cv.addEventListener(n, () => { sc.last = null; }));
+  requestAnimationFrame(scFrame);
+}
+function scDrawUnder(txt){
+  const u = sc.under.getContext('2d'), W = sc.W, H = sc.H, g = u.createRadialGradient(W / 2, H / 2, 20, W / 2, H / 2, W / 1.4); g.addColorStop(0, '#fff7c2'); g.addColorStop(1, '#f59e0b'); u.fillStyle = g; u.fillRect(0, 0, W, H);
+  u.textAlign = 'center'; u.fillStyle = '#7c2d12'; u.font = '900 150px Manrope,Inter,sans-serif'; u.fillText(txt === '?' ? '?' : '+' + txt, W / 2, 245); u.font = '800 40px Manrope,Inter,sans-serif'; u.fillText('MATA', W / 2, 322);
+}
+function scFrame(now){
+  if(!sc.cv || !sc.cv.isConnected) return; const W = sc.W, H = sc.H, f = sc.foil.getContext('2d');
+  f.globalCompositeOperation = 'source-over'; f.clearRect(0, 0, W, H); f.drawImage(sc.tex, 0, 0);
+  f.globalCompositeOperation = 'source-atop'; const gx = (((now / 1900) % 1.7) - .35) * W * 1.3, g = f.createLinearGradient(gx - 130, 0, gx + 130, H * .4);
+  g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.8)'); g.addColorStop(1, 'rgba(255,255,255,0)'); f.fillStyle = g; f.fillRect(0, 0, W, H);   // the foil keeps shining
+  for(let i = 0; i < 7; i++){ const a = (Math.sin(now / 260 + i * 2.1) + 1) / 2, x = (i * 97 + 60) % W, y = (i * 61 + 40) % H; f.fillStyle = 'rgba(255,255,255,' + a * .9 + ')'; f.fillRect(x - 1, y - 9 * a, 2, 18 * a); f.fillRect(x - 9 * a, y - 1, 18 * a, 2); }
+  f.globalCompositeOperation = 'destination-in'; f.drawImage(sc.mask, 0, 0);
+  sc.x.clearRect(0, 0, W, H); sc.x.drawImage(sc.under, 0, 0); sc.x.drawImage(sc.foil, 0, 0); requestAnimationFrame(scFrame);
+}
+function scCover(){ const d = sc.mask.getContext('2d').getImageData(0, 0, sc.W, sc.H).data; let n = 0, c = 0; for(let i = 3; i < d.length; i += 64){ n++; if(d[i] < 40) c++; } return c / n; }
+async function doScratch(){
+  if(busy) return; busy = true; $('go').disabled = true; $('msg').textContent = 'Menyemak lokasi…'; buzz(20); beep(660, .1);
+  try{
+    const r = await begin(); if(!r.ok) return failStart(r);
+    sc.prize = r.prize; scDrawUnder(String(r.prize)); scratchOn = true; $('go').style.display = 'none'; $('msg').textContent = 'Gosok kad sehingga habis! 👆';
+    const iv = setInterval(() => {
+      if(!scratchOn){ clearInterval(iv); return; }
+      const c = scCover(); $('scp').style.width = Math.min(100, c / .88 * 100) + '%';
+      if(c >= .88){ scratchOn = false; clearInterval(iv); const m = sc.mask.getContext('2d'); m.globalCompositeOperation = 'destination-out'; m.fillRect(0, 0, sc.W, sc.H); $('scp').style.width = '100%'; setTimeout(() => showWin(sc.prize, '🎟️', 'Hadiah telah disimpan ke akaun anda'), 900); }
+    }, 220);
+  }catch(e){ failStart({ error:e.message || 'Ralat. Cuba lagi.' }); }
+}
+
+/* ====================================================== CLAW MACHINE (Wednesday) ====================================================== */
+const CLAW_EMO = { apple:'🍎', orange:'🍊', strawberry:'🍓', grape:'🍇', bandage:'🩹', pill:'💊', syringe:'💉', thermo:'🌡️', steth:'🩺', duck:'🦆', teddy:'🧸', panda:'🐼', unicorn:'🦄', gift:'🎁' };
+let cl = {};
+function readyClaw(){
+  $('ttl').textContent = 'Claw Machine';
+  $('card').innerHTML = '<h1>🕹️ Claw Machine</h1><p class="sub">Tekan <b>MULA</b> untuk masukkan syiling, gerakkan penyepit ◀ ▶, kemudian tekan <b>ON</b> untuk mencapai hadiah!</p>' +
+    '<div class="stage" style="aspect-ratio:340/400;border-color:#f472b6"><canvas id="cl" width="340" height="400"></canvas></div>' +
+    '<div class="clawctl"><button class="cb" id="cL" aria-label="Kiri" disabled>◀</button><button class="cb on" id="cOn" disabled>ON</button><button class="cb" id="cR" aria-label="Kanan" disabled>▶</button></div>' +
+    '<div class="msg" id="msg"></div><button class="big" id="go" onclick="doClaw()">🪙 MULA</button><button class="ghost" onclick="goBack()">Kembali</button>';
+  cl = { cv:$('cl'), x:170, rope:0, open:.6, dir:0, on:false, credit:0, coin:null, time:0, carry:null, mode:'follow', res:null, t0:0, items:[] }; cl.c = cl.cv.getContext('2d');
+  Object.keys(CLAW_EMO).sort(() => Math.random() - .5).forEach((id, i) => cl.items.push(i < 8 ? { id, x:88 + i * 30, y:318, row:0, rot:Math.random() * .6 - .3 } : { id, x:104 + (i - 8) * 40, y:290, row:1, rot:Math.random() * .6 - .3 }));
+  const hold = (b, d) => { b.addEventListener('pointerdown', e => { e.preventDefault(); if(cl.on) cl.dir = d; }); ['pointerup', 'pointerleave', 'pointercancel'].forEach(n => b.addEventListener(n, () => { if(cl.dir === d) cl.dir = 0; })); };
+  hold($('cL'), -1); hold($('cR'), 1); $('cOn').addEventListener('pointerdown', e => { e.preventDefault(); clGrab(); });
+  window.addEventListener('keydown', e => { if(!cl.on) return; if(e.key === 'ArrowLeft') cl.dir = -1; if(e.key === 'ArrowRight') cl.dir = 1; if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); clGrab(); } });
+  window.addEventListener('keyup', e => { if(e.key === 'ArrowLeft' || e.key === 'ArrowRight') cl.dir = 0; });
+  requestAnimationFrame(clDraw);
+}
+function clCtl(on){ ['cL', 'cR', 'cOn'].forEach(i => { const b = $(i); if(b) b.disabled = !on; }); }
+async function doClaw(){
+  if(busy) return; busy = true; $('go').disabled = true; $('msg').textContent = 'Menyemak lokasi…'; buzz(20); beep(520, .08);
+  try{
+    const r = await begin(); if(!r.ok) return failStart(r);
+    cl.res = r; $('go').style.display = 'none'; $('msg').textContent = '';
+    cl.credit = 1; beep(900, .08); await tw(750, k => { cl.coin = { y:240 + k * 132, k }; beep(300 + k * 300, .01, 'square', .005); }); cl.coin = null; beep(1200, .15); buzz(30);   // coin drops into the slot
+    cl.on = true; cl.time = 30; clCtl(true); $('msg').textContent = 'Gerakkan penyepit, kemudian tekan ON!';
+  }catch(e){ failStart({ error:e.message || 'Ralat. Cuba lagi.' }); }
+}
+async function clGrab(){
+  if(!cl.on) return; cl.on = false; cl.dir = 0; clCtl(false); $('msg').textContent = ''; beep(260, .2, 'sawtooth');
+  const win = cl.res.prize > 0, near = cl.items.reduce((a, b) => Math.abs(b.x - cl.x) < Math.abs(a.x - cl.x) ? b : a);
+  let tgt = null;
+  if(win){                                                          // the server decided this item comes out — slide it under the claw (nobody sees the swap)
+    tgt = cl.items.find(i => i.id === cl.res.item) || near;
+    const top = cl.items.filter(i => i.row === 1).reduce((a, b) => Math.abs(b.x - cl.x) < Math.abs(a.x - cl.x) ? b : a);
+    if(top !== tgt){ ['x', 'y', 'row', 'rot'].forEach(k => { const v = tgt[k]; tgt[k] = top[k]; top[k] = v; }); }
+    const x0 = cl.x; await tw(260, k => cl.x = x0 + (tgt.x - x0) * k);
+  }else if(Math.abs(near.x - cl.x) < 24) tgt = near;                 // a near-miss: it grips, then slips
+  const depth = (tgt ? tgt.y - 24 : 300) - 46, ox = tgt && tgt.x, oy = tgt && tgt.y, orot = tgt && tgt.rot;
+  await tw(250, k => cl.open = .6 + .4 * k); beep(180, .9, 'triangle', .03); await tw(1150, k => cl.rope = depth * k);
+  await tw(520, k => cl.open = 1 - .92 * k); beep(140, .15, 'square');
+  if(win){
+    cl.carry = tgt; cl.items = cl.items.filter(i => i !== tgt); cl.mode = 'follow';
+    await tw(1150, k => cl.rope = depth * (1 - k)); await tw(1250, k => cl.x = cl.x + (38 - cl.x) * k);
+    await tw(380, k => cl.open = .08 + .92 * k); cl.mode = 'free'; const y0 = cl.carry.y; beep(500, .25, 'triangle');
+    await tw(520, k => cl.carry.y = y0 + (372 - y0) * k * k); await tw(160, k => cl.carry.y = 372 - Math.sin(k * Math.PI) * 14); beep(1000, .2); buzz([40, 30, 90]);
+    await new Promise(r => setTimeout(r, 350)); showWin(cl.res.prize, CLAW_EMO[cl.res.item] || '🎁', 'Hadiah telah disimpan ke akaun anda');
+  }else{
+    if(tgt){
+      cl.carry = tgt; cl.mode = 'follow'; await tw(650, k => cl.rope = depth * (1 - .5 * k));
+      await tw(180, k => cl.open = .08 + .5 * k); cl.mode = 'free'; const y1 = tgt.y; beep(220, .3, 'sawtooth'); await tw(380, k => { tgt.y = y1 + (oy - y1) * k * k; tgt.x = tgt.x + (ox - tgt.x) * k; tgt.rot = orot + Math.sin(k * 9) * .4 * (1 - k); }); cl.carry = null;
+      await tw(700, k => { cl.rope = depth * .5 * (1 - k); cl.open = .58 + .02 * k; });
+    }else await tw(900, k => { cl.rope = depth * (1 - k); cl.open = .08 + .52 * k; });
+    await new Promise(r => setTimeout(r, 300)); busy = false;
+    ov(true, '', '', '<div style="font-size:70px">😅</div><div class="ovt">Tidak berjaya kali ini</div><div class="ovs">Penyepit terlepas. Cuba lagi pada hari bermain seterusnya!</div><button class="big" style="max-width:320px" onclick="goBack()">Kembali ke Dashboard</button>');
+  }
+}
+function clDraw(now){
+  if(!cl.cv || !cl.cv.isConnected) return; const c = cl.c, W = 340, H = 400, dt = Math.min(.05, (now - (cl.t0 || now)) / 1000); cl.t0 = now;
+  if(cl.on){ cl.x = Math.max(22, Math.min(318, cl.x + cl.dir * 95 * dt)); cl.time -= dt; if(cl.time <= 0) clGrab(); }
+  if(cl.carry && cl.mode === 'follow'){ cl.carry.x = cl.x; cl.carry.y = 46 + cl.rope + 30; }
+  let g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1e1b4b'); g.addColorStop(1, '#0f172a'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  for(let i = 0; i < 14; i++){ c.fillStyle = 'rgba(255,255,255,' + (.05 + .05 * Math.sin(now / 500 + i)) + ')'; c.fillRect((i * 53) % W, 50 + (i * 37) % 210, 2, 2); }
+  c.fillStyle = '#312e81'; c.fillRect(0, 332, W, 8);
+  c.fillStyle = '#050816'; c.fillRect(8, 332, 60, 68); c.strokeStyle = '#f472b6'; c.lineWidth = 3; c.strokeRect(8, 332, 60, 68); c.fillStyle = '#f9a8d4'; c.font = '700 11px Inter,sans-serif'; c.textAlign = 'center'; c.fillText('HADIAH ▼', 38, 350);
+  c.fillStyle = '#0b1020'; c.fillRect(68, 340, 272, 60);
+  c.font = '800 11px Manrope,sans-serif'; c.textAlign = 'left'; c.fillStyle = '#94a3b8'; c.fillText('KREDIT', 80, 360); c.fillStyle = cl.credit ? '#4ade80' : '#475569'; c.font = '900 22px Manrope,sans-serif'; c.fillText(cl.credit ? '1' : '0', 80, 384);
+  c.fillStyle = '#1e293b'; c.fillRect(130, 372, 120, 10); if(cl.on){ c.fillStyle = cl.time < 8 ? '#f43f5e' : '#22d3ee'; c.fillRect(130, 372, 120 * cl.time / 30, 10); }
+  c.fillStyle = '#020617'; c.fillRect(288, 366, 24, 7); c.strokeStyle = '#fbbf24'; c.lineWidth = 2; c.strokeRect(288, 366, 24, 7);
+  const draw = it => { c.save(); c.translate(it.x, it.y); c.rotate(it.rot || 0); c.font = '30px serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(CLAW_EMO[it.id], 0, 0); c.restore(); };
+  cl.items.slice().sort((a, b) => a.row - b.row).forEach(draw); if(cl.carry) draw(cl.carry);
+  if(cl.coin){ const k = cl.coin.k; c.save(); c.translate(300, cl.coin.y); c.scale(Math.cos(k * 10), 1); c.beginPath(); c.arc(0, 0, 11, 0, 6.283); c.fillStyle = '#fbbf24'; c.fill(); c.strokeStyle = '#92400e'; c.lineWidth = 2; c.stroke(); c.restore(); }
+  c.fillStyle = '#64748b'; c.fillRect(0, 28, W, 8); c.fillStyle = '#334155'; c.fillRect(cl.x - 18, 24, 36, 18);
+  const ry = 46 + cl.rope; c.strokeStyle = '#94a3b8'; c.lineWidth = 3; c.beginPath(); c.moveTo(cl.x, 42); c.lineTo(cl.x, ry - 6); c.stroke();
+  c.fillStyle = '#cbd5e1'; c.fillRect(cl.x - 12, ry - 8, 24, 14);
+  const a = .12 + .6 * cl.open; c.strokeStyle = '#e2e8f0'; c.lineWidth = 5; c.lineCap = 'round'; c.lineJoin = 'round';
+  [-1, 1].forEach(s => { const px = cl.x + s * 8, tx = px + s * Math.sin(a) * 28, ty = ry + 4 + Math.cos(a) * 28; c.beginPath(); c.moveTo(px, ry + 4); c.lineTo(tx, ty); c.lineTo(tx - s * 9, ty + 6); c.stroke(); });
+  c.strokeStyle = (Math.floor(now / 400) % 2) ? '#f472b6' : '#22d3ee'; c.lineWidth = 4; c.shadowColor = c.strokeStyle; c.shadowBlur = 12; c.strokeRect(2, 2, W - 4, H - 4); c.shadowBlur = 0;
+  requestAnimationFrame(clDraw);
+}
+
+/* ====================================================== TAP CHALLENGE (Thursday) ====================================================== */
+let tp = { n:0, on:false };
+function readyTap(){
+  $('ttl').textContent = 'Tap Challenge';
+  $('card').innerHTML = '<h1>👆 Tap Challenge</h1><div class="pill">Maksimum 15 mata</div><p class="sub">Dalam 10 saat, ketik skrin <b>seberapa laju</b> yang boleh. Makin laju, makin tinggi peluang dapat lebih mata!</p>' +
+    '<div class="tapzone" id="pad"><div class="tapbtn" id="tb">TAP!</div></div><div class="scbar"><i id="tpm"></i></div><div class="msg" id="msg"></div>' +
+    '<button class="big" id="go" onclick="doTap()">▶ Mula!</button><button class="ghost" onclick="goBack()">Kembali</button>';
+  $('pad').addEventListener('pointerdown', e => {
+    if(!tp.on) return; e.preventDefault(); tp.n++; $('coins').textContent = tp.n; $('tpm').style.width = Math.min(100, tp.n / 68 * 100) + '%'; buzz(6);
+    const z = $('pad'), r = z.getBoundingClientRect(), d = document.createElement('div'); d.className = 'rip'; d.style.left = (e.clientX - r.left) + 'px'; d.style.top = (e.clientY - r.top) + 'px'; z.appendChild(d); setTimeout(() => d.remove(), 520);
+    z.classList.add('hit'); setTimeout(() => z.classList.remove('hit'), 55); if(tp.n % 4 === 0) beep(500 + Math.min(600, tp.n * 6), .04, 'square', .012);
+  });
+}
+async function doTap(){
+  if(busy) return; busy = true; $('go').disabled = true; $('msg').textContent = 'Menyemak lokasi…'; buzz(20); beep(520, .08);
+  try{
+    const r = await begin(); if(!r.ok) return failStart(r);
+    sid = r.sid; $('go').style.display = 'none'; $('msg').textContent = ''; countdown(3, runTap);
+  }catch(e){ failStart({ error:e.message || 'Ralat. Cuba lagi.' }); }
+}
+function runTap(){
+  tp = { n:0, on:true }; const end = performance.now() + 10000; $('pad').classList.add('go'); $('tb').textContent = 'TAP!';
+  $('coinBadge').innerHTML = '👆 <span id="coins">0</span>'; $('coinBadge').style.display = ''; $('timeBadge').style.display = ''; $('tleft').textContent = '10'; $('msg').textContent = 'KETIK LAJU-LAJU! ⚡';
+  const iv = setInterval(() => { const l = Math.max(0, end - performance.now()); $('tleft').textContent = Math.ceil(l / 1000); if(l <= 0){ clearInterval(iv); endTap(); } }, 80);
+}
+async function endTap(){
+  tp.on = false; $('pad').classList.remove('go'); ov(true, 'Menyimpan skor…', 'Sebentar sahaja'); let r = null;
+  for(let n = 0; n < 4 && !(r && (r.ok || r.error)); n++){ try{ r = await api({ action:'finishGame', sid, taps:tp.n }); }catch(e){ await new Promise(s => setTimeout(s, 1200 * (n + 1))); } }
+  if(r && r.ok){
+    if(r.coins > 0) showWin(r.coins, '👆', 'Skor telah disimpan ke akaun anda');
+    else ov(true, '', '', '<div style="font-size:70px">😴</div><div class="ovt">Tiada ketikan direkod</div><div class="ovs">Cuba lagi pada hari bermain seterusnya!</div><button class="big" style="max-width:320px" onclick="goBack()">Kembali</button>');
+  }else ov(true, '', '', '<div class="ovt" style="color:#fda4af">⚠️ Skor tidak dapat disimpan</div><div class="ovs">' + esc((r && r.error) || 'Sambungan bermasalah. Cuba lagi.') + '</div><button class="big" style="max-width:320px" onclick="goBack()">Kembali</button>');
+}
 </script>
+
+
 </body>
 </html>
