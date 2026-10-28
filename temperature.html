@@ -92,11 +92,11 @@
 <body>
 <div class="wrap">
   <div class="head">
-    <div><div class="eb">Klinik Kesihatan Ayer Hitam</div><h1>🌡️ Suhu  Sejuk</h1><span class="me" id="me">…</span></div>
+    <div><div class="eb">Klinik Kesihatan Ayer Hitam</div><h1>🌡️ Suhu Peti Sejuk</h1><span class="me" id="me">…</span></div>
     <a class="back" href="./dashboard.html">← Dashboard</a>
   </div>
   <div class="units" id="units" role="group" aria-label="Unit"><button data-u="OPD" aria-pressed="true">OPD</button><button data-u="MCH" aria-pressed="false">MCH</button></div>
-  <div class="fr" id="fr" role="group" aria-label=" sejuk"></div>
+  <div class="fr" id="fr" role="group" aria-label="Peti sejuk"></div>
 
   <div class="view show" id="v-log"><div id="logBody"><div class="empty"><div class="spin"></div>Memuatkan…</div></div></div>
 
@@ -123,8 +123,8 @@
 <div class="sheet" id="shConf"><div class="box" id="confBox"></div></div>
 <div class="sheet" id="shMail"><div class="box">
   <h3>📧 Hantar laporan</h3><div class="sub" id="mailSub"></div>
-  <label class="l" for="mUnit"> sejuk</label>
-  <select class="fld" id="mUnit"><option value="OPD">OPD —  Sejuk</option><option value="MCH">MCH —  Sejuk 1, 2, 3</option><option value="ALL">Semua (OPD + MCH)</option></select>
+  <label class="l" for="mUnit">Peti sejuk</label>
+  <select class="fld" id="mUnit"><option value="OPD">OPD — Peti Sejuk</option><option value="MCH">MCH — Peti Sejuk 1, 2, 3</option><option value="ALL">Semua (OPD + MCH)</option></select>
   <div id="mailMsg"></div>
   <div class="row2"><button class="btn ghost" data-close>Batal</button><button class="btn" id="mailGo" type="button">Hantar PDF</button></div>
 </div></div>
@@ -193,7 +193,7 @@ function head(){
   $('fr').innerHTML = S.fridges.filter(f => f.unit === S.unit).map(f => {
     const t = S.today[f.id] || {}, h = NOW.getHours();
     const dot = (k, lab, due) => '<span class="dt ' + (t[k] ? 'ok' : (h >= due ? 'due' : '')) + '">' + lab + (t[k] ? ' ✓' : '') + '</span>';
-    return '<button data-f="' + f.id + '" aria-pressed="' + (f.id === S.fridge) + '">🧊 ' + esc(f.name.replace(' Sejuk ', ' ')) + '<span class="dots">' + dot('am', 'AM', 8) + dot('pm', 'PM', 16) + '</span></button>';
+    return '<button data-f="' + f.id + '" aria-pressed="' + (f.id === S.fridge) + '">🧊 ' + esc(f.name.replace('Peti Sejuk ', 'Peti ')) + '<span class="dots">' + dot('am', 'AM', 8) + dot('pm', 'PM', 16) + '</span></button>';
   }).join('');
   document.querySelectorAll('#nav button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === S.view));
   ['log','graph','rec'].forEach(v => $('v-' + v).classList.toggle('show', v === S.view));
