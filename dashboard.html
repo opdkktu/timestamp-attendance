@@ -2256,44 +2256,47 @@ const CHECKLIST_SOURCES = {
 const CHK_ORDER = ['temperature', 'trolley', 'bag', 'ambulance'];
 const CHK_BOX = { temperature: 'box_temperature', trolley: 'box_trolley', bag: 'box_bag', ambulance: 'box_ambulance' };
 const CHK_URL = {   // fallback copy of the links (the backend also returns them)
-  temperature: 'https://script.google.com/a/macros/moh.gov.my/s/AKfycbyUcI4q1NcV_IpiM_30mZ55d1N1C1mW6nOTbGbjaGZdcAm9_cY7i9692nGZyxvi5CSCRA/exec',
+  temperature: './temperature.html',
   trolley:   'https://script.google.com/macros/s/AKfycbwj634nbrqJzMJyK8y33BTXHgc_HbVjiv56a7X6xM6yZVpsIfIKQs4UWiW6iIsfw1QvEw/exec',
   bag:       'https://script.google.com/macros/s/AKfycbw-o5cHk5NyfsPRGmB7KjGcTmSiUxBQGb-byiH2XYMNQVTc1F68mLEqjvrmT-ztDkO_/exec',
   ambulance: 'https://script.google.com/macros/s/AKfycbwYhOAPrNBkp4qypwd0I8Fi1bpUa09dinQAPyOx6D6W8p9fyVJAIOjvCyGYfiL1WA4oow/exec'
 };
 let chkLastLoad = 0, chkOpenedAt = 0, chkData = {};
 
-/** Opens a checklist in a new tab with the logged-in person's name preselected (?name=…). */
+/** Opens a checklist. Temperature is SIAGA-native (same tab, own name filled in server-side); the others open externally with ?name=. */
 function openChecklist(key, slot){
   if(VIEW_NAME) return;                                   // a supervisor viewing a staff member must not check on their behalf
-  const base = (chkData[key] && chkData[key].url) || CHK_URL[key];
-  const name = sessionStorage.getItem('kkah_name') || '';
   chkOpenedAt = Date.now();
   try{ logAct('Buka checklist', key); }catch(e){}
+  if(key === 'temperature'){ location.href = './temperature.html' + (slot ? '?slot=' + slot : ''); return; }
+  const base = (chkData[key] && chkData[key].url) || CHK_URL[key];
+  const name = sessionStorage.getItem('kkah_name') || '';
   const qs = [name ? 'name=' + encodeURIComponent(name) : '', slot ? 'slot=' + slot : ''].filter(Boolean).join('&');
   window.open(base + (qs ? '?' + qs : ''), '_blank', 'noopener');
 }
 
 function escHtml_(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-/* Temperature (OPD) is checked twice a day (AM 8:00, PM 16:00): show both sessions, red only when one is due and still missing. */
+/* Temperature: 6 fridges (OPD 1-3, MCH 1-3) x 2 sessions (AM 8:00, PM 16:00). Red only when a session is due and some fridge is still missing. */
 function renderTemperatureBox(item, el){
-  const name = item.icon + ' ' + item.label, S = item.slots || {};
+  const name = item.icon + ' ' + item.label, S = item.slots || {}, U = item.units || {};
   const line = (k, ic) => { const s = S[k]; if(!s) return '';
-    const t = s.state === 'done' ? '✓ ' + escHtml_(s.time) + ' · ' + escHtml_(String(s.by).split(' ').slice(0, 2).join(' '))
-      : s.state === 'due' ? '<b>BELUM</b> — sepatutnya ' + escHtml_(s.dueTxt) : 'dibuka ' + escHtml_(s.dueTxt);
+    const t = s.state === 'upcoming' ? 'dibuka ' + escHtml_(s.dueTxt)
+      : (s.state === 'done' ? '✓ ' : '<b>BELUM</b> ') + s.done + '/' + s.total + ' peti' + (s.state === 'due' ? ' — sepatutnya ' + escHtml_(s.dueTxt) : '');
     return '<div class="sb-sub" style="margin-top:3px;">' + ic + ' ' + s.label + ': ' + t + '</div>'; };
+  const unitLine = Object.keys(U).map(u => { const x = U[u] || {}; return u + ' ' + ((x.am || {}).done || 0) + '+' + ((x.pm || {}).done || 0) + '/' + (((x.am || {}).total || 0) * 2); }).join(' · ');
   const btn = (txt, soft) => VIEW_NAME ? '' : '<button class="sb-btn' + (soft ? ' soft' : '') + '" onclick="openChecklist(\'temperature\',\'' + (item.next || '') + '\')">' + txt + ' →</button>';
   if(item.error){
     el.className = 'status-box sb-neutral';
     el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">Tiada data</div><div class="sb-sub">Status tidak dapat dibaca</div>' + btn('Buka rekod', true);
   }else if(item.next){
     el.className = 'status-box sb-alert';
-    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">BELUM DIREKOD</div>' + line('am', '☀️') + line('pm', '🌙') + btn('Rekod ' + S[item.next].label + ' sekarang');
+    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">BELUM DIREKOD</div>' + line('am', '☀️') + line('pm', '🌙') + (unitLine ? '<div class="sb-sub" style="margin-top:3px;">' + unitLine + '</div>' : '') + btn('Rekod ' + S[item.next].label + ' sekarang');
   }else{
     const bothDone = S.am && S.pm && S.am.state === 'done' && S.pm.state === 'done';
-    el.className = 'status-box ' + (bothDone || (S.am && S.am.state === 'done') ? 'sb-ok' : 'sb-neutral');
-    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">' + (bothDone ? 'AM &amp; PM ✓' : (S.am && S.am.state === 'done' ? 'AM disemak ✓' : 'Belum waktunya')) + '</div>' + line('am', '☀️') + line('pm', '🌙') + (S.am && S.am.state === 'upcoming' ? btn('Rekod awal', true) : '');
+    const amDone = S.am && S.am.state === 'done';
+    el.className = 'status-box ' + (bothDone || amDone ? 'sb-ok' : 'sb-neutral');
+    el.innerHTML = '<div class="sb-label">' + name + '</div><div class="sb-main">' + (bothDone ? 'AM &amp; PM ✓' : (amDone ? 'AM disemak ✓' : 'Belum waktunya')) + '</div>' + line('am', '☀️') + line('pm', '🌙') + (S.am && S.am.state === 'upcoming' ? btn('Rekod awal', true) : (!bothDone ? btn('Buka rekod', true) : ''));
   }
 }
 
