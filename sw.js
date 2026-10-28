@@ -21,6 +21,7 @@ const SHELL_FILES = [
   './dashboard.html',
   './emergency.html',
   './emergency-alert.js',
+  './jsQR.min.js',
   './siren.mp3',
   './manifest.json',
   './siaga-192.png',
