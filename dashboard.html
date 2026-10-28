@@ -1883,18 +1883,20 @@ async function cmeOnCode(text){
     '<div class="kc-spin" style="width:54px;height:54px;border-width:5px;"></div><div class="sr-title" style="font-size:17px;">Merekod kehadiran…</div>';
 
   let data, debug = '';
+  const payload = JSON.stringify({ action: 'cmeCheckIn', token: sessionStorage.getItem('kkah_session_token'), qr: text });
+for(let attempt = 1; attempt <= 3; attempt++){
   try{
-    const res = await fetch(API_URL_DASHBOARD, {
-      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'cmeCheckIn', token: sessionStorage.getItem('kkah_session_token'), qr: text })
-    });
+    const res = await fetch(API_URL_DASHBOARD, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload, cache: 'no-store' });
     const raw = await res.text();
-    try{ data = JSON.parse(raw); }
+    try{ data = JSON.parse(raw); debug = ''; }
     catch(pe){ data = { ok:false, error:'Pelayan memberi jawapan yang tidak dijangka.' }; debug = 'HTTP ' + res.status + ' · ' + raw.replace(/\s+/g, ' ').slice(0, 220); }
+    break;
   }catch(err){
-    data = { ok:false, error:'Tiada sambungan ke pelayan. Semak internet anda.' };
+    data = { ok:false, error:'Tiada sambungan ke pelayan. Semak internet anda, kemudian tekan “Imbas semula”.' };
     debug = (err && (err.name + ': ' + err.message)) || String(err);
+    if(attempt < 3) await new Promise(r => setTimeout(r, 900 * attempt));
   }
+}
   if(data && data.error === 'Unknown action'){
     data.error = 'Pelayan belum dikemas kini. Admin perlu tampal CME.gs + Code.gs terkini dan buat “New deployment version” di Apps Script.';
   }
