@@ -10,9 +10,23 @@
  * The preview canvas (what the person sees after the shutter) stays unstamped and small; only the uploaded file is stamped.
  */
 (function () {
+  var lastCode = { code: '', w: 0 };
   var CORNER = 'left';       // 'left' or 'right' — which bottom corner carries the stamp
   var SIZE = 480;            // saved photo is at most SIZE × SIZE px (≈ 40–60 KB as JPEG)
   var QUALITY = 0.82;
+
+  // Security code: fetched from the server (getProofCode), different for every person and every 5 minutes; printed in the corner.
+  var sec = { code: '', w: 0, until: 0 }, timer = 0;
+  function prefetch(apiUrl, token) {
+    function go() {
+      return fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'getProofCode', token: token }) })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { if (d && d.ok) { sec = { code: d.code, w: d.w, until: Date.now() + d.expiresInSec * 1000 }; clearTimeout(timer); timer = setTimeout(go, Math.max(5000, d.expiresInSec * 1000 - 5000)); } })
+        .catch(function () { clearTimeout(timer); timer = setTimeout(go, 8000); });
+    }
+    return go();
+  }
+  function current() { return (sec.code && Date.now() < sec.until + 60000) ? { code: sec.code, w: sec.w } : { code: '', w: 0 }; }
 
   function when() {
     var d = new Date();
@@ -51,13 +65,14 @@
 
     // ---- stamp ----
     var fs = Math.max(11, Math.round(out * 0.036));
-    var lines = [when(), where(loc)];
+    var cur = current(); lastCode = cur;
+    var lines = [when(), where(loc), 'KOD: ' + (cur.code || '------')];
     ctx.font = '600 ' + fs + 'px Arial, Helvetica, sans-serif';
     ctx.textBaseline = 'alphabetic';
     var w = 0;
     lines.forEach(function (t) { w = Math.max(w, ctx.measureText(t).width); });
     var padX = Math.round(fs * 0.6), padY = Math.round(fs * 0.45), gap = Math.round(fs * 0.25);
-    var boxW = Math.ceil(w + padX * 2), boxH = Math.ceil(fs * 2 + gap + padY * 2);
+    var boxW = Math.ceil(w + padX * 2), boxH = Math.ceil(fs * 3 + gap * 2 + padY * 2);
     var margin = Math.round(out * 0.02);
     var bx = CORNER === 'right' ? out - boxW - margin : margin;
     var by = out - boxH - margin;
@@ -68,9 +83,10 @@
     ctx.textAlign = 'left';
     ctx.fillText(lines[0], bx + padX, by + padY + fs - Math.round(fs * 0.15));
     ctx.fillText(lines[1], bx + padX, by + padY + fs * 2 + gap - Math.round(fs * 0.15));
+    ctx.fillStyle = '#ffe066'; ctx.fillText(lines[2], bx + padX, by + padY + fs * 3 + gap * 2 - Math.round(fs * 0.15));
 
     return c.toDataURL('image/jpeg', QUALITY);
   }
 
-  window.SiagaStamp = { capture: capture };
+  window.SiagaStamp = { capture: capture, prefetch: prefetch, lastCode: function () { return lastCode; } };
 })();
