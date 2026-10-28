@@ -1073,9 +1073,10 @@ async function loadGameTile_(){
     const g = await res.json();
     slot.innerHTML = '';
     if(!g || !g.ok || !g.game || !g.open || g.left < 1) return;
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'status-box sb-act sb-game';
-    const name = g.game === 'spin' ? 'Lucky Spin' : 'Shake & Catch', sub = g.game === 'spin' ? 'Satu ketikan \u00b7 menang sehingga 20 mata' : 'Satu ketikan \u00b7 kumpul sehingga ' + g.cap + ' mata' + (g.birth ? ' \ud83c\udf82' : '');
-    b.innerHTML = '<span class="ai">' + (g.game === 'spin' ? '\ud83c\udfa1' : '\ud83e\ude99') + '</span><span><b></b><small></small></span><span class="go">\u203a</span>';
+   const GM = { shake:['Shake & Catch','🪙','Satu ketikan · kumpul sehingga '+g.cap+' mata'+(g.birth?' 🎂':'')], spin:['Lucky Spin','🎡','Satu ketikan · menang sehingga 20 mata'],
+  scratch:['Scratch Card','🎟️','Gosok kad · dapat 5–10 mata'], claw:['Claw Machine','🕹️','Capai hadiah · sehingga 15 mata'], tap:['Tap Challenge','👆','Ketik laju 10 saat · sehingga 15 mata'] };
+    const gm = GM[g.game] || GM.shake, name = gm[0], sub = gm[2];
+b.innerHTML = '<span class="ai">'+gm[1]+'</span><span><b></b><small></small></span><span class="go">›</span>';
     b.querySelector('b').textContent = '\ud83c\udfae Masa bermain \u2014 ' + name; b.querySelector('small').textContent = sub;
     b.onclick = () => { window.location.href = './game.html'; };
     slot.appendChild(b);
