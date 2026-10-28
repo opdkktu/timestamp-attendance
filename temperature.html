@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Suhu Peti Sejuk</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<link rel="apple-touch-icon" href="./siaga-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0b3b5c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<style>
+  :root{ --b9:#0b3b5c; --b7:#0e5a7e; --b5:#0e7490; --sky:#E4F3F8; --bg:#F3F9FB; --ink:#18262c; --ink2:#566970; --line:#D5E5EB;
+    --red:#d62839; --green:#0a9a64; --blue:#1d7fd1; --amber:#d98a0b; --gold:#C9A227; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; min-height:100vh; background:radial-gradient(1200px 800px at 50% -10%, var(--sky), var(--bg)); font-family:'Inter',sans-serif; color:var(--ink); padding:12px 12px 96px; }
+  .wrap{ max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
+  .head{ border-radius:22px; padding:16px 18px; color:#fff; background:linear-gradient(135deg,var(--b9),var(--b5)); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .head .eb{ font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; opacity:.78; font-weight:700; }
+  .head h1{ font:800 20px 'Manrope',sans-serif; margin:2px 0 0; }
+  .me{ display:inline-block; margin-top:6px; font-size:12px; font-weight:700; background:rgba(255,255,255,.18); padding:4px 11px; border-radius:99px; max-width:60vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
+  .units{ display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:5px; }
+  .units button{ min-height:48px; border:none; border-radius:12px; background:transparent; font:800 14px 'Manrope',sans-serif; color:var(--ink2); cursor:pointer; }
+  .units button[aria-pressed="true"]{ background:var(--b9); color:#fff; }
+  .fr{ display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr)); gap:8px; }
+  .fr button{ border:1.5px solid var(--line); background:#fff; border-radius:16px; padding:10px 4px 9px; cursor:pointer; font:800 13px 'Manrope',sans-serif; color:var(--ink); display:flex; flex-direction:column; align-items:center; gap:6px; min-height:70px; }
+  .fr button[aria-pressed="true"]{ border-color:var(--b5); background:var(--sky); box-shadow:0 0 0 2px rgba(14,116,144,.2); }
+  .dots{ display:flex; gap:6px; } .dt{ font-size:10.5px; font-weight:800; padding:2px 7px; border-radius:99px; background:#eef3f5; color:var(--ink2); }
+  .dt.ok{ background:#d9f3e8; color:#066a45; } .dt.due{ background:#fde3e6; color:#a31526; animation:blink 1.4s ease-in-out infinite; }
+  @keyframes blink{ 50%{ opacity:.55; } }
+  .nav{ position:fixed; left:0; right:0; bottom:0; z-index:30; background:#fff; border-top:1px solid var(--line); display:grid; grid-template-columns:repeat(3,1fr); padding:6px 8px max(8px,env(safe-area-inset-bottom)); gap:4px; }
+  .nav button{ border:none; background:none; padding:8px 2px; border-radius:14px; font:700 11.5px 'Manrope',sans-serif; color:var(--ink2); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; min-height:52px; }
+  .nav button span{ font-size:20px; } .nav button[aria-selected="true"]{ background:var(--sky); color:var(--b9); }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:18px; padding:14px; }
+  .card h2{ margin:0 0 8px; font:800 15px 'Manrope',sans-serif; display:flex; align-items:center; gap:8px; }
+  .sub{ font-size:12.5px; color:var(--ink2); line-height:1.5; }
+  .dtrow{ display:flex; gap:8px; align-items:center; }
+  .ib{ width:48px; height:48px; border-radius:14px; border:1.5px solid var(--line); background:#fff; font-size:20px; cursor:pointer; flex:none; } .ib:disabled{ opacity:.35; }
+  .fld{ width:100%; min-height:48px; border-radius:12px; border:1.5px solid var(--line); padding:0 12px; font:inherit; font-size:16px; background:#fff; color:var(--ink); }
+  .fld:focus,textarea:focus{ outline:none; border-color:var(--b5); box-shadow:0 0 0 3px rgba(14,116,144,.15); }
+  textarea{ width:100%; min-height:62px; border-radius:12px; border:1.5px solid var(--line); padding:10px 12px; font:inherit; font-size:15px; resize:vertical; }
+  .seg{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .seg button{ min-height:58px; border-radius:15px; border:2px solid var(--line); background:#fff; font:800 14px 'Manrope',sans-serif; color:var(--ink2); cursor:pointer; line-height:1.25; }
+  .seg button small{ display:block; font:600 11px 'Inter',sans-serif; opacity:.8; }
+  .seg button.on.am{ background:#fff4dc; border-color:#f0b64a; color:#8a5a00; } .seg button.on.pm{ background:#e3effa; border-color:#6aa6dc; color:#134a7c; }
+  .temps{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .temp label{ display:flex; align-items:center; gap:6px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--ink2); margin-bottom:6px; }
+  .temp .d{ width:10px; height:10px; border-radius:50%; }
+  .temp input{ width:100%; min-height:64px; border-radius:14px; border:1.5px solid var(--line); text-align:center; font:800 26px 'Manrope',sans-serif; padding:0 4px; background:#fff; }
+  .temp.max input{ color:var(--red); } .temp.min input{ color:var(--green); } .temp.cur input{ color:var(--blue); }
+  .temp input.oor{ border-color:var(--amber); background:#fff8e8; } .hint{ min-height:16px; font-size:11.5px; color:var(--amber); font-weight:700; margin-top:4px; }
+  label.l{ display:block; font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--ink2); margin:14px 0 6px; }
+  .who{ display:flex; align-items:center; gap:10px; background:var(--sky); border-radius:14px; padding:11px 13px; font-weight:700; font-size:14px; }
+  .evs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; } @media(max-width:460px){ .evs{ grid-template-columns:1fr; } }
+  .ev{ display:flex; gap:9px; align-items:flex-start; padding:10px; border:1.5px solid var(--line); border-radius:12px; font-size:13px; color:var(--ink2); min-height:46px; cursor:pointer; }
+  .ev input{ width:20px; height:20px; accent-color:var(--amber); flex:none; margin-top:1px; } .ev:has(input:checked){ background:#fff4dc; border-color:#f0b64a; color:var(--ink); }
+  .btn{ min-height:54px; border-radius:15px; border:none; font:800 15px 'Manrope',sans-serif; cursor:pointer; background:linear-gradient(135deg,var(--b9),var(--b5)); color:#fff; padding:0 18px; width:100%; }
+  .btn:disabled{ opacity:.45; } .btn.ghost{ background:#fff; border:1.5px solid var(--line); color:var(--ink); }
+  .msg{ border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.5; margin-top:10px; } .msg.err{ background:#fde8ea; color:#a31526; } .msg.warn{ background:#fff4dc; color:#8a5a00; } .msg.info{ background:var(--sky); color:var(--b7); }
+  .lockrow{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; margin:8px 0; } .lockrow small{ display:block; font-size:10.5px; font-weight:800; text-transform:uppercase; color:var(--ink2); } .lockrow b{ font:800 28px 'Manrope',sans-serif; }
+  .pts{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:#7a5a00; background:#fff3c4; border:1px solid #f0d36b; padding:4px 10px; border-radius:99px; }
+  .done-all{ text-align:center; padding:26px 12px; } .done-all .big{ font-size:46px; animation:pop .6s cubic-bezier(.2,1.6,.4,1) both; } @keyframes pop{ from{ transform:scale(0); } to{ transform:scale(1); } }
+  .view{ display:none; flex-direction:column; gap:12px; } .view.show{ display:flex; }
+  .mnav{ display:flex; align-items:center; justify-content:space-between; gap:8px; } .mnav b{ font:800 15px 'Manrope',sans-serif; text-align:center; flex:1; }
+  .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; } .stat{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:9px 4px; text-align:center; }
+  .stat b{ display:block; font:800 19px 'Manrope',sans-serif; } .stat small{ font-size:9.5px; font-weight:800; color:var(--ink2); text-transform:uppercase; }
+  .chart-box{ position:relative; height:320px; } .legend{ display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:var(--ink2); margin-top:8px; } .legend i{ display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-2px; }
+  .tw{ overflow:auto; border:1px solid var(--line); border-radius:14px; background:#fff; max-height:68vh; }
+  table{ border-collapse:collapse; width:100%; min-width:640px; table-layout:fixed; font-size:12.5px; font-family:'Manrope',sans-serif; }
+  th,td{ padding:7px 4px; text-align:center; border-bottom:1px solid var(--line); border-right:1px solid var(--line); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  thead th{ background:#eaf3f7; position:sticky; top:0; z-index:2; font-size:11px; } thead tr:nth-child(2) th{ top:31px; }
+  td.dy{ font-weight:800; color:var(--ink2); position:sticky; left:0; background:#fff; } tr.today td.dy{ color:var(--b5); }
+  td.hi{ background:#fde0e3; color:#a31526; font-weight:800; } td.lo{ background:#dcf2e6; color:#066a45; font-weight:800; } td.ok{ background:#e6f2fb; color:#134a7c; font-weight:800; }
+  .toast{ position:fixed; left:50%; bottom:92px; transform:translate(-50%,30px); background:var(--b9); color:#fff; font-weight:700; font-size:14px; padding:12px 20px; border-radius:99px; opacity:0; pointer-events:none; transition:all .3s; z-index:90; max-width:92vw; text-align:center; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); } .toast.err{ background:var(--red); }
+  .sheet{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.5); display:none; align-items:flex-end; justify-content:center; } .sheet.show{ display:flex; }
+  .box{ width:min(560px,100%); background:#fff; border-radius:24px 24px 0 0; padding:18px 18px max(18px,env(safe-area-inset-bottom)); }
+  .box h3{ margin:0 0 6px; font:800 18px 'Manrope',sans-serif; }
+  .row2{ display:grid; grid-template-columns:1fr 1.4fr; gap:10px; margin-top:14px; }
+  .spin{ width:22px; height:22px; border:3px solid var(--line); border-top-color:var(--b5); border-radius:50%; animation:sp .8s linear infinite; margin:0 auto 8px; } @keyframes sp{ to{ transform:rotate(360deg); } }
+  .empty{ text-align:center; padding:30px 12px; color:var(--ink2); font-size:14px; line-height:1.6; }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div><div class="eb">Klinik Kesihatan Ayer Hitam</div><h1>🌡️ Suhu Peti Sejuk</h1><span class="me" id="me">…</span></div>
+    <a class="back" href="./dashboard.html">← Dashboard</a>
+  </div>
+  <div class="units" id="units" role="group" aria-label="Unit"><button data-u="OPD" aria-pressed="true">OPD</button><button data-u="MCH" aria-pressed="false">MCH</button></div>
+  <div class="fr" id="fr" role="group" aria-label="Peti sejuk"></div>
+
+  <div class="view show" id="v-log"><div id="logBody"><div class="empty"><div class="spin"></div>Memuatkan…</div></div></div>
+
+  <div class="view" id="v-graph">
+    <div class="mnav"><button class="ib" data-m="-1" aria-label="Bulan sebelum">‹</button><b id="gMonth"></b><button class="ib" data-m="1" aria-label="Bulan seterusnya">›</button></div>
+    <div class="stats" id="gStats"></div>
+    <div class="card"><h2 id="gTitle">Graf suhu</h2><div class="chart-box"><canvas id="chart" role="img" aria-label="Graf suhu bulanan"></canvas></div>
+      <div class="legend"><span><i style="background:#d62839"></i>Maks</span><span><i style="background:#0a9a64"></i>Min</span><span><i style="background:#1d7fd1"></i>Semasa</span><span><i style="background:#999"></i>Had</span></div></div>
+  </div>
+
+  <div class="view" id="v-rec">
+    <div class="mnav"><button class="ib" data-m="-1" aria-label="Bulan sebelum">‹</button><b id="rMonth"></b><button class="ib" data-m="1" aria-label="Bulan seterusnya">›</button></div>
+    <div class="tw"><table id="tbl"></table></div>
+    <div class="legend"><span><i style="background:#fde0e3"></i>Melebihi had maks</span><span><i style="background:#e6f2fb"></i>Dalam julat</span><span><i style="background:#dcf2e6"></i>Bawah had min</span></div>
+    <button class="btn" id="mail" type="button">📧 Hantar laporan ke emel saya</button>
+  </div>
+</div>
+<nav class="nav" id="nav">
+  <button data-v="log" aria-selected="true"><span>➕</span>Rekod</button>
+  <button data-v="graph" aria-selected="false"><span>📈</span>Graf</button>
+  <button data-v="rec" aria-selected="false"><span>📋</span>Jadual</button>
+</nav>
+
+<div class="sheet" id="shConf"><div class="box" id="confBox"></div></div>
+<div class="sheet" id="shMail"><div class="box">
+  <h3>📧 Hantar laporan</h3><div class="sub" id="mailSub"></div>
+  <label class="l" for="mUnit">Peti sejuk</label>
+  <select class="fld" id="mUnit"><option value="OPD">OPD — Peti Sejuk</option><option value="MCH">MCH — Peti Sejuk 1, 2, 3</option><option value="ALL">Semua (OPD + MCH)</option></select>
+  <div id="mailMsg"></div>
+  <div class="row2"><button class="btn ghost" data-close>Batal</button><button class="btn" id="mailGo" type="button">Hantar PDF</button></div>
+</div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const token = sessionStorage.getItem('kkah_session_token');
+if(!token) location.href = './login.html';
+const MONTHS = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+const pad = n => String(n).padStart(2, '0');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = v => v == null ? '' : (Math.round(v * 10) / 10).toString();
+const ini = n => { const w = String(n || '').split(/\s+/).filter(x => x && !/^(bin|binti|b\.|bt\.|a\/l|a\/p)$/i.test(x)); return w.length > 1 ? w.map(x => x[0].toUpperCase()).join('').slice(0, 4) : String(n || ''); };
+function toast(m, err){ const t = $('toast'); t.textContent = m; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(toast._t); toast._t = setTimeout(() => t.className = 'toast', 3400); }
+async function api(body){
+  const r = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)) });
+  const d = await r.json();
+  if(!d.ok && /expired/i.test(d.error || '')){ location.href = './login.html'; throw new Error('expired'); }
+  return d;
+}
+
+const NOW = new Date();
+const q = new URLSearchParams(location.search);
+const S = { view:'log', unit:'OPD', fridge:'OPD1', y:NOW.getFullYear(), m:NOW.getMonth() + 1, day:NOW.getDate(), slot:(q.get('slot') === 'am' || q.get('slot') === 'pm') ? q.get('slot') : (NOW.getHours() < 12 ? 'am' : 'pm'),
+  cfg:null, events:[], fridges:[], me:'', days:[], today:{}, todayDate:'', busy:false, cache:{}, saved:false };
+const todayParts = () => { const d = new Date(); return { y:d.getFullYear(), m:d.getMonth() + 1, d:d.getDate() }; };
+const isCurMonth = () => S.y === NOW.getFullYear() && S.m === NOW.getMonth() + 1;
+const oor = v => v != null && (v > S.cfg.maxTemp || v < S.cfg.minTemp);
+const fr = id => S.fridges.find(f => f.id === id) || {};
+const key = () => S.fridge + '|' + S.y + '|' + S.m;
+
+/* ---------------- boot ---------------- */
+(async function boot(){
+  const want = q.get('fridge') || (() => { try{ return localStorage.getItem('kkah_temp_fridge') || ''; }catch(e){ return ''; } })() || 'OPD1';
+  try{
+    const d = await api({ action:'tempInit', fridge: want, year: S.y, month: S.m });
+    if(!d.ok) throw new Error(d.error || 'Gagal memuatkan');
+    S.cfg = d.settings; S.events = d.events; S.fridges = d.fridges; S.me = d.me.name; S.today = d.today; S.todayDate = d.todayDate;
+    S.fridge = d.fridge; S.unit = fr(S.fridge).unit || 'OPD'; S.days = d.days; S.cache[key()] = d.days;
+    $('me').textContent = '👤 ' + S.me;
+    // go straight to the record page on the first fridge that still needs this session (own unit first)
+    if(!q.get('fridge')){ const n = nextPending(S.slot, S.unit); if(n) { S.fridge = n; S.unit = fr(n).unit; } if(S.fridge !== d.fridge) await loadMonth(); }
+    render();
+  }catch(e){ $('logBody').innerHTML = '<div class="card"><div class="empty">⚠️ ' + esc(e.message) + '<br><br><button class="btn" onclick="location.reload()">Cuba semula</button></div></div>'; }
+})();
+function nextPending(slot, preferUnit){
+  const order = S.fridges.slice().sort((a, b) => (a.unit === preferUnit ? 0 : 1) - (b.unit === preferUnit ? 0 : 1));
+  const f = order.find(x => !(S.today[x.id] && S.today[x.id][slot]));
+  return f ? f.id : '';
+}
+async function loadMonth(force){
+  const k = key();
+  if(!force && S.cache[k]){ S.days = S.cache[k]; return; }
+  try{
+    const d = await api({ action:'tempMonth', fridge:S.fridge, year:S.y, month:S.m });
+    if(!d.ok) throw new Error(d.error);
+    S.days = d.days; S.cache[k] = d.days; S.today = d.today || S.today;
+  }catch(e){ toast(e.message, true); }
+}
+
+/* ---------------- shell ---------------- */
+function head(){
+  document.querySelectorAll('#units button').forEach(b => b.setAttribute('aria-pressed', b.dataset.u === S.unit));
+  $('fr').innerHTML = S.fridges.filter(f => f.unit === S.unit).map(f => {
+    const t = S.today[f.id] || {}, h = NOW.getHours();
+    const dot = (k, lab, due) => '<span class="dt ' + (t[k] ? 'ok' : (h >= due ? 'due' : '')) + '">' + lab + (t[k] ? ' ✓' : '') + '</span>';
+    return '<button data-f="' + f.id + '" aria-pressed="' + (f.id === S.fridge) + '">🧊 ' + esc(f.name.replace('Peti Sejuk ', 'Peti ')) + '<span class="dots">' + dot('am', 'AM', 8) + dot('pm', 'PM', 16) + '</span></button>';
+  }).join('');
+  document.querySelectorAll('#nav button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === S.view));
+  ['log','graph','rec'].forEach(v => $('v-' + v).classList.toggle('show', v === S.view));
+}
+function render(){ head(); if(S.view === 'log') renderLog(); if(S.view === 'graph') renderGraph(); if(S.view === 'rec') renderRec(); }
+$('nav').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; S.view = b.dataset.v; render(); window.scrollTo(0, 0); });
+$('units').addEventListener('click', async e => { const b = e.target.closest('button'); if(!b || b.dataset.u === S.unit) return; S.unit = b.dataset.u; S.fridge = (S.fridges.find(f => f.unit === S.unit) || {}).id; S.saved = false; await loadMonth(); render(); });
+$('fr').addEventListener('click', async e => { const b = e.target.closest('[data-f]'); if(!b) return; S.fridge = b.dataset.f; S.saved = false; try{ localStorage.setItem('kkah_temp_fridge', S.fridge); }catch(_){} await loadMonth(); render(); });
+document.addEventListener('click', async e => {
+  const mb = e.target.closest('[data-m]'); if(!mb) return;
+  let m = S.m + Number(mb.dataset.m), y = S.y; if(m < 1){ m = 12; y--; } if(m > 12){ m = 1; y++; }
+  if(y > NOW.getFullYear() || (y === NOW.getFullYear() && m > NOW.getMonth() + 1)) return;
+  S.y = y; S.m = m; S.day = isCurMonth() ? NOW.getDate() : 1; await loadMonth(); render();
+});
+
+/* ---------------- record ---------------- */
+function renderLog(){
+  const f = fr(S.fridge), d = S.days[S.day - 1] || {}, dateVal = S.y + '-' + pad(S.m) + '-' + pad(S.day), tv = NOW.getFullYear() + '-' + pad(NOW.getMonth() + 1) + '-' + pad(NOW.getDate());
+  const tab = (k, l, sub) => '<button class="' + k + (S.slot === k ? ' on' : '') + '" data-slot="' + k + '" aria-pressed="' + (S.slot === k) + '">' + l + (d[k] ? ' ✓' : '') + '<small>' + sub + '</small></button>';
+  let html = '<div class="card"><h2>🧊 ' + esc(f.unit) + ' · ' + esc(f.name) + ' <span class="pts" style="margin-left:auto">🏅 +1 mata / sesi</span></h2>' +
+    '<div class="dtrow"><button class="ib" data-d="-1" aria-label="Hari sebelum">‹</button><input class="fld" id="dt" type="date" value="' + dateVal + '" max="' + tv + '" style="text-align:center;font-weight:800"><button class="ib" data-d="1" aria-label="Hari seterusnya"' + (dateVal >= tv ? ' disabled' : '') + '>›</button></div></div>' +
+    '<div class="seg">' + tab('am', '☀️ AM', '8:00 pagi') + tab('pm', '🌙 PM', '4:00 petang') + '</div>';
+  const s = d[S.slot];
+  if(s){
+    html += '<div class="card"><h2 style="color:var(--green)">🔒 Sesi ' + S.slot.toUpperCase() + ' telah direkod &amp; dikunci</h2><div class="lockrow">' +
+      [['Maks', s.max, 'red'], ['Min', s.min, 'green'], ['Semasa', s.cur, 'blue']].map(x => '<div><small>' + x[0] + '</small><b style="color:var(--' + x[2] + ')">' + fmt(x[1]) + '°</b></div>').join('') + '</div>' +
+      '<div class="sub">👤 ' + esc(s.nurse) + ' · 🕒 ' + esc(String(s.time).slice(11, 16)) + '</div>' +
+      ((d.events || []).length ? '<div class="msg warn">Insiden: ' + d.events.map(esc).join(', ') + '</div>' : '') + (d.note ? '<div class="msg info">' + esc(d.note) + '</div>' : '') + '</div>';
+    const nx = dateVal === tv ? nextPending(S.slot, S.unit) : '';
+    if(nx && nx !== S.fridge) html += '<button class="btn" data-go="' + nx + '">➡️ Seterusnya: ' + esc(fr(nx).unit) + ' ' + esc(fr(nx).name) + '</button>';
+    else if(dateVal === tv && !nx) html += '<div class="card done-all"><div class="big">🎉</div><b>Semua peti sejuk sesi ' + S.slot.toUpperCase() + ' telah direkod</b><div class="sub" style="margin-top:6px">Terima kasih! Setiap rekod memberi +1 mata.</div></div>';
+  }else{
+    html += '<div class="card"><h2>' + (S.slot === 'am' ? '☀️ Bacaan AM — 8:00 pagi' : '🌙 Bacaan PM — 4:00 petang') + '</h2>' +
+      '<div class="msg info" style="margin:0 0 4px">Isi <b style="color:var(--red)">maksima</b> → <b style="color:var(--green)">minima</b> → <b style="color:var(--blue)">semasa</b>. Julat <b>' + esc(S.cfg.standard) + '</b>. Sesi hanya boleh disimpan <b>sekali</b>.</div>' +
+      '<div class="temps">' + [['max', 'Maks', 'red'], ['min', 'Min', 'green'], ['cur', 'Semasa', 'blue']].map(x => '<div class="temp ' + x[0] + '"><label for="f-' + x[0] + '"><span class="d" style="background:var(--' + x[2] + ')"></span>' + x[1] + '</label><input id="f-' + x[0] + '" type="number" inputmode="decimal" step="0.1" placeholder="—" autocomplete="off"><div class="hint" id="h-' + x[0] + '"></div></div>').join('') + '</div>' +
+      '<label class="l">Direkod oleh</label><div class="who">👤 ' + esc(S.me) + '</div>' +
+      (S.events.length ? '<label class="l">Insiden (jika ada)</label><div class="evs">' + S.events.map(e => '<label class="ev"><input type="checkbox" value="' + esc(e.code) + '"><span><b style="color:var(--ink)">' + esc(e.code) + '</b> – ' + esc(e.text) + '</span></label>').join('') + '</div>' : '') +
+      '<label class="l" for="f-note">Catatan</label><textarea id="f-note" rows="2" maxlength="300" placeholder="Catatan tambahan jika perlu…"></textarea><div id="f-msg"></div></div>' +
+      '<button class="btn" id="f-save" disabled>💾 Simpan bacaan ' + S.slot.toUpperCase() + ' · +1 mata</button>';
+  }
+  $('logBody').innerHTML = html;
+  if(!s) bindForm();
+}
+$('logBody').addEventListener('click', async e => {
+  const sb = e.target.closest('[data-slot]'); if(sb){ S.slot = sb.dataset.slot; renderLog(); return; }
+  const db = e.target.closest('[data-d]'); if(db){ const t = new Date(S.y, S.m - 1, S.day + Number(db.dataset.d)); if(t > NOW) return; await setDay(t); return; }
+  const go = e.target.closest('[data-go]'); if(go){ S.fridge = go.dataset.go; S.unit = fr(S.fridge).unit; await loadMonth(); render(); window.scrollTo(0, 0); }
+});
+$('logBody').addEventListener('change', async e => { if(e.target.id === 'dt' && e.target.value){ const [y, m, d] = e.target.value.split('-').map(Number); const t = new Date(y, m - 1, d); if(t <= NOW) await setDay(t); } });
+async function setDay(t){ const mc = t.getFullYear() !== S.y || t.getMonth() + 1 !== S.m; S.y = t.getFullYear(); S.m = t.getMonth() + 1; S.day = t.getDate(); if(mc) await loadMonth(); render(); }
+
+function readForm(){
+  const n = id => { const v = $(id).value; return v === '' ? null : parseFloat(v); };
+  return { max:n('f-max'), min:n('f-min'), cur:n('f-cur'), events:[...document.querySelectorAll('.ev input:checked')].map(i => i.value), note:$('f-note').value.trim() };
+}
+function validate(){
+  const v = readForm(), errs = []; let warn = false;
+  ['max','min','cur'].forEach(k => { const bad = oor(v[k]); warn = warn || bad; $('f-' + k).classList.toggle('oor', !!bad); $('h-' + k).textContent = bad ? (v[k] > S.cfg.maxTemp ? '▲ Melebihi had' : '▼ Bawah had') : ''; });
+  const all = v.max != null && v.min != null && v.cur != null;
+  if(!all) errs.push('Isi ketiga-tiga suhu.');
+  else if(v.min > v.max) errs.push('Min tidak boleh lebih tinggi daripada Maks.');
+  else if(v.cur < v.min || v.cur > v.max) errs.push('Semasa mesti antara Min dan Maks.');
+  $('f-msg').innerHTML = (all ? errs.map(e => '<div class="msg err">' + e + '</div>').join('') : '') + (warn ? '<div class="msg warn">⚠ Suhu luar julat (' + esc(S.cfg.standard) + '). Pilih insiden jika berkaitan dan ambil tindakan segera. Emel amaran akan dihantar.</div>' : '');
+  $('f-save').disabled = errs.length > 0 || S.busy; return { v, ok: !errs.length };
+}
+function bindForm(){
+  ['f-max','f-min','f-cur'].forEach(id => $(id).addEventListener('input', validate));
+  $('f-save').onclick = () => {
+    const { v, ok } = validate(); if(!ok) return;
+    const row = (k, val, c) => '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span class="sub">' + k + '</span><b style="color:var(--' + c + ')">' + val + '°C</b></div>';
+    $('confBox').innerHTML = '<h3>Sahkan simpan ' + S.slot.toUpperCase() + '?</h3><div class="sub" style="margin-bottom:8px">' + esc(fr(S.fridge).unit) + ' · ' + esc(fr(S.fridge).name) + ' · ' + S.day + '/' + S.m + '/' + S.y + '</div>' +
+      row('Maks', v.max, 'red') + row('Min', v.min, 'green') + row('Semasa', v.cur, 'blue') + '<div class="msg warn">🔒 Selepas disimpan, rekod <b>tidak boleh diubah</b>.</div>' +
+      '<div class="row2"><button class="btn ghost" data-close>Semak semula</button><button class="btn" id="confGo" type="button">Ya, simpan</button></div>';
+    $('shConf').classList.add('show'); $('confGo').onclick = doSave;
+  };
+  validate();
+}
+async function doSave(){
+  if(S.busy) return; const v = readForm(); S.busy = true; const go = $('confGo'); go.disabled = true; go.textContent = 'Menyimpan…';
+  try{
+    const d = await api(Object.assign({ action:'tempSave', fridge:S.fridge, year:S.y, month:S.m, day:S.day, slot:S.slot }, v));
+    if(!d.ok) throw new Error(d.error);
+    S.days = d.days; S.cache[key()] = d.days; S.today = d.today || S.today;
+    $('shConf').classList.remove('show');
+    toast(d.pts ? '✓ Disimpan · +' + d.pts + ' mata 🎉' : '✓ Disimpan');
+    S.busy = false; render();
+    const nx = (S.day === NOW.getDate() && isCurMonth()) ? nextPending(S.slot, S.unit) : '';
+    if(nx && nx !== S.fridge) setTimeout(async () => { S.fridge = nx; S.unit = fr(nx).unit; await loadMonth(); render(); window.scrollTo(0, 0); }, 900);   // straight on to the next fridge that still needs this session
+  }catch(e){ S.busy = false; $('shConf').classList.remove('show'); toast(e.message, true); await loadMonth(true); render(); }
+}
+document.addEventListener('click', e => { if(e.target.closest('[data-close]')) document.querySelectorAll('.sheet').forEach(s => s.classList.remove('show')); });
+document.querySelectorAll('.sheet').forEach(s => s.addEventListener('pointerdown', e => { if(e.target === s) s.classList.remove('show'); }));
+
+/* ---------------- graph (animated line + dots) ---------------- */
+let chart = null, pulseRaf = 0;
+const RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function stats(){
+  const f = []; S.days.forEach(d => ['am','pm'].forEach(k => { if(d[k]) f.push(d[k]); }));
+  const all = f.flatMap(s => [s.max, s.min, s.cur]);
+  return { n:f.length, avg:f.length ? (f.reduce((a, s) => a + s.cur, 0) / f.length).toFixed(1) : null, hi:f.length ? Math.max(...f.map(s => s.max)) : null, lo:f.length ? Math.min(...f.map(s => s.min)) : null, bad:all.filter(oor).length };
+}
+function renderGraph(){
+  const f = fr(S.fridge), st = stats();
+  $('gMonth').textContent = MONTHS[S.m - 1] + ' ' + S.y; $('gTitle').textContent = '🧊 ' + f.unit + ' · ' + f.name;
+  $('gStats').innerHTML = [['Sesi', st.n, 'var(--b5)'], ['Purata', st.avg == null ? '--' : st.avg + '°', 'var(--blue)'], ['Tertinggi', st.hi == null ? '--' : st.hi + '°', 'var(--red)'], ['Luar julat', st.bad, st.bad ? 'var(--amber)' : 'var(--ink2)']].map(x => '<div class="stat"><b style="color:' + x[2] + '">' + x[1] + '</b><small>' + x[0] + '</small></div>').join('');
+  if(chart){ chart.destroy(); chart = null; } cancelAnimationFrame(pulseRaf);
+  if(!st.n){ $('chart').parentNode.innerHTML = '<div class="empty" id="noData">Tiada data bulan ini.<br>Pergi ke tab Rekod untuk mula.</div><canvas id="chart" hidden></canvas>'; return; }
+  const box = document.querySelector('.chart-box'); if(!box.querySelector('canvas:not([hidden])')){ box.innerHTML = '<canvas id="chart" role="img" aria-label="Graf suhu bulanan"></canvas>'; }
+  if(typeof Chart === 'undefined'){ box.innerHTML = '<div class="empty">Graf tidak dapat dimuatkan (semak sambungan internet).</div>'; return; }
+  const labels = [], ser = { max:[], min:[], cur:[] };
+  S.days.forEach(d => ['am','pm'].forEach(k => { labels.push(d.day + ' ' + k.toUpperCase()); const s = d[k]; ser.max.push(s ? s.max : null); ser.min.push(s ? s.min : null); ser.cur.push(s ? s.cur : null); }));
+  const all = [...ser.max, ...ser.min, ...ser.cur].filter(v => v != null), c = S.cfg;
+  const ymin = Math.floor(Math.min(c.minTemp - 2, ...all.map(v => v - 1))), ymax = Math.ceil(Math.max(c.maxTemp + 2, ...all.map(v => v + 1)));
+  const total = 1600, count = labels.length, delay = total / count;
+  const prevY = ctx => ctx.index === 0 ? ctx.chart.scales.y.getPixelForValue(100) : ctx.chart.getDatasetMeta(ctx.datasetIndex).data[ctx.index - 1].getProps(['y'], true).y;
+  const draw = RM ? false : {
+    x: { type:'number', easing:'linear', duration:delay, from:NaN, delay: ctx => ctx.type !== 'data' || ctx.xStarted ? 0 : (ctx.xStarted = true, ctx.index * delay) },
+    y: { type:'number', easing:'linear', duration:delay, from:prevY, delay: ctx => ctx.type !== 'data' || ctx.yStarted ? 0 : (ctx.yStarted = true, ctx.index * delay) },
+    radius: { duration:420, easing:'easeOutBack', from:0, delay: ctx => ctx.type === 'data' ? ctx.index * delay + 120 : 0 }       // dots pop in right after the line reaches them
+  };
+  const mk = (label, k, col) => ({ label, data:ser[k], borderColor:col, backgroundColor:col, borderWidth:2.6, tension:.28, spanGaps:true,
+    pointRadius: ser[k].map(v => oor(v) ? 7 : 4), pointHoverRadius:9, pointBorderColor: ser[k].map(v => oor(v) ? '#fff' : col), pointBorderWidth: ser[k].map(v => oor(v) ? 2 : 0) });
+  const lim = (label, v, col) => ({ label, data:Array(count).fill(v), borderColor:col, borderDash:[6, 4], borderWidth:1.2, pointRadius:0, pointHoverRadius:0, fill:false, animation:false });
+  const lastIdx = (() => { for(let i = ser.cur.length - 1; i >= 0; i--) if(ser.cur[i] != null) return i; return -1; })();
+  const pulse = { id:'pulse', afterDatasetsDraw(ch){                                  // a soft ring keeps breathing around the newest reading
+    if(RM || lastIdx < 0) return; const el = ch.getDatasetMeta(2).data[lastIdx]; if(!el || ch.$growing) return;
+    const t = (performance.now() % 1800) / 1800, x = ch.ctx; x.save(); x.beginPath(); x.arc(el.x, el.y, 6 + t * 14, 0, Math.PI * 2); x.strokeStyle = 'rgba(29,127,209,' + (0.55 * (1 - t)).toFixed(3) + ')'; x.lineWidth = 2.2; x.stroke(); x.restore(); },
+    afterRender(ch){ if(RM) return; cancelAnimationFrame(pulseRaf); pulseRaf = requestAnimationFrame(() => { if(chart === ch && S.view === 'graph') ch.draw(); }); } };
+  chart = new Chart($('chart'), { type:'line', plugins:[pulse],
+    data:{ labels, datasets:[mk('Suhu Maks', 'max', '#d62839'), mk('Suhu Min', 'min', '#0a9a64'), mk('Suhu Semasa', 'cur', '#1d7fd1'), lim('Had maks ' + c.maxTemp + '°C', c.maxTemp, '#d62839'), lim('Had min ' + c.minTemp + '°C', c.minTemp, '#0a9a64')] },
+    options:{ responsive:true, maintainAspectRatio:false, animation:draw, interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ display:false }, tooltip:{ filter: i => i.datasetIndex < 3, callbacks:{ title: it => { const i = it[0].dataIndex; return Math.floor(i / 2) + 1 + ' ' + MONTHS[S.m - 1] + ' · ' + (i % 2 ? 'PM' : 'AM'); }, label: x => ' ' + x.dataset.label + ': ' + x.parsed.y + '°C' } } },
+      scales:{ x:{ grid:{ color:'#e3edf1' }, ticks:{ autoSkip:false, maxRotation:0, font:{ size:10 }, callback:(v, i) => i % 2 === 0 ? Math.floor(i / 2) + 1 : '' } }, y:{ min:ymin, max:ymax, grid:{ color:'#e3edf1' }, ticks:{ callback: v => v + '°' } } } } });
+  chart.$growing = !RM; setTimeout(() => { if(chart) chart.$growing = false; }, RM ? 0 : total + 700);
+}
+
+/* ---------------- monthly table + e-mail ---------------- */
+function renderRec(){
+  $('rMonth').textContent = MONTHS[S.m - 1] + ' ' + S.y;
+  const c = v => v == null ? '<td></td>' : '<td class="' + (v > S.cfg.maxTemp ? 'hi' : v < S.cfg.minTemp ? 'lo' : 'ok') + '">' + fmt(v) + '</td>';
+  const slot = s => s ? c(s.max) + c(s.min) + c(s.cur) + '<td title="' + esc(s.nurse) + '">' + esc(ini(s.nurse)) + '</td>' : '<td></td><td></td><td></td><td></td>';
+  $('tbl').innerHTML = '<colgroup><col style="width:46px">' + '<col><col><col><col style="width:54px">'.repeat(2) + '<col style="width:64px"></colgroup>' +
+    '<thead><tr><th rowspan="2">Tkh</th><th colspan="4">AM · 8:00 pagi</th><th colspan="4">PM · 4:00 petang</th><th rowspan="2">Insiden</th></tr><tr>' + '<th>Maks</th><th>Min</th><th>Smsa</th><th>Oleh</th>'.repeat(2) + '</tr></thead><tbody>' +
+    S.days.map(d => '<tr class="' + (isCurMonth() && d.day === NOW.getDate() ? 'today' : '') + '"><td class="dy">' + d.day + '</td>' + slot(d.am) + slot(d.pm) + '<td>' + esc((d.events || []).join(',')) + '</td></tr>').join('') + '</tbody>';
+}
+$('mail').onclick = () => { $('mUnit').value = S.unit; $('mailSub').textContent = 'PDF ' + MONTHS[S.m - 1] + ' ' + S.y + ' akan dihantar ke emel akaun SIAGA anda.'; $('mailMsg').innerHTML = ''; $('shMail').classList.add('show'); };
+$('mailGo').onclick = async () => {
+  const b = $('mailGo'); b.disabled = true; b.textContent = 'Menghantar…'; $('mailMsg').innerHTML = '';
+  try{
+    const d = await api({ action:'tempEmailReport', unit:$('mUnit').value, year:S.y, month:S.m });
+    if(!d.ok) throw new Error(d.error);
+    $('shMail').classList.remove('show'); toast('Laporan dihantar ke ' + d.email + ' ✓');
+  }catch(e){ $('mailMsg').innerHTML = '<div class="msg err">' + esc(e.message) + '</div>'; }
+  b.disabled = false; b.textContent = 'Hantar PDF';
+};
+</script>
+</body>
+</html>
