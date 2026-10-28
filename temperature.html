@@ -213,7 +213,7 @@ document.addEventListener('click', async e => {
 function renderLog(){
   const f = fr(S.fridge), d = S.days[S.day - 1] || {}, dateVal = S.y + '-' + pad(S.m) + '-' + pad(S.day), tv = NOW.getFullYear() + '-' + pad(NOW.getMonth() + 1) + '-' + pad(NOW.getDate());
   const tab = (k, l, sub) => '<button class="' + k + (S.slot === k ? ' on' : '') + '" data-slot="' + k + '" aria-pressed="' + (S.slot === k) + '">' + l + (d[k] ? ' ✓' : '') + '<small>' + sub + '</small></button>';
-  let html = '<div class="card"><h2>🧊 ' + esc(f.unit) + ' · ' + esc(f.name) + ' <span class="pts" style="margin-left:auto">🏅 +1 mata / sesi</span></h2>' +
+  let html = '<div class="card"><h2>🧊 ' + esc(f.unit) + ' · ' + esc(f.name) + </h2>' +
     '<div class="dtrow"><button class="ib" data-d="-1" aria-label="Hari sebelum">‹</button><input class="fld" id="dt" type="date" value="' + dateVal + '" max="' + tv + '" style="text-align:center;font-weight:800"><button class="ib" data-d="1" aria-label="Hari seterusnya"' + (dateVal >= tv ? ' disabled' : '') + '>›</button></div></div>' +
     '<div class="seg">' + tab('am', '☀️ AM', '8:00 pagi') + tab('pm', '🌙 PM', '4:00 petang') + '</div>';
   const s = d[S.slot];
@@ -224,7 +224,7 @@ function renderLog(){
       ((d.events || []).length ? '<div class="msg warn">Insiden: ' + d.events.map(esc).join(', ') + '</div>' : '') + (d.note ? '<div class="msg info">' + esc(d.note) + '</div>' : '') + '</div>';
     const nx = dateVal === tv ? nextPending(S.slot, S.unit) : '';
     if(nx && nx !== S.fridge) html += '<button class="btn" data-go="' + nx + '">➡️ Seterusnya: ' + esc(fr(nx).unit) + ' ' + esc(fr(nx).name) + '</button>';
-    else if(dateVal === tv && !nx) html += '<div class="card done-all"><div class="big">🎉</div><b>Semua peti sejuk sesi ' + S.slot.toUpperCase() + ' telah direkod</b><div class="sub" style="margin-top:6px">Terima kasih! Setiap rekod memberi +1 mata.</div></div>';
+    else if(dateVal === tv && !nx) html += '<div class="card done-all"><div class="big">🎉</div><b>Semua peti sejuk sesi ' + S.slot.toUpperCase() + ' telah direkod</b><div class="sub" style="margin-top:6px">Terima kasih!</div></div>';
   }else{
     html += '<div class="card"><h2>' + (S.slot === 'am' ? '☀️ Bacaan AM — 8:00 pagi' : '🌙 Bacaan PM — 4:00 petang') + '</h2>' +
       '<div class="msg info" style="margin:0 0 4px">Isi <b style="color:var(--red)">maksima</b> → <b style="color:var(--green)">minima</b> → <b style="color:var(--blue)">semasa</b>. Julat <b>' + esc(S.cfg.standard) + '</b>. Sesi hanya boleh disimpan <b>sekali</b>.</div>' +
@@ -232,7 +232,7 @@ function renderLog(){
       '<label class="l">Direkod oleh</label><div class="who">👤 ' + esc(S.me) + '</div>' +
       (S.events.length ? '<label class="l">Insiden (jika ada)</label><div class="evs">' + S.events.map(e => '<label class="ev"><input type="checkbox" value="' + esc(e.code) + '"><span><b style="color:var(--ink)">' + esc(e.code) + '</b> – ' + esc(e.text) + '</span></label>').join('') + '</div>' : '') +
       '<label class="l" for="f-note">Catatan</label><textarea id="f-note" rows="2" maxlength="300" placeholder="Catatan tambahan jika perlu…"></textarea><div id="f-msg"></div></div>' +
-      '<button class="btn" id="f-save" disabled>💾 Simpan bacaan ' + S.slot.toUpperCase() + ' · +1 mata</button>';
+      '<button class="btn" id="f-save" disabled>💾 Simpan bacaan ' + S.slot.toUpperCase() + ' </button>';
   }
   $('logBody').innerHTML = html;
   if(!s) bindForm();
