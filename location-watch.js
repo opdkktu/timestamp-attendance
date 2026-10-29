@@ -94,7 +94,7 @@
       ov.innerHTML = '<div class="lw-box"><h3>📍 Semakan lokasi waktu bertugas</h3>' +
         '<p>Pada <b>' + wins().join(' dan ') + '</b>, selepas anda daftar masuk dan sebelum daftar keluar, SIAGA akan menyemak lokasi anda <b>setiap ' + cfg.intervalMin + ' minit</b> apabila aplikasi dibuka.</p>' +
         '<ul><li>🎯 Setiap semakan di dalam klinik memberi <b>+' + (cfg.locPts || 1) + ' mata</b>.</li></ul>' +
-        '<ul><li>Hanya <b>jarak dari klinik</b> dan masa direkod — bukan laluan perjalanan.</li><li>Jika anda di luar kawasan klinik (' + cfg.radiusM + ' m) beberapa bacaan berturut-turut, <b>penyelia dimaklumkan</b>.</li>' +
+        '<ul><li>Pada waktu semakan sahaja, <b>koordinat lokasi &amp; masa</b> direkod dan <b>penyelia boleh melihat jejak pada peta</b>. Tiada penjejakan di luar waktu itu.</li><li>Jika anda di luar kawasan klinik (' + cfg.radiusM + ' m) beberapa bacaan berturut-turut, <b>penyelia dimaklumkan</b>.</li>' +
         '<li>Bertugas di luar (lawatan, ambulans, kursus)? Tekan <b>“Tugas luar”</b> dan tiada amaran dihantar.</li><li>Rekod dipadam automatik selepas 90 hari.</li></ul>' +
         '<p style="font-size:12.5px;color:#5B6B68">Telefon mungkin meminta kebenaran lokasi — sila pilih <b>Benarkan</b>.</p>' +
         '<div class="lw-btns"><button class="g" type="button">Kemudian</button><button class="p" type="button">Saya faham &amp; setuju</button></div></div>';
