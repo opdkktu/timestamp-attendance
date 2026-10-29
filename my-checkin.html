@@ -413,6 +413,7 @@ function showStandbyChoice(){
 }
 function enterStandby(){
   audioCtx(); requestWake(); prewarm();                       // this tap unlocks sound + keeps the screen on
+  bioGate(75, true);                                          // Face ID / Touch ID now (while the user is tapping), valid for the standby hour
   const ss = $('startScreen'); ss.classList.add('standby');
   $('startGo').hidden = false; $('startGo').textContent = 'Check Out sekarang';
   $('startStandby').hidden = true; $('startCancel').hidden = false;
@@ -473,9 +474,54 @@ function fmt12(hms){
 }
 
 /* ===================== prepare (everything in parallel) ===================== */
-function beginStart(){
+/* ===================== Face ID / Touch ID gate (before the camera + faceprint start) ===================== */
+const BIO_REQUIRED = true;          // false = no gate at all
+const BIO_ALLOW_NO_SENSOR = true;   // phone without Face ID / fingerprint / screen lock: true = let it through, false = block
+let bioUntil = 0, bioFails = 0, bioSaved = null;
+const bioKey = () => 'kkah_ci_cred_' + (sessionStorage.getItem('kkah_ic') || '');
+const b64e = buf => { let s = ''; new Uint8Array(buf).forEach(b => s += String.fromCharCode(b)); return btoa(s); };
+const b64d = str => { const s = atob(str), a = new Uint8Array(s.length); for(let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a.buffer; };
+const bioAvailP = (async () => { try{ return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); }catch(e){ return false; } })();
+
+async function bioVerify(){            // true when the phone confirmed Face ID / Touch ID / screen lock
+  const ic = sessionStorage.getItem('kkah_ic') || '', challenge = crypto.getRandomValues(new Uint8Array(32));
+  let id = ''; try{ id = localStorage.getItem(bioKey()) || ''; }catch(e){}
+  if(!id){                             // first time on this phone: create the Face ID key (this already asks for Face ID / Touch ID)
+    const cred = await navigator.credentials.create({ publicKey:{ challenge, rp:{ name:'SIAGA' }, user:{ id:new TextEncoder().encode(ic), name:ic, displayName:ic },
+      pubKeyCredParams:[{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }], authenticatorSelection:{ authenticatorAttachment:'platform', userVerification:'required' }, timeout:60000, attestation:'none' } });
+    if(!cred) return false;
+    try{ localStorage.setItem(bioKey(), b64e(cred.rawId)); }catch(e){}
+    return true;
+  }
+  await navigator.credentials.get({ publicKey:{ challenge, allowCredentials:[{ id:b64d(id), type:'public-key' }], userVerification:'required', timeout:60000 } });
+  return true;
+}
+function bioShow(msg){
+  const t = $('startTitle'), m = $('startMsg'), g = $('startGo');
+  if(!bioSaved) bioSaved = { t:t.textContent, m:m.textContent, g:g.textContent };
+  t.textContent = '🔐 Sahkan identiti'; m.textContent = msg; g.hidden = false; g.textContent = 'Sahkan dengan Face ID / Touch ID';
+  $('startStandby').hidden = true; $('startCancel').hidden = true;
+  $('startScreen').classList.remove('standby'); $('startScreen').classList.add('show');
+}
+function bioRestore(){ if(bioSaved){ $('startTitle').textContent = bioSaved.t; $('startMsg').textContent = bioSaved.m; $('startGo').textContent = bioSaved.g; bioSaved = null; } }
+/** true = go on. quiet=true: never draws anything (used while standing by). validMin = how long this pass stays valid. */
+async function bioGate(validMin, quiet){
+  if(!BIO_REQUIRED || Date.now() < bioUntil) return true;
+  if(!(await bioAvailP)){ if(BIO_ALLOW_NO_SENSOR) return true; if(!quiet) bioShow('Telefon ini tiada Face ID / cap jari / kunci skrin. Hidupkan kunci skrin dalam Tetapan telefon, kemudian cuba lagi.'); return false; }
+  const gesture = navigator.userActivation ? navigator.userActivation.isActive : true;     // iPhone only allows the prompt right after a tap
+  if(gesture){
+    try{ if(await bioVerify()){ bioFails = 0; bioUntil = Date.now() + (validMin || 2) * 60000; return true; } }
+    catch(e){ bioFails++; if(bioFails >= 2){ try{ localStorage.removeItem(bioKey()); }catch(_){} } }   // 2 fails in a row → the old key may be gone: make a fresh one next time
+  }
+  if(!quiet) bioShow(bioFails ? 'Pengesahan tidak berjaya. Tekan butang dan cuba lagi.' : 'Sahkan bahawa ini anda sebelum imbasan muka dimulakan.');
+  return false;
+}
+
+async function beginStart(){
   audioCtx(); // this tap unlocks sound for the cues below
   clearInterval(standbyTimer); standbyTimer = null;
+  if(!(await bioGate())) return;
+  bioRestore();
   $('startScreen').classList.remove('show', 'standby');
   init();
 }
@@ -745,7 +791,7 @@ function failRecord(msg, canRetry){
 }
 function onRetry(){
   if(capturedImage){ recordAttendance(); }   // photo already taken & face verified — only the save step is repeated
-  else init();
+  else beginStart();                         // new faceprint attempt → Face ID / Touch ID check applies again (skipped inside its 2-minute pass)
 }
 
 function onSuccess(data){
