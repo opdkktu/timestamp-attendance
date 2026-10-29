@@ -35,6 +35,7 @@
   .s1 h3{ margin:0 0 8px; font:800 14px 'Manrope',sans-serif; display:flex; align-items:center; gap:8px; }
   .kv{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; text-align:center; } .kv b{ display:block; font:800 17px 'Manrope',sans-serif; } .kv small{ font-size:10px; font-weight:700; color:var(--ink2); text-transform:uppercase; }
   @media(max-width:480px){ .kv{ grid-template-columns:repeat(2,1fr); } }
+  .st{ font:800 11px 'Manrope',sans-serif; padding:4px 10px; border-radius:99px; white-space:nowrap; } .st-PATUH{ background:#E0F5E8; color:var(--green); } .st-SEBAHAGIAN{ background:#FFF3D6; color:#8a6d0a; } .st-TIADA{ background:#FDE0E3; color:var(--red); } .st-LOKASI{ background:#FDE0E3; color:var(--red); } .st-BERTUGAS{ background:#E8F1FB; color:#1c4f8f; }
   .empty{ text-align:center; padding:26px 10px; color:var(--ink2); font-size:14px; line-height:1.6; }
   .note{ font-size:12px; color:var(--ink2); line-height:1.55; }
   .pulse{ width:22px; height:22px; margin:-11px 0 0 -11px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 0 rgba(255,255,255,.6),0 2px 8px rgba(0,0,0,.4); animation:pl 1.4s infinite; }
@@ -61,6 +62,7 @@
   <div id="map" role="img" aria-label="Peta jejak lokasi"></div>
   <div class="card ctl"><button class="btn" id="play" type="button">▶ Main</button><input type="range" id="scrub" min="0" max="100" value="100" aria-label="Garis masa"><span id="clock" style="font:800 14px 'Manrope',sans-serif;min-width:48px;text-align:right">--:--</span></div>
   <div class="sum" id="sum"></div>
+  <div class="card"><div class="lbl">Laporan Kepatuhan (selepas setiap waktu semakan)</div><div id="cmp" class="note">Memuatkan…</div></div>
   <p class="note">Titik = satu bacaan lokasi (sekitar setiap <span id="iv">10</span> minit, hanya semasa aplikasi dibuka dalam waktu semakan). Hijau = dalam klinik/zon · merah = luar · kelabu = GPS lemah. Jarak pergerakan mengabaikan getaran GPS kurang 15 m. Data dipadam automatik selepas 90 hari.</p>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -94,7 +96,7 @@ async function load(){
     base.clearLayers(); const c = d.clinic;
     L.circle([c.lat, c.lng], { radius: d.radiusM, color: '#0F5C56', weight: 2, dashArray: '6 5', fillColor: '#1C8F84', fillOpacity: .08 }).addTo(base).bindTooltip('Klinik (' + d.radiusM + ' m)');
     (d.zones || []).forEach(z => L.circle([z.lat, z.lng], { radius: z.radius, color: '#7c3aed', weight: 2, dashArray: '6 5', fillColor: '#7c3aed', fillOpacity: .08 }).addTo(base).bindTooltip(esc(z.name)));
-    renderCtl(); draw(true);
+    renderCtl(); draw(true); loadCmp();
   }catch(e){ $('ppl').innerHTML = '<div class="empty">⚠️ ' + esc(e.message) + '</div>'; }
 }
 function renderCtl(){
@@ -156,6 +158,15 @@ $('none').onclick = () => { sel.clear(); renderCtl(); draw(false); };
 $('date').onchange = load;
 $('dPrev').onclick = () => { const d = new Date($('date').value + 'T00:00:00'); d.setDate(d.getDate() - 1); $('date').value = ymd(d); load(); };
 $('dNext').onclick = () => { const d = new Date($('date').value + 'T00:00:00'); d.setDate(d.getDate() + 1); if(ymd(d) <= today){ $('date').value = ymd(d); load(); } };
+async function loadCmp(){
+  $('cmp').textContent = 'Memuatkan…';
+  try{
+    const r = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'getLocCompliance', token, date: $('date').value }) }); const d = await r.json(); if(!d.ok) throw new Error(d.error);
+    $('cmp').innerHTML = d.rows.length ? '<div style="overflow:auto"><table style="border-collapse:collapse;width:100%;min-width:520px;font-size:12.5px"><thead><tr style="text-align:left;color:var(--ink2)"><th>Nama</th><th>Waktu</th><th>Bacaan</th><th>Luar</th><th>Ditolak</th><th>Peringatan</th><th>Status</th></tr></thead><tbody>' +
+      d.rows.map(x => '<tr style="border-top:1px solid var(--line)"><td style="padding:8px 4px">' + esc(x.name) + '</td><td>' + esc(x.win) + '</td><td>' + x.n + '/' + x.exp + '</td><td>' + x.outside + '</td><td>' + x.denied + '</td><td>' + x.pushes + '</td><td><span class="st st-' + esc(String(x.status).split(' ')[0]) + '">' + esc(x.status) + '</span></td></tr>').join('') +
+      '</tbody></table></div><p class="note" style="margin:10px 0 0">Ini bukti sokongan sahaja. Sebelum sebarang tindakan, semak punca (telefon mati/bateri, tiada isyarat, tugas luar, kebenaran lokasi). Tambah catatan dalam tab <b>LocCompliance</b>.</p>' : '<div class="empty">Belum ada laporan untuk tarikh ini (dijana sejurus selepas waktu semakan tamat).</div>';
+  }catch(e){ $('cmp').textContent = e.message; }
+}
 initMap(); load();
 </script>
 </body>
