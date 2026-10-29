@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIAGA · Log In</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.0.1.8">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.0.1.8">
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIAGA">
 
@@ -151,13 +151,14 @@
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
+<script src="./device.js"></script>
 </head>
 <body>
 
 <div class="liquid-bg"><div class="blob"></div><div class="blob"></div><div class="blob"></div></div>
 
 <div class="login-box">
-  <div class="logo">S<img src="./siaga-192.png?v=1.15.0" alt="" onerror="this.remove()"></div>
+  <div class="logo">S<img src="./siaga-192.png?v=1.21.1" alt="" onerror="this.remove()"></div>
   <h2>SIAGA</h2>
   <p class="subtitle">Staff Integration, Attendance &amp; Governance Application<br>Klinik Kesihatan Ayer Hitam</p>
 
@@ -386,7 +387,7 @@ async function handlePasswordLogin(){
   try{
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'login', ic, password, device: navigator.userAgent })
+      body: JSON.stringify({ action: 'login', ic, password, device: navigator.userAgent, deviceId: SiagaDevice.id() })
     });
     const data = await res.json();
     if(!data.ok){
@@ -421,7 +422,7 @@ async function handleVerifyCode(){
   try{
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'verifyTotp', pendingToken, code, device: navigator.userAgent })
+      body: JSON.stringify({ action: 'verifyTotp', pendingToken, code, device: navigator.userAgent, deviceId: SiagaDevice.id() })
     });
     const data = await res.json();
     if(!data.ok){ showBanner(data.error || 'Verification failed.'); }
@@ -529,7 +530,7 @@ async function handleBiometricLogin(){
     // Browser confirmed the local biometric prompt — now exchange the device token for a session.
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'biometricLogin', deviceToken, device: navigator.userAgent })
+      body: JSON.stringify({ action: 'biometricLogin', deviceToken, device: navigator.userAgent, deviceId: SiagaDevice.id() })
     });
     const data = await res.json();
     if(!data.ok){
