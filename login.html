@@ -391,7 +391,7 @@ async function handlePasswordLogin(){
     });
     const data = await res.json();
     if(!data.ok){
-      showBanner(data.error || 'Login failed.');
+      showBanner(data.error || 'Login failed.', data.code === 'DEVICE_PENDING' ? 'info' : 'error');   // new phone → waiting for the supervisor (not an error)
       if(data.needsVerification){
         showResendOption(data.ic);
       }
