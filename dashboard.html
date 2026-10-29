@@ -1367,7 +1367,7 @@ async function setupSupervisorAndLog(){
     const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'getSupervisorScope', token: sessionStorage.getItem('kkah_session_token') }) });
     const d = await res.json();
-    if(d && d.ok && d.isSupervisor) addModuleCard('Penyelia — Staf Saya', '👥', './supervisor.html'); if(d && d.ok && d.isSupervisor) addModuleCard('Papan Lokasi', '📍', './locwatch.html');
+    if(d && d.ok && d.isSupervisor) addModuleCard('Penyelia — Staf Saya', '👥', './supervisor.html'); if(d && d.ok && d.isSupervisor) addModuleCard('Papan Lokasi', '📍', './locwatch.html');if(d && d.ok && d.isSupervisor) addModuleCard('Peranti Staf', '📱', './devices.html');
   }catch(e){}
 }
 
