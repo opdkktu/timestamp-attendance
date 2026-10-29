@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Jejak Lokasi</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./leaflet.css">
+<style>
+  :root{ --t9:#0B3D3A; --t7:#0F5C56; --t5:#1C8F84; --mint:#EAF6F2; --bg:#F6FBF9; --ink:#17302d; --ink2:#5b6b68; --line:#d8e6e2; --green:#0a8f5a; --red:#C62839; --amber:#d98a0b; --gold:#C9A227; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; min-height:100vh; background:radial-gradient(1200px 800px at 50% -10%,var(--mint),var(--bg)); font-family:'Inter',sans-serif; color:var(--ink); padding:12px 12px 40px; }
+  .wrap{ max-width:760px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
+  .head{ border-radius:22px; padding:16px 18px; color:#fff; background:linear-gradient(135deg,var(--t9),var(--t7)); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .head .eb{ font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; opacity:.78; font-weight:700; } .head h1{ font:800 20px 'Manrope',sans-serif; margin:2px 0 0; }
+  .back{ color:#fff; text-decoration:none; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); white-space:nowrap; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:18px; padding:14px; }
+  .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .fld{ min-height:46px; border-radius:12px; border:1.5px solid var(--line); padding:0 12px; font:inherit; font-size:16px; background:#fff; color:var(--ink); }
+  .chip{ min-height:42px; padding:0 14px; border-radius:99px; border:1.5px solid var(--line); background:#fff; font:700 13px 'Manrope',sans-serif; color:var(--ink2); cursor:pointer; }
+  .chip[aria-pressed="true"]{ background:var(--t9); color:#fff; border-color:var(--t9); }
+  .ib{ width:46px; height:46px; border-radius:12px; border:1.5px solid var(--line); background:#fff; font-size:20px; cursor:pointer; } .ib:disabled{ opacity:.35; }
+  .lbl{ font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--ink2); margin:0 0 6px; }
+  .ppl{ display:flex; flex-direction:column; max-height:240px; overflow:auto; margin-top:8px; }
+  .pp{ display:flex; align-items:center; gap:10px; padding:10px 6px; border-bottom:1px solid var(--line); min-height:48px; cursor:pointer; }
+  .pp:last-child{ border-bottom:none; } .pp input{ width:20px; height:20px; flex:none; } .sw{ width:14px; height:14px; border-radius:50%; flex:none; }
+  .pp .nm{ flex:1; font-weight:600; font-size:14px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .pp small{ color:var(--ink2); font-size:12px; white-space:nowrap; }
+  #map{ height:56vh; min-height:340px; border-radius:18px; border:1px solid var(--line); overflow:hidden; z-index:1; }
+  .ctl{ display:flex; gap:10px; align-items:center; } .ctl input[type=range]{ flex:1; height:36px; accent-color:var(--t5); }
+  .btn{ min-height:46px; padding:0 18px; border-radius:14px; border:none; font:800 14px 'Manrope',sans-serif; color:#fff; background:linear-gradient(135deg,var(--t9),var(--t5)); cursor:pointer; }
+  .sum{ display:grid; gap:10px; } .s1{ border:1px solid var(--line); border-radius:14px; padding:12px; }
+  .s1 h3{ margin:0 0 8px; font:800 14px 'Manrope',sans-serif; display:flex; align-items:center; gap:8px; }
+  .kv{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; text-align:center; } .kv b{ display:block; font:800 17px 'Manrope',sans-serif; } .kv small{ font-size:10px; font-weight:700; color:var(--ink2); text-transform:uppercase; }
+  @media(max-width:480px){ .kv{ grid-template-columns:repeat(2,1fr); } }
+  .empty{ text-align:center; padding:26px 10px; color:var(--ink2); font-size:14px; line-height:1.6; }
+  .note{ font-size:12px; color:var(--ink2); line-height:1.55; }
+  .pulse{ width:22px; height:22px; margin:-11px 0 0 -11px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 0 rgba(255,255,255,.6),0 2px 8px rgba(0,0,0,.4); animation:pl 1.4s infinite; }
+  @keyframes pl{ 70%{ box-shadow:0 0 0 14px rgba(0,0,0,0),0 2px 8px rgba(0,0,0,.4); } 100%{ box-shadow:0 0 0 0 rgba(0,0,0,0),0 2px 8px rgba(0,0,0,.4); } }
+  .toast{ position:fixed; left:50%; bottom:24px; transform:translate(-50%,30px); background:var(--t9); color:#fff; font-weight:700; font-size:14px; padding:12px 20px; border-radius:99px; opacity:0; pointer-events:none; transition:all .3s; z-index:9999; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); } .toast.err{ background:var(--red); }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+<script src="./version.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><div><div class="eb">Penyelia · Klinik Kesihatan Ayer Hitam</div><h1>🗺️ Jejak Lokasi</h1></div><a class="back" href="./locwatch.html">← Papan</a></div>
+
+  <div class="card">
+    <div class="row"><button class="ib" id="dPrev" aria-label="Hari sebelum">‹</button><input class="fld" id="date" type="date" style="flex:1;text-align:center;font-weight:700"><button class="ib" id="dNext" aria-label="Hari seterusnya">›</button></div>
+    <div class="lbl" style="margin-top:12px">Waktu</div><div class="row" id="wins"></div>
+    <div class="lbl" style="margin-top:12px">Staf <span id="pc" style="font-weight:600;text-transform:none"></span></div>
+    <div class="row"><button class="chip" id="all" type="button">Pilih semua</button><button class="chip" id="none" type="button">Kosongkan</button></div>
+    <div class="ppl" id="ppl"></div>
+  </div>
+
+  <div id="map" role="img" aria-label="Peta jejak lokasi"></div>
+  <div class="card ctl"><button class="btn" id="play" type="button">▶ Main</button><input type="range" id="scrub" min="0" max="100" value="100" aria-label="Garis masa"><span id="clock" style="font:800 14px 'Manrope',sans-serif;min-width:48px;text-align:right">--:--</span></div>
+  <div class="sum" id="sum"></div>
+  <p class="note">Titik = satu bacaan lokasi (sekitar setiap <span id="iv">10</span> minit, hanya semasa aplikasi dibuka dalam waktu semakan). Hijau = dalam klinik/zon · merah = luar · kelabu = GPS lemah. Jarak pergerakan mengabaikan getaran GPS kurang 15 m. Data dipadam automatik selepas 90 hari.</p>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="./leaflet.js"></script>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const token = sessionStorage.getItem('kkah_session_token'); if(!token) location.href = './login.html';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const PAL = ['#e6194b', '#3b82f6', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#65a30d', '#f97316', '#0d9488', '#a16207'];
+const pad = n => String(n).padStart(2, '0'), ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+function toast(m, err){ const t = $('toast'); t.textContent = m; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(toast._t); toast._t = setTimeout(() => t.className = 'toast', 3400); }
+function hav(a, b, c, d){ const R = 6371000, r = x => x * Math.PI / 180, dl = r(c - a), dg = r(d - b), h = Math.sin(dl / 2) ** 2 + Math.cos(r(a)) * Math.cos(r(c)) * Math.sin(dg / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); }
+const fm = m => m >= 1000 ? (m / 1000).toFixed(2) + ' km' : Math.round(m) + ' m';
+
+let D = null, win = 0, sel = new Set(), map = null, layer = null, base = null, anim = null, colors = {};
+const today = ymd(new Date()); $('date').max = today; $('date').value = today;
+
+function initMap(){
+  map = L.map('map', { zoomControl: true, attributionControl: true }).setView([6.240404, 100.246714], 17);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+  base = L.layerGroup().addTo(map); layer = L.layerGroup().addTo(map);
+}
+async function load(){
+  stop(); $('sum').innerHTML = ''; $('ppl').innerHTML = '<div class="empty">Memuatkan…</div>';
+  try{
+    const r = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'getLocWatchTrail', token, date: $('date').value }) });
+    const d = await r.json();
+    if(!d.ok){ if(/expired/i.test(d.error || '')){ location.href = './login.html'; return; } throw new Error(d.error); }
+    D = d; $('iv').textContent = d.intervalMin; win = 0; sel = new Set(d.people.slice(0, 1).map(p => p.ic)); colors = {}; d.people.forEach((p, i) => colors[p.ic] = PAL[i % PAL.length]);
+    base.clearLayers(); const c = d.clinic;
+    L.circle([c.lat, c.lng], { radius: d.radiusM, color: '#0F5C56', weight: 2, dashArray: '6 5', fillColor: '#1C8F84', fillOpacity: .08 }).addTo(base).bindTooltip('Klinik (' + d.radiusM + ' m)');
+    (d.zones || []).forEach(z => L.circle([z.lat, z.lng], { radius: z.radius, color: '#7c3aed', weight: 2, dashArray: '6 5', fillColor: '#7c3aed', fillOpacity: .08 }).addTo(base).bindTooltip(esc(z.name)));
+    renderCtl(); draw(true);
+  }catch(e){ $('ppl').innerHTML = '<div class="empty">⚠️ ' + esc(e.message) + '</div>'; }
+}
+function renderCtl(){
+  $('wins').innerHTML = '<button class="chip" data-w="0" aria-pressed="' + (win === 0) + '">Semua</button>' + D.windows.map(w => '<button class="chip" data-w="' + w.idx + '" aria-pressed="' + (win === w.idx) + '">' + esc(w.label) + '</button>').join('');
+  $('pc').textContent = '(' + D.people.length + ' ada bacaan)';
+  $('ppl').innerHTML = D.people.length ? D.people.map(p => '<label class="pp"><input type="checkbox" data-ic="' + esc(p.ic) + '"' + (sel.has(p.ic) ? ' checked' : '') + '><span class="sw" style="background:' + colors[p.ic] + '"></span><span class="nm">' + esc(p.name) + '</span><small>' + esc(p.unit) + ' · ' + p.pts.length + '</small></label>').join('')
+    : '<div class="empty">Tiada bacaan lokasi pada tarikh ini.<br>Bacaan hanya direkod semasa aplikasi dibuka dalam waktu semakan.</div>';
+  $('dNext').disabled = $('date').value >= today;
+}
+function pts(p){ return p.pts.filter(x => win === 0 ? x.w > 0 : x.w === win); }
+function stats(list){
+  let mv = 0, out = 0, far = 0; for(let i = 0; i < list.length; i++){ const x = list[i]; if(x.inside === 'N') out++; if(x.dist != null) far = Math.max(far, x.dist); if(i){ const s = hav(list[i - 1].lat, list[i - 1].lng, x.lat, x.lng); if(s >= 15) mv += s; } }
+  return { n: list.length, mv, out, far, first: list[0] && list[0].t, last: list.length && list[list.length - 1].t };
+}
+function dotColor(x){ return x.inside === 'Y' ? '#0a8f5a' : x.inside === 'N' ? '#C62839' : '#8b9a97'; }
+let all = [];                                                      // [{p, list, color}] currently drawn
+function draw(fit){
+  stop(); layer.clearLayers(); all = [];
+  const chosen = D.people.filter(p => sel.has(p.ic)), bounds = [];
+  chosen.forEach(p => {
+    const list = pts(p), col = colors[p.ic]; if(!list.length) return; all.push({ p, list, col });
+    L.polyline(list.map(x => [x.lat, x.lng]), { color: col, weight: 3, opacity: .75, dashArray: '2 6', lineCap: 'round' }).addTo(layer);
+    list.forEach((x, i) => { L.circleMarker([x.lat, x.lng], { radius: 7, color: '#fff', weight: 2, fillColor: dotColor(x), fillOpacity: 1 }).addTo(layer)
+      .bindTooltip('<b>' + esc(p.name) + '</b><br>' + x.t + ' · #' + (i + 1) + (x.dist != null ? '<br>' + x.dist + ' m dari klinik' : '') + '<br>±' + x.acc + ' m'); bounds.push([x.lat, x.lng]); });
+    L.circleMarker([list[0].lat, list[0].lng], { radius: 11, color: col, weight: 3, fill: false }).addTo(layer).bindTooltip('Mula ' + list[0].t);
+  });
+  if(fit){ if(bounds.length > 1) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 }); else if(bounds.length) map.setView(bounds[0], 18); else map.setView([D.clinic.lat, D.clinic.lng], 17); }
+  $('sum').innerHTML = all.length ? all.map(a => { const s = stats(a.list); return '<div class="s1"><h3><span class="sw" style="background:' + a.col + '"></span>' + esc(a.p.name) + ' <small style="font-weight:600;color:var(--ink2)">' + s.first + ' – ' + s.last + '</small></h3><div class="kv"><div><b>' + s.n + '</b><small>Bacaan</small></div><div><b>' + fm(s.mv) + '</b><small>Jumlah gerakan</small></div><div><b>' + fm(s.far) + '</b><small>Terjauh dari klinik</small></div><div><b style="color:' + (s.out ? 'var(--red)' : 'var(--green)') + '">' + s.out + '</b><small>Di luar</small></div></div></div>'; }).join('')
+    : (D.people.length ? '<div class="empty">Pilih staf untuk melihat jejak.</div>' : '');
+  const ms = all.flatMap(a => a.list.map(x => x.ms)); $('scrub').disabled = !ms.length; $('play').disabled = !ms.length;
+  if(ms.length){ tmin = Math.min(...ms); tmax = Math.max(...ms); } $('scrub').value = 100; $('clock').textContent = ms.length ? fmt(tmax) : '--:--';
+}
+let tmin = 0, tmax = 0, raf = 0, markers = [], playing = false;
+const fmt = ms => { const d = new Date(ms + 8 * 3600000); return pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()); };
+function posAt(list, t){                                           // interpolated position at time t (moves smoothly between readings)
+  if(t <= list[0].ms) return list[0]; const l = list[list.length - 1]; if(t >= l.ms) return l;
+  for(let i = 1; i < list.length; i++) if(t <= list[i].ms){ const a = list[i - 1], b = list[i], k = (t - a.ms) / (b.ms - a.ms || 1); return { lat: a.lat + (b.lat - a.lat) * k, lng: a.lng + (b.lng - a.lng) * k }; }
+  return l;
+}
+function show(t){
+  if(!markers.length) markers = all.map(a => L.marker([0, 0], { icon: L.divIcon({ className: '', html: '<div class="pulse" style="background:' + a.col + '"></div>', iconSize: [0, 0] }), interactive: false, zIndexOffset: 1000 }).addTo(map));
+  all.forEach((a, i) => { if(t < a.list[0].ms){ markers[i].setOpacity(0); return; } markers[i].setOpacity(1); const q = posAt(a.list, t); markers[i].setLatLng([q.lat, q.lng]); });
+  $('clock').textContent = fmt(t);
+}
+function stop(){ playing = false; cancelAnimationFrame(raf); markers.forEach(m => m.remove()); markers = []; $('play').textContent = '▶ Main'; }
+function play(){
+  if(!all.length) return; if(playing){ stop(); return; }
+  playing = true; $('play').textContent = '⏸ Henti'; const span = Math.max(1, tmax - tmin), dur = 14000;   // the whole window replays in ~14 s
+  let t0 = performance.now(), from = Number($('scrub').value) >= 99 ? 0 : Number($('scrub').value) / 100;
+  const step = n => { if(!playing) return; const k = Math.min(1, from + (n - t0) / dur * (1 - from)); $('scrub').value = k * 100; show(tmin + span * k); if(k < 1) raf = requestAnimationFrame(step); else { playing = false; $('play').textContent = '↻ Ulang'; } };
+  raf = requestAnimationFrame(step);
+}
+$('play').onclick = play;
+$('scrub').oninput = () => { cancelAnimationFrame(raf); playing = false; $('play').textContent = '▶ Main'; if(all.length) show(tmin + (tmax - tmin) * $('scrub').value / 100); };
+$('wins').onclick = e => { const b = e.target.closest('[data-w]'); if(!b) return; win = Number(b.dataset.w); renderCtl(); draw(true); };
+$('ppl').onchange = e => { const c = e.target.closest('[data-ic]'); if(!c) return; c.checked ? sel.add(c.dataset.ic) : sel.delete(c.dataset.ic); draw(true); };
+$('all').onclick = () => { sel = new Set(D.people.map(p => p.ic)); renderCtl(); draw(true); };
+$('none').onclick = () => { sel.clear(); renderCtl(); draw(false); };
+$('date').onchange = load;
+$('dPrev').onclick = () => { const d = new Date($('date').value + 'T00:00:00'); d.setDate(d.getDate() - 1); $('date').value = ymd(d); load(); };
+$('dNext').onclick = () => { const d = new Date($('date').value + 'T00:00:00'); d.setDate(d.getDate() + 1); if(ymd(d) <= today){ $('date').value = ymd(d); load(); } };
+initMap(); load();
+</script>
+</body>
+</html>
