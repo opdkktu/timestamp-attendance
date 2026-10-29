@@ -135,6 +135,7 @@
 <script src="./version-ui.js"></script>
 <script src="./permission-gate.js"></script>
 <script src="./photo-stamp.js"></script>
+<script>try{ SiagaStamp.prefetch('https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec', sessionStorage.getItem('kkah_session_token')); }catch(e){}</script>
 </head>
 <body>
 
@@ -236,7 +237,17 @@ function distanceMeters(lat1, lng1, lat2, lng2){
   const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
   return 2 * R * Math.asin(Math.sqrt(a));
 }
+/* extra allowed places (Klinik Desa …) — managed in the CheckinZones tab; cached on the phone so it also works with weak signal */
+let EXTRA_ZONES = [];
+try{ EXTRA_ZONES = JSON.parse(localStorage.getItem('kkah_zones') || '[]'); }catch(e){}
+function loadZones(){
+  const fetchIt = fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'getCheckinZones', token: sessionStorage.getItem('kkah_session_token') }) })
+    .then(r => r.json()).then(d => { if(d && d.ok){ EXTRA_ZONES = d.zones || []; try{ localStorage.setItem('kkah_zones', JSON.stringify(EXTRA_ZONES)); }catch(e){} } }).catch(() => {});
+  return Promise.race([fetchIt, new Promise(r => setTimeout(r, 3000))]);
+}
 function checkGeofence(lat, lng){
+  const tol = Math.min((userLocation && userLocation.acc) || 0, 100);
+  for(const z of EXTRA_ZONES){ if(distanceMeters(lat, lng, z.lat, z.lng) - tol <= z.radius){ if(userLocation) userLocation.name = z.name; return null; } }
   const dist = Math.round(distanceMeters(lat, lng, CLINIC_LAT, CLINIC_LNG));
   if(dist <= BUILDING_RADIUS_M) return null;
   return { zoneMsg: dist <= AREA_RADIUS_M ? 'Anda berada di luar bangunan klinik' : 'Anda berada di luar kawasan klinik', dist };
@@ -518,8 +529,9 @@ async function init(){
 function requestLocation(){
   return new Promise((resolve, reject) => {
     if(!navigator.geolocation) return reject(new Error('Geolocation not supported'));
-    const onSuccess = pos => {
+    const onSuccess = async pos => {
       userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy, name: '' };
+      if(!EXTRA_ZONES.length) await loadZones(); else loadZones();
       const violation = checkGeofence(userLocation.lat, userLocation.lng);
       if(violation){
         $('geofenceZoneMsg').textContent = violation.zoneMsg;
@@ -528,7 +540,7 @@ function requestLocation(){
         cue.fail();
         return reject(new Error('Outside allowed zone'));
       }
-      reverseGeocode(userLocation.lat, userLocation.lng); // background — never holds anything up
+      if(!userLocation.name) reverseGeocode(userLocation.lat, userLocation.lng); // background — never holds anything up
       resolve();
     };
     const onFail = () => reject(new Error('Location permission denied'));
@@ -757,7 +769,7 @@ function onSuccess(data){
   // Snapshot goes to Drive in the background; keepalive lets it finish even while we return to the dashboard.
   try{
     fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, keepalive: true,
-      body: JSON.stringify({ action:'attachSnapshot', ic: myIc, date: data.date, type: data.type, imageBase64: capturedImage }) }
+      body: JSON.stringify({ action:'attachSnapshot', ic: myIc, date: data.date, type: data.type, imageBase64: capturedImage, token: sessionStorage.getItem('kkah_session_token'), code: SiagaStamp.lastCode().code, cw: SiagaStamp.lastCode().w }) }
     ).catch(err => console.warn('Snapshot upload failed (attendance row still saved):', err));
   }catch(e){}
 
@@ -768,7 +780,6 @@ function onSuccess(data){
   tick(); redirectTimer = setInterval(tick, 1000);
 }
 </script>
-<script src="./emergency-alert.js"></script>
-<script>if(window.SiagaEmergency)SiagaEmergency.watch();</script>
+
 </body>
 </html>
