@@ -79,7 +79,7 @@
       var A = amtC.length ? amtC[amtC.length - 1] : null;
       if (A !== null) {
         var near = litC.concat(all).filter(function (l) { return Math.abs(l - A / price) < 0.35; })[0];
-        amount = A; litres = near !== undefined ? near : Math.round(A / price * 100) / 100;
+        amount = A; litres = near !== undefined ? near : Math.round(A / price * 1000) / 1000;
         confidence = near !== undefined ? 'high' : 'medium';
       }
     }
