@@ -215,7 +215,7 @@
   <div class="read" id="shRead" role="status"></div>
 
   <div class="row2">
-    <div><label for="shAmt">Amaun (RM)</label><input type="number" id="shAmt" inputmode="decimal" step="0.01" min="0" placeholder="0.00"></div>
+    <div><label for="shAmt">Amaun (RM)</label><input type="number" id="shAmt" inputmode="decimal" step="0.01" min="0" placeholder="0.000"></div>
     <div><label for="shLit">Liter</label><input type="number" id="shLit" inputmode="decimal" step="0.001" min="0" placeholder="0.00"></div>
   </div>
   <span class="ppl none" id="shPpl">RM seliter: —</span>
@@ -353,7 +353,7 @@ function renderAll(){
   const kmL = (k && k.km > 0 && s.litres > 0) ? k.km / s.litres : null;
   $('stats').innerHTML =
     '<div class="stat big"><div class="lb">Jumlah belanja minyak</div><div class="vl">' + rm(s.amount) + '</div><div class="dl">' + delta(s.amount, p.amount) + '</div></div>' +
-    '<div class="stat"><div class="lb">Jumlah liter</div><div class="vl">' + nf(s.litres, 1) + '<small>L</small></div><div class="dl">' + delta(s.litres, p.litres) + '</div></div>' +
+    '<div class="stat"><div class="lb">Jumlah liter</div><div class="vl">' + nf(s.litres, 3) + '<small>L</small></div><div class="dl">' + delta(s.litres, p.litres) + '</div></div>' +
     '<div class="stat"><div class="lb">Kekerapan isi</div><div class="vl">' + s.fills + '<small>kali</small></div><div class="dl">' + (s.avgGap ? 'Purata setiap ' + nf(s.avgGap, 1) + ' hari' : 'Tiada jarak isian') + '</div></div>' +
     '<div class="stat"><div class="lb">Purata seliter</div><div class="vl">' + (s.avgPrice ? 'RM ' + nf(s.avgPrice, 2) : '—') + '</div><div class="dl">' + (s.avgFill ? 'Purata ' + nf(s.avgFill, 1) + ' L / isian' : '&nbsp;') + '</div></div>' +
     '<div class="stat"><div class="lb">Jarak (km)</div><div class="vl">' + (k && k.km !== null ? nf(k.km, 0) : '—') + '<small>km</small></div><div class="dl">' +
@@ -369,7 +369,7 @@ function renderInsights(){
   if(!s.fills){
     out.push(li('⛽', 'Tiada pengisian direkodkan untuk <b>' + MONTHS[M - 1] + ' ' + Y + '</b>.' + (ov.perms.canAdd ? ' Ketik “Tambah resit minyak” untuk merekod.' : '')));
   }else{
-    out.push(li('💧', '<b>' + s.fills + ' kali</b> isi minyak — <b>' + nf(s.litres, 1) + ' L</b> dengan jumlah <b>' + rm(s.amount) + '</b>.'));
+    out.push(li('💧', '<b>' + s.fills + ' kali</b> isi minyak — <b>' + nf(s.litres, 3) + ' L</b> dengan jumlah <b>' + rm(s.amount) + '</b>.'));
     if(p.fills){
       const dA = s.amount - p.amount, dL = s.litres - p.litres;
       out.push(li(dA > 0 ? '📈' : '📉', 'Belanja ' + (dA > 0 ? '<b>naik ' : '<b>turun ') + rm(Math.abs(dA)) + '</b> dan ' + nf(Math.abs(dL), 1) + ' L ' + (dL > 0 ? 'lebih banyak' : 'lebih sedikit') + ' berbanding ' + MONTHS[(M + 10) % 12] + '.'));
@@ -424,9 +424,9 @@ function barChart(host, items, o){
 }
 
 const METRICS = {
-  amount: { t:'Belanja minyak (RM)', axis: v => v >= 1000 ? nf(v / 1000, 1) + 'k' : nf(v, 0), short: v => nf(v, 0), long: v => rm(v), tipOf: m => '<b>' + rm(m.amount) + '</b> · ' + nf(m.litres, 1) + ' L · ' + m.fills + ' isian' },
-  litres: { t:'Jumlah liter',        axis: v => nf(v, 0), short: v => nf(v, 0), long: v => nf(v, 1) + ' L', tipOf: m => '<b>' + nf(m.litres, 1) + ' L</b> · ' + rm(m.amount) + (m.avgPrice ? ' · RM ' + nf(m.avgPrice, 2) + '/L' : '') },
-  fills:  { t:'Kekerapan isi minyak', axis: v => nf(v, 0), short: v => nf(v, 0), long: v => v + ' kali', tipOf: m => '<b>' + m.fills + ' kali</b> · ' + nf(m.litres, 1) + ' L' },
+  amount: { t:'Belanja minyak (RM)', axis: v => v >= 1000 ? nf(v / 1000, 1) + 'k' : nf(v, 0), short: v => nf(v, 0), long: v => rm(v), tipOf: m => '<b>' + rm(m.amount) + '</b> · ' + nf(m.litres, 3) + ' L · ' + m.fills + ' isian' },
+  litres: { t:'Jumlah liter',        axis: v => nf(v, 0), short: v => nf(v, 0), long: v => nf(v, 3) + ' L', tipOf: m => '<b>' + nf(m.litres, 3) + ' L</b> · ' + rm(m.amount) + (m.avgPrice ? ' · RM ' + nf(m.avgPrice, 2) + '/L' : '') },
+  fills:  { t:'Kekerapan isi minyak', axis: v => nf(v, 0), short: v => nf(v, 0), long: v => v + ' kali', tipOf: m => '<b>' + m.fills + ' kali</b> · ' + nf(m.litres, 3) + ' L' },
   km:     { t:'Jarak dipandu (km)',  axis: v => nf(v, 0), short: v => nf(v, 0), long: v => nf(v, 0) + ' km', tipOf: m => (m.km === null ? 'Tiada bacaan odometer' : '<b>' + nf(m.km, 0) + ' km</b>' + (m.litres > 0 && m.km > 0 ? ' · ≈ ' + nf(m.km / m.litres, 1) + ' km/L' : '')) }
 };
 function renderTrend(){
@@ -441,7 +441,7 @@ function renderTrend(){
   document.querySelectorAll('.mchip').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === metric));
   $('trendTable').innerHTML = '<table><thead><tr><th>Bulan</th><th>RM</th><th>Liter</th><th>Isian</th><th>Km</th></tr></thead><tbody>' +
     trend.months.slice().reverse().map(m => { const p = m.ym.split('-').map(Number);
-      return '<tr><td>' + MON3[p[1] - 1] + ' ' + p[0] + '</td><td>' + nf(m.amount, 2) + '</td><td>' + nf(m.litres, 1) + '</td><td>' + m.fills + '</td><td>' + (m.km === null ? '—' : nf(m.km, 0)) + '</td></tr>'; }).join('') + '</tbody></table>';
+      return '<tr><td>' + MON3[p[1] - 1] + ' ' + p[0] + '</td><td>' + nf(m.amount, 2) + '</td><td>' + nf(m.litres, 3) + '</td><td>' + m.fills + '</td><td>' + (m.km === null ? '—' : nf(m.km, 0)) + '</td></tr>'; }).join('') + '</tbody></table>';
 }
 
 /* ----- calendar ----- */
@@ -464,7 +464,7 @@ function renderCalendar(){
 $('cal').addEventListener('pointerdown', e => {
   const b = e.target.closest('.d.has'); if(!b) return;
   const x = $('cal')._by[+b.dataset.d], r = b.getBoundingClientRect();
-  showTip('<b>' + b.dataset.d + ' ' + MONTHS[M - 1] + '</b><br>' + rm(x.amount) + ' · ' + nf(x.litres, 1) + ' L' + (x.n > 1 ? ' · ' + x.n + ' isian' : '') + '<br>' + esc(x.who.filter((v, i, a) => a.indexOf(v) === i).join(', ')), r.left + r.width / 2, r.top);
+  showTip('<b>' + b.dataset.d + ' ' + MONTHS[M - 1] + '</b><br>' + rm(x.amount) + ' · ' + nf(x.litres, 3) + ' L' + (x.n > 1 ? ' · ' + x.n + ' isian' : '') + '<br>' + esc(x.who.filter((v, i, a) => a.indexOf(v) === i).join(', ')), r.left + r.width / 2, r.top);
 });
 
 /* ----- mileage ----- */
@@ -499,7 +499,7 @@ function renderLogs(){
     const p = l.date.split('-').map(Number), dow = DOW3[new Date(p[0], p[1] - 1, p[2]).getDay()];
     const badge = l.auto ? (l.edited ? '<span class="badge fix">Dibaca auto · dibetulkan</span>' : '<span class="badge">Dibaca auto · disahkan</span>') : '<span class="badge">Taip manual</span>';
     return '<div class="log"><div class="dt"><b>' + p[2] + '</b><span>' + dow + '</span></div><div class="mid">' +
-      '<div class="rm">' + rm(l.amount) + ' <span style="font-weight:600;font-size:13px;color:var(--ink-500)">· ' + nf(l.litres, 2) + ' L</span></div>' +
+      '<div class="rm">' + rm(l.amount) + ' <span style="font-weight:600;font-size:13px;color:var(--ink-500)">· ' + nf(l.litres, 3) + ' L</span></div>' +
       '<div class="meta">RM ' + nf(l.price, 2) + '/L' + (l.type ? ' · ' + esc(l.type) : '') + (l.odo ? ' · ' + nf(l.odo, 0) + ' km' : '') + '<br>' + esc(l.driver) + '</div>' +
       '<div style="margin-top:5px">' + badge + '</div>' +
       '<div class="acts">' + (l.photo ? '<a class="lnk" href="' + esc(l.photo) + '" data-lb="fuel" data-title="Resit minyak" target="_blank" rel="noopener">🧾 Lihat resit</a>' : '') +
