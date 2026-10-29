@@ -3013,9 +3013,30 @@ function renderModules(role){
   applyRibbons_();
 }
 
-function handleLogout(){
+try{ if(!sessionStorage.getItem('kkah_login_ts')) sessionStorage.setItem('kkah_login_ts', String(Date.now())); }catch(e){}   // when this login started (15-minute guidance + logout warning)
+function logoutAsk_(title, html, okTxt, danger){
+  return new Promise(res => {
+    const o = document.createElement('div'); o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:14px';
+    o.innerHTML = '<div role="alertdialog" aria-modal="true" style="width:min(420px,100%);background:#fff;border-radius:24px;padding:20px 18px;font-family:Inter,sans-serif"><h3 style="margin:0 0 8px;font:800 19px Manrope,sans-serif">' + title + '</h3><div style="font-size:14px;line-height:1.55;color:#33433f">' + html + '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1.2fr;gap:10px;margin-top:16px"><button data-a="0" style="min-height:50px;border-radius:14px;border:1.5px solid #d8e6e2;background:#fff;font:700 15px Inter,sans-serif;cursor:pointer">Batal</button><button data-a="1" style="min-height:50px;border-radius:14px;border:none;color:#fff;font:800 15px Manrope,sans-serif;cursor:pointer;background:' + (danger ? '#C62839' : '#0F5C56') + '">' + okTxt + '</button></div></div>';
+    o.onclick = e => { const b = e.target.closest('[data-a]'); if(b){ o.remove(); res(b.dataset.a === '1'); } else if(e.target === o){ o.remove(); res(false); } };
+    document.body.appendChild(o);
+  });
+}
+async function handleLogout(){
   if(VIEW_NAME){ exitViewMode(); return; }
-  try{ // record the logout (fire-and-forget; keepalive lets it finish while the page leaves)
+  if(!await logoutAsk_('Log keluar?', 'Anda pasti mahu log keluar daripada SIAGA?', 'Ya, teruskan')) return;                       // confirmation 1
+  let st = null;
+  try{ const r = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getLocWatchStatus', token: sessionStorage.getItem('kkah_session_token') }) }); st = await r.json(); }catch(e){}
+  let ls = Number(sessionStorage.getItem('kkah_login_ts')); if(!ls){ ls = Date.now(); sessionStorage.setItem('kkah_login_ts', String(ls)); }
+  const mins = (Date.now() - ls) / 60000;
+  if(st && st.ok && st.active){                                                                                                  // confirmation 2: inside a location-check window
+    const pen = Math.abs(Number(st.logoutPenalty) || 0);
+    if(!await logoutAsk_('⚠️ Waktu semakan lokasi sedang berjalan', 'Anda sedang dalam waktu semakan lokasi (<b>' + escHtml_(st.win) + '</b>). Jika log keluar sekarang, semakan lokasi terhenti, penyelia dimaklumkan' + (pen ? ' dan <b>' + pen + ' mata akan ditolak</b>' : '') + '. Teruskan log keluar?', 'Log keluar juga', true)) return;
+  }else if(mins < 15){                                                                                                           // confirmation 2: just logged in
+    if(!await logoutAsk_('Baru log masuk', 'Anda baru log masuk (' + Math.max(1, Math.round(mins)) + ' minit lalu). Sila kekal sekurang-kurangnya 15 minit supaya notifikasi dan semakan lokasi dapat diterima. Tetap log keluar?', 'Tetap log keluar', false)) return;
+  }
+  try{ // record the logout (the server applies the penalty if it falls inside a window)
     fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, keepalive:true,
       body: JSON.stringify({ action:'logout', token: sessionStorage.getItem('kkah_session_token') }) }).catch(() => {});
   }catch(e){}
@@ -3023,6 +3044,7 @@ function handleLogout(){
   sessionStorage.removeItem('kkah_session_token');
   sessionStorage.removeItem('kkah_role');
   sessionStorage.removeItem('kkah_ic');
+  sessionStorage.removeItem('kkah_login_ts');
   window.location.href = './login.html';
 }
 
