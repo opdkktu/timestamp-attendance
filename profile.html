@@ -107,6 +107,7 @@
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
+<script src="./bio-help.js"></script>
 </head>
 <body>
 
@@ -162,6 +163,7 @@
       <span class="pill off" id="bioPill">Checking…</span>
     </div>
     <button class="btn" id="bioActionBtn" style="display:none;" onclick="handleEnableBiometricFromProfile()">Enable on this device</button>
+    <div id="bioNote" role="status" style="display:none;margin-top:10px;font-size:13px;line-height:1.55;border-radius:12px;padding:10px 12px;background:#FFF3D6;color:#6b5208"></div>
 
     <div class="sec-row" style="margin-top:14px;">
       <div>
@@ -350,20 +352,23 @@ async function renderBiometricPill(){
   const pill = document.getElementById('bioPill');
   const btn = document.getElementById('bioActionBtn');
   const hasEnrolled = !!(localStorage.getItem('kkah_biometric_device_token') && localStorage.getItem('kkah_biometric_credential_id'));
-  const canBiometric = window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+  const chk = await SiagaBio.check(), note = document.getElementById('bioNote');
 
   if(hasEnrolled){
-    pill.textContent = 'Enabled'; pill.className = 'pill on'; btn.style.display = 'none';
-  }else if(canBiometric){
-    pill.textContent = 'Not set up'; pill.className = 'pill off'; btn.style.display = 'block';
+    pill.textContent = 'Enabled'; pill.className = 'pill on'; btn.style.display = 'none'; note.style.display = 'none';
+  }else if(chk.ok){
+    pill.textContent = 'Not set up'; pill.className = 'pill off'; btn.style.display = 'block'; note.style.display = 'none';
   }else{
     pill.textContent = 'Unavailable on this device'; pill.className = 'pill off'; btn.style.display = 'none';
+    note.textContent = chk.reason; note.style.display = 'block';      // say WHY, so the user can fix it
   }
 }
+function bioNote_(msg, ok){ const n = document.getElementById('bioNote'); n.textContent = msg; n.style.display = 'block'; n.style.background = ok ? '#E0F5E8' : '#FDE0E3'; n.style.color = ok ? '#0a6b43' : '#8a1c28'; }
 
 async function handleEnableBiometricFromProfile(){
   const btn = document.getElementById('bioActionBtn');
   btn.disabled = true; btn.textContent = 'Setting up…';
+  let note = null;                                   // shown AFTER the pill is redrawn (the redraw clears old notes)
   try{
     const challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
@@ -373,7 +378,7 @@ async function handleEnableBiometricFromProfile(){
     const credential = await navigator.credentials.create({
       publicKey: {
         challenge, rp: { name: 'SIAGA' }, user: { id: userId, name: ic, displayName: ic },
-        pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
         authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
         timeout: 60000, attestation: 'none'
       }
@@ -388,12 +393,17 @@ async function handleEnableBiometricFromProfile(){
     if(data.ok){
       localStorage.setItem('kkah_biometric_device_token', data.deviceToken);
       localStorage.setItem('kkah_biometric_credential_id', arrayBufferToBase64(credential.rawId));
-      alert('Face ID / Touch ID is now enabled on this device.' + (data.points ? ' +' + data.points + ' mata 🎉' : ''));
+      note = ['✅ Face ID / Touch ID diaktifkan pada telefon ini.' + (data.points ? ' +' + data.points + ' mata 🎉' : ''), true];
+    }else{
+      note = [data.error || 'Pelayan tidak dapat menyimpan Face ID / Touch ID. Cuba lagi sebentar.', false];
     }
   }catch(err){
-    alert('Could not set up Face ID / Touch ID on this device.');
+    console.warn('Biometric setup failed:', err);
+    const x = SiagaBio.explain(err);
+    note = [x.text + '  (kod: ' + x.code + ')', false];       // the real reason instead of a blank "could not set up"
   }
   await renderBiometricPill();
+  if(note) bioNote_(note[0], note[1]);
   btn.disabled = false; btn.textContent = 'Enable on this device';
 }
 
@@ -574,5 +584,6 @@ async function handleChangePassword(){
   btn.disabled = false; btn.textContent = 'Update Password';
 }
 </script>
+
 </body>
 </html>
