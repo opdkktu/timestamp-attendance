@@ -68,6 +68,12 @@
   .p1 .block{ height:112px; background:linear-gradient(180deg,#F0CF62,#BD9420); animation-delay:.05s; } .p2 .block{ height:80px; background:linear-gradient(180deg,#C9D2D3,#8D9A9C); animation-delay:.2s; } .p3 .block{ height:60px; background:linear-gradient(180deg,#DDA574,#A8662D); animation-delay:.35s; }
   @keyframes rise{ from{ transform:scaleY(0); } to{ transform:scaleY(1); } }
   .pcol.me .pav{ outline:3px solid var(--teal-500); outline-offset:2px; }
+  /* mystery places: only you and the supervisors know who is on the podium */
+  .pcol.mys .pav > div{ background:radial-gradient(circle at 30% 25%,#667775,#26332f) !important; font-size:30px; animation:mys 2.6s ease-in-out infinite; }
+  .pcol.mys .pn{ letter-spacing:.25em; color:var(--ink2); } .pcol.mys .pp{ font-size:12px; color:var(--ink2); margin:8px 0 10px; }
+  .ban.mys .bav{ background:rgba(0,0,0,.28); font-size:28px; } .ban.mys b{ letter-spacing:.25em; }
+  @keyframes mys{ 50%{ box-shadow:0 0 0 7px rgba(201,162,39,.28); } }
+  .mysnote{ text-align:center; color:var(--ink2); font-size:13px; line-height:1.6; padding:14px 6px 4px; }
   .gapmsg{ display:flex; gap:12px; align-items:center; } .gapmsg .ic{ width:46px; height:46px; border-radius:15px; background:var(--mint-100); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; } .gapmsg div{ font-size:14px; line-height:1.5; }
 
   /* banner carousel (last month's champions) */
@@ -152,7 +158,7 @@
 </nav>
 
 <div class="sheet" id="nickSheet" role="dialog" aria-modal="true" aria-labelledby="nsT"><div class="box">
-  <h3 id="nsT">Nama panggilan</h3><p>Dipaparkan pada podium dan ranking. Nama penuh anda hanya dilihat oleh penyelia.</p>
+  <h3 id="nsT">Nama panggilan</h3><p>Dipaparkan kepada anda dan penyelia sahaja. Nama penuh anda hanya dilihat oleh penyelia.</p>
   <input id="nickIn" type="text" maxlength="16" autocomplete="off" placeholder="cth. Kak Nur, Dr Ali" aria-label="Nama panggilan">
   <div class="err" id="nickErr" role="alert"></div>
   <div class="btns"><button class="btn ghost" id="nickCancel" type="button">Kemudian</button><button class="btn pri" id="nickSave" type="button">Simpan</button></div>
@@ -208,7 +214,7 @@ function paintPhotos(){
   });
 }
 async function loadPhotos(){
-  const pids = {}; (data.podium || []).forEach(p => pids[p.pid] = 1); if(data.last) data.last.podium.forEach(p => pids[p.pid] = 1); if(data.myPid) pids[data.myPid] = 1;
+  const pids = {}; (data.podium || []).forEach(p => { if(p.pid) pids[p.pid] = 1; }); if(data.last) data.last.podium.forEach(p => { if(p.pid) pids[p.pid] = 1; }); if(data.myPid) pids[data.myPid] = 1;
   const need = Object.keys(pids).filter(p => !photoGet(p)).slice(0, 8);
   paintPhotos();
   if(!need.length) return;
@@ -220,7 +226,7 @@ async function loadPhotos(){
 
 /* ---------- load ---------- */
 async function load(){
-  const key = 'b_' + (Y || 0) + '_' + (M || 0), hit = cget(key);
+  const key = 'b2_' + (Y || 0) + '_' + (M || 0), hit = cget(key);
   if(hit && hit.d){ data = hit.d; render(); if(Date.now() - hit.t < 90000) return; }
   try{
     const d = await api({ action:'getPointsBoard', year: Y, month: M });
@@ -248,10 +254,11 @@ function render(){
 
   // podium
   $('podTitle').textContent = d.isCurrent ? 'Podium bulan ini' : 'Juara ' + MONTHS[M - 1] + ' ' + Y;
-  $('podSub').textContent = d.isCurrent ? 'Siapa di puncak setakat ini?' : 'Keputusan akhir bulan';
+  $('podSub').textContent = d.mystery ? 'Hanya anda dan penyelia tahu siapa di podium 🤫' : (d.isCurrent ? 'Siapa di puncak setakat ini?' : 'Keputusan akhir bulan');
   if(!d.podium.length) $('podium').innerHTML = '<div class="empty">Belum ada mata untuk bulan ini.<br>Mata bermula bila staf daftar masuk &amp; keluar.</div>';
   else{
     const slot = (i, cls, medal) => { const p = d.podium[i]; if(!p) return '<div class="pcol"></div>';
+      if(p.hidden) return '<div class="pcol mys ' + cls + '"><div class="pav">' + (i === 0 ? '<span class="crown" aria-hidden="true">👑</span>' : '') + '<div aria-hidden="true">?</div></div><div class="pn" aria-label="Dirahsiakan">???</div><div class="pu">&nbsp;</div><div class="pp"><small>🔒 Misteri</small></div><div class="block" aria-label="Kedudukan ' + (i + 1) + ' (dirahsiakan)">' + medal + '</div></div>';
       return '<div class="pcol ' + cls + (me && p.pid === d.myPid ? ' me' : '') + '"><div class="pav">' + (i === 0 ? '<span class="crown" aria-hidden="true">👑</span>' : '') + '<div data-pid="' + esc(p.pid) + '">' + esc(ini(p.nick)) + '</div></div>' +
         '<div class="pn"' + fullAttr(p) + '>' + esc(p.nick) + '</div><div class="pu">' + esc(p.unit || '') + '</div><div class="pp">' + p.points + ' <small>mata</small></div><div class="block" aria-label="Kedudukan ' + (i + 1) + '">' + medal + '</div></div>'; };
     $('podium').innerHTML = '<div class="podium">' + slot(1, 'p2', '🥈') + slot(0, 'p1', '🥇') + slot(2, 'p3', '🥉') + '</div>';
@@ -260,23 +267,26 @@ function render(){
   const gc = $('gapCard');
   if(me){
     let ico = '🎯', msg;
-    if(me.rank === 1){ ico = '👑'; msg = 'Anda di <b>tempat pertama</b>! Kekalkan daftar masuk tepat masa.'; }
-    else if(me.rank <= 3){ ico = '🎉'; msg = 'Anda dalam <b>podium</b>!' + (me.toNext ? ' ' + me.toNext + ' mata lagi untuk naik satu tangga.' : ''); }
+    if(me.rank === 1){ ico = '👑'; msg = 'Anda di <b>tempat pertama</b>! 🤫 Hanya anda dan penyelia yang tahu. Kekalkan daftar masuk tepat masa.'; }
+    else if(me.rank <= 3){ ico = '🎉'; msg = 'Anda dalam <b>podium</b>! 🤫 Hanya anda dan penyelia yang tahu.' + (me.toNext ? ' ' + me.toNext + ' mata lagi untuk naik satu tangga.' : ''); }
     else msg = me.toPodium ? '<b>' + me.toPodium + ' mata</b> lagi untuk masuk podium. Daftar masuk sebelum ' + r.lateAfter + ' dan jangan lupa daftar keluar.' : 'Teruskan usaha!';
     gc.style.display = ''; gc.innerHTML = '<div class="gapmsg"><div class="ic">' + ico + '</div><div>' + msg + (me.streak >= 3 ? '<br>🔥 Rentetan tepat masa terbaik: <b>' + me.streak + ' hari</b>' : '') + '</div></div>';
   }else gc.style.display = 'none';
   // last month banners
   if(d.last){
     $('lastWrap').style.display = '';
-    $('rail').innerHTML = d.last.podium.map((p, i) => '<div class="ban g' + (i + 1) + '"><div class="bav" data-pid="' + esc(p.pid) + '">' + esc(ini(p.nick)) + '</div><div><small>' + ['🥇 Juara','🥈 Naib juara','🥉 Tempat ketiga'][i] + ' · ' + MONTHS[d.last.month - 1] + '</small><b' + fullAttr(p) + '>' + esc(p.nick) + '</b><span>' + p.points + ' mata</span></div></div>').join('');
+    $('rail').innerHTML = d.last.podium.map((p, i) => p.hidden ? '<div class="ban g' + (i + 1) + ' mys"><div class="bav" aria-hidden="true">?</div><div><small>' + ['🥇 Juara','🥈 Naib juara','🥉 Tempat ketiga'][i] + ' · ' + MONTHS[d.last.month - 1] + '</small><b>???</b><span>🔒 Dirahsiakan</span></div></div>' : '<div class="ban g' + (i + 1) + '"><div class="bav" data-pid="' + esc(p.pid) + '">' + esc(ini(p.nick)) + '</div><div><small>' + ['🥇 Juara','🥈 Naib juara','🥉 Tempat ketiga'][i] + ' · ' + MONTHS[d.last.month - 1] + '</small><b' + fullAttr(p) + '>' + esc(p.nick) + '</b><span>' + p.points + ' mata</span></div></div>').join('');
   }else $('lastWrap').style.display = 'none';
 
   // ranking
   const rowH = p => '<div class="row' + (d.me && p.pid === d.myPid ? ' me' : '') + '"><div class="rn">' + p.rank + '</div><div class="av" data-pid="' + esc(p.pid) + '">' + esc(ini(p.nick)) + '</div><div class="mid"><div class="nm"' + fullAttr(p) + '>' + esc(p.nick) + (d.me && p.pid === d.myPid ? ' <span style="color:var(--teal-500)">(Anda)</span>' : '') + '</div><div class="un">' + esc(p.unit || '') + '</div></div><div class="pt">' + p.points + ' <small>mata</small></div></div>';
   let list = d.top.map(rowH).join('');
   if(me && !me.inTop10 && me.around.length) list += '<div style="text-align:center;color:var(--ink2);letter-spacing:.3em;padding:2px 0">⋮</div>' + me.around.map(rowH).join('');
+  if(d.mystery){      // normal staff: only their own standing — everyone else stays a mystery
+    list = (me ? rowH({ pid:d.myPid, nick:nick, unit:'', points:me.points, rank:me.rank }) : '') + '<p class="mysnote">🔒 Kedudukan staf lain dirahsiakan.<br>Hanya anda dan penyelia tahu siapa di podium.</p>';
+  }
   $('rank').innerHTML = list || '<div class="empty">Belum ada ranking.</div>';
-  $('rankSub').textContent = d.total + ' staf' + (d.total > 10 ? ' · 10 teratas' : '') + (d.canSeeFull ? ' · lalukan kursor / ketik nama untuk nama penuh' : '');
+  $('rankSub').textContent = d.mystery ? 'Kedudukan anda daripada ' + d.total + ' staf' : d.total + ' staf' + (d.total > 10 ? ' · 10 teratas' : '') + (d.canSeeFull ? ' · lalukan kursor / ketik nama untuk nama penuh' : '');
 
   // daily
   $('days').innerHTML = me && me.daily.length ? me.daily.slice().reverse().map(x => {
@@ -295,12 +305,12 @@ function render(){
     (r.tfa ? '<tr><td>🛡️ Aktifkan pengesahan 2 langkah (sekali seumur akaun)</td><td>' + sgn(r.tfa) + '</td></tr>' : '') +
     (r.uname ? '<tr><td>🏷️ Tetapkan nama pengguna (sekali)</td><td>' + sgn(r.uname) + '</td></tr>' : '') +
     (r.view ? '<tr><td>🏆 Buka halaman mata (seminggu sekali)</td><td>' + sgn(r.view) + '</td></tr>' : '') +
-    '<tr><td>🎮 Kotak permainan 12:45 </td><td>+ syiling</td></tr>' +
+    '<tr><td>🎮 Kotak permainan 12:45 (Ahad Shake maks 10 · bulan lahir 50 · Isnin Lucky Spin maks 20 · Selasa Scratch Card 5–10 · Rabu Claw Machine maks 15 · Khamis Tap Challenge maks 15)</td><td>+ syiling</td></tr>' +
     (r.fuel ? '<tr><td>⛽ Muat naik resit petrol</td><td>' + sgn(r.fuel) + '</td></tr>' : '') +
     (r.bersihDay ? '<tr><td>🧹 BERSIH (PPK / PRA): semua tugasan harian siap Pagi &amp; Petang pada hari anda daftar masuk</td><td>' + sgn(r.bersihDay) + '</td></tr>' : '') +
     (r.bersihTask ? '<tr><td>🧹 BERSIH: setiap tugasan mingguan / bulanan siap (sekali setiap tempoh)</td><td>' + sgn(r.bersihTask) + '</td></tr>' : '') +
     (r.bersihStreak ? '<tr><td>🧹 BERSIH: bonus bagi setiap ' + r.bersihStreakN + ' hari lengkap dalam bulan</td><td>' + sgn(r.bersihStreak) + '</td></tr>' : '') + '</table>' +
-    '<p class="fine">Jika mata sama: lebih banyak hari tepat masa, kemudian purata masa masuk lebih awal. Butiran lewat dan EL hanya dilihat oleh anda sendiri. Nama panggilan dipaparkan kepada semua; nama penuh hanya kepada penyelia.</p>';
+    '<p class="fine">Jika mata sama: lebih banyak hari tepat masa, kemudian purata masa masuk lebih awal. Butiran lewat dan EL hanya dilihat oleh anda sendiri. Hanya anda dan penyelia yang tahu siapa di podium; staf lain dirahsiakan. Nama penuh hanya dilihat oleh penyelia.</p>';
 
   paintPhotos(); loadPhotos();
   if(!d.nickname && me && !sessionStorage.getItem('pts_nick_asked')){ sessionStorage.setItem('pts_nick_asked', '1'); setTimeout(openNick, 700); }
@@ -335,5 +345,6 @@ $('nickSave').onclick = async () => {
 };
 load();
 </script>
+
 </body>
 </html>
