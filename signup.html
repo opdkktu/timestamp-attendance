@@ -137,10 +137,10 @@
         </div>
       </div>
 
-      <div class="field"><label for="nameInput">Full Name</label><input type="text" id="nameInput" autocomplete="name"></div>
-      <div class="field"><label for="icInput">IC Number</label><input type="text" id="icInput" autocomplete="off"></div>
+      <div class="field"><label for="nameInput">Full Name</label><input type="text" id="nameInput" autocomplete="name" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase" placeholder="NUR AINA BINTI ALI" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="field"><label for="icInput">IC Number</label><input type="text" id="icInput" autocomplete="off" inputmode="numeric" maxlength="12" placeholder="010203040506" oninput="this.value=this.value.replace(/\D/g,'').slice(0,12)"></div>
       <div class="field"><label for="phoneInput">Phone Number</label><input type="tel" id="phoneInput" autocomplete="tel" inputmode="tel" placeholder="0123456789"></div>
-      <div class="field"><label for="emailInput">Email</label><input type="email" id="emailInput" autocomplete="email"></div>
+      <div class="field"><label for="emailInput">Email</label><input type="email" id="emailInput" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="nama@gmail.com" oninput="this.value=this.value.toLowerCase().replace(/\s/g,'')"></div>
       <div class="field"><label for="passwordInput">Password</label><input type="password" id="passwordInput" autocomplete="new-password" oninput="updateStrength()"></div>
       <ul class="strength-list" id="strengthList">
         <li id="reqLen">At least 10 characters</li>
@@ -296,13 +296,15 @@ function updateStrength(){
 function setReq(id, met){ document.getElementById(id).classList.toggle('met', met); }
 
 async function handleSignup(){
-  const name = document.getElementById('nameInput').value.trim();
-  const ic = document.getElementById('icInput').value.trim();
-  const email = document.getElementById('emailInput').value.trim();
+  const name = document.getElementById('nameInput').value.replace(/\s+/g, ' ').trim().toUpperCase();      // names are saved in CAPITAL letters
+  const ic = document.getElementById('icInput').value.replace(/\D/g, '');
+  const email = document.getElementById('emailInput').value.trim().toLowerCase();
   const phone = document.getElementById('phoneInput').value.trim();
   const password = document.getElementById('passwordInput').value;
 
   if(!name || !ic || !email || !password || !phone){ showBanner('Please fill in all fields.'); return; }
+  if(!/^\d{12}$/.test(ic)){ showBanner('IC number must be 12 digits (no dash), e.g. 010203040506.'); return; }
+  if(!/^[a-z0-9._%+\-]+@[a-z0-9\-]+(\.[a-z0-9\-]+)*\.[a-z]{2,}$/.test(email) || /\.\./.test(email)){ showBanner('Please enter a valid email address, e.g. nama@gmail.com.'); return; }
   if(!/^(\+?60|0)?1?\d{8,10}$/.test(phone.replace(/[\s-]/g, ''))){ showBanner('Please enter a valid phone number, e.g. 0123456789.'); return; }
   if(!selectedImageBase64 && !photoSkipped){ showBanner('Please capture a photo, or tap "Skip this step" if one is already on file.'); return; }
 
