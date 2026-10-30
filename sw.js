@@ -23,6 +23,7 @@ const SHELL_FILES = [
   './emergency-alert.js',
   './jsQR.min.js',
   './device.js',
+  './bio-help.js',
   './siren.mp3',
   './manifest.json',
   './siaga-192.png',
