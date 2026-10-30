@@ -160,7 +160,16 @@
   }
   .modal-btn:disabled{ background:var(--line); color:var(--ink-500); }
   .modal-cancel{ background:transparent; color:var(--ink-500); font-weight:600; margin-top:8px; }
-
+/* Senarai Kursus: add / edit form */
+  .kr-row{ display:flex; gap:10px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--line); }
+  .kr-row .kr-main{ flex:1; min-width:0; }
+  .kr-edit{ flex:none; min-width:44px; min-height:44px; border-radius:12px; border:1px solid var(--line); background:#fff; font-size:16px; cursor:pointer; }
+  .kr-edit:active{ background:var(--line); }
+  .kr-add{ width:100%; min-height:46px; margin:0 0 10px; border-radius:12px; border:1.5px dashed var(--teal-500); background:rgba(28,143,132,.07); color:var(--teal-700); font-weight:700; font-size:14px; cursor:pointer; }
+  #kursusForm input[type=text], #kursusForm input[type=date]{ width:100%; padding:11px 13px; border-radius:12px; font-size:15px; border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700); background:#fff; }
+  #kursusForm .kr-dates{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  #kursusForm .kr-msg{ font-size:12.5px; min-height:18px; margin:2px 0 8px; color:var(--red-500); }
+  #kursusForm .kr-del{ background:transparent; color:var(--red-500); font-weight:700; margin-top:4px; }
   /* === FESTIVE / BIRTHDAY POPUPS === */
   .festival-overlay{
     position:fixed; inset:0; background:rgba(11,61,58,0.55); display:none;
@@ -941,10 +950,25 @@
 <div class="modal-overlay" id="kursusModalOverlay">
   <div class="modal">
     <h2>Senarai Kursus</h2>
-    <div class="sub">Jumlah hari kursus mengikut tahun</div>
-    <div class="year-tabs" id="kursusYearTabs"></div>
-    <div id="kursusListBody" style="max-height:44vh; overflow-y:auto; margin-bottom:8px;"></div>
-    <button class="modal-btn modal-cancel" onclick="closeKursusModal()">Tutup</button>
+    <div class="sub" id="kursusSub">Jumlah hari kursus mengikut tahun</div>
+    <div id="kursusListView">
+      <div class="year-tabs" id="kursusYearTabs"></div>
+      <button class="kr-add" id="kursusAddBtn" onclick="kursusOpenForm()">＋ Tambah kursus</button>
+      <div id="kursusListBody" style="max-height:40vh; overflow-y:auto; margin-bottom:8px;"></div>
+      <button class="modal-btn modal-cancel" onclick="closeKursusModal()">Tutup</button>
+    </div>
+    <form id="kursusForm" style="display:none" onsubmit="event.preventDefault(); kursusSubmit();" novalidate>
+      <div class="field"><label for="krName">Nama kursus</label><input type="text" id="krName" maxlength="150" autocomplete="off" placeholder="cth. Kursus BLS 2026"></div>
+      <div class="kr-dates">
+        <div class="field"><label for="krMula">Tarikh mula</label><input type="date" id="krMula"></div>
+        <div class="field"><label for="krAkhir">Tarikh akhir</label><input type="date" id="krAkhir"></div>
+      </div>
+      <div class="req-list" id="krDays">Kosongkan tarikh akhir jika kursus 1 hari.</div>
+      <div class="kr-msg" id="krMsg" role="alert"></div>
+      <button type="submit" class="modal-btn" id="krSave">Simpan</button>
+      <button type="button" class="modal-btn kr-del" id="krDel" style="display:none" onclick="kursusDelete()">🗑 Padam kursus ini</button>
+      <button type="button" class="modal-btn modal-cancel" onclick="kursusCloseForm()">Batal</button>
+    </form>
   </div>
 </div>
 
@@ -1684,7 +1708,7 @@ async function loadKursusBox(){
 
 function openKursusModal(){
   const currentYear = new Date().getFullYear();
-  activeKursusYear = currentYear;
+  activeKursusYear = currentYear; krEditing = null; kursusShow_(false);
 
   const tabsEl = document.getElementById('kursusYearTabs');
   tabsEl.innerHTML = '';
@@ -1708,20 +1732,97 @@ function selectKursusYear(year){
   });
   renderKursusList(year);
 }
-
+function kursusEsc_(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function renderKursusList(year){
   const body = document.getElementById('kursusListBody');
   const list = cachedKursusByYear[String(year)] || [];
+  const canEdit = !(typeof VIEW_NAME !== 'undefined' && VIEW_NAME);          // a supervisor viewing someone else cannot change their list
+  document.getElementById('kursusAddBtn').style.display = canEdit ? '' : 'none';
   if(!list.length){
-    body.innerHTML = '<div style="font-size:13px; color:var(--ink-500); text-align:center; padding:20px 0;">Tiada kursus direkodkan untuk ' + year + '.</div>';
+    body.innerHTML = '<div style="font-size:13px; color:var(--ink-500); text-align:center; padding:20px 0;">Tiada kursus direkodkan untuk ' + year + '.<br>Ketik “Tambah kursus” untuk menambah.</div>';
     return;
   }
-  body.innerHTML = list.map(k =>
-    '<div style="padding:10px 0; border-bottom:1px solid var(--line);">' +
-      '<div style="font-weight:700; font-size:13px; color:var(--teal-900);">' + k.kursus + '</div>' +
-      '<div style="font-size:11.5px; color:var(--ink-500); margin-top:2px;">' + k.mula + ' – ' + k.akhir + ' · ' + k.days + ' hari</div>' +
+  body.innerHTML = list.map((k, i) =>
+    '<div class="kr-row"><div class="kr-main">' +
+      '<div style="font-weight:700; font-size:13px; color:var(--teal-900);">' + kursusEsc_(k.kursus) + '</div>' +
+      '<div style="font-size:11.5px; color:var(--ink-500); margin-top:2px;">' + k.mula + ' – ' + k.akhir + ' · ' + k.days + ' hari</div></div>' +
+      (canEdit ? '<button class="kr-edit" aria-label="Ubah kursus" onclick="kursusOpenForm(' + i + ')">✏️</button>' : '') +
     '</div>'
   ).join('');
+}
+ 
+/* --- add / edit / delete (own courses only; the server re-checks everything) --- */
+let krEditing = null;                                                          // the course being edited, or null when adding
+function kursusShow_(form){
+  document.getElementById('kursusForm').style.display = form ? '' : 'none';
+  document.getElementById('kursusListView').style.display = form ? 'none' : '';
+  document.getElementById('kursusSub').textContent = form ? (krEditing ? 'Ubah maklumat kursus' : 'Tambah kursus baru') : 'Jumlah hari kursus mengikut tahun';
+}
+function kursusOpenForm(i){
+  const k = (i == null) ? null : (cachedKursusByYear[String(activeKursusYear)] || [])[i];
+  krEditing = k || null;
+  document.getElementById('krName').value = k ? k.kursus : '';
+  document.getElementById('krMula').value = k ? k.mulaIso : '';
+  document.getElementById('krAkhir').value = k ? k.akhirIso : '';
+  document.getElementById('krMsg').textContent = '';
+  document.getElementById('krDel').style.display = k ? '' : 'none';
+  document.getElementById('krSave').disabled = false; document.getElementById('krSave').textContent = 'Simpan';
+  kursusShow_(true); kursusDays_();
+  setTimeout(() => { try{ document.getElementById('krName').focus(); }catch(e){} }, 50);
+}
+function kursusCloseForm(){ krEditing = null; kursusShow_(false); }
+function kursusDays_(){
+  const m = document.getElementById('krMula').value, a = document.getElementById('krAkhir').value || m, out = document.getElementById('krDays');
+  if(m && a && a >= m){ const d = Math.round((new Date(a) - new Date(m)) / 86400000) + 1; out.textContent = 'Jumlah: ' + d + ' hari'; }
+  else out.textContent = 'Kosongkan tarikh akhir jika kursus 1 hari.';
+}
+['krMula','krAkhir'].forEach(id => { const e = document.getElementById(id); if(e) e.addEventListener('change', kursusDays_); });
+ 
+async function kursusCall_(action, extra){
+  const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ action: action, token: sessionStorage.getItem('kkah_session_token') }, extra)) });
+  return res.json();
+}
+function kursusApply_(data){                                                   // fresh list from the server → cache, box and list
+  cachedKursusByYear = data.byYear || {};
+  cacheSet('getMyKursusList', data);
+  const y = String(new Date().getFullYear()), el = document.getElementById('box_kursus');
+  const days = (cachedKursusByYear[y] || []).reduce((n, k) => n + k.days, 0);
+  if(el) el.innerHTML = '<div class="sb-label">Jumlah Hari Kursus</div><div class="sb-main">' + days + '</div><div class="sb-sub">Tahun ' + y + ' · ketik untuk senarai</div>';
+}
+async function kursusSubmit(){
+  const msg = document.getElementById('krMsg'), btn = document.getElementById('krSave');
+  const kursus = document.getElementById('krName').value.trim(), mula = document.getElementById('krMula').value, akhir = document.getElementById('krAkhir').value || mula;
+  if(kursus.length < 3){ msg.textContent = 'Sila isi nama kursus.'; return; }
+  if(!mula){ msg.textContent = 'Sila pilih tarikh mula.'; return; }
+  if(akhir < mula){ msg.textContent = 'Tarikh akhir tidak boleh sebelum tarikh mula.'; return; }
+  msg.textContent = ''; btn.disabled = true; btn.textContent = 'Menyimpan…';
+  try{
+    const data = await kursusCall_('kursusSave', { kursus: kursus, mula: mula, akhir: akhir, row: krEditing ? krEditing.row : 0, sig: krEditing ? krEditing.sig : '' });
+    if(!data || !data.ok){ msg.textContent = (data && data.error) || 'Tidak berjaya disimpan. Cuba lagi.'; btn.disabled = false; btn.textContent = 'Simpan'; return; }
+    kursusApply_(data);
+    const yr = Number(mula.slice(0, 4)); activeKursusYear = yr;
+    krEditing = null; kursusShow_(false);
+    openKursusModalAt_(yr);
+  }catch(e){ msg.textContent = 'Tiada sambungan. Cuba lagi.'; btn.disabled = false; btn.textContent = 'Simpan'; }
+}
+async function kursusDelete(){
+  if(!krEditing) return;
+  if(!await logoutAsk_('Padam kursus?', '<b>' + kursusEsc_(krEditing.kursus) + '</b><br>' + krEditing.mula + ' – ' + krEditing.akhir + '<br>Tindakan ini tidak boleh dibatalkan.', 'Ya, padam', true)) return;
+  const msg = document.getElementById('krMsg'); msg.textContent = '';
+  try{
+    const data = await kursusCall_('kursusDelete', { row: krEditing.row, sig: krEditing.sig });
+    if(!data || !data.ok){ msg.textContent = (data && data.error) || 'Tidak berjaya dipadam.'; return; }
+    kursusApply_(data); krEditing = null; kursusShow_(false); openKursusModalAt_(activeKursusYear);
+  }catch(e){ msg.textContent = 'Tiada sambungan. Cuba lagi.'; }
+}
+function openKursusModalAt_(year){                                              // rebuild tabs, then land on a given year
+  const cur = new Date().getFullYear(), tabs = document.getElementById('kursusYearTabs'); tabs.innerHTML = '';
+  const from = Math.min(KURSUS_BASE_YEAR, year);
+  for(let y = from; y <= Math.max(cur, year); y++){
+    const b = document.createElement('button'); b.className = 'year-tab' + (y === year ? ' active' : ''); b.textContent = y; b.onclick = () => selectKursusYear(y); tabs.appendChild(b);
+  }
+  activeKursusYear = year; renderKursusList(year);
 }
 
 function closeKursusModal(){ document.getElementById('kursusModalOverlay').classList.remove('show'); }
