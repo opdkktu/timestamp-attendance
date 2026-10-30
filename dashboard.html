@@ -68,6 +68,11 @@
   .bj-r .nm.none{ font-weight:600; opacity:.6; font-style:italic; }
   .bj-r .you{ display:inline-block; margin-left:5px; font-size:10px; font-weight:800; background:#fff; color:#0b3b5c; border-radius:99px; padding:1px 7px; vertical-align:middle; }
   .bj-r.wide{ grid-column:1 / -1; }
+  .bj-head{ cursor:default; } .bj-card.canfold .bj-head{ cursor:pointer; min-height:32px; }
+.bj-chev{ display:none; font-size:15px; transition:transform .25s; margin-left:6px; } .bj-card.canfold .bj-chev{ display:inline-block; }
+.bj-card.canfold.folded .bj-grid, .bj-card.canfold.folded .bj-open{ display:none; }
+.bj-card.canfold.folded{ padding-bottom:10px; } .bj-card.canfold.folded .bj-head{ margin-bottom:0; }
+.bj-card.canfold:not(.folded) .bj-chev{ transform:rotate(180deg); }
   .bj-sk{ height:50px; border-radius:14px; background:linear-gradient(90deg,rgba(255,255,255,.1) 25%,rgba(255,255,255,.22) 50%,rgba(255,255,255,.1) 75%); background-size:200% 100%; animation:bjsk 1.4s infinite; }
   @keyframes bjsk{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
   @media (prefers-reduced-motion:reduce){ .bj-sk{ animation:none; } }
@@ -795,7 +800,7 @@
   </div>
 
   <div class="bj-card loading" id="box_banjir" aria-live="polite">
-    <div class="bj-head"><span class="bj-t">🌊 Banjir Team</span><span class="bj-d" id="bjDate">&nbsp;</span></div>
+   <div class="bj-head" id="bjHead"><span class="bj-t">🌊 Banjir Team<span class="bj-chev" aria-hidden="true">▾</span></span><span class="bj-d" id="bjDate">&nbsp;</span></div>
     <div class="bj-grid" id="bjGrid"><div class="bj-sk"></div><div class="bj-sk"></div><div class="bj-sk"></div></div>
     <a class="bj-open" href="./banjir.html">📋 Buka Banjir PPS — rekod mangsa &amp; laporan WhatsApp ›</a>
   </div>
@@ -2753,6 +2758,16 @@ function bjRender_(row){
   }).join('');
   card.classList.remove('loading');
 }
+  const nobody = !BANJIR_ROLES.some(r => String(row[r[2]] || '').trim());
+const fold = nobody || stale;
+card.classList.toggle('canfold', fold);
+if(!fold) card.classList.remove('folded');
+else if(!card.dataset.userToggled) card.classList.add('folded');
+const head = document.getElementById('bjHead');
+if(fold){ head.setAttribute('role','button'); head.tabIndex = 0; head.setAttribute('aria-expanded', String(!card.classList.contains('folded'))); }
+else{ head.removeAttribute('role'); head.removeAttribute('aria-expanded'); head.tabIndex = -1; }
+if(fold && nobody && !stale) de.textContent = 'Tiada penugasan hari ini' + (dt ? ' · ' + dt : '');
+  
 async function loadBanjirBox(){
   const card = document.getElementById('box_banjir'); if(!card) return;
   try{ const c = JSON.parse(localStorage.getItem('kkah_banjir') || 'null'); if(c && c.row) bjRender_(c.row); }catch(e){}
