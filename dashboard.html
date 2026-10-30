@@ -2757,7 +2757,6 @@ function bjRender_(row){
       (nm ? esc(nm) + (mine ? '<span class="you">Anda</span>' : '') : 'Belum ditetapkan') + '</div></div>';
   }).join('');
   card.classList.remove('loading');
-}
   const nobody = !BANJIR_ROLES.some(r => String(row[r[2]] || '').trim());
 const fold = nobody || stale;
 card.classList.toggle('canfold', fold);
@@ -2767,6 +2766,12 @@ const head = document.getElementById('bjHead');
 if(fold){ head.setAttribute('role','button'); head.tabIndex = 0; head.setAttribute('aria-expanded', String(!card.classList.contains('folded'))); }
 else{ head.removeAttribute('role'); head.removeAttribute('aria-expanded'); head.tabIndex = -1; }
 if(fold && nobody && !stale) de.textContent = 'Tiada penugasan hari ini' + (dt ? ' · ' + dt : '');
+}
+  (function(){
+  const flip = () => { const c = document.getElementById('box_banjir'); if(!c || !c.classList.contains('canfold')) return; c.dataset.userToggled = '1'; const f = c.classList.toggle('folded'); document.getElementById('bjHead').setAttribute('aria-expanded', String(!f)); };
+  document.addEventListener('click', e => { if(e.target.closest && e.target.closest('#bjHead')) flip(); });
+  document.addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.id === 'bjHead'){ e.preventDefault(); flip(); } });
+})();
   
 async function loadBanjirBox(){
   const card = document.getElementById('box_banjir'); if(!card) return;
