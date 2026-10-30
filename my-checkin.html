@@ -131,6 +131,7 @@
   @media (max-height:700px){ .viewfinder{ width:200px; height:200px; } .viewfinder video,.viewfinder canvas.snapshot{ width:174px; height:174px; } .b-icon{ font-size:36px; height:40px; } }
   @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
 </style>
+<script src="./bio-help.js"></script>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
 <script src="./permission-gate.js"></script>
@@ -245,12 +246,15 @@ function loadZones(){
     .then(r => r.json()).then(d => { if(d && d.ok){ EXTRA_ZONES = d.zones || []; try{ localStorage.setItem('kkah_zones', JSON.stringify(EXTRA_ZONES)); }catch(e){} } }).catch(() => {});
   return Promise.race([fetchIt, new Promise(r => setTimeout(r, 3000))]);
 }
+const GPS_GRACE_M = 40;          // GPS noise allowed on top of the clinic radius (never more than the phone's own accuracy)
+const GPS_WEAK_M = 100;          // worse than this = the phone can't really tell where it is
 function checkGeofence(lat, lng){
-  const tol = Math.min((userLocation && userLocation.acc) || 0, 100);
+  const acc = (userLocation && userLocation.acc) || 0, tol = Math.min(acc, 100);
   for(const z of EXTRA_ZONES){ if(distanceMeters(lat, lng, z.lat, z.lng) - tol <= z.radius){ if(userLocation) userLocation.name = z.name; return null; } }
   const dist = Math.round(distanceMeters(lat, lng, CLINIC_LAT, CLINIC_LNG));
-  if(dist <= BUILDING_RADIUS_M) return null;
-  return { zoneMsg: dist <= AREA_RADIUS_M ? 'Anda berada di luar bangunan klinik' : 'Anda berada di luar kawasan klinik', dist };
+  if(dist - Math.min(acc, GPS_GRACE_M) <= BUILDING_RADIUS_M) return null;
+  if(acc > GPS_WEAK_M) return { weak:true, zoneMsg:'Isyarat lokasi lemah — kedudukan anda tidak dapat disahkan', dist, acc };   // not "you are outside": the phone itself is unsure
+  return { zoneMsg: dist <= AREA_RADIUS_M ? 'Anda berada di luar bangunan klinik' : 'Anda berada di luar kawasan klinik', dist, acc };
 }
 
 const $ = id => document.getElementById(id);
@@ -330,7 +334,7 @@ function prewarm(){
   warmLoc();
   return warm;
 }
-function warmLoc(){ try{ if(navigator.geolocation) navigator.geolocation.getCurrentPosition(() => {}, () => {}, { enableHighAccuracy:false, timeout:8000, maximumAge:60000 }); }catch(e){} }
+function warmLoc(){ try{ if(navigator.geolocation) navigator.geolocation.getCurrentPosition(() => {}, () => {}, { enableHighAccuracy:true, timeout:10000, maximumAge:0 }); }catch(e){} }   // wakes the GPS chip before the real reading
 async function warmCamera(){
   if(camWarm || stream) return; camWarm = true;
   try{ prewarm(); abortRun = false; await startCamera(); await warm.modelsP; await warmUp(); warmedUp = true; }
@@ -477,7 +481,7 @@ function fmt12(hms){
 /* ===================== Face ID / Touch ID gate (before the camera + faceprint start) ===================== */
 const BIO_REQUIRED = true;          // false = no gate at all
 const BIO_ALLOW_NO_SENSOR = true;   // phone without Face ID / fingerprint / screen lock: true = let it through, false = block
-let bioUntil = 0, bioFails = 0, bioSaved = null;
+let bioUntil = 0, bioFails = 0, bioSaved = null, bioErr = null;
 const bioKey = () => 'kkah_ci_cred_' + (sessionStorage.getItem('kkah_ic') || '');
 const b64e = buf => { let s = ''; new Uint8Array(buf).forEach(b => s += String.fromCharCode(b)); return btoa(s); };
 const b64d = str => { const s = atob(str), a = new Uint8Array(s.length); for(let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a.buffer; };
@@ -511,9 +515,9 @@ async function bioGate(validMin, quiet){
   const gesture = navigator.userActivation ? navigator.userActivation.isActive : true;     // iPhone only allows the prompt right after a tap
   if(gesture){
     try{ if(await bioVerify()){ bioFails = 0; bioUntil = Date.now() + (validMin || 2) * 60000; return true; } }
-    catch(e){ bioFails++; if(bioFails >= 2){ try{ localStorage.removeItem(bioKey()); }catch(_){} } }   // 2 fails in a row → the old key may be gone: make a fresh one next time
+    catch(e){ bioErr = SiagaBio.explain(e); bioFails++; if(bioFails >= 2){ try{ localStorage.removeItem(bioKey()); }catch(_){} } }   // 2 fails in a row → the old key may be gone: make a fresh one next time
   }
-  if(!quiet) bioShow(bioFails ? 'Pengesahan tidak berjaya. Tekan butang dan cuba lagi.' : 'Sahkan bahawa ini anda sebelum imbasan muka dimulakan.');
+  if(!quiet) bioShow(bioErr ? bioErr.text + ' (kod: ' + bioErr.code + ')' : 'Sahkan bahawa ini anda sebelum imbasan muka dimulakan.');
   return false;
 }
 
@@ -566,36 +570,57 @@ async function init(){
     const m = err && err.message;
     if(m === 'Outside allowed zone') return;        // the red geofence screen is already showing
     if(m === 'Camera permission denied'){ setStep('face', 'error'); setBanner('err', '📷', 'Kamera tidak dibenarkan', 'Benarkan akses kamera dalam tetapan pelayar/telefon, kemudian cuba lagi.'); }
-    else if(m === 'Location permission denied'){ setStep('loc', 'error'); setBanner('err', '📍', 'Lokasi tidak dibenarkan', 'Hidupkan lokasi & benarkan akses, kemudian cuba lagi.'); }
+    else if(m === 'Location permission denied'){ setStep('loc', 'error'); setBanner('err', '📍', 'Lokasi tidak dibenarkan', 'Hidupkan lokasi & benarkan akses (pilih "Lokasi Tepat / Precise"), kemudian cuba lagi.'); }
+    else if(m === 'Location unavailable'){ setStep('loc', 'error'); setBanner('err', '📍', 'Tidak dapat menentukan lokasi', 'Isyarat GPS tiada. Hidupkan Lokasi Tepat & Wi-Fi, berdiri berhampiran tingkap atau di luar, kemudian cuba lagi.'); }
     else setBanner('err', '⚠️', 'Tidak dapat memulakan', m || 'Sila semak sambungan dan cuba lagi.');
     cue.fail(); showButtons(true, true);
   }
 }
 
-function requestLocation(){
+/* Best fix: FRESH high-accuracy readings for up to ~14 s, keep the most accurate. (An old cached / mobile-network fix can be hundreds of metres
+   from where you really stand — that was the "800 m away" error. We never use a cached position and ignore anything older than 30 s.) */
+function bestFix(){
   return new Promise((resolve, reject) => {
     if(!navigator.geolocation) return reject(new Error('Geolocation not supported'));
-    const onSuccess = async pos => {
-      userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy, name: '' };
-      if(!EXTRA_ZONES.length) await loadZones(); else loadZones();
-      const violation = checkGeofence(userLocation.lat, userLocation.lng);
-      if(violation){
-        $('geofenceZoneMsg').textContent = violation.zoneMsg;
-        $('geofenceDistance').textContent = 'Jarak dari klinik: ~' + violation.dist + 'm';
-        $('geofenceBlocker').classList.add('show');
-        cue.fail();
-        return reject(new Error('Outside allowed zone'));
-      }
-      if(!userLocation.name) reverseGeocode(userLocation.lat, userLocation.lng); // background — never holds anything up
-      resolve();
+    let best = null, done = false, denied = false, wid = null, t1 = null, t2 = null;
+    const finish = () => {
+      if(done) return; done = true; clearTimeout(t1); clearTimeout(t2);
+      try{ navigator.geolocation.clearWatch(wid); }catch(e){}
+      best ? resolve(best) : reject(new Error(denied ? 'Location permission denied' : 'Location unavailable'));
     };
-    const onFail = () => reject(new Error('Location permission denied'));
-    navigator.geolocation.getCurrentPosition(onSuccess, () => {
-      navigator.geolocation.getCurrentPosition(onSuccess, onFail, { enableHighAccuracy:false, timeout:12000, maximumAge:120000 });
-    }, { enableHighAccuracy:false, timeout:6000, maximumAge:120000 });
+    wid = navigator.geolocation.watchPosition(pos => {
+      if(Date.now() - pos.timestamp > 30000) return;                                  // stale cached fix → ignore
+      if(!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
+      $('tip').textContent = 'Mencari lokasi tepat… ±' + Math.round(best.coords.accuracy) + ' m';
+      if(best.coords.accuracy <= 25) finish();                                         // precise enough → stop early
+    }, err => { if(err && err.code === 1){ denied = true; finish(); } }, { enableHighAccuracy:true, maximumAge:0, timeout:15000 });
+    t1 = setTimeout(() => { if(best && best.coords.accuracy <= 80) finish(); }, 6000);  // after 6 s a decent fix is enough
+    t2 = setTimeout(finish, 14000);                                                     // hard stop
   });
 }
-function recheckGeofence(){ $('geofenceBlocker').classList.remove('show'); init(); }
+async function requestLocation(){
+  const pos = await bestFix();
+  userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy, name: '' };
+  if(!EXTRA_ZONES.length) await loadZones(); else loadZones();
+  const violation = checkGeofence(userLocation.lat, userLocation.lng);
+  if(violation){
+    $('geofenceZoneMsg').textContent = violation.zoneMsg;
+    const w = $('geofenceWarning');
+    if(violation.weak){
+      w.textContent = 'Hidupkan "Lokasi Tepat / Precise Location" & Wi-Fi, dan berdiri berhampiran tingkap atau di kawasan terbuka. Kemudian tekan Semak Semula.';
+      w.style.animation = 'none'; w.style.fontSize = '14px';
+    }else{
+      w.textContent = '⚠ AMARAN! ANDA DILARANG UNTUK TERUSKAN FACEPRINT.';
+      w.style.animation = ''; w.style.fontSize = '';
+    }
+    $('geofenceDistance').textContent = 'Jarak dari klinik: ~' + violation.dist + ' m  ·  ketepatan GPS: ±' + Math.round(violation.acc) + ' m';
+    $('geofenceBlocker').classList.add('show');
+    cue.fail();
+    throw new Error('Outside allowed zone');
+  }
+  if(!userLocation.name) reverseGeocode(userLocation.lat, userLocation.lng);          // background — never holds anything up
+}
+function recheckGeofence(){ $('geofenceBlocker').classList.remove('show'); beginStart(); }
 
 async function reverseGeocode(lat, lng){
   try{
