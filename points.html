@@ -300,6 +300,7 @@ function render(){
   $('rules').innerHTML = '<table><tr><td>✅ Daftar masuk tepat masa (pada / sebelum ' + r.lateAfter + ')</td><td>' + sgn(r.checkIn) + '</td></tr><tr><td>⏰ Daftar masuk lewat (selepas ' + r.lateAfter + ')</td><td>' + sgn(r.lateIn) + '</td></tr><tr><td>🚪 Daftar keluar pada hari yang sama</td><td>' + sgn(r.checkOut) + '</td></tr><tr><td>🚨 Cuti kecemasan (EL), setiap hari</td><td>' + sgn(r.el) + '</td></tr>' +
     (r.locCheck ? '<tr><td>📍 Setiap semakan lokasi 10 minit di dalam klinik (' + (r.locWindows || []).join(' &amp; ') + ')</td><td>' + sgn(r.locCheck) + '</td></tr>' : '') +
     (r.checklist ? '<tr><td>📋 Kemas kini senarai semak (Trolley / Beg / Ambulans), sekali sehari bagi setiap satu</td><td>' + sgn(r.checklist) + '</td></tr>' : '') +
+    (r.kursus ? '<tr><td>🎓 Kursus: setiap hari kursus yang dihadiri (kemas kini dalam Senarai Kursus)</td><td>' + sgn(r.kursus) + ' / hari</td></tr>' : '') +
     (r.bls ? '<tr><td>🩺 Tarikh BLS: kali pertama diisi, atau selepas BLS luput → tarikh sah baharu</td><td>' + sgn(r.bls) + '</td></tr>' : '') +
     (r.bio ? '<tr><td>🔐 Aktifkan Face ID / Touch ID (sekali seumur akaun)</td><td>' + sgn(r.bio) + '</td></tr>' : '') +
     (r.tfa ? '<tr><td>🛡️ Aktifkan pengesahan 2 langkah (sekali seumur akaun)</td><td>' + sgn(r.tfa) + '</td></tr>' : '') +
