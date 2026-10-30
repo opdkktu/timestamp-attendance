@@ -549,7 +549,7 @@ async function handleEnableBiometric(){
         rp: { name: 'SIAGA' },
         user: { id: userId, name: ic, displayName: ic },
         pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged', requireResidentKey: false },
         timeout: 60000,
         attestation: 'none'
       }
@@ -593,7 +593,7 @@ async function handleBiometricLogin(){
     await navigator.credentials.get({
       publicKey: {
         challenge,
-        allowCredentials: [{ id: base64ToArrayBuffer(credentialId), type: 'public-key' }],
+        allowCredentials: [{ id: base64ToArrayBuffer(credentialId), type: 'public-key', transports: ['internal'] }],
         userVerification: 'required',
         timeout: 60000
       }
