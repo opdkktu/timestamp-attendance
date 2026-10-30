@@ -152,6 +152,7 @@
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
 <script src="./device.js"></script>
+<script src="./bio-help.js"></script>
 </head>
 <body>
 
@@ -177,6 +178,7 @@
     </div>
     <button class="login-btn" id="loginBtn" type="submit"><span>LOG IN</span></button>
     <div class="signup">Don't have an account? <a href="./signup.html">Create Account</a></div>
+    <div class="signup" style="margin-top:12px"><a href="#" onclick="event.preventDefault(); openForgot();">Forgot password? · Lupa kata laluan?</a></div>
 
     <div id="biometricArea" style="display:none;">
       <div class="divider">OR</div>
@@ -194,10 +196,27 @@
     <button class="login-btn" id="totpBtn" type="submit"><span>VERIFY</span></button>
   </form>
 
+  <!-- Forgot password: 1) IC + email → code  2) code + new password -->
+  <form class="step" id="stepForgot" onsubmit="event.preventDefault(); handleForgotStart();" novalidate>
+    <div class="hint-text">Masukkan IC dan emel yang didaftarkan. Kod 6 digit akan dihantar ke emel itu.</div>
+    <div class="input-box"><input type="text" id="fpIc" placeholder=" " inputmode="numeric" maxlength="12" autocomplete="username"><label for="fpIc">IC Number</label></div>
+    <div class="input-box"><input type="email" id="fpEmail" placeholder=" " autocomplete="email" autocapitalize="none" spellcheck="false"><label for="fpEmail">Email berdaftar</label></div>
+    <button class="login-btn" id="fpBtn" type="submit"><span>HANTAR KOD</span></button>
+    <button type="button" class="login-btn ghost" onclick="showBanner(null); showStep('stepPassword');"><span>Kembali</span></button>
+  </form>
+  <form class="step" id="stepReset" onsubmit="event.preventDefault(); handleForgotReset();" novalidate>
+    <div class="hint-text">Masukkan kod 6 digit dari emel anda dan pilih kata laluan baharu (sekurang-kurangnya 10 aksara dengan huruf besar, huruf kecil, nombor dan simbol).</div>
+    <div class="input-box"><input type="text" class="code-input" id="fpCode" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder=" "></div>
+    <div class="input-box"><input type="password" id="fpPw" placeholder=" " autocomplete="new-password"><label for="fpPw">Kata laluan baharu</label></div>
+    <div class="input-box"><input type="password" id="fpPw2" placeholder=" " autocomplete="new-password"><label for="fpPw2">Ulang kata laluan baharu</label></div>
+    <button class="login-btn" id="fpResetBtn" type="submit"><span>SET KATA LALUAN</span></button>
+    <button type="button" class="login-btn ghost" onclick="showBanner(null); showStep('stepForgot');"><span>Minta kod baharu</span></button>
+  </form>
+
   <!-- Step 3: Offer biometric enrollment -->
   <div class="step" id="stepOfferBiometric">
     <div class="hint-text">Enable Face ID / Touch ID for faster login next time on this device?</div>
-    <button class="login-btn" onclick="handleEnableBiometric()"><span>Enable Face ID / Touch ID</span></button>
+    <button class="login-btn" id="bioEnableBtn" onclick="handleEnableBiometric()"><span>Enable Face ID / Touch ID</span></button>
     <button class="login-btn ghost" onclick="goToDashboard()"><span>Skip for now</span></button>
   </div>
 
@@ -317,6 +336,47 @@ function togglePw(){
   const show = i.type === 'password';
   i.type = show ? 'text' : 'password';
   b.textContent = show ? 'Hide' : 'Show';
+}
+
+/* ---------- Forgot password ---------- */
+function openForgot(){
+  showBanner(null);
+  const ic = document.getElementById('icInput').value.replace(/\D/g, '');
+  document.getElementById('fpIc').value = ic;
+  showStep('stepForgot');
+}
+async function handleForgotStart(){
+  const ic = document.getElementById('fpIc').value.replace(/\D/g, ''), email = document.getElementById('fpEmail').value.trim().toLowerCase();
+  if(!/^\d{12}$/.test(ic)){ showBanner('IC mesti 12 digit (tanpa sengkang).'); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showBanner('Sila masukkan emel yang sah.'); return; }
+  const btn = document.getElementById('fpBtn');
+  btn.disabled = true; btn.innerHTML = '<span><span class="spinner-inline"></span>Menghantar…</span>'; showBanner(null);
+  try{
+    const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'forgotStart', ic, email }) });
+    const d = await res.json();
+    if(!d.ok) showBanner(d.error || 'Tidak dapat meminta kod.');
+    else{ fpIc = ic; showStep('stepReset'); showBanner(d.message, 'info'); setTimeout(() => { const c = document.getElementById('fpCode'); if(c) c.focus(); }, 300); }
+  }catch(e){ showBanner('Masalah sambungan — cuba lagi.'); }
+  btn.disabled = false; btn.innerHTML = '<span>HANTAR KOD</span>';
+}
+let fpIc = '';
+async function handleForgotReset(){
+  const code = document.getElementById('fpCode').value.replace(/\D/g, ''), pw = document.getElementById('fpPw').value, pw2 = document.getElementById('fpPw2').value;
+  if(code.length !== 6){ showBanner('Masukkan kod 6 digit.'); return; }
+  if(pw !== pw2){ showBanner('Kata laluan tidak sama.'); return; }
+  const btn = document.getElementById('fpResetBtn');
+  btn.disabled = true; btn.innerHTML = '<span><span class="spinner-inline"></span>Menyimpan…</span>'; showBanner(null);
+  try{
+    const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'forgotReset', ic: fpIc, code, newPassword: pw }) });
+    const d = await res.json();
+    if(!d.ok) showBanner(d.error || 'Tidak berjaya.');
+    else{
+      ['fpCode','fpPw','fpPw2'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('icInput').value = fpIc; document.getElementById('passwordInput').value = '';
+      showStep('stepPassword'); showBanner('✅ Kata laluan ditetapkan. Sila log masuk dengan kata laluan baharu.', 'info');
+    }
+  }catch(e){ showBanner('Masalah sambungan — cuba lagi.'); }
+  btn.disabled = false; btn.innerHTML = '<span>SET KATA LALUAN</span>';
 }
 
 function showStep(id){
@@ -472,6 +532,11 @@ async function checkBiometricAvailable(){
 }
 
 async function handleEnableBiometric(){
+  const btn = document.getElementById('bioEnableBtn'), label = btn.querySelector('span');
+  const busy = on => { btn.disabled = on; label.textContent = on ? 'Menyediakan…' : 'Cuba lagi'; };
+  showBanner(null); busy(true);
+  const chk = await SiagaBio.check();
+  if(!chk.ok){ showBanner(chk.reason); busy(false); label.textContent = 'Cuba lagi'; return; }
   try{
     const challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
@@ -483,7 +548,7 @@ async function handleEnableBiometric(){
         challenge,
         rp: { name: 'SIAGA' },
         user: { id: userId, name: ic, displayName: ic },
-        pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
         authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
         timeout: 60000,
         attestation: 'none'
@@ -500,11 +565,18 @@ async function handleEnableBiometric(){
     if(data.ok){
       localStorage.setItem('kkah_biometric_device_token', data.deviceToken);
       localStorage.setItem('kkah_biometric_credential_id', arrayBufferToBase64(credential.rawId));
+      showBanner('✅ Face ID / Touch ID diaktifkan pada telefon ini.' + (data.points ? ' +' + data.points + ' mata 🎉' : ''), 'info');
+      label.textContent = 'Berjaya ✓';
+      setTimeout(goToDashboard, 1400);
+      return;
     }
+    showBanner(data.error || 'Pelayan tidak dapat menyimpan Face ID / Touch ID. Cuba lagi sebentar.');
   }catch(err){
-    console.warn('Biometric setup skipped:', err);
+    console.warn('Biometric setup failed:', err);
+    const x = SiagaBio.explain(err);
+    showBanner(x.text + '  (kod: ' + x.code + ')');
   }
-  goToDashboard();
+  busy(false);
 }
 
 async function handleBiometricLogin(){
