@@ -78,7 +78,7 @@
   @media (prefers-reduced-motion:reduce){ .bj-sk{ animation:none; } }
   .schedule-card{
     background:linear-gradient(135deg, var(--teal-700), var(--teal-500)); color:#fff;
-    border-radius:20px; padding:18px 20px; margin-top:4px; display:none;
+      border-radius:20px; padding:18px 20px; margin:4px 0 14px; display:none;
   }
   .schedule-card.show{ display:block; }
   .schedule-card .label{ font-size:11px; letter-spacing:.05em; text-transform:uppercase; opacity:.8; font-weight:600; }
@@ -476,7 +476,12 @@
   .pr-trio[hidden]{ display:none; }
   .pr-trio button{ border:none; border-radius:18px; padding:12px 6px 10px; min-height:96px; background:linear-gradient(160deg,#0B3D3A,#1C8F84); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; font:800 12.5px Manrope,sans-serif; line-height:1.2; text-align:center; cursor:pointer; box-shadow:0 12px 24px -16px rgba(11,61,58,.8); }
   .pr-trio button .ai{ width:40px; height:40px; border-radius:13px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-size:21px; }
-  .pr-trio button:active{ transform:scale(.97); } .pr-trio button:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
+    .pr-trio button:active{ transform:scale(.97); } .pr-trio button:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
+  /* PRIMA frame around: call box + Registration / e-Clerking / Search visit */
+  .prima-wrap{ position:relative; margin:22px 0 16px; padding:20px 10px 10px; border-radius:26px; border:2px solid rgba(28,143,132,.45); background:rgba(28,143,132,.07); }
+  .prima-wrap::before{ content:'PRIMA'; position:absolute; top:-11px; left:18px; padding:2px 12px; border-radius:999px; background:#0F5C56; color:#fff; font:800 11px/1.6 Manrope,sans-serif; letter-spacing:.12em; }
+  .prima-wrap .kc-box{ margin-top:0; }
+  .prima-wrap .pr-trio{ margin:10px 0 0; }
   .sb-pair{ grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .sb-pair .sb-act{ grid-column:auto; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:8px; padding:14px; min-height:132px; }
   .sb-pair .sb-act .go{ display:none; } .sb-pair .sb-act small{ line-height:1.35; }
@@ -813,7 +818,7 @@
     <div class="bj-grid" id="bjGrid"><div class="bj-sk"></div><div class="bj-sk"></div><div class="bj-sk"></div></div>
     <a class="bj-open" href="./banjir.html">📋 Buka Banjir PPS — rekod mangsa &amp; laporan WhatsApp ›</a>
   </div>
-
+  <div class="prima-wrap">
   <div class="kc-box" id="kcBox" onclick="kcOpen()" role="button" aria-label="Panggil nombor giliran">
     <button class="kc-close" onclick="event.stopPropagation(); kcDismiss()" aria-label="Tutup">✕</button>
     <button class="kc-pin" id="kcPin" onclick="event.stopPropagation(); kcTogglePin()" aria-pressed="false" aria-label="Kekalkan kaunter aktif">📌 Aktif</button>
@@ -831,7 +836,7 @@
   </div>
 
   <div class="pr-trio" id="prTrio" hidden></div>
-
+</div>
   <div class="tr-box" id="trBox" aria-live="polite"></div>
 
   <button class="cme-scan-tile" onclick="openCmeScanner()" aria-label="Imbas QR kehadiran CME">
