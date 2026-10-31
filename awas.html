@@ -611,8 +611,34 @@ var LAST_REMIND = 0;
 var cdSecs = REFRESH_SECS;
 var cdTimer = null, autoTimer = null, busy = false;
 
+// ---- Performed By = whoever is logged in to SIAGA (matched to the AWAS name list; staff can still change it) ----
+var SIAGA_API = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+var MY_NAME = '';
+function normName_(s){ return String(s||'').toUpperCase().replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
+function myPerformer_(){
+  var list = (RANGES.performedBy||[]).filter(Boolean), me = normName_(MY_NAME);
+  if(!me || !list.length) return '';
+  var i, n;
+  for(i=0;i<list.length;i++){ if(normName_(list[i])===me) return list[i]; }                       // exact
+  for(i=0;i<list.length;i++){ n = normName_(list[i]); if(n.length>=4 && (me.indexOf(n)>-1 || n.indexOf(me)>-1)) return list[i]; }   // short name inside full name
+  var mt = me.split(' '), best = '', bs = 0;
+  for(i=0;i<list.length;i++){                                                                     // most shared words (≥2)
+    var lt = normName_(list[i]).split(' '), s = 0;
+    lt.forEach(function(w){ if(w.length>2 && mt.indexOf(w)>-1) s++; });
+    if(s>bs){ bs=s; best=list[i]; }
+  }
+  return bs>=2 ? best : '';
+}
+function loadMyName_(){
+  try{
+    fetch(SIAGA_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'getMyProfile',token:tok_()})})
+      .then(function(r){return r.json();}).then(function(j){ if(j&&j.ok&&j.name){ MY_NAME=j.name; try{sessionStorage.setItem('awas_my_name',MY_NAME);}catch(e){} } }).catch(function(){});
+  }catch(e){}
+}
 window.onload = function() {
   if(!tok_()) return;
+  try{ MY_NAME = sessionStorage.getItem('awas_my_name') || ''; }catch(e){}
+  if(!MY_NAME) loadMyName_();
   gasGet('getRangeLists',
     function(r){ RANGES=r||RANGES; initDynamicSS(); },
     function(){  initDynamicSS(); }
@@ -992,7 +1018,7 @@ function loadPatient(row) {
   setVal('f-tcaDays',    row.tcaDays);
   document.getElementById('f-tcaDate').value   = row.tcaLocal  ? fmtKey(row.tcaLocal) : '';
   setVal('f-tcaTime',    row.tcaTime);
-  setVal('f-performedBy',row.performedBy);
+  setVal('f-performedBy',row.performedBy || myPerformer_());   // empty → the logged-in staff (still changeable)
 
   // If interval already set, show calculated date
   if (row.tcaDays) onIntervalChange();
