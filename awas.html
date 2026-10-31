@@ -349,6 +349,28 @@ details.esec[open]>summary{margin-bottom:12px;}
   100%{opacity:0;transform:translate(var(--x1),var(--y1)) scale(.4);}
 }
 
+
+/* ── simplified header, tabs and numbers (phone first) ── */
+.hdr{padding:10px 14px;gap:10px;justify-content:flex-start;position:sticky;top:0;z-index:50;}
+.hdr-back{color:#fff;text-decoration:none;font-size:30px;line-height:1;width:34px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:10px;margin-left:-6px;}
+.hdr-back:active{background:rgba(255,255,255,.15);}
+.hdr-title{flex:1;min-width:0;}
+.hdr-title h1{font-size:19px;font-weight:700;letter-spacing:.04em;line-height:1.1;}
+.hdr-title p{font-size:11.5px;opacity:.8;margin-top:1px;}
+.btn-hdr.ico{width:40px;height:40px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.btn-hdr.ico:active{background:rgba(255,255,255,.3);}
+.btn-hdr.ico.turning svg{animation:spin .7s linear 2;}
+.hdr-status{display:flex;justify-content:space-between;gap:8px;padding:7px 16px;font-size:11px;color:var(--text3);background:var(--bg);}
+.wrap{padding:10px 12px 24px;}
+.metrics{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;}
+.mc{padding:10px 8px;text-align:center;}
+.mc .lbl{font-size:9px;letter-spacing:.04em;margin-bottom:4px;}
+.mc .val{font-size:22px;}
+.mc .hint{display:none;}
+.tabs{width:100%;flex-wrap:nowrap;overflow-x:auto;gap:2px;padding:3px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:1 0 auto;padding:9px 12px;font-size:12.5px;white-space:nowrap;}
+@media(min-width:700px){.tabs{width:fit-content;}.mc .val{font-size:26px;}.mc .hint{display:block;}}
 </style>
 </head>
 <body>
@@ -375,19 +397,13 @@ details.esec[open]>summary{margin-bottom:12px;}
 </div>
 
 <div class="hdr">
-  <div class="hdr-title">
-    <a href="./dashboard.html" style="color:#fff;opacity:.85;font-size:12px;text-decoration:none;display:inline-block;margin-bottom:3px">&#8592; SIAGA</a>
-    <h1>&#127973; AWAS -- Advanced Wound Appointment System</h1>
-    <p>Advanced Wound Appointment System &nbsp;|&nbsp; Census KK</p>
-  </div>
-  <div class="hdr-right">
-    <div class="hdr-info">
-      <div id="refresh-lbl">--</div>
-      <div>Auto-check: <span id="countdown">0:30</span></div>
-    </div>
-    <button class="btn-hdr" id="btn-refresh" onclick="manualRefresh()">&#8635; Refresh</button>
-  </div>
+  <a class="hdr-back" href="./dashboard.html" aria-label="Kembali ke SIAGA">&#8249;</a>
+  <div class="hdr-title"><h1>AWAS</h1><p>Wound appointments</p></div>
+  <button class="btn-hdr ico" id="btn-refresh" onclick="manualRefresh()" aria-label="Refresh" title="Refresh">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+  </button>
 </div>
+<div class="hdr-status"><span id="refresh-lbl">--</span><span>Auto-check <span id="countdown">0:30</span></span></div>
 
 <div class="wrap">
 
@@ -401,10 +417,10 @@ details.esec[open]>summary{margin-bottom:12px;}
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab active" onclick="go('entry')">&#9999; Data Entry</button>
-    <button class="tab"        onclick="go('tca')">&#128197; TCA Schedule</button>
-    <button class="tab"        onclick="go('def')">&#9888; Defaulters</button>
-    <button class="tab"        onclick="go('lookup')">&#128269; Lookup</button>
+    <button class="tab active" onclick="go('entry')">Data Entry</button>
+    <button class="tab"        onclick="go('tca')">TCA</button>
+    <button class="tab"        onclick="go('def')">Defaulters</button>
+    <button class="tab"        onclick="go('lookup')">Lookup</button>
   </div>
 
   <div id="tab-loading" class="empty" style="display:none"><div class="spin" style="margin:0 auto 12px"></div><p style="color:var(--text3)">Loading the full record…</p></div>
@@ -720,6 +736,7 @@ function doFetch() {                           // called after Save
 }
 
 function manualRefresh() {
+  var rb = document.getElementById('btn-refresh'); if(rb){ rb.classList.add('turning'); setTimeout(function(){ rb.classList.remove('turning'); }, 1500); }
   toast('Refreshing…');
   refreshToday(false);
   if (SUMMARY_LOADED) gasGet('getCensusData', onSummaryLoaded, function(){});
@@ -743,7 +760,7 @@ function updCD() {
 function onErr(err) {
   busy = false;
   var btn = document.getElementById('btn-refresh');
-  btn.disabled = false; btn.textContent = ' Refresh';
+  btn.disabled = false;
   var msg = err && err.message ? err.message : String(err);
   document.getElementById('loading').innerHTML =
     '<div style="max-width:480px;padding:24px;text-align:left">' +
