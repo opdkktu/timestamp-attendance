@@ -479,7 +479,7 @@ function fmt12(hms){
 
 /* ===================== prepare (everything in parallel) ===================== */
 /* ===================== Face ID / Touch ID gate (before the camera + faceprint start) ===================== */
-const BIO_REQUIRED = true;          // false = no gate at all
+const BIO_REQUIRED = false;          // false = no gate at all
 const BIO_ALLOW_NO_SENSOR = true;   // phone without Face ID / fingerprint / screen lock: true = let it through, false = block
 let bioUntil = 0, bioFails = 0, bioSaved = null, bioErr = null;
 const bioKey = () => 'kkah_ci_cred_' + (sessionStorage.getItem('kkah_ic') || '');
