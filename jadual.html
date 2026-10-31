@@ -187,8 +187,12 @@ async function loadRecords(){
       }else{
         docAction = '<label class="mini-btn">📎 Muat Naik<input type="file" onchange="doRetroUpload(this, ' + i + ')"></label>';
       }
+      const sl = (row.sups && row.sups.length) ? row.sups : [{ name: '', phone: row.phone }];
       const waAction = isPending
-        ? '<button class="mini-btn wa" onclick="notify(' + i + ')">💬 WhatsApp Info</button>'
+        ? sl.map(function (s, k) {
+            const first = String(s.name || '').split(' ')[0];
+            return '<button class="mini-btn wa" onclick="notify(' + i + ',' + k + ')">💬 ' + (sl.length > 1 && first ? first : 'WhatsApp Info') + '</button>';
+          }).join('')
         : '';
 
       card.innerHTML =
@@ -203,12 +207,11 @@ async function loadRecords(){
   }catch(err){
     listEl.innerHTML = '<div class="empty-state">Ralat rangkaian — sila cuba sebentar lagi.</div>';
   }
-}
-
-function notify(i){
-  const r = currentRecords[i];
+} 
+function notify(i, k){
+  const r = currentRecords[i], s = (r.sups && r.sups[k || 0]) || { phone: r.phone };
   const msg = '*BORANG KEBENARAN KELUAR*\n\nMohon pada *' + r.tarikh + '* jam *' + r.masa + '* bagi tujuan *' + r.tujuan + '*.';
-  window.open('https://wa.me/' + r.phone + '?text=' + encodeURIComponent(msg), '_blank');
+  window.open('https://wa.me/' + s.phone + '?text=' + encodeURIComponent(msg), '_blank');
 }
 
 function doRetroUpload(el, i){
