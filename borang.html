@@ -177,6 +177,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   if(!token){ window.location.href = './login.html'; return; }
 
   document.getElementById('supervisorDisplay').textContent = DEFAULT_SUPERVISOR_NAME;
+    fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getMySupervisors', token: token }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (j && j.ok && j.list.length) document.getElementById('supervisorDisplay').textContent = j.list.map(function (s) { return s.name; }).join('  •  '); })
+      .catch(function () {});
   document.getElementById('tarikh').valueAsDate = new Date();
   populateTimes();
   loadApplicantName();
