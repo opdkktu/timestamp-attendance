@@ -237,7 +237,7 @@ async function profileLock(){
     const go = async () => {
       try{
         const challenge = new Uint8Array(32); crypto.getRandomValues(challenge);
-        await navigator.credentials.get({ publicKey: { challenge, allowCredentials: [{ id: base64ToArrayBuffer(localStorage.getItem('kkah_biometric_credential_id')), type: 'public-key' }], userVerification: 'required', timeout: 60000 } });
+        await navigator.credentials.get({ publicKey: { challenge, allowCredentials: [{ id: base64ToArrayBuffer(localStorage.getItem('kkah_biometric_credential_id')), type: 'public-key', transports: ['internal'] }], userVerification: 'required', timeout: 60000 } });
         try{ sessionStorage.setItem('kkah_prof_unlocked', String(Date.now())); }catch(e){}
         ov.remove(); resolve(true);
       }catch(e){ document.querySelector('.lockov p').textContent = 'Pengesahan gagal atau dibatalkan. Cuba lagi.'; }
@@ -379,7 +379,7 @@ async function handleEnableBiometricFromProfile(){
       publicKey: {
         challenge, rp: { name: 'SIAGA' }, user: { id: userId, name: ic, displayName: ic },
         pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged', requireResidentKey: false },
         timeout: 60000, attestation: 'none'
       }
     });
@@ -531,7 +531,7 @@ async function handleChangePasswordClick(){
     await navigator.credentials.get({
       publicKey: {
         challenge,
-        allowCredentials: [{ id: base64ToArrayBuffer(localStorage.getItem('kkah_biometric_credential_id')), type: 'public-key' }],
+        allowCredentials: [{ id: base64ToArrayBuffer(localStorage.getItem('kkah_biometric_credential_id')), type: 'public-key', transports: ['internal'] }],
         userVerification: 'required',
         timeout: 60000
       }
