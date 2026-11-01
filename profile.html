@@ -223,6 +223,21 @@ function blsDot(){
   const ok = v >= today; el.className = 'bls-dot ' + (ok ? 'ok' : 'bad'); el.innerHTML = '<i></i>' + (ok ? 'Sah' : 'Tamat tempoh');
 }
 
+/* The saved Face ID key was deleted / belongs to another app copy ("no matching passkeys saved in Passwords for github.io"):
+   make a fresh key on THIS phone (asks Face ID / Touch ID once). The login device token is kept, nothing is sent to the server. */
+async function bioRepair_(){
+  const challenge = new Uint8Array(32); crypto.getRandomValues(challenge);
+  const ic = sessionStorage.getItem('kkah_ic') || '';
+  const cred = await navigator.credentials.create({ publicKey: {
+    challenge, rp: { name: 'SIAGA' }, user: { id: new TextEncoder().encode(ic), name: ic, displayName: ic },
+    pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+    authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged', requireResidentKey: false },
+    timeout: 60000, attestation: 'none' } });
+  if(!cred) throw new Error('No credential created');
+  localStorage.setItem('kkah_biometric_credential_id', arrayBufferToBase64(cred.rawId));
+  return true;
+}
+
 /* ---------- Face ID / Touch ID lock: the profile only opens after the device unlocks it ---------- */
 async function profileLock(){
   const enrolled = localStorage.getItem('kkah_biometric_device_token') && localStorage.getItem('kkah_biometric_credential_id');
@@ -232,7 +247,7 @@ async function profileLock(){
   try{ if(Date.now() - Number(sessionStorage.getItem('kkah_prof_unlocked') || 0) < 5 * 60000) return true; }catch(e){}
   return new Promise(resolve => {
     const ov = document.createElement('div'); ov.className = 'lockov';
-    ov.innerHTML = '<div class="ic">🔒</div><h2>Profil dikunci</h2><p>Sahkan dengan Face ID / Touch ID untuk membuka maklumat profil anda.</p><button id="lockGo">Buka dengan Face ID / Touch ID</button><a href="./dashboard.html">← Kembali ke Dashboard</a>';
+    ov.innerHTML = '<div class="ic">🔒</div><h2>Profil dikunci</h2><p>Sahkan dengan Face ID / Touch ID untuk membuka maklumat profil anda.</p><button id="lockGo">Buka dengan Face ID / Touch ID</button><button id="lockFix" style="display:none;background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.7)">Tetapkan semula Face ID</button><a href="./dashboard.html">← Kembali ke Dashboard</a>';
     document.body.appendChild(ov);
     const go = async () => {
       try{
@@ -240,7 +255,14 @@ async function profileLock(){
         await navigator.credentials.get({ publicKey: { challenge, allowCredentials: [{ id: base64ToArrayBuffer(localStorage.getItem('kkah_biometric_credential_id')), type: 'public-key', transports: ['internal'] }], userVerification: 'required', timeout: 60000 } });
         try{ sessionStorage.setItem('kkah_prof_unlocked', String(Date.now())); }catch(e){}
         ov.remove(); resolve(true);
-      }catch(e){ document.querySelector('.lockov p').textContent = 'Pengesahan gagal atau dibatalkan. Cuba lagi.'; }
+      }catch(e){
+        document.querySelector('.lockov p').textContent = 'Pengesahan gagal. Jika telefon kata "no matching passkeys", ketik Tetapkan semula Face ID (sekali sahaja).';
+        document.getElementById('lockFix').style.display = '';
+      }
+    };
+    document.getElementById('lockFix').onclick = async () => {
+      try{ await bioRepair_(); try{ sessionStorage.setItem('kkah_prof_unlocked', String(Date.now())); }catch(e){} ov.remove(); resolve(true); }
+      catch(e){ document.querySelector('.lockov p').textContent = 'Tidak berjaya. Log keluar, log masuk semula dengan kata laluan, kemudian aktifkan Face ID di Profil.'; }
     };
     document.getElementById('lockGo').onclick = go; go();
   });
@@ -538,7 +560,9 @@ async function handleChangePasswordClick(){
     });
     openPasswordModal();
   }catch(err){
-    alert('Face ID / Touch ID verification is required to change your password.');
+    if(confirm('Face ID / Touch ID gagal. Tetapkan semula Face ID pada telefon ini dan teruskan?')){
+      try{ await bioRepair_(); openPasswordModal(); }catch(e){ alert('Tidak berjaya. Cuba lagi.'); }
+    }
   }
 }
 
