@@ -909,7 +909,7 @@ const DAYS   = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
 //  GAS BRIDGE
 // ═══════════════════════════════════
 // PATUH runs inside SIAGA: every call goes to the PATUH API with the SIAGA login token.
-const PATUH_URL = 'PASTE_PATUH_EXEC_URL_HERE';     // ← PATUH Apps Script web-app /exec URL
+const PATUH_URL = 'https://script.google.com/macros/s/AKfycbwCI9w-SCD_s42e-HL5ujDue1mj1FlGS2XRo0xZEQ_CnV7Px6acHvcD3OJxA_srxeVPxQ/exec';     // ← PATUH Apps Script web-app /exec URL
 function siagaToken(){ try{ return sessionStorage.getItem('kkah_session_token') || ''; }catch(e){ return ''; } }
 function goLogin(){ try{ sessionStorage.removeItem('kkah_session_token'); }catch(e){} location.replace('./login.html'); }
 const GAS = {
