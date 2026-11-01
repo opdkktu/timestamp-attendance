@@ -1023,7 +1023,7 @@ const MODULES = [
   { id: 'jadual', name: 'Jadual & Rekod Saya', icon: '📅', status: 'active', href: './jadual.html' },
   { id: 'myreport', name: 'Laporan Kehadiran Bulanan', icon: '📊', status: 'active', href: './report.html' },
   { id: 'transport', name: 'Minta Kenderaan', icon: '🚐', status: 'active', href: './transport.html' },
-  { id: 'kkm999', name: 'Laporan Ambulans', icon: '🚑', status: 'active', href: '../KKM999/index.html' },
+  { id: 'kkm999', name: 'KKM NG 999', icon: '🚑', status: 'active', href: '../KKM999/index.html' },
    { id:'patuh', name:'PATUH (TB)', icon:'💊', status:'active', href:'./patuh.html' },
   { id:'saringan', name:'Saringan Minda', icon:'🧠', status:'active', href:'./saringan.html' }
 ];
@@ -1399,7 +1399,7 @@ async function setupSupervisorAndLog(){
   addModuleCard('Mata & Ranking', '🏆', './points.html');
   addModuleCard('Log Aktiviti', '🧾', './activity.html');
   addModuleCard('Inventori Luka', '🩹', './wound-inventory.html');
-  addModuleCard('AWAS Luka', '🩹', './awas.html');
+  addModuleCard('AWAS', '🩹', './awas.html');
   addModuleCard('Clinical Guideline Library', '📚', './guidelines.html');
   try{
     const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
