@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0F4C81">
+<title>PATUH — TB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+/* ── RESET & VARIABLES ─────────────────────────────── */
+:root{
+  --navy:#0F4C81; --navy2:#0A3461; --navy3:#1565C0;
+  --teal:#00B4A2; --teal2:#00897B; --teal3:#4DD0C4;
+  --sky:#E8F4FD;
+  --green:#22C55E; --green2:#16A34A;
+  --red:#EF4444; --amber:#F59E0B;
+  --bg:#F0F7FF; --card:#FFFFFF;
+  --txt:#0F2A4A; --txt2:#4B6A8A; --txt3:#8AAEC8;
+  --bdr:#D5E8F5;
+  --sh: 0 4px 24px rgba(15,76,129,.10);
+  --sh2:0 8px 32px rgba(15,76,129,.18);
+  --r:18px; --r2:12px; --r3:8px;
+  --hdr:64px; --nav:64px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--txt);font-size:15px;line-height:1.5}
+
+/* ── LOADING OVERLAY ───────────────────────────────── */
+#overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:linear-gradient(150deg,var(--navy2) 0%,var(--navy) 45%,var(--teal2) 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity .6s ease,visibility .6s ease;
+}
+#overlay.gone{opacity:0;visibility:hidden;pointer-events:none}
+
+.ov-rings{position:relative;width:120px;height:120px;margin-bottom:28px}
+.ov-ring{
+  position:absolute;inset:0;border-radius:50%;border:2px solid transparent;
+  animation:spin 2s linear infinite;
+}
+.ov-ring:nth-child(1){border-top-color:rgba(255,255,255,.9);animation-duration:1.6s}
+.ov-ring:nth-child(2){inset:12px;border-right-color:rgba(77,208,196,.8);animation-duration:2.2s;animation-direction:reverse}
+.ov-ring:nth-child(3){inset:24px;border-bottom-color:rgba(255,255,255,.5);animation-duration:1.9s}
+.ov-icon{
+  position:absolute;inset:36px;
+  background:rgba(255,255,255,.15);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.25);
+}
+.ov-icon svg{width:26px;height:26px;fill:white}
+
+.ov-title{color:#fff;font-size:22px;font-weight:800;letter-spacing:.4px;text-align:center;margin-bottom:6px}
+.ov-sub{color:rgba(255,255,255,.65);font-size:13px;text-align:center;margin-bottom:36px}
+.ov-track{width:200px;height:3px;background:rgba(255,255,255,.15);border-radius:99px;overflow:hidden}
+.ov-fill{height:100%;background:linear-gradient(90deg,var(--teal3),#fff);border-radius:99px;animation:fill 2.4s ease-in-out infinite}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fill{0%{width:0%}60%{width:75%}100%{width:100%}}
+
+/* ── LAYOUT ────────────────────────────────────────── */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── HEADER ────────────────────────────────────────── */
+.hdr{
+  background:linear-gradient(135deg,var(--navy2),var(--navy));
+  color:#fff;padding:12px 16px 0;flex-shrink:0;
+  box-shadow:0 2px 20px rgba(0,0,0,.2);
+}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.hdr-brand{display:flex;align-items:center;gap:10px}
+.hdr-logo{
+  width:36px;height:36px;border-radius:10px;
+  background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,.2);
+}
+.hdr-logo svg{width:20px;height:20px;fill:white}
+.hdr-title{font-size:16px;font-weight:800;line-height:1.1}
+.hdr-sub{font-size:10px;opacity:.65;margin-top:1px}
+.hdr-actions{display:flex;gap:8px}
+.hdr-btn{
+  width:34px;height:34px;border-radius:9px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);
+  color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .2s;
+}
+.hdr-btn:active{background:rgba(255,255,255,.25)}
+.hdr-btn svg{width:16px;height:16px;fill:currentColor}
+
+.hdr-bar{
+  background:rgba(255,255,255,.08);
+  border-radius:10px 10px 0 0;
+  padding:8px 14px;margin:0 -0px;
+  display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid rgba(255,255,255,.1);
+}
+.hdr-date{font-size:12px;font-weight:600;color:rgba(255,255,255,.9)}
+.hdr-time{font-size:12px;color:rgba(255,255,255,.55);font-weight:500}
+
+/* ── PAGE WRAPPER ──────────────────────────────────── */
+#pages{flex:1;overflow:hidden;position:relative}
+.page{
+  position:absolute;inset:0;
+  overflow-y:auto;overflow-x:hidden;
+  padding:16px 14px calc(var(--nav) + 20px);
+  opacity:0;pointer-events:none;
+  transform:translateY(8px);
+  transition:opacity .22s,transform .22s;
+}
+.page.active{opacity:1;pointer-events:auto;transform:translateY(0)}
+
+/* ── BOTTOM NAV ────────────────────────────────────── */
+.nav{
+  height:var(--nav);flex-shrink:0;
+  background:var(--card);
+  border-top:1px solid var(--bdr);
+  display:flex;
+  box-shadow:0 -4px 20px rgba(15,76,129,.08);
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;border:none;background:none;cursor:pointer;
+  color:var(--txt3);font-size:9.5px;font-weight:600;
+  font-family:'Outfit',sans-serif;
+  transition:color .2s;position:relative;
+}
+.nav-btn.on{color:var(--navy)}
+.nav-btn svg{width:21px;height:21px;fill:currentColor;transition:transform .2s}
+.nav-btn.on svg{transform:scale(1.15)}
+.nav-pill{
+  position:absolute;top:6px;
+  width:24px;height:3px;border-radius:99px;
+  background:linear-gradient(90deg,var(--navy),var(--teal));
+  transform:scaleX(0);transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.nav-btn.on .nav-pill{transform:scaleX(1)}
+
+/* ── SECTION TITLES ────────────────────────────────── */
+.sec-title{
+  font-size:13px;font-weight:700;color:var(--txt2);
+  text-transform:uppercase;letter-spacing:.8px;
+  margin-bottom:12px;margin-top:4px;
+}
+
+/* ── STAT CHIPS ────────────────────────────────────── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.stat{
+  background:var(--card);border-radius:var(--r2);padding:14px 10px;
+  text-align:center;box-shadow:var(--sh);
+}
+.stat-n{font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--navy),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-l{font-size:10px;color:var(--txt2);font-weight:600;margin-top:2px}
+
+/* ── STAFF GRID ────────────────────────────────────── */
+.staff-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.s-card{
+  background:var(--card);border-radius:var(--r);padding:16px;
+  box-shadow:var(--sh);cursor:pointer;
+  border:2px solid transparent;
+  transition:transform .18s,box-shadow .18s,border-color .18s;
+  position:relative;overflow:hidden;
+}
+.s-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(15,76,129,.03),rgba(0,180,162,.03));
+}
+.s-card:active{transform:scale(.97);box-shadow:var(--sh2)}
+.s-card.sel{border-color:var(--teal)}
+
+.s-avatar{
+  width:54px;height:54px;border-radius:14px;
+  background:linear-gradient(135deg,var(--navy),var(--teal));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:20px;font-weight:800;
+  margin-bottom:10px;overflow:hidden;flex-shrink:0;
+}
+.s-avatar img{width:100%;height:100%;object-fit:cover}
+
+.s-name{font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-zone{font-size:11px;color:var(--txt2);margin-bottom:10px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-prog-track{height:5px;background:var(--sky);border-radius:99px;overflow:hidden}
+.s-prog-fill{height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--navy),var(--teal));transition:width .6s ease}
+.s-prog-label{font-size:10px;color:var(--txt3);margin-top:5px;font-weight:600}
+
+/* ── CHECKIN PAGE ──────────────────────────────────── */
+.ci-header{
+  background:linear-gradient(135deg,var(--navy),var(--teal2));
+  border-radius:var(--r);padding:16px;margin-bottom:14px;
+  display:flex;align-items:center;gap:14px;
+  box-shadow:0 4px 20px rgba(15,76,129,.25);
+}
+.ci-avatar{
+  width:58px;height:58px;border-radius:14px;
+  background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:22px;font-weight:800;
+  border:2px solid rgba(255,255,255,.3);flex-shrink:0;overflow:hidden;
+}
+.ci-avatar img{width:100%;height:100%;object-fit:cover}
+.ci-info h2{color:#fff;font-size:17px;font-weight:800}
+.ci-info p{color:rgba(255,255,255,.7);font-size:12px;margin-top:2px}
+.ci-badge{
+  display:inline-flex;align-items:center;gap:5px;margin-top:7px;
+  background:rgba(255,255,255,.15);border-radius:99px;padding:4px 10px;
+  font-size:11px;font-weight:700;color:#fff;
+}
+
+/* ── TABS ──────────────────────────────────────────── */
+.tabs{
+  display:flex;background:var(--card);border-radius:var(--r2);
+  padding:4px;gap:4px;margin-bottom:14px;box-shadow:var(--sh);
+}
+.tab{
+  flex:1;padding:9px 4px;border:none;border-radius:9px;
+  font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;
+  cursor:pointer;transition:all .2s;color:var(--txt2);background:none;
+}
+.tab.on{
+  background:linear-gradient(135deg,var(--navy),var(--teal));
+  color:#fff;box-shadow:0 2px 12px rgba(15,76,129,.3);
+}
+
+/* ── TASK CARDS ────────────────────────────────────── */
+.task-card{
+  background:var(--card);border-radius:var(--r2);
+  padding:13px 14px;margin-bottom:9px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 2px 10px rgba(15,76,129,.07);
+  border-left:3px solid transparent;
+  transition:all .2s;
+}
+.task-card.done{
+  background:#F0FFF8;border-left-color:var(--green);
+}
+.task-card.loading-ci{opacity:.5;pointer-events:none}
+
+.t-check{
+  width:40px;height:40px;border-radius:11px;
+  border:2px solid var(--bdr);background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;transition:all .25s;
+}
+.t-check.done{background:var(--green);border-color:var(--green)}
+.t-check:active{transform:scale(.9)}
+.t-check svg{width:20px;height:20px}
+.t-check .check-i{fill:var(--txt3)}
+.t-check.done .check-i{fill:white}
+
+.t-info{flex:1;min-width:0}
+.t-name{font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-freq{font-size:10px;color:var(--txt2);font-weight:600}
+.t-ts{font-size:10px;color:var(--green2);font-weight:700;margin-top:3px}
+
+.freq-chip{
+  display:inline-flex;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;
+}
+.freq-HARIAN{background:#E0F2FE;color:#0369A1}
+.freq-MINGGUAN{background:#EDE9FE;color:#6D28D9}
+.freq-BULANAN{background:#FEF3C7;color:#92400E}
+.freq-2X_BULANAN{background:#FCE7F3;color:#9D174D}
+
+/* ── ADMIN PAGE ────────────────────────────────────── */
+.a-card{
+  background:var(--card);border-radius:var(--r);
+  padding:18px;margin-bottom:14px;box-shadow:var(--sh);
+}
+.a-card-title{
+  font-size:13px;font-weight:800;color:var(--navy);
+  text-transform:uppercase;letter-spacing:.6px;
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.a-card-title svg{width:17px;height:17px;fill:var(--teal)}
+
+.label{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;
+  letter-spacing:.5px;display:block;margin-bottom:6px}
+.field{
+  width:100%;padding:12px 14px;
+  border:2px solid var(--bdr);border-radius:var(--r3);
+  font-family:'Outfit',sans-serif;font-size:14px;color:var(--txt);
+  background:var(--sky);outline:none;transition:border-color .2s,background .2s;
+  margin-bottom:14px;
+}
+.field:focus{border-color:var(--navy);background:#fff}
+.field::placeholder{color:var(--txt3)}
+
+.photo-drop{
+  border:2px dashed var(--bdr);border-radius:var(--r2);
+  padding:20px;text-align:center;cursor:pointer;
+  transition:border-color .2s,background .2s;margin-bottom:14px;
+}
+.photo-drop:hover{border-color:var(--teal);background:rgba(0,180,162,.03)}
+.photo-drop svg{width:36px;height:36px;fill:var(--txt3)}
+.photo-drop p{font-size:12px;color:var(--txt2);margin-top:6px;font-weight:600}
+
+/* ── BUTTONS ───────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 18px;border:none;border-radius:var(--r3);
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .18s;
+}
+.btn-p{
+  background:linear-gradient(135deg,var(--navy),var(--teal));color:#fff;
+  box-shadow:0 4px 16px rgba(15,76,129,.3);
+}
+.btn-p:active{transform:scale(.97);box-shadow:none}
+.btn-d{background:#FFF1F2;color:var(--red)}
+.btn-d:active{background:#FECDD3}
+.btn-w{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.btn-full{width:100%}
+.btn svg{width:17px;height:17px;fill:currentColor}
+
+/* ── STAFF LIST (ADMIN) ────────────────────────────── */
+.sl-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px;border-radius:var(--r3);background:var(--sky);margin-bottom:8px;
+}
+.sl-avatar{
+  width:42px;height:42px;border-radius:11px;
+  background:linear-gradient(135deg,var(--navy),var(--teal));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:16px;font-weight:800;flex-shrink:0;overflow:hidden;
+}
+.sl-avatar img{width:100%;height:100%;object-fit:cover}
+.sl-info{flex:1;min-width:0}
+.sl-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-zone{font-size:11px;color:var(--txt2)}
+
+/* ── REPORT PAGE ───────────────────────────────────── */
+.month-nav{
+  background:var(--card);border-radius:var(--r2);padding:14px 16px;
+  display:flex;align-items:center;gap:12px;margin-bottom:14px;box-shadow:var(--sh);
+}
+.month-arrows{
+  width:34px;height:34px;border-radius:9px;border:2px solid var(--bdr);
+  background:var(--sky);cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.month-arrows svg{width:18px;height:18px;fill:var(--txt2)}
+.month-label{flex:1;text-align:center;font-size:16px;font-weight:800;color:var(--navy)}
+
+.r-staff-row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--card);border-radius:var(--r2);padding:13px;
+  margin-bottom:8px;box-shadow:var(--sh);cursor:pointer;
+  border:2px solid transparent;transition:border-color .2s;
+}
+.r-staff-row.sel{border-color:var(--teal)}
+.r-staff-row input[type=radio]{display:none}
+.r-radio{
+  width:20px;height:20px;border-radius:50%;
+  border:2px solid var(--bdr);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.r-staff-row.sel .r-radio{background:var(--teal);border-color:var(--teal)}
+.r-radio-dot{width:8px;height:8px;border-radius:50%;background:white;opacity:0;transition:opacity .2s}
+.r-staff-row.sel .r-radio-dot{opacity:1}
+
+/* ── MODALS ────────────────────────────────────────── */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(5,20,40,.55);
+  display:flex;align-items:flex-end;justify-content:center;
+  z-index:800;opacity:0;visibility:hidden;
+  transition:opacity .25s,visibility .25s;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.modal-bg.open{opacity:1;visibility:visible}
+
+.modal-sheet{
+  background:var(--card);border-radius:24px 24px 0 0;
+  padding:20px;width:100%;max-width:500px;
+  max-height:88vh;overflow-y:auto;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.15,1);
+}
+.modal-bg.open .modal-sheet{transform:translateY(0)}
+.modal-handle{
+  width:38px;height:4px;border-radius:99px;
+  background:var(--bdr);margin:0 auto 18px;
+}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--txt2);margin-bottom:18px}
+
+/* ── REPORT HTML TABLE ─────────────────────────────── */
+.rpt-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px}
+.rpt-table{border-collapse:collapse;min-width:100%;font-size:10px}
+.rpt-table th,.rpt-table td{
+  border:1px solid #C8E0F5;padding:6px 5px;text-align:center;white-space:nowrap;
+}
+.rpt-table thead th{background:var(--navy);color:#fff;font-weight:700}
+.rpt-table .task-col{
+  text-align:left;max-width:130px;white-space:normal;
+  font-weight:600;padding:6px 8px;background:#F0F7FF;font-size:9px;
+}
+.rpt-table .sub-col{background:#E8F4FD;font-size:9px;color:var(--navy)}
+.rpt-table .chk{color:var(--green2);font-size:12px;font-weight:800}
+.rpt-table tr:hover td{background:#F5FBFF}
+.rpt-footer{margin-top:20px;display:flex;justify-content:space-between;gap:16px}
+.rpt-sig{flex:1;text-align:center}
+.rpt-sig-line{border-top:1px solid var(--txt);margin-top:50px;padding-top:8px;font-size:10px;color:var(--txt2)}
+.rpt-sig img{max-height:50px;max-width:130px;display:block;margin:8px auto 0}
+
+/* ── TOAST ─────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:calc(var(--nav) + 14px);left:50%;
+  transform:translateX(-50%) translateY(12px);
+  background:var(--navy);color:#fff;
+  padding:11px 20px;border-radius:99px;
+  font-size:13px;font-weight:700;white-space:nowrap;
+  z-index:8000;pointer-events:none;
+  opacity:0;transition:opacity .25s,transform .25s;
+  box-shadow:0 4px 20px rgba(0,0,0,.25);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{background:var(--green2)}
+#toast.err{background:var(--red)}
+
+/* ── EMPTY STATE ───────────────────────────────────── */
+.empty{text-align:center;padding:40px 20px;color:var(--txt3)}
+.empty svg{width:56px;height:56px;fill:currentColor;opacity:.35;margin-bottom:12px}
+.empty h3{font-size:15px;font-weight:700;color:var(--txt2);margin-bottom:6px}
+.empty p{font-size:13px}
+
+/* ── ANIMATIONS ────────────────────────────────────── */
+.fade-up{animation:fadeUp .25s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PRINT STYLES ──────────────────────────────────── */
+@media print{
+  body{overflow:auto}
+  #app,#overlay,#toast{display:none}
+  #print-area{display:block!important;padding:12mm;font-family:'Arial',sans-serif}
+  .rpt-table{font-size:7px}
+  .rpt-table th,.rpt-table td{padding:3px 2px}
+  @page{size:A4 landscape;margin:8mm}
+}
+
+/* ── PATIENT CARD (inherits .s-card base from sample) ── */
+.staff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+.s-card {
+  background: var(--card); border-radius: var(--r); padding: 16px;
+  box-shadow: var(--sh); cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform .18s, box-shadow .18s, border-color .18s;
+  position: relative; overflow: hidden;
+}
+.s-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg,rgba(15,76,129,.03),rgba(0,180,162,.03));
+}
+.s-card.present { border-color: var(--green) }
+.s-avatar {
+  width: 54px; height: 54px; border-radius: 14px;
+  background: linear-gradient(135deg,var(--navy),var(--teal));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 20px; font-weight: 800;
+  margin-bottom: 10px; overflow: hidden; flex-shrink: 0;
+}
+.s-name {
+  font-size: 13px; font-weight: 700; color: var(--txt); margin-bottom: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── STATUS BADGE ── */
+.p-status {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 99px;
+  margin-bottom: 8px;
+}
+.p-status.present { background: #DCFCE7; color: var(--green2) }
+.p-status.absent  { background: #FEF2F2; color: var(--red) }
+
+/* ── CATEGORY & PHASE CHIPS (replaces .freq-chip from sample) ── */
+.chip { display: inline-flex; padding: 2px 8px; border-radius: 99px; font-size: 9px; font-weight: 700; margin-right: 3px }
+.chip-PR1         { background: #E0F2FE; color: #0369A1 }
+.chip-PR2         { background: #EDE9FE; color: #6D28D9 }
+.chip-INTENSIVE   { background: #FEF3C7; color: #92400E }
+.chip-MAINTENANCE { background: #D1FAE5; color: #065F46 }
+
+/* ── ATTENDANCE LIST ITEM ── */
+.att-item {
+  background: var(--card); border-radius: var(--r2);
+  padding: 13px 14px; margin-bottom: 9px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 10px rgba(15,76,129,.07);
+  border-left: 4px solid var(--green);
+}
+.att-time { font-size: 17px; font-weight: 800; color: var(--navy); min-width: 62px; text-align: center; line-height: 1.1 }
+.att-time span { display: block; font-size: 9px; font-weight: 500; color: var(--txt3) }
+.att-info { flex: 1; min-width: 0 }
+.att-name { font-size: 13px; font-weight: 700; color: var(--txt); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+
+/* ── SCAN HEADER CARD ── */
+.scan-card {
+  background: linear-gradient(135deg,var(--navy),var(--teal2));
+  border-radius: var(--r); padding: 16px; margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(15,76,129,.25);
+}
+.scan-card h3 { color: #fff; font-size: 15px; font-weight: 800; margin-bottom: 3px }
+.scan-card p  { color: rgba(255,255,255,.7); font-size: 12px }
+
+/* ── CI HEADER (same as sample — copy if you missed it) ── */
+.ci-header {
+  background: linear-gradient(135deg,var(--navy),var(--teal2));
+  border-radius: var(--r); padding: 16px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 4px 20px rgba(15,76,129,.25);
+}
+.ci-avatar {
+  width: 58px; height: 58px; border-radius: 14px;
+  background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 22px; font-weight: 800;
+  border: 2px solid rgba(255,255,255,.3); flex-shrink: 0;
+}
+.ci-info h2 { color: #fff; font-size: 17px; font-weight: 800 }
+.ci-info p  { color: rgba(255,255,255,.7); font-size: 12px; margin-top: 2px }
+
+/* ── ANALYSIS FILTERS ── */
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px }
+.f-chip {
+  padding: 7px 14px; border-radius: 99px; border: 2px solid var(--bdr);
+  background: var(--card); font-family: 'Outfit', sans-serif;
+  font-size: 12px; font-weight: 700; color: var(--txt2); cursor: pointer;
+  transition: all .18s;
+}
+.f-chip.on {
+  background: linear-gradient(135deg,var(--navy),var(--teal)); color: #fff;
+  border-color: transparent; box-shadow: 0 3px 12px rgba(15,76,129,.25);
+}
+
+/* ── TREND BARS ── */
+.trend-bars { display: flex; align-items: flex-end; gap: 6px; height: 80px }
+.t-bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 3px; height: 100% }
+.t-bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center }
+.t-bar { width: 100%; border-radius: 5px 5px 0 0; min-height: 4px; background: linear-gradient(180deg,var(--teal),var(--navy)); transition: height .6s cubic-bezier(.34,1.3,.64,1) }
+.t-bar-lbl { font-size: 8px; font-weight: 700; color: var(--txt3); white-space: nowrap }
+.t-bar-val { font-size: 9px; font-weight: 800; color: var(--navy) }
+
+/* ── ANALYTICS COMPLIANCE ROW ── */
+.comp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px }
+.comp-card { background: var(--card); border-radius: var(--r2); padding: 14px; text-align: center; box-shadow: var(--sh) }
+.comp-n { font-size: 30px; font-weight: 900; line-height: 1 }
+.comp-n.green { background: linear-gradient(135deg,var(--green2),var(--teal)); -webkit-background-clip: text; -webkit-text-fill-color: transparent }
+.comp-n.red   { background: linear-gradient(135deg,var(--red),#f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent }
+.comp-l { font-size: 10px; font-weight: 600; color: var(--txt2); margin-top: 4px }
+
+/* ── PATIENT RANKING ── */
+.top-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--sky); border-radius: var(--r3); margin-bottom: 6px }
+.top-rank { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg,var(--navy),var(--teal)); color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0 }
+.top-info { flex: 1; min-width: 0 }
+.top-name { font-size: 12px; font-weight: 700; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.top-meta { font-size: 10px; color: var(--txt2); margin-top: 1px }
+.top-visits { font-size: 20px; font-weight: 900; color: var(--navy); flex-shrink: 0 }
+
+/* ── REPORT TABLE overrides ── */
+.rpt-table .no-col  { width: 28px; font-weight: 800; color: var(--navy) }
+.rpt-table .dt-col  { background: #F0F7FF; font-weight: 700; font-size: 9px }
+
+#phaseToggle button {
+  flex: 1;
+  padding: 12px 8px;
+  border: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .25s;
+  background: var(--sky);
+  color: var(--txt2);
+  line-height: 1.3;
+}
+#phaseToggle button.active-phase {
+  color: #fff;
+}
+/* ── PATIENT CONTACT ROW ── */
+.p-contact { display:flex; gap:6px; margin-top:8px }
+.p-ab {
+  display:inline-flex; align-items:center; justify-content:center; gap:4px;
+  min-height:34px; padding:6px 10px; border-radius:9px;
+  background:var(--sky); color:var(--navy); text-decoration:none;
+  font-size:11px; font-weight:700;
+}
+.p-ab.wa { background:#DCFCE7; color:var(--green2); flex:1 }
+.p-ab:active { transform:scale(.96) }
+.p-nophone { margin-top:8px; font-size:10px; font-weight:600; color:var(--txt3) }
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <div class="ov-rings">
+    <div class="ov-ring"></div>
+    <div class="ov-ring"></div>
+    <div class="ov-ring"></div>
+    <div class="ov-icon">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+  </div>
+  <div class="ov-title">PATUH</div>
+  <div class="ov-sub">Patient Adherence &amp; Treatment Update Hub</div>
+  <div class="ov-track"><div class="ov-fill"></div></div>
+</div>
+
+<!-- ── APP SHELL ── -->
+<div id="app">
+
+  <div class="hdr">
+    <div class="hdr-top">
+      <div class="hdr-brand">
+        <a class="hdr-btn" href="./dashboard.html" aria-label="Kembali ke SIAGA" style="text-decoration:none;font-size:22px;line-height:1">‹</a>
+        <div class="hdr-logo">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        </div>
+        <div>
+          <div class="hdr-title">PATUH</div>
+          <div class="hdr-sub">Patient Adherence &amp; Treatment Update Hub</div>
+        </div>
+      </div>
+      <div class="hdr-actions">
+        <button class="hdr-btn" onclick="Nav.go('admin')" title="Tetapan">
+          <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 018.5 12 3.5 3.5 0 0112 8.5a3.5 3.5 0 013.5 3.5 3.5 3.5 0 01-3.5 3.5m7.43-2.03c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.58-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="hdr-bar">
+      <div class="hdr-date" id="hdrDate">—</div>
+      <div class="hdr-time" id="hdrTime">—</div>
+    </div>
+  </div>
+  <div id="pages">
+
+    <!-- ══════════ HOME ══════════ -->
+    <div class="page active" id="pg-home">
+      <div class="stats-row">
+        <div class="stat"><div class="stat-n" id="stTotal">0</div><div class="stat-l">Jumlah Pesakit</div></div>
+        <div class="stat"><div class="stat-n" id="stPresent" style="-webkit-text-fill-color:var(--green)">0</div><div class="stat-l">Hadir Hari Ini</div></div>
+        <div class="stat"><div class="stat-n" id="stAbsent"  style="-webkit-text-fill-color:var(--red)">0</div><div class="stat-l">Belum Hadir</div></div>
+      </div>
+      <!-- Unregistered alert badge — hidden until scan finds pending patients -->
+      <div id="unregBadge" style="display:none;background:#FFF1F2;border:1.5px solid #FECDD3;
+        border-radius:var(--r2);padding:12px 14px;margin-bottom:12px;
+        align-items:center;gap:10px;justify-content:space-between">
+      </div>
+      <button class="btn btn-p btn-full" style="margin-bottom:14px" onclick="Attend.scan()">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 0016 9.5 6.5 6.5 0 009.5 3 6.5 6.5 0 003 9.5 6.5 6.5 0 009.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        Imbas Rekod PRIMA Hari Ini
+      </button>
+      <div class="sec-title">Senarai Pesakit TB</div>
+      <div class="staff-grid" id="patientGrid">
+        <div class="empty" style="grid-column:1/-1"><p>Memuatkan…</p></div>
+      </div>
+    </div>
+
+    <!-- ══════════ ATTENDANCE ══════════ -->
+    <div class="page" id="pg-attend">
+      <div id="scanCard"></div>
+      <div class="sec-title">Rekod Kehadiran Hari Ini</div>
+      <div id="attendList"><div class="empty"><p>Tiada rekod hari ini</p></div></div>
+    </div>
+
+    <!-- ══════════ REPORT ══════════ -->
+    <div class="page" id="pg-report">
+      <div class="sec-title">Pilih Pesakit</div>
+      <div id="rptPatList"></div>
+      <button class="btn btn-p btn-full" style="margin-top:10px" onclick="Rpt.generate()">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zm1.5 17.5L12 17l-3.5 2.5V10h7zM13 9V3.5L18.5 9z"/></svg>
+        Jana Laporan PDF
+      </button>
+    </div>
+
+    <!-- ══════════ ANALYSIS ══════════ -->
+    <div class="page" id="pg-analysis">
+      <div class="sec-title">Tapisan Kategori</div>
+      <div class="filter-row" id="catFilter">
+        <button class="f-chip on" onclick="Analysis.setCat(null,this)">Semua</button>
+        <button class="f-chip"    onclick="Analysis.setCat('PR1',this)">PR1</button>
+        <button class="f-chip"    onclick="Analysis.setCat('PR2',this)">PR2</button>
+      </div>
+      <div class="sec-title">Tapisan Fasa</div>
+      <div class="filter-row" id="phaseFilter">
+        <button class="f-chip on" onclick="Analysis.setPhase(null,this)">Semua Fasa</button>
+        <button class="f-chip"    onclick="Analysis.setPhase('INTENSIVE',this)">INTENSIVE</button>
+        <button class="f-chip"    onclick="Analysis.setPhase('MAINTENANCE',this)">MAINTENANCE</button>
+      </div>
+      <div id="analysisContent"><div class="empty"><p>Memuatkan analisis…</p></div></div>
+    </div>
+
+    <!-- ══════════ ADMIN ══════════ -->
+    <div class="page" id="pg-admin">
+
+      <div class="a-card">
+        <div class="a-card-title">
+          <svg viewBox="0 0 24 24"><path d="M15 14c-2.67 0-8 1.33-8 4v2h16v-2c0-2.67-5.33-4-8-4m0-2a4 4 0 100-8 4 4 0 000 8M5 15v-3H2v-2h3V7h2v3h3v2H7v3z"/></svg>
+          Daftar Pesakit Baru
+        </div>
+        <label class="label">Nama Penuh</label>
+        <input class="field" id="inName" placeholder="Cth: Ahmad bin Ali" type="text">
+        <label class="label">No. Kad Pengenalan (12 digit)</label>
+        <input class="field" id="inIC" placeholder="Cth: 630422023438" type="text" inputmode="numeric" maxlength="12">
+        <label class="label">No. Telefon (pilihan)</label>
+        <input class="field" id="inPhone" placeholder="Cth: 0123456789" type="tel" inputmode="tel" maxlength="14" autocomplete="off">
+        <label class="label">Kategori</label>
+        <select class="field" id="inCat"><option value="PR1">PR1</option><option value="PR2">PR2</option></select>
+        <label class="label">Fasa Rawatan</label>
+        <select class="field" id="inPhase">
+          <option value="INTENSIVE">Intensif (Intensive)</option>
+          <option value="MAINTENANCE">Penyelenggaraan (Maintenance)</option>
+        </select>
+        <button class="btn btn-p btn-full" onclick="Admin.add()">
+          <svg viewBox="0 0 24 24"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>
+          Daftar Pesakit
+        </button>
+      </div>
+
+      <div class="a-card">
+        <div class="a-card-title">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3m-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3m0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13m8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          Senarai Pesakit Aktif
+        </div>
+        <div id="adminList"><p style="color:var(--txt3);font-size:13px">Memuatkan…</p></div>
+      </div>
+
+      <div class="a-card">
+        <div class="a-card-title">
+          <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+          Tetapan Laporan
+        </div>
+        <div style="background:#FFF8E1;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#92400E;line-height:1.5">
+          ℹ️ Tetapan ini akan dipaparkan dalam laporan PDF pesakit.
+        </div>
+        <label class="label">Nama Pegawai Perubatan / Penyelia</label>
+        <input class="field" id="inSuperName" placeholder="Cth: Dr. Siti binti Hasan">
+        <label class="label">Nama Fasiliti / Klinik</label>
+        <input class="field" id="inOrgName" placeholder="Cth: Klinik Kesihatan Bandar">
+        <button class="btn btn-p btn-full" onclick="Admin.saveSettings()">
+          <svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7zm-5 16a3 3 0 110-6 3 3 0 010 6zm3-10H5V5h10z"/></svg>
+          Simpan Tetapan
+        </button>
+      </div>
+
+    </div><!-- /pg-admin -->
+
+  </div><!-- /pages -->
+
+  <!-- BOTTOM NAV — 5 tabs -->
+  <nav class="nav">
+    <button class="nav-btn on" id="nb-home" onclick="Nav.go('home')">
+      <div class="nav-pill"></div>
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      Utama
+    </button>
+    <button class="nav-btn" id="nb-attend" onclick="Nav.go('attend')">
+      <div class="nav-pill"></div>
+      <svg viewBox="0 0 24 24"><path d="M9 10H7v2h2v-2m4 0h-2v2h2v-2m4 0h-2v2h2v-2m2-7h-1V1h-2v2H8V1H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2m0 16H5V8h14v11z"/></svg>
+      Kehadiran
+    </button>
+    <button class="nav-btn" id="nb-report" onclick="Nav.go('report')">
+      <div class="nav-pill"></div>
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zm1.5 17.5L12 17l-3.5 2.5V10h7zM13 9V3.5L18.5 9z"/></svg>
+      Laporan
+    </button>
+    <button class="nav-btn" id="nb-analysis" onclick="Nav.go('analysis')">
+      <div class="nav-pill"></div>
+      <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2m-7 3a4 4 0 110 8 4 4 0 010-8m6 12H6v-.57c0-2.26 3.13-4.43 6-4.43s6 2.17 6 4.43z"/></svg>
+      Analisis
+    </button>
+    <button class="nav-btn" id="nb-admin" onclick="Nav.go('admin')">
+      <div class="nav-pill"></div>
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      Tetapan
+    </button>
+  </nav>
+<div class="modal-bg" id="modalQuickReg">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">➕ Daftar Pesakit TB</div>
+    <div style="background:#FFF1F2;border-radius:10px;padding:12px 14px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:800;color:var(--txt)" id="unregModalName">—</div>
+      <div style="font-size:11px;color:var(--txt2);margin-top:3px">
+        IC: <span id="unregModalIC">—</span> &nbsp;·&nbsp; Bangsa: <span id="unregModalBangsa">—</span>
+      </div>
+    </div>
+    <label class="label">No. Telefon (pilihan)</label>
+    <input class="field" id="qrPhone" placeholder="Cth: 0123456789" type="tel" inputmode="tel" maxlength="14" autocomplete="off">
+    <label class="label">Kategori</label>
+    <select class="field" id="qrCat">
+      <option value="PR1">PR1</option>
+      <option value="PR2">PR2</option>
+    </select>
+    <label class="label">Fasa Rawatan</label>
+    <select class="field" id="qrPhase">
+      <option value="INTENSIVE">Intensif (Intensive)</option>
+      <option value="MAINTENANCE">Penyelenggaraan (Maintenance)</option>
+    </select>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-d" style="flex:1" onclick="Mod.close('modalQuickReg')">Batal</button>
+      <button class="btn btn-p" style="flex:2" onclick="Admin.confirmQuickReg()">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        Sahkan Pendaftaran
+      </button>
+    </div>
+  </div>
+</div>
+</div><!-- /app -->
+
+<!-- ── EDIT PATIENT MODAL (NEW) ── -->
+<div class="modal-bg" id="modalEdit">
+<div class="modal-sheet" style="display:flex;flex-direction:column">
+<div class="modal-handle"></div>
+<div class="modal-title">✏️ Kemaskini Maklumat Pesakit</div>
+<div class="modal-sub" id="editName">—</div>
+
+<label class="label">Nama Penuh</label>
+<input class="field" id="editNameInput" placeholder="Nama penuh pesakit" type="text">
+
+<label class="label">No. Telefon</label>
+<input class="field" id="editPhone" placeholder="Cth: 0123456789" type="tel" inputmode="tel" maxlength="14" autocomplete="off">
+
+<label class="label">Kategori</label>
+<select class="field" id="editCat">
+  <option value="PR1">PR1</option>
+  <option value="PR2">PR2</option>
+</select>
+
+<label class="label">Fasa Rawatan</label>
+<!-- Visual phase stepper — tap to toggle -->
+<div id="phaseToggle" style="display:flex;gap:0;border-radius:var(--r3);overflow:hidden;border:2px solid var(--bdr);margin-bottom:14px">
+  <button id="phaseBtn-INTENSIVE" onclick="Admin.setPhase('INTENSIVE')"
+    style="flex:1;padding:11px 6px;border:none;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;background:var(--sky);color:var(--txt2)">
+    🔴 Intensif
+  </button>
+  <div style="width:1px;background:var(--bdr)"></div>
+  <button id="phaseBtn-MAINTENANCE" onclick="Admin.setPhase('MAINTENANCE')"
+    style="flex:1;padding:11px 6px;border:none;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;background:var(--sky);color:var(--txt2)">
+    🟢 Penyelenggaraan
+  </button>
+</div>
+
+<!-- Phase change info banner — shown only when phase changes -->
+<div id="phaseChangeBanner" style="display:none;background:#FFF8E1;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#92400E;line-height:1.5">
+  ⚠️ <strong>Pertukaran Fasa:</strong> Rekod <em>akan datang</em> sahaja akan menggunakan fasa baru. Rekod lepas tidak diubah.
+</div>
+
+<div style="background:#EFF6FF;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#1D4ED8;line-height:1.5">
+  ℹ️ IC tidak boleh diubah. Hubungi admin sistem jika perlu pinda IC.
+</div>
+<div style="display:flex;gap:10px">
+  <button class="btn btn-d" style="flex:1" onclick="Mod.close('modalEdit')">Batal</button>
+  <button class="btn btn-p" style="flex:2" onclick="Admin.confirmEdit()">
+    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    Simpan Perubahan
+  </button>
+</div>
+</div>
+</div><!-- /modalEdit ← ADD THIS -->
+<!-- ── REPORT PREVIEW MODAL (same structure as sample, new content) ── -->
+<div class="modal-bg" id="modalReport">
+  <div class="modal-sheet" style="max-height:92vh">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="modal-title" style="margin:0">📄 Laporan Pematuhan</div>
+      <button class="btn btn-p" style="padding:8px 14px;font-size:12px" onclick="Rpt.print()">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M19 8H5a3 3 0 00-3 3v6h4v4h12v-4h4v-6a3 3 0 00-3-3m-3 11H8v-5h8v5m1-11a1 1 0 110 2 1 1 0 010-2m-1-5H5v4h14V3z"/></svg>
+        Cetak / PDF
+      </button>
+    </div>
+    <div id="rptContent"></div>
+    <button class="btn btn-d btn-full" style="margin-top:12px" onclick="Mod.close('modalReport')">Tutup</button>
+  </div>
+</div>
+
+<!-- ── DELETE CONFIRM MODAL — COPY FROM SAMPLE verbatim, same IDs ── -->
+<div class="modal-bg" id="modalDelete">
+  <div class="modal-sheet" style="display:flex;flex-direction:column;max-height:88vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="color:var(--red)">🗑️ Padam Pesakit?</div>
+    <div class="modal-sub" id="deleteLabel">—</div>
+    <div style="background:#FFF1F2;border-radius:10px;padding:12px;margin-bottom:18px;font-size:12px;color:var(--red)">
+      ⚠️ Rekod kehadiran akan dikekalkan. Pesakit hanya akan diarkibkan.
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-d" style="flex:1;border:2px solid var(--bdr)" onclick="Mod.close('modalDelete')">Batal</button>
+      <button class="btn" style="flex:2;background:var(--red);color:white" onclick="Admin.confirmDelete()">Ya, Padam</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST — COPY FROM SAMPLE verbatim ── -->
+<div id="toast"></div>
+<div id="print-area" style="display:none"></div>
+
+<!-- ════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ════════════════════════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════
+//  CONFIG & CONSTANTS
+// ═══════════════════════════════════
+
+  const MONTHS = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+const DAYS   = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+// ═══════════════════════════════════
+//  GAS BRIDGE
+// ═══════════════════════════════════
+// PATUH runs inside SIAGA: every call goes to the PATUH API with the SIAGA login token.
+const PATUH_URL = 'PASTE_PATUH_EXEC_URL_HERE';     // ← PATUH Apps Script web-app /exec URL
+function siagaToken(){ try{ return sessionStorage.getItem('kkah_session_token') || ''; }catch(e){ return ''; } }
+function goLogin(){ try{ sessionStorage.removeItem('kkah_session_token'); }catch(e){} location.replace('./login.html'); }
+const GAS = {
+  call(fn, args, onOk, onErr){
+    const fail = e => { if(onErr) onErr(e); else { hideOverlay(); showToast('Ralat: ' + e, 'err'); } };
+    const t = siagaToken(); if(!t){ goLogin(); return; }
+    fetch(PATUH_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ fn, args, token: t }) })
+      .then(r => r.json())
+      .then(j => {
+        if(j.auth){ goLogin(); return; }
+        if(j.forbidden){
+          const d = document.createElement('div');
+          d.style.cssText = 'position:fixed;inset:0;z-index:10000;background:#F0F7FF;padding:60px 24px;text-align:center;font-family:Outfit,sans-serif;color:#0F2A4A';
+          d.innerHTML = '<div style="font-size:42px">🔒</div><h2>Akses dihadkan</h2><p></p><p><a href="./dashboard.html" style="color:#0F4C81;font-weight:700">‹ Kembali ke SIAGA</a></p>';
+          d.querySelector('p').textContent = j.error || 'Anda tidak dibenarkan menggunakan PATUH.';
+          document.body.appendChild(d); return;
+        }
+        if(!j.ok){ fail(j.error || 'Ralat'); return; }
+        (onOk || (()=>{}))(j.data);
+      })
+      .catch(() => fail('Tiada sambungan'));
+  }
+};
+
+// ═══════════════════════════════════
+//  MODAL HELPER
+// ═══════════════════════════════════
+const Mod = {
+  open(id) { document.getElementById(id).classList.add('open'); },
+  close(id){ document.getElementById(id).classList.remove('open'); }
+};
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+const S = {
+  patients:       [],
+  todayAtt:       [],
+  unregistered:   [],   // TB patients from PRIMA not yet in PATUH
+  rptSelPatient:  null,
+  pendingDelete:  null,
+  pendingEdit:    null,
+  settings:       {},
+  _editOrigPhase: null,
+  _editPhase:     null,
+};
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+window.onload = () => {
+  clockTick(); setInterval(clockTick, 1000);
+  loadSettings();
+  showOverlay('Memuatkan sistem PATUH…');
+  // Load patients + today attendance in parallel via sequential GAS calls
+  GAS.call('getPatients', [], pts => {
+    S.patients = pts || [];
+    GAS.call('getTodayAttendance', [], att => {
+      S.todayAtt = att || [];
+      _syncStats();
+      Home.render();
+      Attend.renderList();
+      Admin.renderList();
+      Rpt.renderPatList();
+      // Lazy-load analysis only when tab is first opened
+      hideOverlay();
+    });
+  });
+};
+
+function clockTick(){
+  const hdrDate = document.getElementById('hdrDate');
+  const hdrTime = document.getElementById('hdrTime');
+  if (!hdrDate || !hdrTime) return;
+  const n    = new Date();
+  const dd   = String(n.getDate()).padStart(2,'0');
+  const mm   = String(n.getMonth()+1).padStart(2,'0');
+  const yyyy = n.getFullYear();
+  const HH   = String(n.getHours()).padStart(2,'0');
+  const MM   = String(n.getMinutes()).padStart(2,'0');
+  const SS   = String(n.getSeconds()).padStart(2,'0');
+  hdrDate.textContent = `${dd}/${mm}/${yyyy}`;
+  hdrTime.textContent = `${HH}:${MM}:${SS}`;
+}
+function _syncStats() {
+  const todayICs = new Set(S.todayAtt.map(a => a.ic));
+  const present  = S.patients.filter(p => todayICs.has(p.ic)).length;
+  _el('stTotal').textContent   = S.patients.length;
+  _el('stPresent').textContent = present;
+  _el('stAbsent').textContent  = S.patients.length - present;
+}
+function _el(id) { return document.getElementById(id) }
+
+// ═══════════════════════════════════
+//  LOADING OVERLAY
+// ═══════════════════════════════════
+let _ovTimer;
+function showOverlay(msg){
+  const ov=document.getElementById('overlay');
+  if(msg) ov.querySelector('.ov-sub').textContent=msg;
+  else     ov.querySelector('.ov-sub').textContent='Patient Adherence & Treatment Update Hub';
+  ov.classList.remove('gone');
+}
+function hideOverlay(){
+  clearTimeout(_ovTimer);
+  _ovTimer=setTimeout(()=>document.getElementById('overlay').classList.add('gone'),450);
+}
+
+// ═══════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════
+let _toastTimer;
+function showToast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(type||'');
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ═══════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════
+function initials(name){
+  return (name||'?').split(' ').map(w=>w[0]||'').join('').substring(0,2).toUpperCase();
+}
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION  (5 pages)
+// ═══════════════════════════════════════════════════════
+const Nav = {
+  go(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+    _el('pg-' + page).classList.add('active');
+    const nb = _el('nb-' + page);
+    if (nb) nb.classList.add('on');
+    if (page === 'attend')   Attend.refresh();
+    if (page === 'report')   Rpt.renderPatList();
+    if (page === 'analysis') Analysis.load();
+    if (page === 'admin')    Admin.renderList();
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  HOME
+// ═══════════════════════════════════════════════════════
+const Home = {
+  render() {
+    const todayICs = new Set(S.todayAtt.map(a => a.ic));
+    const active   = S.patients.filter(p => p.active !== false);
+    const grid     = _el('patientGrid');
+    if (!active.length) {
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3m-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3m0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13m8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        <h3>Tiada Pesakit Berdaftar</h3><p>Tambah pesakit di tab Tetapan</p></div>`;
+      return;
+    }
+    grid.innerHTML = active.map(p => {
+      const here = todayICs.has(p.ic);
+      // Inside Home.render(), replace the entire map() return template:
+return `<div class="s-card${here ? ' present' : ''} fade-up" onclick="Admin.openEdit('${p.id}')">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+    <div class="s-avatar" style="margin-bottom:0">${initials(p.name)}</div>
+    <div style="background:rgba(0,0,0,.04);border-radius:7px;padding:4px 6px;display:flex;align-items:center">
+      <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:var(--txt3)"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm17.71-10.04a1 1 0 000-1.42l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.82z"/></svg>
+    </div>
+  </div>
+  <div class="s-name">${p.name}</div>
+  <div class="p-status ${here ? 'present' : 'absent'}">${here ? '✓ Hadir' : '● Belum Hadir'}</div>
+  <div>
+    <span class="chip chip-${p.category}">${p.category}</span>
+    <span class="chip chip-${p.phase}">${p.phase === 'INTENSIVE' ? 'Intensif' : 'Penyelenggaraan'}</span>
+  </div>
+  ${p.phone
+    ? `<div class="p-contact" onclick="event.stopPropagation()">
+         <a class="p-ab" href="tel:${p.phone}" aria-label="Telefon ${p.phone}">📞</a>
+         ${here ? '' : `<a class="p-ab wa" href="${waLink(p)}" target="_blank" rel="noopener">💬 Ingatkan</a>`}
+       </div>`
+    : `<div class="p-nophone">＋ Tiada no. telefon</div>`}
+</div>`;
+    }).join('');
+  },
+  renderUnregBadge() {
+    const el = _el('unregBadge');
+    if (!el) return;
+    const count = S.unregistered.length;
+    if (count === 0) { el.style.display = 'none'; return; }
+    el.style.display = 'flex';
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;flex:1">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(239,68,68,.15);
+          display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--red)">
+            <path d="M12 2a10 10 0 100 20A10 10 0 0012 2m1 15h-2v-2h2zm0-4h-2V7h2z"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:800;color:var(--red)">${count} Pesakit TB Belum Daftar</div>
+          <div style="font-size:11px;color:var(--txt2);margin-top:1px">Ditemui dalam PRIMA hari ini</div>
+        </div>
+      </div>
+      <button onclick="Nav.go('attend')" style="padding:8px 12px;border:none;border-radius:8px;
+        background:var(--red);color:#fff;font-family:'Outfit',sans-serif;
+        font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">
+        Semak →
+      </button>`;
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  ATTENDANCE
+// ═══════════════════════════════════════════════════════
+const Attend = {
+  refresh() {
+    showOverlay('Memuatkan kehadiran…');
+    GAS.call('getTodayAttendance', [], att => {
+      S.todayAtt = att || [];
+      _syncStats();
+      Attend.renderList();
+      Home.render();
+      hideOverlay();
+    });
+  },
+  scan() {
+    showOverlay('Mengimbas rekod PRIMA…');
+    GAS.call('scanAndCapture', [], res => {
+      if (!res.success) { hideOverlay(); showToast(res.message || 'Ralat imbasan', 'err'); return; }
+
+      // Store unregistered for badge + pending section
+      S.unregistered = res.unregistered || [];
+
+      const parts = [];
+      if (res.newCaptures > 0) parts.push(`✅ ${res.newCaptures} ditambah`);
+      if (res.skipNotTB  > 0) parts.push(`${res.skipNotTB} bukan TB`);
+      if (res.skipNoIC   > 0) parts.push(`⚠️ ${res.skipNoIC} belum daftar`);
+      if (res.skipDupe   > 0) parts.push(`${res.skipDupe} sudah log`);
+      const msg = (parts.length ? parts.join(' · ') : 'Tiada rekod baru')
+        + ` [${res.source || 'TODAY LIST'}: ${res.totalRows || 0} baris]`;
+
+      GAS.call('getTodayAttendance', [], att => {
+        S.todayAtt = att || [];
+        _syncStats();
+        Home.render();
+        Home.renderUnregBadge();
+        Attend.renderList();
+        hideOverlay();
+        showToast(msg, res.newCaptures > 0 ? 'ok' : '');
+      });
+    });
+  },
+  renderList() {
+    const n = new Date();
+    const dd = String(n.getDate()).padStart(2,'0');
+    const mm = String(n.getMonth()+1).padStart(2,'0');
+    const yyyy = n.getFullYear();
+    const dateStr = `${dd}/${mm}/${yyyy}`;
+
+    _el('scanCard').innerHTML = `
+      <div class="scan-card">
+        <div>
+          <h3>📋 Imbasan PRIMA</h3>
+          <p>${dateStr} · ${S.todayAtt.length} rekod ditemui</p>
+        </div>
+        <button class="btn btn-w" onclick="Attend.scan()" style="padding:9px 14px;font-size:12px">
+          <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:currentColor">
+            <path d="M17.65 6.35A7.958 7.958 0 0012 4a8 8 0 00-8 8 8 8 0 008 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18a6 6 0 010-12c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/>
+          </svg>
+          Imbas Semula
+        </button>
+      </div>`;
+
+    const el = _el('attendList');
+
+    // ── Pending (unregistered) section ──
+    let pendingHTML = '';
+    if (S.unregistered.length) {
+      const rows = S.unregistered.map(u => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+          background:#FFF1F2;border-radius:var(--r3);margin-bottom:7px;
+          border-left:3px solid var(--red)">
+          <div style="width:36px;height:36px;border-radius:9px;
+            background:linear-gradient(135deg,#EF4444,#F97316);
+            display:flex;align-items:center;justify-content:center;
+            color:#fff;font-size:13px;font-weight:800;flex-shrink:0">
+            ${initials(u.name)}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:var(--txt);
+              white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name || '—'}</div>
+            <div style="font-size:10px;color:var(--txt2);margin-top:1px">${maskIC(u.ic)} · ${u.bangsa || '—'}</div>
+          </div>
+          <button onclick="Admin.quickRegFromPending('${u.ic}','${(u.name||'').replace(/'/g,"\\'")}','${u.bangsa||''}','${u.phone||''}')"
+            style="padding:7px 11px;border:none;border-radius:7px;
+            background:var(--navy);color:#fff;font-family:'Outfit',sans-serif;
+            font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap">
+            + Daftar
+          </button>
+        </div>`).join('');
+
+      pendingHTML = `
+        <div style="margin-bottom:16px">
+          <div class="sec-title" style="color:var(--red);display:flex;align-items:center;gap:6px">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--red)">
+              <path d="M12 2a10 10 0 100 20A10 10 0 0012 2m1 15h-2v-2h2zm0-4h-2V7h2z"/>
+            </svg>
+            Belum Daftar (${S.unregistered.length})
+          </div>
+          ${rows}
+        </div>`;
+    }
+
+    // ── Registered attendance section ──
+    let attHTML = '';
+    if (!S.todayAtt.length) {
+      attHTML = `<div class="empty">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2m1 15H11v-2h2zm0-4H11V7h2z"/></svg>
+        <h3>Tiada Rekod</h3>
+        <p>Tekan Imbas Semula untuk semak rekod terbaru</p>
+      </div>`;
+    } else {
+      attHTML = `
+        <div class="sec-title" style="display:flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--green2)">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+          </svg>
+          Hadir Hari Ini (${S.todayAtt.length})
+        </div>
+        ${S.todayAtt.map((a, i) => {
+          const t = (a.timestamp.split(' ')[1] || a.timestamp).substring(0, 5);
+          return `<div class="att-item fade-up">
+            <div class="att-time">${t}<span>#${i+1}</span></div>
+            <div class="att-info">
+              <div class="att-name">${a.name}</div>
+              <div style="font-size:10px;color:var(--txt2)">${maskIC(a.ic)} · ${a.bangsa || '—'}</div>
+              <div style="margin-top:4px">
+                <span class="chip chip-${a.category}">${a.category}</span>
+                <span class="chip chip-${a.phase}">${a.phase==='INTENSIVE'?'Intensif':'Penyelenggaraan'}</span>
+                ${a.bayar ? `<span style="font-size:9px;color:var(--txt2);margin-left:4px">${a.bayar}</span>` : ''}
+              </div>
+            </div>
+          </div>`;
+        }).join('')}`;
+    }
+
+    el.innerHTML = pendingHTML + attHTML;
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  ADMIN
+// ═══════════════════════════════════════════════════════
+const Admin = {
+  add() {
+    const name  = _el('inName').value.trim();
+    const ic    = _el('inIC').value.trim().replace(/\D/g, '');
+    const phone = cleanPhone(_el('inPhone').value);
+    const cat   = _el('inCat').value;
+    const phase = _el('inPhase').value;
+    if (!name)           { showToast('Sila masukkan nama', 'err'); return; }
+    if (ic.length !== 12){ showToast('IC mesti 12 digit', 'err');  return; }
+    if (phone && !phoneOk(phone)) { showToast('No. telefon tidak sah (cth: 0123456789)', 'err'); return; }
+    showOverlay('Mendaftar pesakit…');
+    GAS.call('addPatient', [{ name, ic, phone, category: cat, phase }], res => {
+      hideOverlay();
+      if (!res.success) { showToast(res.message || 'Ralat pendaftaran', 'err'); return; }
+      showToast('✅ Pesakit berjaya didaftarkan!', 'ok');
+      _el('inName').value = ''; _el('inIC').value = ''; _el('inPhone').value = '';
+      GAS.call('getPatients', [], pts => {
+        S.patients = pts || [];
+        Admin.renderList(); Home.render(); Rpt.renderPatList();
+      });
+    });
+  },
+  renderList() {
+    const active = S.patients.filter(p => p.active !== false);
+    const el = _el('adminList');
+    if (!active.length) { el.innerHTML = '<p style="color:var(--txt3);font-size:13px;text-align:center;padding:16px">Tiada pesakit aktif</p>'; return; }
+    el.innerHTML = active.map(p => `
+      <div class="sl-item fade-up">
+        <div class="sl-avatar">${initials(p.name)}</div>
+        <div class="sl-info">
+          <div class="sl-name">${p.name}</div>
+          <div class="sl-zone">${maskIC(p.ic)}${p.phone ? ' · ' + p.phone : ''}</div>
+          <div style="margin-top:3px"><span class="chip chip-${p.category}">${p.category}</span><span class="chip chip-${p.phase}">${p.phase==='INTENSIVE'?'Intensif':'Penyelenggaraan'}</span></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn" style="padding:8px 10px;background:var(--sky);color:var(--navy)" onclick="Admin.openEdit('${p.id}')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm17.71-10.04a1 1 0 000-1.42l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.82z"/></svg>
+          </button>
+          <button class="btn btn-d" style="padding:8px 10px" onclick="Admin.askDelete('${p.id}','${p.name.replace(/'/g,"\\'")}')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor"><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 002 2h8a2 2 0 002-2V7H6v12z"/></svg>
+          </button>
+        </div>
+      </div>`).join('');
+  },
+quickRegFromPending(ic, name, bangsa, phone) {
+    // Open the unregistered modal pre-filled with this patient's data (phone comes from PRIMA)
+    S._pendingUnreg = { ic, name, bangsa };
+    _el('qrPhone').value = phone || '';
+    _el('unregModalName').textContent = name || ic;
+    _el('unregModalIC').textContent   = maskIC(ic);
+    _el('unregModalBangsa').textContent = bangsa || '—';
+    Mod.open('modalQuickReg');
+  },
+  confirmQuickReg() {
+    if (!S._pendingUnreg) return;
+    const { ic, name, bangsa } = S._pendingUnreg;
+    const cat   = _el('qrCat').value;
+    const phase = _el('qrPhase').value;
+    const phone = cleanPhone(_el('qrPhone').value);
+    if (phone && !phoneOk(phone)) { showToast('No. telefon tidak sah (cth: 0123456789)', 'err'); return; }
+    Mod.close('modalQuickReg');
+    showOverlay('Mendaftar…');
+    GAS.call('addPatient', [{ name, ic, phone, category: cat, phase }], res => {
+      hideOverlay();
+      showToast(res.success ? `✅ ${name} didaftarkan!` : (res.message || 'Ralat'), res.success ? 'ok' : 'err');
+      if (res.success) {
+        // Remove from pending list
+        S.unregistered = S.unregistered.filter(u => u.ic !== ic);
+        S._pendingUnreg = null;
+        GAS.call('getPatients', [], pts => {
+          S.patients = pts || [];
+          Home.render();
+          Home.renderUnregBadge();
+          Admin.renderList();
+          Rpt.renderPatList();
+          Attend.renderList();
+        });
+      }
+    });
+  },
+openEdit(id) {
+  S.pendingEdit = id;
+  const p = S.patients.find(x => x.id === id);
+  if (!p) return;
+
+  // Store original phase to detect changes
+  S._editOrigPhase = p.phase;
+  S._editPhase     = p.phase;
+  _el('editName').textContent      = maskIC(p.ic);
+  _el('editNameInput').value       = p.name;
+  _el('editPhone').value           = p.phone || '';
+  _el('editCat').value             = p.category;
+  _el('phaseChangeBanner').style.display = 'none';
+  Mod.open('modalEdit');
+  
+  // Delay setPhase until after modal is visible in DOM
+  setTimeout(() => Admin.setPhase(p.phase, true), 50);
+},
+  // Highlight the active phase button
+setPhase(val, silent) {
+  S._editPhase = val;
+  ['INTENSIVE','MAINTENANCE'].forEach(v => {
+    const btn = _el('phaseBtn-' + v);
+    if (!btn) return;
+    const active = v === val;
+    btn.classList.toggle('active-phase', active);
+    btn.style.background = active
+      ? (v === 'INTENSIVE'
+          ? 'linear-gradient(135deg,#EF4444,#F97316)'
+          : 'linear-gradient(135deg,#16A34A,#00B4A2)')
+      : 'var(--sky)';
+    btn.style.color = active ? '#fff' : 'var(--txt2)';
+  });
+  // Show banner only if phase differs from original and not silent
+  const changed = S._editOrigPhase && S._editPhase !== S._editOrigPhase;
+  if (_el('phaseChangeBanner'))
+    _el('phaseChangeBanner').style.display = (!silent && changed) ? 'block' : 'none';
+},
+confirmEdit() {
+  if (!S.pendingEdit) return;
+  const name  = _el('editNameInput').value.trim();
+  const cat   = _el('editCat').value;
+  const phase = S._editPhase || _el('editCat').closest('.modal-sheet').querySelector('[id^="phaseBtn-"][style*="gradient"]')?.id?.replace('phaseBtn-','') || 'INTENSIVE';
+
+  const phone = cleanPhone(_el('editPhone').value);
+  if (!name) { showToast('Sila masukkan nama', 'err'); return; }
+  if (phone && !phoneOk(phone)) { showToast('No. telefon tidak sah (cth: 0123456789)', 'err'); return; }
+  Mod.close('modalEdit');
+  showOverlay('Mengemaskini…');
+  GAS.call('updatePatient', [S.pendingEdit, cat, phase, name, phone], res => {
+    hideOverlay();
+    showToast(res.success ? '✅ Maklumat dikemaskini!' : (res.message || 'Ralat'), res.success ? 'ok' : 'err');
+    if (res.success) {
+      const idx = S.patients.findIndex(x => x.id === S.pendingEdit);
+      if (idx > -1) {
+        S.patients[idx].name     = name;
+        S.patients[idx].category = cat;
+        S.patients[idx].phase    = phase;
+        S.patients[idx].phone    = phone;
+      }
+      Admin.renderList();
+      Home.render();
+      Rpt.renderPatList();
+      S.pendingEdit    = null;
+      S._editOrigPhase = null;
+      S._editPhase     = null;
+    }
+  });
+},
+  askDelete(id, name) {
+    S.pendingDelete = id;
+    _el('deleteLabel').textContent = 'Anda akan memadam: ' + name;
+    Mod.open('modalDelete');
+  },
+  confirmDelete() {
+    if (!S.pendingDelete) return;
+    Mod.close('modalDelete');
+    showOverlay('Memadam…');
+    GAS.call('deletePatient', [S.pendingDelete], () => {
+      GAS.call('getPatients', [], pts => {
+        S.patients = pts || [];
+        Admin.renderList(); Home.render(); Rpt.renderPatList();
+        S.pendingDelete = null;
+        hideOverlay();
+        showToast('Pesakit diarkibkan', 'ok');
+      });
+    });
+  },
+
+  saveSettings() {
+    const payload = {
+      superName: _el('inSuperName').value.trim(),
+      orgName:   _el('inOrgName').value.trim()
+    };
+    S.settings = { ...S.settings, ...payload };
+    try { localStorage.setItem('patuh_cfg', JSON.stringify(S.settings)); } catch(e) {}
+    GAS.call('saveSettings', [payload], res => {
+      showToast(res.success ? '✅ Tetapan disimpan!' : 'Ralat simpan', res.success ? 'ok' : 'err');
+    });
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  REPORT  (day-1 to current, 30 records per page)
+// ═══════════════════════════════════════════════════════
+const Rpt = {
+  renderPatList() {
+    const active = S.patients.filter(p => p.active !== false);
+    const el = _el('rptPatList');
+    if (!active.length) { el.innerHTML = '<div class="empty"><p>Tiada pesakit</p></div>'; return; }
+    el.innerHTML = active.map(p => `
+      <div class="r-staff-row${S.rptSelPatient===p.id?' sel':''}" id="rs-${p.id}" onclick="Rpt.sel('${p.id}')">
+        <div class="r-radio"><div class="r-radio-dot"></div></div>
+        <div class="sl-avatar" style="width:38px;height:38px;font-size:14px">${initials(p.name)}</div>
+        <div class="sl-info">
+          <div class="sl-name">${p.name}</div>
+          <div class="sl-zone">${maskIC(p.ic)} · <span class="chip chip-${p.category}">${p.category}</span></div>
+        </div>
+      </div>`).join('');
+  },
+  sel(id) {
+    S.rptSelPatient = id;
+    document.querySelectorAll('.r-staff-row').forEach(r => r.classList.toggle('sel', r.id === 'rs-' + id));
+  },
+  generate() {
+    if (!S.rptSelPatient) { showToast('Sila pilih pesakit', 'err'); return; }
+    showOverlay('Menjana laporan…');
+    GAS.call('generateReport', [S.rptSelPatient], data => {
+      hideOverlay();
+      if (!data.success) { showToast(data.message || 'Ralat', 'err'); return; }
+      _el('rptContent').innerHTML = Rpt.buildHTML(data);
+      Mod.open('modalReport');
+    });
+  },
+  buildHTML(d) {
+    const p   = d.patient;
+    const att = d.attendance;
+    const org = S.settings.orgName   || d.settings?.orgName   || '—';
+    const sup = S.settings.superName || d.settings?.superName || '—';
+    const PAGE = 30;
+    let html = '';
+
+    for (let i = 0; i < Math.max(1, att.length); i += PAGE) {
+      const chunk = att.slice(i, i + PAGE);
+      const pgNo  = Math.floor(i / PAGE) + 1;
+      const rows  = chunk.map((a, idx) => `
+        <tr>
+          <td class="no-col">${i + idx + 1}</td>
+          <td class="dt-col">${a.date}</td>
+          <td>${(a.timestamp.split(' ')[1] || a.timestamp).substring(0,8)}</td>
+          <td><span class="chip chip-${a.category}" style="font-size:8px">${a.category}</span></td>
+          <td style="font-size:8px">${a.phase==='INTENSIVE'?'Intensif':'Penyelenggaraan'}</td>
+          <td>${a.bayar || '—'}</td>
+          <td>${a.bangsa || '—'}</td>
+        </tr>`).join('');
+
+      html += `<div style="${pgNo > 1 ? 'page-break-before:always;padding-top:16px' : ''}">
+        ${pgNo === 1 ? `
+          <div style="text-align:center;margin-bottom:14px">
+            <div style="font-size:15px;font-weight:900;color:#0F4C81">LAPORAN PEMATUHAN RAWATAN TB</div>
+            <div style="font-size:12px;font-weight:700;color:#4B6A8A;margin-top:2px">${org}</div>
+            <hr style="border:1.5px solid #D5E8F5;margin:10px 0">
+            <div style="font-size:11px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;line-height:2">
+              <span><b>Nama:</b> ${p.name}</span>
+              <span><b>IC:</b> ${maskIC(p.ic)}</span>
+              <span><b>Kategori:</b> ${p.category}</span>
+              <span><b>Fasa:</b> ${p.phase==='INTENSIVE'?'Intensif':'Penyelenggaraan'}</span>
+              <span><b>Tarikh Daftar:</b> ${p.regDate}</span>
+              <span><b>Jumlah Kehadiran:</b> ${att.length}</span>
+            </div>
+          </div>` : `<div style="text-align:center;font-size:10px;color:#4B6A8A;margin-bottom:8px"><b>${p.name}</b> — Muka ${pgNo} / ${Math.ceil(Math.max(1,att.length)/PAGE)}</div>`}
+        <div style="overflow-x:auto">
+          <table class="rpt-table" style="width:100%;font-size:10px">
+            <thead><tr>
+              <th class="no-col">No.</th><th class="dt-col">Tarikh</th><th>Masa Tiba</th>
+              <th>Kategori</th><th>Fasa</th><th>Bayaran</th><th>Bangsa</th>
+            </tr></thead>
+            <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:#8AAEC8;padding:16px">Tiada rekod kehadiran</td></tr>'}</tbody>
+          </table>
+        </div>
+        <p style="font-size:9px;color:#8AAEC8;text-align:right;margin-top:6px">
+          ${pgNo === Math.ceil(Math.max(1,att.length)/PAGE) ? 'Disediakan oleh: ' + sup + ' · ' : ''}
+          Dijana: ${d.generated} · PATUH System
+        </p>
+      </div>`;
+    }
+    return html;
+  },
+  print() {
+    const content = _el('rptContent').innerHTML;
+    const w = window.open('', '_blank');
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan TB - PATUH</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:10mm;margin:0}
+        table{width:100%;border-collapse:collapse;font-size:8px}
+        th,td{border:1px solid #C8E0F5;padding:4px 3px;text-align:center}
+        .no-col{width:28px;font-weight:800;color:#0F4C81;text-align:center}
+        .dt-col{background:#F0F7FF;font-weight:700}
+        thead th{background:#0F4C81;color:#fff;font-weight:700}
+        .chip{display:inline-flex;padding:1px 5px;border-radius:99px;font-size:7px;font-weight:700}
+        .chip-PR1{background:#E0F2FE;color:#0369A1}
+        .chip-PR2{background:#EDE9FE;color:#6D28D9}
+        @page{size:A4 portrait;margin:10mm}
+      </style></head><body>${content}</body></html>`);
+    w.document.close();
+    setTimeout(() => w.print(), 600);
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  ANALYSIS
+// ═══════════════════════════════════════════════════════
+const Analysis = {
+  _cat: null, _phase: null, _loaded: false,
+  setCat(val, btn) {
+    this._cat = val;
+    document.querySelectorAll('#catFilter .f-chip').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on'); this.load();
+  },
+  setPhase(val, btn) {
+    this._phase = val;
+    document.querySelectorAll('#phaseFilter .f-chip').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on'); this.load();
+  },
+  load() {
+    showOverlay('Mengira analisis…');
+    GAS.call('getAnalytics', [this._cat, this._phase], data => {
+      hideOverlay(); Analysis.render(data); this._loaded = true;
+    });
+  },
+  render(d) {
+    const maxT = Math.max(...d.monthlyTrend.map(m => m.count), 1);
+    const bars = d.monthlyTrend.map(m => {
+      const h = Math.max(6, Math.round((m.count / maxT) * 68));
+      return `<div class="t-bar-col">
+        <div class="t-bar-val">${m.count}</div>
+        <div class="t-bar-wrap"><div class="t-bar" style="height:${h}px"></div></div>
+        <div class="t-bar-lbl">${m.month.substring(5)}</div>
+      </div>`;
+    }).join('');
+
+    const pct = d.total ? Math.round(d.compliant / d.total * 100) : 0;
+
+    const topRows = d.topPatients.slice(0, 10).map((p, i) => `
+      <div class="top-item fade-up">
+        <div class="top-rank">${i+1}</div>
+        <div class="top-info">
+          <div class="top-name">${p.name}</div>
+          <div class="top-meta"><span class="chip chip-${p.category}">${p.category}</span> <span class="chip chip-${p.phase}">${p.phase==='INTENSIVE'?'Intensif':'Penyelenggaraan'}</span></div>
+        </div>
+        <div class="top-visits">${p.visits}</div>
+      </div>`).join('');
+
+    _el('analysisContent').innerHTML = `
+      <div class="comp-row">
+        <div class="comp-card">
+          <div class="comp-n">${d.total}</div>
+          <div class="comp-l">Jumlah Pesakit (ditapis)</div>
+        </div>
+        <div class="comp-card">
+          <div class="comp-n ${pct >= 70 ? 'green' : 'red'}">${pct}%</div>
+          <div class="comp-l">Pematuhan Bulan Ini</div>
+        </div>
+      </div>
+      <div class="stats-row" style="margin-bottom:18px">
+        <div class="stat"><div class="stat-n" style="-webkit-text-fill-color:#0369A1">${d.pr1}</div><div class="stat-l">PR1</div></div>
+        <div class="stat"><div class="stat-n" style="-webkit-text-fill-color:#6D28D9">${d.pr2}</div><div class="stat-l">PR2</div></div>
+        <div class="stat"><div class="stat-n">${d.intensive}</div><div class="stat-l">Intensif</div></div>
+      </div>
+      <div class="a-card">
+        <div class="a-card-title">
+          <svg viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+          Trend Kehadiran (6 Bulan Lepas)
+        </div>
+        <div class="trend-bars">${bars || '<p style="color:var(--txt3);font-size:12px;text-align:center;width:100%">Tiada data</p>'}</div>
+      </div>
+      <div class="a-card" style="margin-top:14px">
+        <div class="a-card-title">
+          <svg viewBox="0 0 24 24"><path d="M9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4zm2.5 2.25h-15V5H21V19.25zM19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"/></svg>
+          Ranking Kehadiran Pesakit
+        </div>
+        ${topRows || '<p style="color:var(--txt3);font-size:12px;text-align:center;padding:16px">Tiada data</p>'}
+      </div>`;
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  UTILS  (new — maskIC + loadSettings)
+// ═══════════════════════════════════════════════════════
+function maskIC(ic) {
+  if (!ic || ic.length < 6) return ic || '—';
+  return ic.substring(0, 6) + '****' + (ic.length > 10 ? ic.substring(10) : '');
+}
+
+// phone helpers: local format 0123456789 → WhatsApp number 60123456789
+function cleanPhone(v) {
+  let d = String(v || '').replace(/\D/g, '');
+  if (!d) return '';
+  if (d.indexOf('60') === 0 && d.length >= 11) d = '0' + d.slice(2);
+  else if (d.charAt(0) === '1' && d.length >= 9 && d.length <= 10) d = '0' + d;
+  return d;
+}
+function phoneOk(p) { return /^0\d{8,10}$/.test(p); }
+function waLink(p) {
+  const num = '6' + p.phone;                                   // 0123456789 → 60123456789
+  const org = S.settings.orgName || 'klinik';
+  // generic wording on purpose: the message never names the illness
+  const msg = 'Salam ' + p.name + ', ini peringatan daripada ' + org + ' supaya anda hadir ke klinik hari ini untuk pengambilan ubat / temujanji anda. Terima kasih.';
+  return 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg);
+}
+
+function loadSettings() {
+  try { S.settings = JSON.parse(localStorage.getItem('patuh_cfg') || '{}'); } catch(e){}
+  if (S.settings.superName) _el('inSuperName').value = S.settings.superName;
+  if (S.settings.orgName)   _el('inOrgName').value   = S.settings.orgName;
+}
+</script>
+</body>
+</html>
