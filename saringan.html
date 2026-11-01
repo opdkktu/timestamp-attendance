@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F5C56">
+<title>Saringan Minda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F7F6; --card:#fff; --ink:#0E2A28; --ink2:#4F6B68; --line:#DCE8E6;
+  --teal:#0F5C56; --teal2:#1C8F84;
+  --red:#C62828; --red-bg:#FDECEC; --amb:#B45309; --amb-bg:#FFF4E0; --grn:#15803D; --grn-bg:#E8F7EE;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0C1716; --card:#142423; --ink:#E6F2F0; --ink2:#9DB8B4; --line:#25403D;
+    --red:#FF8A80; --red-bg:#3A1717; --amb:#FFB74D; --amb-bg:#3A2B10; --grn:#6EE7A0; --grn-bg:#12301F; }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:500 15px/1.45 'Manrope',system-ui,sans-serif;min-height:100vh;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+.hdr{background:linear-gradient(135deg,#0B3D3A,var(--teal) 60%,var(--teal2));color:#fff;padding:max(12px,env(safe-area-inset-top)) 16px 14px;position:sticky;top:0;z-index:5;box-shadow:0 6px 20px -10px rgba(0,0,0,.5)}
+.hdr-row{display:flex;align-items:center;gap:12px}
+.back{color:#fff;text-decoration:none;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.ttl{flex:1;min-width:0}
+.ttl h1{margin:0;font-size:19px;font-weight:800;letter-spacing:.2px}
+.ttl p{margin:1px 0 0;font-size:12px;opacity:.8}
+.rf{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.rf svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.rf.turning svg{animation:turn .8s linear infinite}
+@keyframes turn{to{transform:rotate(360deg)}}
+.wrap{max-width:640px;margin:0 auto;padding:14px 14px 0}
+.priv{display:flex;gap:8px;align-items:flex-start;background:var(--amb-bg);color:var(--amb);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:600;margin-bottom:12px}
+.chips{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{border:1.5px solid var(--line);background:var(--card);color:var(--ink2);border-radius:99px;padding:8px 14px;font:700 13px 'Manrope',sans-serif;cursor:pointer;white-space:nowrap;min-height:38px}
+.chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.chip b{margin-left:5px}
+.card{background:var(--card);border-radius:18px;padding:14px 14px 12px 18px;margin-bottom:12px;position:relative;box-shadow:0 8px 22px -16px rgba(11,61,58,.55);border:1.5px solid transparent;overflow:hidden}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--grn)}
+.card.amber::before{background:#F59E0B}
+.card.red::before,.card.critical::before{background:var(--red)}
+.card.critical{border-color:var(--red);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 4px rgba(198,40,40,.22)}}
+@media (prefers-reduced-motion: reduce){.card.critical{animation:none}.rf.turning svg{animation:none}}
+.card.hl{border-color:var(--teal2);box-shadow:0 0 0 4px rgba(28,143,132,.25)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.qn{font-weight:800;font-size:13px;color:var(--teal);background:var(--grn-bg);padding:3px 10px;border-radius:99px}
+.when{font-size:12px;color:var(--ink2);font-weight:600}
+.nm{font-size:17px;font-weight:800;margin:8px 0 1px;word-break:break-word}
+.meta{font-size:12.5px;color:var(--ink2);margin-bottom:10px}
+.alert{background:var(--red-bg);color:var(--red);border-radius:12px;padding:10px 12px;font-weight:800;font-size:13px;margin-bottom:10px;display:flex;gap:8px}
+.sc{display:grid;grid-template-columns:1fr;gap:6px}
+.pill{display:flex;align-items:center;gap:10px;border-radius:12px;padding:9px 12px}
+.pill.green{background:var(--grn-bg);color:var(--grn)} .pill.amber{background:var(--amb-bg);color:var(--amb)} .pill.red{background:var(--red-bg);color:var(--red)}
+.pill .k{font-weight:800;font-size:12.5px;width:74px;flex:none}
+.pill .v{font-weight:800;font-size:15px;flex:none}
+.pill .l{font-size:12.5px;font-weight:700;margin-left:auto;text-align:right}
+.dot{width:10px;height:10px;border-radius:50%;background:currentColor;flex:none}
+.empty{text-align:center;color:var(--ink2);padding:44px 18px}
+.empty .big{font-size:40px;margin-bottom:6px}
+.err{background:var(--red-bg);color:var(--red);border-radius:14px;padding:16px;font-weight:700;text-align:center}
+.sk{height:150px;border-radius:18px;margin-bottom:12px;background:linear-gradient(90deg,var(--line),var(--card),var(--line));background-size:200% 100%;animation:sh 1.3s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-row">
+    <a class="back" href="./dashboard.html" aria-label="Kembali">‹</a>
+    <div class="ttl"><h1>🧠 Saringan Minda</h1><p id="status">Memuatkan…</p></div>
+    <button class="rf" id="rf" aria-label="Muat semula"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg></button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="priv" role="note">🔒 <span>Maklumat sulit pesakit. Jangan tangkap skrin, jangan kongsi di WhatsApp. Keputusan ini untuk tindakan klinikal sahaja.</span></div>
+  <div class="chips" id="chips" role="tablist">
+    <button class="chip on" data-f="all" role="tab">Semua<b id="nAll">0</b></button>
+    <button class="chip" data-f="abn" role="tab">Abnormal<b id="nAbn">0</b></button>
+    <button class="chip" data-f="today" role="tab">Hari ini<b id="nToday">0</b></button>
+  </div>
+  <div id="list"><div class="sk"></div><div class="sk"></div></div>
+</main>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let ALL = [], FILTER = 'all', FOCUS = new URLSearchParams(location.search).get('id') || '', DAYS = 14, busy = false;
+
+function tok(){ try{ return sessionStorage.getItem('kkah_session_token') || ''; }catch(e){ return ''; } }
+function goLogin(){ try{ sessionStorage.removeItem('kkah_session_token'); }catch(e){} location.replace('./login.html'); }
+
+async function call(body){
+  const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body) });
+  return r.json();
+}
+function isToday(t){ const d = new Date(t), n = new Date(); return d.toDateString() === n.toDateString(); }
+function fmtWhen(t){
+  const d = new Date(t); if (isNaN(d)) return '';
+  const hm = d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+  return isToday(t) ? 'Hari ini · ' + hm : d.toLocaleDateString('en-GB', {day:'2-digit', month:'short'}) + ' · ' + hm;
+}
+function pill(k, o, extra){
+  const ic = o.c === 'red' ? '🔴' : o.c === 'amber' ? '🟠' : '🟢';
+  return '<div class="pill ' + o.c + '"><span class="dot" aria-hidden="true"></span><span class="k">' + esc(k) + '</span><span class="v">' + esc(o.s) + '</span><span class="l">' + esc(o.l || '') + '<span class="sr" hidden>' + ic + '</span></span></div>';
+}
+function cardHtml(x){
+  const g = [x.gender, x.age ? x.age + ' tahun' : ''].filter(Boolean).join(' · ');
+  return '<article class="card ' + x.overall + (x.id === FOCUS ? ' hl' : '') + '" id="c-' + esc(x.id) + '">' +
+    '<div class="top"><span class="qn">' + (x.qnum ? 'No. ' + esc(x.qnum) : 'Saringan') + '</span><span class="when">' + esc(fmtWhen(x.time)) + '</span></div>' +
+    '<div class="nm">' + esc(x.name) + '</div><div class="meta">' + esc(g || '—') + '</div>' +
+    (x.ideation ? '<div class="alert" role="alert">🚨 <span>Ada fikiran mencederakan diri (PHQ-9 soalan 9). Sila semak pesakit SEGERA.</span></div>' : '') +
+    '<div class="sc">' + pill('Whooley', { c:x.whooley.c, s:x.whooley.s, l:'' }) +
+    (x.phq.s !== '—' ? pill('PHQ-9', x.phq) : '<div class="pill green"><span class="dot"></span><span class="k">PHQ-9</span><span class="l">Tidak diperlukan</span></div>') +
+    pill(x.gad.tool, x.gad) + '</div></article>';
+}
+function render(){
+  const abn = ALL.filter(x => x.overall === 'red' || x.overall === 'critical');
+  const today = ALL.filter(x => isToday(x.time));
+  $('nAll').textContent = ALL.length; $('nAbn').textContent = abn.length; $('nToday').textContent = today.length;
+  const rows = FILTER === 'abn' ? abn : FILTER === 'today' ? today : ALL;
+  $('list').innerHTML = rows.length ? rows.map(cardHtml).join('') :
+    '<div class="empty"><div class="big">🌿</div><div><b>Tiada rekod</b></div><div>' + (FILTER === 'abn' ? 'Tiada keputusan abnormal.' : 'Belum ada saringan dihantar.') + '</div></div>';
+  if (FOCUS) { const el = $('c-' + FOCUS); if (el) { el.scrollIntoView({block:'center', behavior:'smooth'}); FOCUS = ''; } }
+}
+async function load(manual){
+  if (busy) return; if (!tok()) { goLogin(); return; }
+  busy = true; $('rf').classList.add('turning');
+  try{
+    const j = await call({ action:'saringanList', token:tok(), days:DAYS });
+    if (j.auth) { goLogin(); return; }
+    if (!j.ok) {
+      $('list').innerHTML = '<div class="err">' + esc(j.error || 'Ralat') + '</div>'; $('status').textContent = j.code === 'FORBIDDEN' ? 'Akses dihadkan' : 'Ralat'; return;
+    }
+    ALL = j.list || [];
+    if (FOCUS && !ALL.some(x => x.id === FOCUS) && DAYS < 60) { DAYS = 60; busy = false; $('rf').classList.remove('turning'); return load(); }
+    $('status').textContent = 'Dikemas kini ' + new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}) + ' · ' + DAYS + ' hari lepas';
+    render();
+  }catch(e){
+    $('status').textContent = 'Tiada sambungan';
+    if (!ALL.length) $('list').innerHTML = '<div class="err">Tiada sambungan internet. Ketik muat semula.</div>';
+  }finally{ busy = false; $('rf').classList.remove('turning'); }
+}
+$('rf').addEventListener('click', () => load(true));
+$('chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; FILTER = b.dataset.f; document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); render(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+setInterval(() => { if (!document.hidden) load(); }, 60000);
+load();
+</script>
+</body>
+</html>
