@@ -479,7 +479,7 @@ function fmt12(hms){
 
 /* ===================== prepare (everything in parallel) ===================== */
 /* ===================== Face ID / Touch ID gate (before the camera + faceprint start) ===================== */
-const BIO_REQUIRED = false;          // false = no gate at all
+const BIO_REQUIRED = true;          // false = no gate at all
 const BIO_ALLOW_NO_SENSOR = true;   // phone without Face ID / fingerprint / screen lock: true = let it through, false = block
 let bioUntil = 0, bioFails = 0, bioSaved = null, bioErr = null;
 const bioKey = () => 'kkah_ci_cred_' + (sessionStorage.getItem('kkah_ic') || '');
@@ -489,15 +489,15 @@ const bioAvailP = (async () => { try{ return !!(window.PublicKeyCredential && aw
 
 async function bioVerify(){            // true when the phone confirmed Face ID / Touch ID / screen lock
   const ic = sessionStorage.getItem('kkah_ic') || '', challenge = crypto.getRandomValues(new Uint8Array(32));
-  let id = ''; try{ id = localStorage.getItem(bioKey()) || ''; }catch(e){}
+  let id = ''; try{ id = localStorage.getItem('kkah_biometric_credential_id') || localStorage.getItem(bioKey()) || ''; }catch(e){}   // reuse the Face ID key made at login — never create a second one
   if(!id){                             // first time on this phone: create the Face ID key (this already asks for Face ID / Touch ID)
     const cred = await navigator.credentials.create({ publicKey:{ challenge, rp:{ name:'SIAGA' }, user:{ id:new TextEncoder().encode(ic), name:ic, displayName:ic },
-      pubKeyCredParams:[{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }], authenticatorSelection:{ authenticatorAttachment:'platform', userVerification:'required' }, timeout:60000, attestation:'none' } });
+      pubKeyCredParams:[{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }], authenticatorSelection:{ authenticatorAttachment:'platform', userVerification:'required', residentKey:'discouraged', requireResidentKey:false }, timeout:60000, attestation:'none' } });
     if(!cred) return false;
-    try{ localStorage.setItem(bioKey(), b64e(cred.rawId)); }catch(e){}
+    try{ localStorage.setItem(bioKey(), b64e(cred.rawId)); localStorage.setItem('kkah_biometric_credential_id', b64e(cred.rawId)); }catch(e){}
     return true;
   }
-  await navigator.credentials.get({ publicKey:{ challenge, allowCredentials:[{ id:b64d(id), type:'public-key' }], userVerification:'required', timeout:60000 } });
+  await navigator.credentials.get({ publicKey:{ challenge, allowCredentials:[{ id:b64d(id), type:'public-key', transports:['internal'] }], userVerification:'required', timeout:60000 } });
   return true;
 }
 function bioShow(msg){
@@ -515,7 +515,7 @@ async function bioGate(validMin, quiet){
   const gesture = navigator.userActivation ? navigator.userActivation.isActive : true;     // iPhone only allows the prompt right after a tap
   if(gesture){
     try{ if(await bioVerify()){ bioFails = 0; bioUntil = Date.now() + (validMin || 2) * 60000; return true; } }
-    catch(e){ bioErr = SiagaBio.explain(e); bioFails++; if(bioFails >= 2){ try{ localStorage.removeItem(bioKey()); }catch(_){} } }   // 2 fails in a row → the old key may be gone: make a fresh one next time
+    catch(e){ bioErr = SiagaBio.explain(e); bioFails++; if(bioFails >= 2){ try{ localStorage.removeItem(bioKey()); localStorage.removeItem('kkah_biometric_credential_id'); }catch(_){} } }   // 2 fails in a row → the old key may be gone: make a fresh one next time
   }
   if(!quiet) bioShow(bioErr ? bioErr.text + ' (kod: ' + bioErr.code + ')' : 'Sahkan bahawa ini anda sebelum imbasan muka dimulakan.');
   return false;
@@ -792,6 +792,7 @@ async function recordAttendance(){
       const data = await res.json();
       if(data.ok){ attReq = null; clearPending(); return onSuccess(data); }
       if(data.code === 'CHECKOUT_TOO_EARLY'){ attReq = null; recording = false; setStep('save', 'error'); cue.fail(); return showLockedAfter(data); }
+      if(data.code === 'ATT_RECORDED'){ attReq = null; recording = false; clearPending(); setStep('save', 'done'); $('ring').className = 'ring success'; setBanner('ok', '✅', 'SUDAH DIREKODKAN', data.error || 'Check In anda telah direkodkan hari ini.'); showButtons(false, true); return; }
       if(data.retry) continue;                                  // server busy → try again (same reqId)
       attReq = null; return failRecord(data.error || 'Tidak dapat merekod kehadiran.', false);
     }catch(err){ /* network / timeout → next attempt */ }
@@ -826,6 +827,7 @@ function onSuccess(data){
   $('checkBadge').classList.add('show');
   $('ring').className = 'ring success';
   setBanner('ok', isOc ? '🌙' : '✅', (isOc ? 'ON-CALL ' : '') + (isOut ? 'CHECK OUT BERJAYA' : 'CHECK IN BERJAYA'), 'Terima kasih, ' + (myName || '').split(' ')[0] + '. Anda boleh simpan telefon.');
+  if(data.late) setBanner('warn', '⚠️', 'CHECK IN DIREKOD — ANDA LEWAT', data.late.msg);
   cue.success();
   try{ $('successSound').play().catch(() => {}); }catch(e){}
   speak(isOut ? 'Check out berjaya' : 'Check in berjaya');
@@ -846,7 +848,7 @@ function onSuccess(data){
 
   showButtons(false, true);
   $('btnDash').textContent = 'Ke Dashboard sekarang';
-  let n = 5;
+  let n = data.late ? 15 : 5;                // late warning stays long enough to read
   const tick = () => { $('countdown').textContent = 'Kembali ke Dashboard dalam ' + n + ' saat…'; if(n-- <= 0){ clearInterval(redirectTimer); window.location.href = './dashboard.html'; } };
   tick(); redirectTimer = setInterval(tick, 1000);
 }
