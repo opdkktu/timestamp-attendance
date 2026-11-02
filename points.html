@@ -292,7 +292,7 @@ function render(){
   $('days').innerHTML = me && me.daily.length ? me.daily.slice().reverse().map(x => {
     const p = x.d.split('-').map(Number), dow = DOW[new Date(p[0], p[1] - 1, p[2]).getDay()];
     const label = x.tag === 'loc' ? '📍 Semakan lokasi × ' + x.n : x.tag === 'chk' ? '📋 Senarai semak dikemas kini × ' + x.n : x.tag === 'evt' ? x.lbl : x.tag === 'bls' ? '🩺 Tarikh BLS dikemas kini' : x.tag === 'bersih' ? '🧹 BERSIH' + (x.daily ? ' · semua tugasan harian selesai' : '') + (x.tasks ? ' · ' + x.tasks + ' tugasan berkala' : '') + (x.bonus ? ' · bonus ' + x.bonus + ' mata' : '') : x.tag === 'el' ? 'Cuti kecemasan (EL)' : (x.in + ' masuk' + (x.out ? ' · ' + x.out + ' keluar' : ' · <span style="color:var(--amber);font-weight:600">tiada check-out</span>'));
-    const sub = x.tag === 'late' ? 'Lewat selepas ' + r.lateAfter : x.tag === 'ok' ? 'Tepat masa' : x.tag === 'loc' ? 'Setiap semakan 10 minit di dalam klinik' : '';
+    const sub = x.tag === 'late' ? 'Lewat selepas ' + r.lateAfter : x.tag === 'ok' ? (x.pen ? 'Penalti lewat — mata Check In/Out tidak dikira' : 'Tepat masa') : x.tag === 'loc' ? 'Setiap semakan 10 minit di dalam klinik' : '';
     return '<div class="day"><div class="d"><b>' + p[2] + '</b><span>' + dow + '</span></div><div class="t">' + label + (sub ? '<em>' + sub + '</em>' : '') + '</div><span class="chip ' + (x.pts > 0 ? 'pos' : x.pts < 0 ? 'neg' : 'zero') + '">' + sgn(x.pts) + '</span></div>';
   }).join('') : '<div class="empty">Tiada rekod anda untuk bulan ini.</div>';
 
