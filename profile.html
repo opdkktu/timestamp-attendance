@@ -39,6 +39,30 @@
     background:var(--mint-100); display:flex; align-items:center; justify-content:center;
     font-family:'Manrope',sans-serif; font-size:28px; font-weight:800; color:var(--teal-700);
   }
+
+  .avatar-ring{ position:relative; border:0; padding:0; cursor:pointer; background-size:cover; background-position:center; box-shadow:0 0 0 3px #fff, 0 0 0 4px var(--line); }
+  .avatar-ring .av-cam{ position:absolute; right:-4px; bottom:-4px; width:28px; height:28px; border-radius:50%; background:var(--teal-700); color:#fff; font-size:13px; display:flex; align-items:center; justify-content:center; border:2px solid #fff; }
+  .avatar-ring:focus-visible{ outline:3px solid var(--gold-500); outline-offset:3px; }
+  .av-hint{ text-align:center; margin:-8px 0 14px; font-size:12px; } .av-hint a{ color:var(--teal-700); font-weight:700; text-decoration:none; }
+  .pp-modes{ display:grid; gap:8px; margin-bottom:12px; }
+  .pp-mode{ display:flex; gap:10px; align-items:flex-start; border:1.5px solid var(--line); border-radius:14px; padding:11px 12px; cursor:pointer; text-align:left; background:#fff; width:100%; font-family:'Inter',sans-serif; }
+  .pp-mode.on{ border-color:var(--teal-700); background:var(--mint-100); }
+  .pp-mode b{ display:block; font-size:13px; color:var(--teal-900); font-family:'Manrope',sans-serif; } .pp-mode span{ font-size:11.5px; color:var(--ink-500); line-height:1.4; display:block; margin-top:2px; }
+  .pp-mode i{ flex:0 0 auto; width:18px; height:18px; border-radius:50%; border:2px solid var(--ink-500); margin-top:2px; } .pp-mode.on i{ border:5px solid var(--teal-700); }
+  .pp-tiles{ display:flex; gap:10px; justify-content:center; margin-bottom:10px; }
+  .pp-tile{ flex:1; max-width:150px; border:2px dashed var(--line); border-radius:16px; padding:8px; text-align:center; cursor:pointer; background:#fff; font-family:'Inter',sans-serif; position:relative; }
+  .pp-tile.active{ border-color:var(--teal-700); border-style:solid; }
+  .pp-tile.done{ border-color:#0a8f5a; border-style:solid; }
+  .pp-tile img{ width:64px; height:64px; border-radius:50%; object-fit:cover; display:none; margin:0 auto 4px; } .pp-tile.has img{ display:block; }
+  .pp-tile .ph{ width:64px; height:64px; border-radius:50%; background:var(--mint-100); margin:0 auto 4px; display:flex; align-items:center; justify-content:center; font-size:24px; } .pp-tile.has .ph{ display:none; }
+  .pp-tile b{ font-size:11.5px; color:var(--teal-900); display:block; } .pp-tile small{ font-size:10.5px; color:var(--ink-500); display:block; }
+  .pp-cam{ position:relative; width:220px; height:220px; margin:0 auto 10px; border-radius:50%; overflow:hidden; background:#0b3d3a; border:4px solid var(--line); }
+  .pp-cam video, .pp-cam img{ width:100%; height:100%; object-fit:cover; transform:scaleX(-1); } .pp-cam img{ transform:none; position:absolute; inset:0; display:none; }
+  .pp-cam.shot img{ display:block; } .pp-cam.ready{ border-color:var(--teal-500); } .pp-cam.good{ border-color:#0a8f5a; } .pp-cam.badc{ border-color:#c62828; }
+  .pp-steps{ font-size:12px; margin:6px 0 10px; display:none; } .pp-steps.show{ display:block; }
+  .pp-steps div{ padding:4px 0; color:var(--ink-500); } .pp-steps .ok{ color:#0a8f5a; font-weight:700; } .pp-steps .err{ color:#c62828; font-weight:700; } .pp-steps .run{ color:var(--teal-700); font-weight:700; }
+  .pp-row{ display:flex; gap:8px; } .pp-row .btn{ margin-top:0; }
+  #ppModalOverlay .modal{ max-height:92vh; overflow-y:auto; }
   .profile-name{ text-align:center; font-family:'Manrope',sans-serif; font-size:19px; font-weight:800; color:var(--teal-900); margin-bottom:4px; }
   .profile-ic{ text-align:center; font-size:13px; color:var(--ink-500); margin-bottom:22px; }
 
@@ -118,7 +142,8 @@
     <a class="back-link" href="./dashboard.html">← Dashboard</a>
   </div>
   <div class="stage">
-    <div class="avatar-ring" id="avatarInitial">—</div>
+    <button type="button" class="avatar-ring" id="avatarInitial" onclick="PP.open()" aria-label="Tukar gambar profil">—<span class="av-cam" aria-hidden="true">📷</span></button>
+    <div class="av-hint"><a href="#" onclick="PP.open();return false">Tukar gambar profil</a></div>
     <div class="profile-name" id="profileName">Loading…</div>
     <div class="profile-ic" id="profileIc">—</div>
 
@@ -178,6 +203,30 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="ppModalOverlay">
+  <div class="modal">
+    <h2>Gambar Profil</h2>
+    <div class="sub">Pilih cara anda mahu menukar gambar.</div>
+    <div class="banner error" id="ppBanner"></div>
+    <div class="pp-modes">
+      <button type="button" class="pp-mode on" id="ppModeBoth" onclick="PP.mode('both')"><i></i><div><b>Satu gambar untuk kedua-duanya</b><span>Sama untuk gambar profil &amp; faceprint Check In. Perlu ujian muka.</span></div></button>
+      <button type="button" class="pp-mode" id="ppModeSep" onclick="PP.mode('sep')"><i></i><div><b>Gambar berasingan</b><span>Satu untuk gambar profil, satu lagi khas untuk faceprint (perlu ujian muka).</span></div></button>
+    </div>
+    <div class="pp-tiles" id="ppTiles"></div>
+    <div class="pp-cam" id="ppCam"><video id="ppVideo" autoplay playsinline muted></video><img id="ppShot" alt=""></div>
+    <div class="hint-text" id="ppStatus">Pilih gambar di atas untuk bermula.</div>
+    <div class="pp-steps" id="ppSteps"><div id="ppS1"></div><div id="ppS2"></div><div id="ppS3"></div></div>
+    <div class="pp-row">
+      <button class="btn primary" id="ppShotBtn" onclick="PP.capture()" disabled>Ambil gambar</button>
+      <button class="btn" id="ppRetakeBtn" onclick="PP.retake()" style="display:none">Ulang</button>
+    </div>
+    <button class="btn" id="ppGalleryBtn" onclick="document.getElementById('ppFile').click()" style="display:none">Pilih dari galeri</button>
+    <input type="file" id="ppFile" accept="image/*" style="display:none" onchange="PP.gallery(this)">
+    <button class="btn primary" id="ppSaveBtn" onclick="PP.save()" disabled>Simpan</button>
+    <button class="btn" onclick="PP.close()">Batal</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="pwModalOverlay">
   <div class="modal">
     <h2>Change Password</h2>
@@ -206,6 +255,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
 
@@ -287,6 +337,7 @@ async function loadProfile(){
       document.getElementById('profileDob').textContent = dob.day + '/' + dob.month + '/' + dob.year;
     }
 
+    PP.loadAvatar();
     totpEnabled = !!data.totpEnabled;
     renderTotpPill();
   }catch(err){
@@ -607,6 +658,136 @@ async function handleChangePassword(){
 
   btn.disabled = false; btn.textContent = 'Update Password';
 }
+
+/* ---------- Gambar profil / faceprint ---------- */
+const PP = (function(){
+  const MODEL_URL = './models', THRESH = 0.5, S = 400;
+  const $ = id => document.getElementById(id);
+  let modelsP = null, run = 0, stream = null, md = 'both', target = 'both';
+  let cap = {};                                   // { both|pic|face : {b64, cv, ok} }
+  const TILES = { both:[['both','Gambar saya','Profil + faceprint']], sep:[['pic','Gambar profil','Paparan sahaja'],['face','Faceprint','Check In · ujian muka']] };
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const tok = () => sessionStorage.getItem('kkah_session_token');
+  async function api(body){ const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({ token: tok() }, body)) }); return r.json(); }
+  function err(m){ const b = $('ppBanner'); b.textContent = m || ''; b.classList.toggle('show', !!m); }
+  function models(){
+    if(!modelsP) modelsP = new Promise(r => { (function poll(){ if(window.faceapi) r(); else setTimeout(poll, 50); })(); })
+      .then(() => Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)]))
+      .catch(e => { modelsP = null; throw e; });
+    return modelsP;
+  }
+  function step(n, cls, txt){ const el = $('ppS' + n); el.className = cls; el.textContent = (cls === 'ok' ? '✓ ' : cls === 'err' ? '✕ ' : cls === 'run' ? '… ' : '○ ') + txt; }
+  function needsTrial(t){ return t === 'both' || t === 'face'; }
+
+  async function loadAvatar(){
+    try{
+      const d = await api({ action:'getMyAvatar' });
+      if(d && d.ok && d.photo){ const a = $('avatarInitial'); a.style.backgroundImage = 'url(' + d.photo + ')'; a.firstChild.nodeValue = ''; }
+    }catch(e){}
+  }
+  function renderTiles(){
+    $('ppTiles').innerHTML = TILES[md].map(t => {
+      const c = cap[t[0]];
+      return '<button type="button" class="pp-tile ' + (c ? 'has ' + (c.ok ? 'done' : '') : '') + (target === t[0] ? ' active' : '') + '" data-t="' + t[0] + '"><img alt="" ' + (c ? 'src="' + c.b64 + '"' : '') + '><div class="ph">📷</div><b>' + t[1] + '</b><small>' + (c ? (needsTrial(t[0]) ? (c.ok ? 'Lulus ✓' : 'Belum lulus') : 'Sedia ✓') : t[2]) + '</small></button>';
+    }).join('');
+    $('ppTiles').querySelectorAll('.pp-tile').forEach(b => b.onclick = () => pick(b.dataset.t));
+    $('ppSaveBtn').disabled = !Object.keys(cap).some(k => cap[k] && (!needsTrial(k) || cap[k].ok));
+  }
+  function mode(m){
+    md = m; cap = {}; err('');
+    $('ppModeBoth').classList.toggle('on', m === 'both'); $('ppModeSep').classList.toggle('on', m === 'sep');
+    target = TILES[m][0][0]; resetCam(); renderTiles(); pick(target);
+  }
+  function resetCam(){ run++; $('ppCam').className = 'pp-cam' + (stream ? ' ready' : ''); $('ppShot').style.display = ''; $('ppSteps').classList.remove('show'); $('ppRetakeBtn').style.display = 'none'; $('ppShotBtn').style.display = ''; }
+  async function pick(t){
+    target = t; err(''); renderTiles(); resetCam();
+    $('ppGalleryBtn').style.display = needsTrial(t) ? 'none' : 'block';
+    $('ppStatus').textContent = needsTrial(t) ? 'Gunakan kamera depan — muka penuh dalam bulatan, cahaya terang, tanpa topi/pelitup.' : 'Ambil gambar dengan kamera atau pilih dari galeri.';
+    await startCam();
+  }
+  async function startCam(){
+    if(stream){ $('ppShotBtn').disabled = false; $('ppCam').classList.add('ready'); return; }
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal:640 }, height:{ ideal:480 } } });
+      const v = $('ppVideo'); v.srcObject = stream; await new Promise(r => v.onloadedmetadata = r); try{ await v.play(); }catch(e){}
+      $('ppCam').classList.add('ready'); $('ppShotBtn').disabled = false;
+    }catch(e){ $('ppStatus').textContent = needsTrial(target) ? 'Akses kamera ditolak — benarkan kamera di tetapan pelayar.' : 'Kamera tidak tersedia — gunakan "Pilih dari galeri".'; }
+  }
+  function stopCam(){ run++; if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } $('ppVideo').srcObject = null; }
+  function setShot(cv){
+    const c = cap[target] = { cv: cv, b64: cv.toDataURL('image/jpeg', 0.9), ok: !needsTrial(target) };
+    $('ppShot').src = c.b64; $('ppCam').classList.add('shot'); $('ppShotBtn').style.display = 'none'; $('ppRetakeBtn').style.display = '';
+    renderTiles(); if(needsTrial(target)) analyse(target);
+  }
+  function capture(){
+    const v = $('ppVideo'), vw = v.videoWidth || 480, vh = v.videoHeight || 480, side = Math.min(vw, vh);
+    // saved un-mirrored, exactly like the check-in camera sees it
+    const cv2 = document.createElement('canvas'); cv2.width = S; cv2.height = S;
+    cv2.getContext('2d').drawImage(v, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, S, S);
+    setShot(cv2);
+  }
+  function gallery(inp){
+    const f = inp.files && inp.files[0]; inp.value = ''; if(!f) return;
+    const im = new Image(), u = URL.createObjectURL(f);
+    im.onload = () => {
+      const side = Math.min(im.width, im.height), cv = document.createElement('canvas'); cv.width = S; cv.height = S;
+      cv.getContext('2d').drawImage(im, (im.width - side) / 2, (im.height - side) / 2, side, side, 0, 0, S, S); URL.revokeObjectURL(u); setShot(cv);
+    };
+    im.onerror = () => err('Gambar tidak dapat dibaca.'); im.src = u;
+  }
+  function retake(){ delete cap[target]; renderTiles(); resetCam(); $('ppCam').classList.remove('shot'); $('ppCam').classList.add('ready'); $('ppStatus').textContent = 'Cuba lagi.'; startCam(); }
+
+  async function analyse(t){
+    const my = ++run, c = cap[t]; c.ok = false; renderTiles();
+    $('ppSteps').classList.add('show'); step(1, 'ok', 'Gambar diambil'); step(2, 'run', 'Membaca faceprint daripada gambar…'); step(3, '', 'Ujian pengecaman muka (kamera sebenar)');
+    let desc;
+    try{
+      await models();
+      const dets = await faceapi.detectAllFaces(c.cv, new faceapi.TinyFaceDetectorOptions({ inputSize:416, scoreThreshold:0.5 })).withFaceLandmarks().withFaceDescriptors();
+      if(my !== run) return;
+      if(!dets.length){ step(2, 'err', 'Tiada muka dikesan. Tekan Ulang — muka penuh dalam bulatan, cahaya terang.'); return bad(); }
+      if(dets.length > 1){ step(2, 'err', 'Lebih daripada satu muka dikesan. Hanya anda sahaja — tekan Ulang.'); return bad(); }
+      desc = dets[0].descriptor; step(2, 'ok', 'Faceprint dibaca (' + Math.round(dets[0].detection.score * 100) + '% yakin)');
+    }catch(e){ step(2, 'err', 'Tidak dapat memuatkan pengecam muka. Semak internet & muat semula.'); return bad(); }
+    if(!stream){ step(3, 'err', 'Kamera diperlukan untuk ujian pengecaman.'); return bad(); }
+    step(3, 'run', 'Ujian pengecaman — pandang terus ke kamera…');
+    $('ppCam').classList.remove('shot'); $('ppCam').classList.add('ready');
+    let best = 9, hits = 0; const t0 = Date.now();
+    while(Date.now() - t0 < 10000 && my === run){
+      try{
+        const d = await faceapi.detectSingleFace($('ppVideo'), new faceapi.TinyFaceDetectorOptions({ inputSize:224, scoreThreshold:0.5 })).withFaceLandmarks().withFaceDescriptor();
+        if(d){ const dist = faceapi.euclideanDistance(d.descriptor, desc); best = Math.min(best, dist); if(dist <= THRESH){ if(++hits >= 2) break; } else hits = 0; }
+      }catch(e){}
+      await sleep(90);
+    }
+    if(my !== run) return;
+    $('ppCam').classList.add('shot');
+    if(hits >= 2){ c.ok = true; step(3, 'ok', 'Padanan berjaya (jarak ' + best.toFixed(2) + ') — Check In akan lancar'); $('ppCam').classList.add('good'); }
+    else { step(3, 'err', 'Padanan lemah' + (best < 9 ? ' (jarak ' + best.toFixed(2) + ')' : ' — tiada muka dikesan') + '. Tekan Ulang dengan cahaya lebih terang.'); $('ppCam').classList.add('badc'); }
+    renderTiles();
+  }
+  function bad(){ $('ppCam').classList.add('badc'); renderTiles(); }
+
+  async function save(){
+    const btn = $('ppSaveBtn'); btn.disabled = true; btn.textContent = 'Menyimpan…'; err('');
+    const jobs = []; // [mode, capture]
+    if(md === 'both' && cap.both && cap.both.ok) jobs.push(['both', cap.both]);
+    if(md === 'sep'){ if(cap.pic) jobs.push(['picture', cap.pic]); if(cap.face && cap.face.ok) jobs.push(['faceprint', cap.face]); }
+    try{
+      for(const j of jobs){
+        const d = await api({ action:'updateMyPhoto', mode:j[0], imageBase64:j[1].b64, faceTrialOk: j[0] !== 'picture' ? true : undefined });
+        if(!d.ok) throw new Error(d.error || 'Gagal menyimpan.');
+      }
+      try{ const ic = sessionStorage.getItem('kkah_ic') || ''; ['getMyAvatar','getMyPhoto'].forEach(a => localStorage.removeItem('kkah_cache_' + ic + '_' + a)); }catch(e){}
+      close(); loadAvatar();
+      const t = document.createElement('div'); t.textContent = 'Gambar berjaya dikemas kini ✓'; t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0b3d3a;color:#fff;padding:12px 18px;border-radius:12px;font:600 13px Inter,sans-serif;z-index:99999'; document.body.appendChild(t); setTimeout(() => t.remove(), 3500);
+    }catch(e){ err(String(e.message || e)); btn.disabled = false; }
+    btn.textContent = 'Simpan';
+  }
+  function open(){ $('ppModalOverlay').classList.add('show'); mode('both'); }
+  function close(){ stopCam(); cap = {}; $('ppModalOverlay').classList.remove('show'); }
+  return { open, close, mode, capture, retake, gallery, save, loadAvatar };
+})();
 </script>
 
 </body>
