@@ -91,7 +91,7 @@ async function load(){
       if(/expired/i.test(d.error || '')){ location.href = './login.html'; return; }
       $('box').innerHTML = '<div class="empty">' + esc(d.error || 'Gagal memuatkan.') + '</div>'; return;
     }
-    DATA = d; render();
+    DATA = d; render(); openLinked();
   }catch(e){ $('box').innerHTML = '<div class="empty">Tiada sambungan. Tarik ke bawah untuk cuba semula.<br><button class="btn" style="margin-top:12px" onclick="load()">Cuba lagi</button></div>'; }
 }
 
@@ -137,6 +137,14 @@ $('box').onclick = async e => {
     catch(err){ toast('Tiada sambungan', true); }
   }
 };
+  let LINKED = new URLSearchParams(location.search).get('req');
+function openLinked(){
+  if(!LINKED || !DATA) return;
+  const it = DATA.pending.filter(x => x.reqId === LINKED)[0]; LINKED = null;
+  if(!it){ toast('Permohonan sudah diproses', false); return; }
+  tab = 'pend'; render();
+  const b = document.querySelector('[data-ok="' + it.reqId + '"]'); if(b) b.click();
+}
 load();
 setInterval(() => { if(document.visibilityState === 'visible') load(); }, 60000);
 </script>
