@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIAGA · Carta Organisasi</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --t9:#0B3D3A; --t7:#0F5C56; --t5:#1C8F84; --mint:#EAF6F2; --bg:#F4FAF8; --ink:#17302d; --ink2:#5b6b68; --line:#d8e6e2; --white:#fff; --amber:#f59e0b; --amber2:#b45309;
+  --top:#0b4f6c; --med:#1565a7; --moic:#0e7a73; --mo:#2980b9; --ppa:#1a8a5e; --pharm:#7b4ea6; --nurse:#b5451b; --lab:#c0392b; --none:#6b7c85;
+  --sh:0 2px 10px rgba(10,40,60,.10); --sh2:0 8px 26px rgba(10,40,60,.20);
+}
+*,*::before,*::after{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ margin:0; }
+body{ font-family:'Inter',system-ui,sans-serif; color:var(--ink); background:radial-gradient(1100px 700px at 50% -10%,var(--mint),var(--bg)); min-height:100vh; padding-bottom:env(safe-area-inset-bottom); }
+button{ font:inherit; color:inherit; cursor:pointer; }
+:focus-visible{ outline:3px solid var(--amber); outline-offset:2px; border-radius:8px; }
+.d-top{--c:var(--top)} .d-med{--c:var(--med)} .d-moic{--c:var(--moic)} .d-mo{--c:var(--mo)} .d-ppa{--c:var(--ppa)} .d-pharm{--c:var(--pharm)} .d-nurse{--c:var(--nurse)} .d-lab{--c:var(--lab)} .d-none{--c:var(--none)}
+
+/* ===== header ===== */
+.hdr{ position:sticky; top:0; z-index:30; background:linear-gradient(135deg,var(--t9),var(--t7)); color:#fff; padding:calc(10px + env(safe-area-inset-top)) 14px 10px; box-shadow:0 4px 18px rgba(11,61,58,.25); }
+.hrow{ display:flex; align-items:center; gap:10px; max-width:1400px; margin:0 auto; }
+.back{ flex:none; width:40px; height:40px; border-radius:50%; display:grid; place-items:center; color:#fff; text-decoration:none; background:rgba(255,255,255,.16); font-size:20px; }
+.ttl{ flex:1; min-width:0; } .ttl .eb{ font-size:10px; letter-spacing:.09em; text-transform:uppercase; opacity:.75; font-weight:700; }
+.ttl h1{ margin:1px 0 0; font:800 18px 'Manrope',sans-serif; line-height:1.2; }
+.tools{ display:flex; gap:8px; max-width:1400px; margin:10px auto 0; flex-wrap:wrap; align-items:center; }
+.search{ flex:1 1 200px; min-width:0; position:relative; }
+.search input{ width:100%; height:44px; border-radius:14px; border:0; padding:0 78px 0 40px; font:500 16px 'Inter',sans-serif; background:#fff; color:var(--ink); }
+.search .ic{ position:absolute; left:13px; top:50%; transform:translateY(-50%); opacity:.55; pointer-events:none; }
+.search .cnt{ position:absolute; right:6px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:4px; font-size:12px; color:var(--ink2); font-weight:700; }
+.search .cnt button{ border:0; background:var(--mint); border-radius:8px; width:30px; height:30px; font-weight:800; }
+.seg{ display:flex; background:rgba(255,255,255,.16); border-radius:14px; padding:3px; }
+.seg button{ border:0; background:transparent; color:#fff; min-height:38px; padding:0 14px; border-radius:11px; font-weight:700; font-size:13px; }
+.seg button[aria-pressed="true"]{ background:#fff; color:var(--t9); }
+.tb{ min-height:44px; padding:0 14px; border-radius:14px; border:1.5px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff; font-weight:700; font-size:13px; display:inline-flex; align-items:center; gap:6px; }
+.tb:hover{ background:rgba(255,255,255,.22); }
+
+/* ===== legend + me banner ===== */
+.wrap{ max-width:1400px; margin:0 auto; padding:12px 14px 40px; }
+.legend{ display:flex; gap:6px; overflow-x:auto; padding:2px 0 10px; scrollbar-width:none; }
+.legend::-webkit-scrollbar{ display:none; }
+.lg{ flex:none; display:inline-flex; align-items:center; gap:6px; background:#fff; border-radius:99px; padding:5px 11px; font-size:11.5px; font-weight:700; color:#3a5560; box-shadow:var(--sh); }
+.lg i{ width:9px; height:9px; border-radius:50%; background:var(--c); }
+.lg.sup i{ background:var(--amber); }
+.mebox{ display:flex; gap:12px; align-items:center; background:#fff; border:1.5px solid #fde3a8; border-left:5px solid var(--amber); border-radius:16px; padding:12px 14px; box-shadow:var(--sh); margin-bottom:12px; }
+.mebox .tx{ flex:1; min-width:0; font-size:13px; color:var(--ink2); line-height:1.5; } .mebox b{ color:var(--ink); font-size:14px; overflow-wrap:break-word; }
+.mebox button{ flex:none; min-height:44px; padding:0 14px; border-radius:12px; border:0; background:var(--amber); color:#3b2300; font-weight:800; }
+.state{ text-align:center; padding:46px 16px; color:var(--ink2); }
+.sk{ height:70px; border-radius:16px; background:linear-gradient(90deg,#e6f1ed 25%,#f4faf8 37%,#e6f1ed 63%); background-size:400% 100%; animation:sh 1.4s infinite; margin-bottom:10px; }
+@keyframes sh{ to{ background-position:-135% 0; } }
+
+/* ===== avatar ===== */
+.av{ flex:none; border-radius:50%; background:color-mix(in srgb,var(--c) 14%,#fff); border:2.5px solid var(--c); color:var(--c); display:grid; place-items:center; font:800 15px 'Manrope',sans-serif; overflow:hidden; position:relative; }
+.av img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.vac{ opacity:.7; }
+
+/* ===== LIST (mobile) ===== */
+#listView{ display:block; }
+.ln{ margin-bottom:10px; scroll-margin-top:170px; } .lrow,.lgrp,.cc,.pl,.lcard{ scroll-margin-top:170px; }
+.lcard{ display:flex; align-items:stretch; background:#fff; border-radius:16px; box-shadow:var(--sh); border-left:5px solid var(--c); overflow:hidden; }
+.lcard .main{ flex:1; min-width:0; display:flex; gap:12px; align-items:center; text-align:left; border:0; background:transparent; padding:12px 12px; min-height:64px; }
+.lcard .av{ width:46px; height:46px; }
+.lt{ min-width:0; flex:1; }
+.lt .p{ font-size:10.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--c); overflow-wrap:break-word; line-height:1.3; }
+.lt .n{ font:700 15px 'Manrope',sans-serif; margin-top:2px; overflow-wrap:break-word; line-height:1.3; }
+.lt .g{ display:inline-block; margin-top:4px; font-size:11px; font-weight:700; background:#f0f4f7; color:#6a7f89; border-radius:7px; padding:1px 8px; }
+.tog{ flex:none; width:58px; border:0; border-left:1px solid var(--line); background:#fafdfc; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; font-weight:800; font-size:12px; color:var(--c); }
+.tog .ch{ transition:transform .2s; font-size:14px; } .tog[aria-expanded="true"] .ch{ transform:rotate(180deg); }
+.lkids{ margin:6px 0 0 8px; padding-left:8px; border-left:3px solid color-mix(in srgb,var(--c) 40%,#fff); }
+.lkids.up{ border-left-color:var(--amber); }
+.lkids .lkids .lkids .lkids{ margin-left:0; padding-left:0; border-left-width:0; }
+.lkids.direct{ border-left:4px solid var(--amber); box-shadow:-6px 0 12px -8px rgba(245,158,11,.9); }
+.lkids[hidden]{ display:none; }
+.lgrp{ background:#fff; border-radius:16px; box-shadow:var(--sh); margin-bottom:10px; overflow:hidden; border-left:5px solid var(--c); }
+.lgrp .gl{ font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--c); padding:9px 12px 3px; display:flex; justify-content:space-between; gap:8px; }
+.lgrp .gl span{ background:color-mix(in srgb,var(--c) 12%,#fff); border-radius:99px; padding:0 8px; }
+.lrow{ width:100%; display:flex; gap:10px; align-items:center; text-align:left; border:0; border-top:1px solid #eef4f2; background:transparent; padding:9px 12px; min-height:52px; }
+.lrow .av{ width:36px; height:36px; font-size:12px; border-width:2px; }
+.lrow .n{ font-weight:700; font-size:14px; overflow-wrap:break-word; line-height:1.3; } .lrow .p{ font-size:11.5px; color:var(--ink2); overflow-wrap:break-word; }
+.lrow .g{ flex:none; font-size:11px; font-weight:700; background:#f0f4f7; color:#6a7f89; border-radius:7px; padding:1px 8px; }
+.unass{ margin-top:18px; } .unass h2{ font:800 14px 'Manrope',sans-serif; color:var(--ink2); margin:0 0 8px; display:flex; align-items:center; gap:8px; }
+.unass h2 span{ background:#fff; border-radius:99px; padding:1px 9px; font-size:12px; box-shadow:var(--sh); }
+.hit{ outline:3px solid #22c55e; outline-offset:2px; border-radius:16px; }
+
+/* ===== blink for me ===== */
+.me{ animation:meBlink 1.4s ease-in-out infinite; position:relative; }
+.mtag{ display:inline-block; background:var(--amber); color:#3b2300; font-size:10px; font-weight:800; letter-spacing:.06em; padding:1px 7px; border-radius:99px; margin-left:6px; vertical-align:middle; }
+@keyframes meBlink{ 0%,100%{ box-shadow:0 0 0 3px var(--amber),0 0 0 0 rgba(245,158,11,0); } 50%{ box-shadow:0 0 0 3px var(--amber),0 0 0 12px rgba(245,158,11,.28); } }
+@media (prefers-reduced-motion:reduce){ .me{ animation:none; box-shadow:0 0 0 3px var(--amber); } .sk{ animation:none; } }
+
+/* ===== CHART (desktop) ===== */
+#chartView{ display:none; }
+body.chart #chartView{ display:block; } body.chart #listView{ display:none; }
+.cwrap{ background:#fff; border-radius:20px; box-shadow:var(--sh); overflow:auto; max-height:calc(100vh - 210px); min-height:320px; border:1px solid var(--line); position:relative; }
+#zbox{ position:relative; margin:0 auto; }
+#canvas{ position:absolute; top:0; left:0; transform-origin:0 0; }
+#canvas svg{ position:absolute; left:0; top:0; pointer-events:none; overflow:visible; }
+.ep{ fill:none; stroke:#9ab8c4; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.ep.up{ stroke:var(--amber); stroke-width:3; opacity:.85; } .ep.direct{ stroke:var(--amber2); stroke-width:4.5; }
+.cc{ position:absolute; background:#fff; border-radius:14px; border-top:5px solid var(--c); box-shadow:var(--sh); padding:10px 12px 11px; text-align:center; width:212px; cursor:pointer; border-left:0; border-right:0; border-bottom:0; font:inherit; color:inherit; }
+.cc:hover{ box-shadow:var(--sh2); transform:translateY(-2px); }
+.cc .av{ width:48px; height:48px; margin:0 auto 6px; }
+.cc .p{ font-size:10.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--c); overflow-wrap:break-word; line-height:1.3; }
+.cc .n{ font:700 13.5px 'Manrope',sans-serif; margin-top:3px; overflow-wrap:break-word; line-height:1.3; }
+.cc .g{ display:inline-block; margin-top:5px; font-size:11px; font-weight:700; background:#f0f4f7; color:#6a7f89; border-radius:7px; padding:1px 8px; }
+.cc.vac{ border:2px dashed var(--c); border-top-width:5px; background:#fafdfc; }
+.pl{ position:absolute; width:204px; background:#fff; border-radius:10px; box-shadow:var(--sh); border-left:4px solid var(--c); padding:6px 8px; display:flex; gap:8px; align-items:center; text-align:left; cursor:pointer; border-top:0; border-right:0; border-bottom:0; font:inherit; color:inherit; }
+.pl:hover{ box-shadow:var(--sh2); }
+.pl .av{ width:30px; height:30px; font-size:11px; border-width:2px; }
+.pl .n{ font-weight:700; font-size:12.5px; overflow-wrap:break-word; line-height:1.25; } .pl .p{ font-size:10.5px; color:var(--ink2); overflow-wrap:break-word; line-height:1.25; }
+.pl .g{ flex:none; margin-left:auto; font-size:10px; font-weight:700; background:#f0f4f7; color:#6a7f89; border-radius:6px; padding:0 6px; white-space:nowrap; }
+.gl2{ position:absolute; width:204px; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--c); background:color-mix(in srgb,var(--c) 12%,#fff); border-radius:99px; padding:4px 10px; text-align:center; overflow-wrap:break-word; }
+.cbox{ position:relative; } .zoom{ position:absolute; right:14px; bottom:14px; display:flex; gap:6px; z-index:5; }
+.zoom button{ width:40px; height:40px; border-radius:12px; border:1px solid var(--line); background:#fff; box-shadow:var(--sh); font-weight:800; font-size:16px; }
+.pnote{ display:none; }
+
+/* ===== sheet ===== */
+.sheetbg{ position:fixed; inset:0; background:rgba(11,61,58,.55); z-index:80; display:none; align-items:flex-end; justify-content:center; }
+.sheetbg.show{ display:flex; }
+.sheet{ width:100%; max-width:440px; background:#fff; border-radius:24px 24px 0 0; padding:18px 18px calc(20px + env(safe-area-inset-bottom)); max-height:88vh; overflow:auto; animation:up .2s ease; border-top:6px solid var(--c); }
+@keyframes up{ from{ transform:translateY(30px); opacity:0; } to{ transform:none; opacity:1; } }
+@media (min-width:700px){ .sheetbg{ align-items:center; } .sheet{ border-radius:24px; } }
+.sh-top{ display:flex; gap:14px; align-items:center; }
+.sh-top .av{ width:84px; height:84px; font-size:26px; }
+.sh-top .p{ font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--c); overflow-wrap:break-word; }
+.sh-top .n{ font:800 19px 'Manrope',sans-serif; margin-top:3px; overflow-wrap:break-word; line-height:1.25; }
+.sh-top .g{ display:inline-block; margin-top:6px; font-size:12px; font-weight:700; background:#f0f4f7; color:#6a7f89; border-radius:8px; padding:2px 10px; }
+.rows{ margin-top:14px; display:grid; gap:8px; }
+.rw{ display:flex; gap:12px; align-items:center; background:var(--mint); border-radius:14px; padding:11px 13px; min-height:48px; text-decoration:none; color:inherit; border:0; width:100%; text-align:left; }
+.rw .i{ font-size:18px; width:26px; text-align:center; flex:none; } .rw .l{ font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); } .rw .v{ font-weight:700; font-size:14px; overflow-wrap:break-word; }
+.rw.act{ background:#e3f6ec; } .rw.btn:hover{ background:#d8efe8; }
+.sh-close{ margin-top:14px; width:100%; min-height:48px; border-radius:14px; border:1.5px solid var(--line); background:#fff; font-weight:800; }
+
+/* ===== Face ID lock ===== */
+.lockov{ position:fixed; inset:0; z-index:9999; background:linear-gradient(160deg,#0b5d56,#134e4a); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; gap:14px; }
+.lockov .ic{ font-size:56px; } .lockov h2{ margin:0; font-size:20px; } .lockov p{ margin:0; opacity:.85; font-size:14px; max-width:300px; }
+.lockov button{ margin-top:8px; padding:14px 26px; border-radius:14px; border:0; background:#fff; color:#0b5d56; font-weight:800; font-size:15px; }
+.lockov a{ color:#fff; opacity:.8; font-size:13px; }
+
+/* ===== desktop defaults ===== */
+@media (min-width:900px){ .ttl h1{ font-size:22px; } }
+.printhead{ display:none; }
+
+/* ===== PRINT: one landscape page, chart only ===== */
+@page{ size:A4 landscape; margin:7mm; }
+@media print{
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body{ background:#fff; padding:0; }
+  .hdr,.legend,.mebox,#listView,.zoom,.sheetbg,.lockov,.unass,.state{ display:none !important; }
+  #chartView{ display:block !important; }
+  .wrap{ padding:0; max-width:none; }
+  .cwrap{ overflow:hidden !important; max-height:none !important; border:0; box-shadow:none; border-radius:0; min-height:0; margin:0 auto; }
+  html,body{ height:auto; overflow:hidden; }
+  #zbox{ margin:0 !important; }
+  .printhead{ display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid var(--t7); padding:0 0 4px; margin-bottom:4px; }
+  .printhead h1{ margin:0; font:800 15px 'Manrope',sans-serif; color:var(--t9); } .printhead span{ font-size:10px; color:#555; }
+  .cc,.pl{ box-shadow:none; border:1px solid #cdd9dd; } .cc{ border-top:4px solid var(--c); } .pl{ border-left:4px solid var(--c); }
+  .cc:hover,.pl:hover{ transform:none; box-shadow:none; }
+  .me{ animation:none !important; box-shadow:0 0 0 2px var(--amber) !important; }
+  .pleg{ display:flex !important; flex-wrap:wrap; gap:8px; font-size:9px; margin-top:4px; } .pleg i{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:3px; }
+}
+.pleg{ display:none; }
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hrow">
+    <a class="back" href="./dashboard.html" aria-label="Kembali ke Dashboard">←</a>
+    <div class="ttl"><div class="eb">Klinik Kesihatan Ayer Hitam</div><h1>Carta Organisasi</h1></div>
+  </div>
+  <div class="tools">
+    <div class="search"><span class="ic" aria-hidden="true">🔍</span>
+      <input id="q" type="search" placeholder="Cari nama / jawatan" autocomplete="off" enterkeyhint="search" aria-label="Cari staf">
+      <div class="cnt" id="cnt" hidden><span id="cntT"></span><button type="button" id="nx" aria-label="Seterusnya">↓</button></div>
+    </div>
+    <div class="seg" role="group" aria-label="Paparan">
+      <button type="button" id="mList" aria-pressed="true">Senarai</button>
+      <button type="button" id="mChart" aria-pressed="false">Carta</button>
+    </div>
+    <button class="tb" type="button" id="btnMe">📍 Saya</button>
+    <button class="tb" type="button" id="btnPrint">🖨 Cetak</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="legend" id="legend" aria-label="Petunjuk warna"></div>
+  <div id="meBox"></div>
+  <div id="status"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+
+  <section id="listView" aria-label="Senarai organisasi"></section>
+
+  <section id="chartView" aria-label="Carta organisasi">
+    <div class="printhead"><h1>Carta Organisasi — Klinik Kesihatan Ayer Hitam</h1><span id="pdate"></span></div>
+    <div class="cbox">
+      <div class="zoom"><button type="button" id="zo" aria-label="Kecilkan">−</button><button type="button" id="zf" aria-label="Muat skrin" title="Muat skrin">⤢</button><button type="button" id="zi" aria-label="Besarkan">+</button></div>
+      <div class="cwrap" id="cwrap"><div id="zbox"><div id="canvas"></div></div></div>
+    </div>
+    <div class="pleg" id="pleg"></div>
+  </section>
+
+  <div class="unass" id="unass" hidden></div>
+</main>
+
+<div class="sheetbg" id="sbg"><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shN"></div></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const LBL = { top:'Pengurusan Daerah', med:'Perubatan', moic:'MOIC', mo:'Pegawai Perubatan', ppa:'Pen. Pegawai Perubatan', pharm:'Farmasi', nurse:'Jururawat', lab:'Makmal', none:'Belum ditempatkan' };
+const $ = id => document.getElementById(id);
+const tok = () => sessionStorage.getItem('kkah_session_token');
+const NS = 'http://www.w3.org/2000/svg';
+let NODES = {}, KIDS = {}, ROOTS = [], UN = [], ME = null, CHAIN = {}, PHOTOS = {}, mode = 'list', zoom = 1, hits = [], hitI = -1;
+
+/* ---------------- Face ID / Touch ID gate (same as Profile) ---------------- */
+function b64ab(b64){ const bin = atob(b64), u = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
+function abb64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+async function bioRepair_(){
+  const challenge = new Uint8Array(32); crypto.getRandomValues(challenge);
+  const ic = sessionStorage.getItem('kkah_ic') || '';
+  const cred = await navigator.credentials.create({ publicKey: { challenge, rp:{ name:'SIAGA' }, user:{ id:new TextEncoder().encode(ic), name:ic, displayName:ic },
+    pubKeyCredParams:[{ type:'public-key', alg:-7 },{ type:'public-key', alg:-257 }],
+    authenticatorSelection:{ authenticatorAttachment:'platform', userVerification:'required', residentKey:'discouraged', requireResidentKey:false }, timeout:60000, attestation:'none' } });
+  if(!cred) throw new Error('none'); localStorage.setItem('kkah_biometric_credential_id', abb64(cred.rawId));
+}
+async function gate(){
+  const enrolled = localStorage.getItem('kkah_biometric_device_token') && localStorage.getItem('kkah_biometric_credential_id');
+  if(!enrolled) return true;
+  const can = window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+  if(!can) return true;
+  try{ const f = Math.max(Number(sessionStorage.getItem('kkah_prof_unlocked') || 0), Number(sessionStorage.getItem('kkah_org_unlocked') || 0)); if(Date.now() - f < 5 * 60000) return true; }catch(e){}
+  return new Promise(resolve => {
+    const ov = document.createElement('div'); ov.className = 'lockov';
+    ov.innerHTML = '<div class="ic">🔒</div><h2>Carta dikunci</h2><p>Sahkan dengan Face ID / Touch ID untuk melihat carta dan maklumat hubungan staf.</p><button id="lgo">Buka dengan Face ID / Touch ID</button><button id="lfix" style="display:none;background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.7)">Tetapkan semula Face ID</button><a href="./dashboard.html">← Kembali ke Dashboard</a>';
+    document.body.appendChild(ov);
+    const ok = () => { try{ sessionStorage.setItem('kkah_org_unlocked', String(Date.now())); }catch(e){} ov.remove(); resolve(true); };
+    const go = async () => {
+      try{
+        const challenge = new Uint8Array(32); crypto.getRandomValues(challenge);
+        await navigator.credentials.get({ publicKey:{ challenge, allowCredentials:[{ id:b64ab(localStorage.getItem('kkah_biometric_credential_id')), type:'public-key', transports:['internal'] }], userVerification:'required', timeout:60000 } });
+        ok();
+      }catch(e){ ov.querySelector('p').textContent = 'Pengesahan gagal. Jika telefon kata "no matching passkeys", ketik Tetapkan semula Face ID (sekali sahaja).'; $('lfix').style.display = ''; }
+    };
+    ov.querySelector('#lfix').onclick = async () => { try{ await bioRepair_(); ok(); }catch(e){ ov.querySelector('p').textContent = 'Tidak berjaya. Log keluar, log masuk semula dan aktifkan Face ID di Profil.'; } };
+    ov.querySelector('#lgo').onclick = go; go();
+  });
+}
+
+/* ---------------- API ---------------- */
+async function api(body){
+  const r = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token: tok() }, body)) });
+  return r.json();
+}
+
+/* ---------------- helpers ---------------- */
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if(cls) e.className = cls; if(txt !== undefined && txt !== null) e.textContent = txt; return e; };
+function initials(n){ const w = String(n.n || '').replace(/^dr\.?\s+/i, '').split(/\s+/).filter(Boolean); return n.v || !w.length ? '?' : (w[0][0] + (w[1] ? w[1][0] : '')).toUpperCase(); }
+function mkAv(n){
+  const a = el('div', 'av' + (n.v ? ' vac' : ''), initials(n)); a.dataset.av = n.k; a.setAttribute('aria-hidden', 'true');
+  if(PHOTOS[n.k]){ const i = el('img'); i.src = PHOTOS[n.k]; i.alt = ''; a.appendChild(i); }
+  return a;
+}
+const disp = n => n.v ? 'Jawatan kosong' : (n.n || '—');
+function sortKids(a, b){ return (a.o - b.o) || String(a.n).localeCompare(String(b.n)); }
+
+function build(data){
+  NODES = {}; KIDS = {}; ROOTS = [];
+  data.nodes.concat(data.unassigned).forEach(n => { NODES[n.k] = n; });
+  data.nodes.forEach(n => { if(n.p && NODES[n.p]) (KIDS[n.p] = KIDS[n.p] || []).push(n); else ROOTS.push(n); });
+  Object.keys(KIDS).forEach(k => KIDS[k].sort(sortKids)); ROOTS.sort(sortKids);
+  UN = data.unassigned; ME = data.me;
+  CHAIN = {};                                                      // me → every boss above me
+  if(ME && !ME.un){ let c = NODES[ME.k], g = 0; while(c && g++ < 20){ CHAIN[c.k] = 1; c = c.p ? NODES[c.p] : null; } }
+}
+/* children grouped as cards / pill blocks. Leaf staff with the same Kumpulan form one block. */
+function items(n){
+  const out = []; let cur = null;
+  (KIDS[n.k] || []).forEach(c => {
+    const leaf = !(KIDS[c.k] || []).length && !c.c;
+    if(!leaf){ out.push({ t:'card', n:c }); cur = null; return; }
+    if(cur && cur.label === (c.grp || '')) cur.nodes.push(c); else { cur = { t:'pills', label:c.grp || '', nodes:[c] }; out.push(cur); }
+  });
+  return out;
+}
+
+/* ---------------- LIST VIEW ---------------- */
+const cls = n => 'd-' + (n.d || 'none');
+function meMark(n, node){ if(ME && ME.k === n.k){ node.classList.add('me'); } }
+function listPerson(n){
+  const b = el('button', 'lrow ' + cls(n)); b.type = 'button'; b.dataset.k = n.k;
+  b.appendChild(mkAv(n));
+  const t = el('div', 'lt'); const nm = el('div', 'n', disp(n));
+  if(ME && ME.k === n.k) nm.appendChild(el('span', 'mtag', 'ANDA'));
+  t.appendChild(nm); if(n.t) t.appendChild(el('div', 'p', n.t)); b.appendChild(t);
+  if(n.g) b.appendChild(el('span', 'g', n.g));
+  b.onclick = () => openSheet(n.k); meMark(n, b); return b;
+}
+function listNode(n, depth){
+  const w = el('div', 'ln ' + cls(n)); w.dataset.k = n.k;
+  const kids = items(n), has = kids.length > 0;
+  const card = el('div', 'lcard');
+  const main = el('button', 'main'); main.type = 'button';
+  main.appendChild(mkAv(n));
+  const t = el('div', 'lt'); if(n.t) t.appendChild(el('div', 'p', n.t));
+  const nm = el('div', 'n', disp(n)); if(ME && ME.k === n.k) nm.appendChild(el('span', 'mtag', 'ANDA')); t.appendChild(nm);
+  if(n.g) t.appendChild(el('span', 'g', n.g)); main.appendChild(t); main.onclick = () => openSheet(n.k);
+  card.appendChild(main); meMark(n, card);
+  let box = null;
+  if(has){
+    const cnt = (KIDS[n.k] || []).length, open = depth < 2 || !!CHAIN[n.k];
+    const tg = el('button', 'tog'); tg.type = 'button'; tg.setAttribute('aria-expanded', String(open)); tg.setAttribute('aria-label', 'Papar ' + cnt + ' kakitangan di bawah ' + disp(n));
+    tg.appendChild(el('span', 'ch', '▾')); tg.appendChild(el('span', '', String(cnt)));
+    card.appendChild(tg);
+    box = el('div', 'lkids'); box.hidden = !open;
+    if(CHAIN[n.k] && ME && n.k !== ME.k){ box.classList.add('up'); if((KIDS[n.k] || []).some(c => c.k === ME.k)) box.classList.add('direct'); }
+    kids.forEach(it => {
+      if(it.t === 'card') box.appendChild(listNode(it.n, depth + 1));
+      else {
+        const g = el('div', 'lgrp ' + cls(it.nodes[0]));
+        if(it.label){ const gl = el('div', 'gl'); gl.appendChild(el('b', '', it.label)); gl.appendChild(el('span', '', String(it.nodes.length))); g.appendChild(gl); }
+        it.nodes.forEach(p => g.appendChild(listPerson(p)));
+        if(it.nodes.some(p => ME && p.k === ME.k)){ g.style.boxShadow = '-5px 0 0 var(--amber),var(--sh)'; }
+        box.appendChild(g);
+      }
+    });
+    tg.onclick = () => { const o = tg.getAttribute('aria-expanded') !== 'true'; tg.setAttribute('aria-expanded', String(o)); box.hidden = !o; };
+  }
+  w.appendChild(card); if(box) w.appendChild(box); return w;
+}
+function renderList(){
+  const root = $('listView'); root.innerHTML = '';
+  ROOTS.forEach(r => root.appendChild(listNode(r, 0)));
+  const u = $('unass'); u.innerHTML = '';
+  if(UN.length){
+    u.hidden = false; const h = el('h2', '', '👥 Belum ditempatkan'); h.appendChild(el('span', '', String(UN.length))); u.appendChild(h);
+    const g = el('div', 'lgrp d-none'); UN.forEach(p => g.appendChild(listPerson(p))); u.appendChild(g);
+  } else u.hidden = true;
+}
+
+/* ---------------- CHART VIEW (measured tidy tree) ---------------- */
+const CWD = 212, PWD = 204, GAP = 22, VG = 48, PG = 6, CG = 10, LBLH = 30;
+function chartCard(n){
+  const b = el('button', 'cc ' + cls(n) + (n.v ? ' vac' : '')); b.type = 'button'; b.dataset.k = n.k;
+  b.appendChild(mkAv(n)); if(n.t) b.appendChild(el('div', 'p', n.t));
+  const nm = el('div', 'n', disp(n)); if(ME && ME.k === n.k) nm.appendChild(el('span', 'mtag', 'ANDA')); b.appendChild(nm);
+  if(n.g) b.appendChild(el('div', 'g', n.g)); b.onclick = () => openSheet(n.k); meMark(n, b); return b;
+}
+function chartPill(n){
+  const b = el('button', 'pl ' + cls(n)); b.type = 'button'; b.dataset.k = n.k;
+  b.appendChild(mkAv(n)); const t = el('div'); const nm = el('div', 'n', disp(n)); if(ME && ME.k === n.k) nm.appendChild(el('span', 'mtag', 'ANDA')); t.appendChild(nm);
+  if(n.t) t.appendChild(el('div', 'p', n.t)); b.appendChild(t); if(n.g) b.appendChild(el('span', 'g', n.g));
+  b.onclick = () => openSheet(n.k); meMark(n, b); return b;
+}
+let EDGES = [];
+function layoutChart(){
+  const cv = $('canvas'); cv.innerHTML = ''; cv.style.transform = 'none'; EDGES = [];
+  const svg = document.createElementNS(NS, 'svg'); cv.appendChild(svg);
+  const measure = e => { e.style.visibility = 'hidden'; cv.appendChild(e); const h = e.offsetHeight; e.style.visibility = ''; return h; };
+  function blockCard(n){
+    const e = chartCard(n); e.style.left = '0px'; e.style.top = '0px'; const h = measure(e);
+    const kids = items(n).map(it => it.t === 'card' ? blockCard(it.n) : blockPills(it));
+    const kw = kids.reduce((s, k) => s + k.bw, 0) + GAP * Math.max(0, kids.length - 1), kh = kids.reduce((m, k) => Math.max(m, k.bh), 0);
+    return { t:'card', n, e, h, kids, kw, bw:Math.max(CWD, kw), bh:h + (kids.length ? VG + kh : 0) };
+  }
+  function blockPills(it){
+    const nn = it.nodes.length, cols = nn > 6 ? Math.ceil(nn / 6) : 1, per = Math.ceil(nn / cols);
+    const lab = it.label ? el('div', 'gl2 ' + cls(it.nodes[0]), it.label) : null;
+    if(lab){ lab.style.left = '0px'; lab.style.top = '0px'; measure(lab); }
+    const lh = lab ? lab.offsetHeight + 6 : 0;
+    const els = it.nodes.map(p => { const e = chartPill(p); e.style.left = '0px'; e.style.top = '0px'; return { e, h:measure(e), n:p }; });
+    let bh = 0; const colH = [];
+    for(let c = 0; c < cols; c++){ let h = 0; els.slice(c * per, (c + 1) * per).forEach(x => h += x.h + PG); colH.push(h - PG); bh = Math.max(bh, h - PG); }
+    return { t:'pills', it, lab, lh, els, cols, per, bw:cols * PWD + (cols - 1) * CG, bh:lh + bh };
+  }
+  function place(b, x, y){                                         // returns {cx, top}
+    if(b.t === 'card'){
+      const cx = x + b.bw / 2; b.e.style.left = (cx - CWD / 2) + 'px'; b.e.style.top = y + 'px';
+      let sx = x + (b.bw - b.kw) / 2;
+      b.kids.forEach(k => {
+        const kc = place(k, sx, y + b.h + VG); sx += k.bw + GAP;
+        const mid = y + b.h + VG / 2, keys = k.t === 'card' ? [k.n.k] : k.els.map(z => z.n.k);
+        EDGES.push({ x1:cx, y1:y + b.h, x2:kc, y2:y + b.h + VG, mid, keys });
+      });
+      return cx;
+    }
+    if(b.lab){ b.lab.style.left = (x + (b.bw - PWD) / 2) + 'px'; b.lab.style.top = y + 'px'; }
+    let cy = [];
+    for(let c = 0; c < b.cols; c++){ let yy = y + b.lh; b.els.slice(c * b.per, (c + 1) * b.per).forEach(z => { z.e.style.left = (x + c * (PWD + CG)) + 'px'; z.e.style.top = yy + 'px'; yy += z.h + PG; }); }
+    return x + b.bw / 2;
+  }
+  // roots (normally one) side by side
+  const rb = ROOTS.map(blockCard); const PAD = 28;
+  let sx = PAD, H = 0; rb.forEach(b => { place(b, sx, PAD); sx += b.bw + GAP; H = Math.max(H, b.bh); });
+  const W = sx - GAP + PAD, HH = H + PAD * 2;
+  svg.setAttribute('width', W); svg.setAttribute('height', HH);
+  const draw = cl => EDGES.filter(e => cl === 'direct' ? ME && e.keys.indexOf(ME.k) !== -1 : cl === 'up' ? (!(ME && e.keys.indexOf(ME.k) !== -1) && e.keys.some(k => CHAIN[k])) : !e.keys.some(k => CHAIN[k]))
+    .forEach(e => { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', `M${e.x1},${e.y1} L${e.x1},${e.mid} L${e.x2},${e.mid} L${e.x2},${e.y2}`); p.setAttribute('class', 'ep ' + (cl === 'base' ? '' : cl)); svg.appendChild(p); });
+  draw('base'); draw('up'); draw('direct');
+  cv.style.width = W + 'px'; cv.style.height = HH + 'px'; cv.dataset.w = W; cv.dataset.h = HH;
+  setZoom(zoom, true);
+}
+function setZoom(z, keep){
+  const cv = $('canvas'), W = Number(cv.dataset.w || 0), H = Number(cv.dataset.h || 0); if(!W) return;
+  zoom = Math.max(0.3, Math.min(1.6, z)); cv.style.transform = `scale(${zoom})`;
+  const zb = $('zbox'); zb.style.width = (W * zoom) + 'px'; zb.style.height = (H * zoom) + 'px';
+}
+function fitZoom(){ const cv = $('canvas'), W = Number(cv.dataset.w || 0); if(!W) return; setZoom(Math.min(1, ($('cwrap').clientWidth - 8) / W)); }
+
+/* ---------------- photos (lazy, 8 per call, me first) ---------------- */
+async function loadPhotos(){
+  const keys = Object.keys(NODES).filter(k => NODES[k].ph); keys.sort((a, b) => (ME && a === ME.k ? -1 : 0) - (ME && b === ME.k ? -1 : 0));
+  const batches = []; for(let i = 0; i < keys.length; i += 8) batches.push(keys.slice(i, i + 8));
+  let i = 0;
+  const worker = async () => {
+    while(i < batches.length){
+      const b = batches[i++];
+      try{
+        const d = await api({ action:'getOrgPhotos', keys:b });
+        if(d.ok) Object.keys(d.photos || {}).forEach(k => { PHOTOS[k] = d.photos[k]; document.querySelectorAll('[data-av="' + k + '"]').forEach(a => { if(!a.querySelector('img')){ const im = el('img'); im.src = d.photos[k]; im.alt = ''; a.appendChild(im); } }); });
+      }catch(e){}
+    }
+  };
+  await Promise.all([worker(), worker()]);
+}
+
+/* ---------------- detail sheet ---------------- */
+let lastFocus = null;
+function openSheet(k){
+  const n = NODES[k]; if(!n) return; lastFocus = document.activeElement;
+  const sh = $('sheet'); sh.className = 'sheet ' + cls(n); sh.innerHTML = '';
+  const top = el('div', 'sh-top'); top.appendChild(mkAv(n)); const t = el('div');
+  if(n.t) t.appendChild(el('div', 'p', n.t)); const nm = el('div', 'n', disp(n)); nm.id = 'shN'; t.appendChild(nm); if(n.g) t.appendChild(el('div', 'g', n.g));
+  top.appendChild(t); sh.appendChild(top);
+  const rows = el('div', 'rows');
+  const row = (ic, l, v, tag, href, cl) => { const r = el(tag || 'div', 'rw' + (cl ? ' ' + cl : '')); if(href) r.href = href; r.appendChild(el('span', 'i', ic)); const x = el('div'); x.appendChild(el('div', 'l', l)); x.appendChild(el('div', 'v', v)); r.appendChild(x); rows.appendChild(r); return r; };
+  if(n.grp) row('👥', 'Kumpulan', n.grp);
+  const boss = n.p && NODES[n.p];
+  if(boss){ const r = row('⬆️', 'Melapor kepada', disp(boss) + (boss.t ? ' · ' + boss.t : ''), 'button'); r.type = 'button'; r.classList.add('btn'); r.onclick = () => { closeSheet(); focusNode(boss.k); }; }
+  if(n.j) row('📅', 'Berkhidmat di KKAH sejak', n.j);
+  const phone = String(n.tel || '').trim();
+  if(phone && /^[0-9+\-\s]{7,16}$/.test(phone)){
+    row('📞', 'Telefon', phone, 'a', 'tel:' + phone.replace(/[\s-]/g, ''), 'act');
+    const w = phone.replace(/\D/g, '').replace(/^0/, '60'); row('💬', 'WhatsApp', 'Hantar mesej', 'a', 'https://wa.me/' + w, 'act').target = '_blank';
+  }
+  if(ME && ME.k === n.k) row('📍', 'Kedudukan', 'Ini kad anda');
+  if(n.v) row('ℹ️', 'Status', 'Jawatan ini belum diisi');
+  sh.appendChild(rows);
+  const c = el('button', 'sh-close', 'Tutup'); c.type = 'button'; c.onclick = closeSheet; sh.appendChild(c);
+  $('sbg').classList.add('show'); c.focus();
+}
+function closeSheet(){ $('sbg').classList.remove('show'); if(lastFocus && lastFocus.focus) try{ lastFocus.focus(); }catch(e){} }
+$('sbg').addEventListener('click', e => { if(e.target === $('sbg')) closeSheet(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeSheet(); });
+
+/* ---------------- navigation: find / me / search ---------------- */
+function expandTo(k){
+  let n = NODES[k], g = 0;
+  while(n && n.p && g++ < 20){ const w = document.querySelector('#listView .ln[data-k="' + n.p + '"]'); if(w){ const tg = w.querySelector(':scope > .lcard .tog'), bx = w.querySelector(':scope > .lkids'); if(tg && bx){ bx.hidden = false; tg.setAttribute('aria-expanded', 'true'); } } n = NODES[n.p]; }
+}
+function focusNode(k, hit){
+  const sel = mode === 'chart' ? '#canvas [data-k="' + k + '"]' : '#listView [data-k="' + k + '"], #unass [data-k="' + k + '"]';
+  if(mode === 'list') expandTo(k);
+  const e = document.querySelector(sel); if(!e) return;
+  e.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' });
+  if(hit){ e.classList.add('hit'); setTimeout(() => e.classList.remove('hit'), 2500); }
+  else { e.animate([{ transform:'scale(1)' },{ transform:'scale(1.06)' },{ transform:'scale(1)' }], { duration:700 }); }
+}
+function doSearch(){
+  const q = $('q').value.trim().toLowerCase(); document.querySelectorAll('.hit').forEach(x => x.classList.remove('hit'));
+  hits = q.length < 2 ? [] : Object.keys(NODES).filter(k => { const n = NODES[k]; return !n.v && ((n.n || '') + ' ' + (n.t || '') + ' ' + (n.grp || '')).toLowerCase().indexOf(q) !== -1; });
+  hitI = -1; $('cnt').hidden = q.length < 2; $('cntT').textContent = hits.length ? hits.length + ' dijumpai' : 'Tiada padanan';
+  if(hits.length) nextHit();
+}
+function nextHit(){ if(!hits.length) return; hitI = (hitI + 1) % hits.length; focusNode(hits[hitI], true); $('cntT').textContent = (hitI + 1) + '/' + hits.length; }
+$('q').addEventListener('input', () => { clearTimeout(doSearch.t); doSearch.t = setTimeout(doSearch, 250); });
+$('q').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); hits.length ? nextHit() : doSearch(); } });
+$('nx').onclick = nextHit;
+$('btnMe').onclick = () => { if(ME) focusNode(ME.k); else alert('Anda belum ditempatkan dalam carta. Hubungi admin.'); };
+
+/* ---------------- mode / print ---------------- */
+function setMode(m, silent){
+  mode = m; document.body.classList.toggle('chart', m === 'chart');
+  $('mList').setAttribute('aria-pressed', String(m === 'list')); $('mChart').setAttribute('aria-pressed', String(m === 'chart'));
+  if(m === 'chart'){ layoutChart(); fitZoom(); }
+  if(!silent){ try{ localStorage.setItem('kkah_org_mode', m); }catch(e){} }
+}
+$('mList').onclick = () => setMode('list'); $('mChart').onclick = () => setMode('chart');
+$('zi').onclick = () => setZoom(zoom + 0.1); $('zo').onclick = () => setZoom(zoom - 0.1); $('zf').onclick = fitZoom;
+let wasMode = null, printed = false;
+function beforePrint(){
+  if(printed) return; printed = true; wasMode = mode;
+  document.body.classList.add('chart'); layoutChart();
+  const W = Number($('canvas').dataset.w), H = Number($('canvas').dataset.h);
+  const availW = (297 - 14) / 25.4 * 96, availH = (210 - 14) / 25.4 * 96 - 70;            // A4 landscape minus margins, header and legend
+  setZoom(Math.min(availW / W, availH / H, 1.2));
+  const cw = $('cwrap'); cw.style.width = $('zbox').style.width; cw.style.height = $('zbox').style.height;
+  $('pdate').textContent = 'Dicetak: ' + new Date().toLocaleDateString('ms-MY', { day:'2-digit', month:'long', year:'numeric' });
+  $('pleg').innerHTML = ''; Object.keys(LBL).filter(k => document.querySelector('#canvas .d-' + k)).forEach(k => { const s = el('span'); const i = el('i'); i.style.background = 'var(--' + k + ')'; s.appendChild(i); s.appendChild(document.createTextNode(LBL[k])); $('pleg').appendChild(s); });
+}
+function afterPrint(){ if(!printed) return; printed = false; $('cwrap').style.width = ''; $('cwrap').style.height = ''; setMode(wasMode || 'list', true); }
+window.addEventListener('beforeprint', beforePrint); window.addEventListener('afterprint', afterPrint);
+$('btnPrint').onclick = () => { beforePrint(); setTimeout(() => window.print(), 150); };
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if(mode === 'chart' && !printed){ layoutChart(); fitZoom(); } }, 250); });
+
+/* ---------------- boot ---------------- */
+function legend(){
+  const used = {}; Object.keys(NODES).forEach(k => used[NODES[k].d || 'none'] = 1);
+  const L = $('legend'); L.innerHTML = '';
+  Object.keys(LBL).filter(k => used[k] && k !== 'none').forEach(k => { const s = el('span', 'lg d-' + k); s.appendChild(el('i')); s.appendChild(document.createTextNode(LBL[k])); L.appendChild(s); });
+  if(ME && !ME.un){ const s = el('span', 'lg sup'); s.appendChild(el('i')); s.appendChild(document.createTextNode('Garis penyelia anda')); L.appendChild(s); }
+}
+function meBox(){
+  const b = $('meBox'); b.innerHTML = '';
+  if(!ME) return;
+  const box = el('div', 'mebox'); const tx = el('div', 'tx');
+  if(ME.un){ tx.appendChild(el('b', '', 'Anda belum ditempatkan dalam carta')); tx.appendChild(el('div', '', 'Nama anda disenaraikan di bahagian "Belum ditempatkan". Admin akan menetapkan jawatan anda.')); }
+  else { const n = NODES[ME.k], bs = n.p && NODES[n.p]; tx.appendChild(el('div', '', 'Kedudukan anda')); tx.appendChild(el('b', '', (n.t || 'Staf') + (n.g ? ' · ' + n.g : ''))); if(bs) tx.appendChild(el('div', '', 'Melapor kepada ' + disp(bs))); }
+  box.appendChild(tx); const bt = el('button', '', 'Cari saya'); bt.type = 'button'; bt.onclick = () => focusNode(ME.k); box.appendChild(bt); b.appendChild(box);
+}
+async function boot(){
+  if(!tok()){ location.href = './login.html'; return; }
+  await gate();
+  let d;
+  try{ d = await api({ action:'getOrgChart' }); }catch(e){ d = null; }
+  if(!d || !d.ok){
+    if(d && /expired/i.test(d.error || '')){ location.href = './login.html'; return; }
+    $('status').innerHTML = ''; const s = el('div', 'state', d && d.error ? d.error : 'Tiada sambungan.'); const r = el('button', 'tb', 'Cuba lagi'); r.style.cssText = 'margin-top:12px;color:var(--t9);border-color:var(--line);background:#fff'; r.onclick = () => location.reload(); s.appendChild(document.createElement('br')); s.appendChild(r); $('status').appendChild(s); return;
+  }
+  build(d); $('status').innerHTML = ''; legend(); meBox(); renderList();
+  let m = 'list'; try{ m = localStorage.getItem('kkah_org_mode') || (window.innerWidth >= 900 ? 'chart' : 'list'); }catch(e){}
+  if(window.innerWidth < 700) m = 'list';
+  setMode(m, true);
+  if(ME) setTimeout(() => focusNode(ME.k), 500);
+  loadPhotos();
+}
+boot();
+</script>
+</body>
+</html>
