@@ -3204,7 +3204,7 @@ async function loadSidebarProfile(){
   });
 
   // Photo (large base64) — cached a day so it paints instantly on later visits
-  cachedApi('getMyPhoto', TTL.photo, (data) => {
+  cachedApi('getMyAvatar', TTL.photo, (data) => {
     if(data.ok && data.photo){
       const avatar = document.getElementById('sidebarAvatar');
       avatar.textContent = '';
