@@ -1440,6 +1440,7 @@ window.addEventListener('DOMContentLoaded', () => {
   loadSidebarProfile();
 
   const params = new URLSearchParams(window.location.search);
+  if(params.get('kursus') === '1'){ (function w(){ if(document.getElementById('welcomeOverlay')) return setTimeout(w, 400); try{ openKursusModal(); }catch(e){} })(); }
   if(params.get('forcePasswordChange') === '1'){
     document.getElementById('forcedBanner').classList.add('show');
     openPasswordModal(true);
