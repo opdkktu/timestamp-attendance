@@ -645,6 +645,29 @@
   .bpop-go{ min-height:44px; padding:0 14px; border:none; border-radius:13px; background:linear-gradient(135deg,#0B3D3A,#1C8F84); color:#fff; font:800 12.5px 'Manrope',sans-serif; cursor:pointer; white-space:nowrap; } .bpop-go:disabled{ opacity:.7; } .bpop-go.ok{ background:#0A8F5B; }
   .bpop-x{ width:100%; min-height:46px; margin-top:6px; border:none; background:transparent; color:var(--ink-500); font-weight:700; font-size:14px; cursor:pointer; }
   @media (prefers-reduced-motion:reduce){ .bpop{ animation:none; } }
+
+  /* blinking: red = nobody has responded / overdue, amber = in progress */
+  @keyframes blinkRed{ 0%,100%{ box-shadow:0 0 0 0 rgba(192,57,43,0) } 50%{ box-shadow:0 0 0 5px rgba(192,57,43,.3) } }
+  @keyframes blinkAmb{ 0%,100%{ box-shadow:0 0 0 0 rgba(232,134,12,0) } 50%{ box-shadow:0 0 0 5px rgba(232,134,12,.32) } }
+  @keyframes dotBlink{ 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.22) } }
+  .blink-wait{ animation:blinkRed 1.2s ease-in-out infinite; }
+  .blink-prog{ animation:blinkAmb 1.6s ease-in-out infinite; }
+  .tr-line.blink-wait .n{ background:#C0392B !important; animation:dotBlink 1s ease-in-out infinite; }
+  .tr-task.prog{ border-color:#E8860C; background:#FFF8E8; animation:blinkAmb 1.6s ease-in-out infinite; }
+  .tr-task.late{ border-color:#C0392B; background:#FDECEA; animation:blinkRed 1.2s ease-in-out infinite; }
+  .tr-task{ position:relative; }
+  .tr-task .trt-main{ display:flex; gap:10px; flex:1; min-width:0; text-decoration:none; color:inherit; }
+  .tr-task .trt-ok{ border:0; border-radius:99px; background:#1f9a57; color:#fff; font-weight:800; font-size:12px; padding:8px 12px; align-self:center; white-space:nowrap; cursor:pointer; }
+  .tr-task .trt-ok:disabled{ opacity:.6; }
+  .po-card.prog{ border-color:#E8860C; animation:blinkAmb 1.6s ease-in-out infinite; }
+  .po-card.late{ border-left-color:#C0392B; border-color:#e0524a; animation:blinkRed 1.2s ease-in-out infinite; }
+  /* bubble-off: finished item swells, pops into little bubbles, collapses */
+  .pop-out{ pointer-events:none; overflow:visible; animation:bubbleOff .75s cubic-bezier(.3,.7,.3,1) forwards !important; }
+  .pop-out::before,.pop-out::after{ content:""; position:absolute; width:14px; height:14px; border-radius:50%; background:rgba(47,174,96,.55); left:18%; top:30%; animation:bubFly .7s ease-out forwards; }
+  .pop-out::after{ width:9px; height:9px; left:70%; top:55%; background:rgba(21,101,192,.45); animation-delay:.05s; }
+  @keyframes bubbleOff{ 0%{ transform:scale(1); opacity:1 } 30%{ transform:scale(1.05); opacity:1 } 100%{ transform:scale(.4); opacity:0; max-height:0; margin-bottom:0; padding-top:0; padding-bottom:0; border-width:0 } }
+  @keyframes bubFly{ 0%{ transform:translateY(0) scale(.4); opacity:.9 } 100%{ transform:translateY(-38px) scale(1.5); opacity:0 } }
+  @media (prefers-reduced-motion:reduce){ .blink-wait,.blink-prog,.tr-task.prog,.tr-task.late,.po-card.prog,.po-card.late,.tr-line.blink-wait .n{ animation:none !important } .pop-out{ animation:none !important; display:none } }
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
@@ -1131,6 +1154,34 @@ document.addEventListener('visibilitychange', () => { if(!document.hidden) setTi
 /* === AMO tasks: procedures / medication ordered by a doctor (PRIMA DoctorRoom section 4). Only AMO accounts ever see this. === */
 let _poAmo = null, _poBusy = false;
 function poEsc_(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+/** Replace slot content but let removed keyed items "pop" off instead of vanishing. Items need data-k="<id>". */
+function keyedSwap_(slot, html){
+  const old = [].slice.call(slot.querySelectorAll('[data-k]')).filter(n => !n.classList.contains('pop-out'));
+  slot.innerHTML = html;
+  const now = {}; slot.querySelectorAll('[data-k]').forEach(n => now[n.getAttribute('data-k')] = 1);
+  old.forEach((g, i) => {
+    if(now[g.getAttribute('data-k')]) return;
+    g.classList.remove('blink-wait','blink-prog','prog','late','urgent');
+    g.classList.add('pop-out');
+    const ref = slot.children[i] || null;
+    slot.insertBefore(g, ref);
+    setTimeout(() => { try{ g.remove(); }catch(e){} }, 800);
+  });
+}
+function trMinsAgo_(hm){ const p = String(hm||'').split(':').map(Number); if(isNaN(p[0])) return 0; const n = new Date(); return n.getHours()*60 + n.getMinutes() - (p[0]*60 + (p[1]||0)); }
+async function trComplete_(id, btn){
+  if(!confirm('Tandakan perjalanan ini sebagai selesai?')) return;
+  if(btn) btn.disabled = true;
+  try{
+    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'completeTransport', id: id, token: sessionStorage.getItem('kkah_session_token') }) });
+    const d = await res.json();
+    if(navigator.vibrate) navigator.vibrate(d && d.ok ? 50 : [80,60,80]);
+    if(d && !d.ok && d.error) alert(d.error);
+  }catch(e){ alert('Ralat sambungan. Cuba lagi.'); }
+  loadTransportBox();
+}
+  
+let _poSeen = {};   // order id -> last status seen in this session
 async function loadProcTasks_(){
   if(VIEW_NAME || _poAmo === false) return;
   const slot = document.getElementById('procSlot'); if(!slot) return;
@@ -1139,22 +1190,31 @@ async function loadProcTasks_(){
     const d = await res.json();
     if(!d || !d.ok) return;
     _poAmo = !!d.amo; if(!d.amo){ slot.innerHTML = ''; return; }
-    const open = d.orders.filter(o => o.status !== 'SELESAI');
-    slot.innerHTML = d.orders.slice(0, 12).map(o => {
-      const cls = o.status === 'SELESAI' ? 'done' : o.status === 'DIAMBIL' ? 'taken' : (o.urgent ? 'urgent' : '');
+    const justDone = {};
+    d.orders.forEach(o => { if(o.status === 'SELESAI' && _poSeen[o.id] && _poSeen[o.id] !== 'SELESAI') justDone[o.id] = 1; });
+    const live = d.orders.filter(o => o.status !== 'SELESAI');
+    const doneN = d.orders.length - live.length;
+    const showList = live.concat(d.orders.filter(o => justDone[o.id])).slice(0, 12);
+    let html = showList.map(o => {
+      const waitMin = trMinsAgo_(o.time);
+      const cls = o.status === 'SELESAI' ? 'done' : o.status === 'DIAMBIL' ? 'taken prog' : (o.urgent || waitMin >= 5 ? 'urgent late' : '');
       const roomNo = (o.room.match(/\d+/) || [''])[0];
       const who = o.status === 'SELESAI' ? '✅ Selesai oleh ' + poEsc_(o.doneBy) + ' · ' + poEsc_(o.doneAt.slice(0,5))
-                : o.status === 'DIAMBIL' ? '🏃 ' + poEsc_(o.claimBy) + ' sedang menguruskan' : '';
+                : o.status === 'DIAMBIL' ? '🏃 ' + poEsc_(o.claimBy) + ' sedang menguruskan'
+                : (waitMin >= 5 ? '⏱ Belum disambut ' + waitMin + ' min' : '');
       const btns = o.status === 'SELESAI' ? '' :
         '<div class="po-act">' + (o.status === 'DIHANTAR' ? '<button class="po-btn" onclick="poAct_(\'claimProcOrder\',\'' + poEsc_(o.id) + '\',this)">Saya ambil</button>' : '') +
         '<button class="po-btn ok" onclick="poAct_(\'doneProcOrder\',\'' + poEsc_(o.id) + '\',this)">✓ Selesai</button></div>';
-      return '<div class="po-card ' + cls + '"><div class="po-h"><span>' + (o.urgent ? '⚡ ' : '🔧 ') + 'Bilik ' + poEsc_(roomNo) + ' · No. ' + poEsc_(o.num) + '</span><small>' + poEsc_(o.time.slice(0,5)) + '</small></div>' +
+      return '<div class="po-card ' + cls + '" data-k="' + poEsc_(o.id) + '"' + (justDone[o.id] ? ' style="animation:bubbleOff .75s 2.2s forwards"' : '') + '><div class="po-h"><span>' + (o.urgent ? '⚡ ' : '🔧 ') + 'Bilik ' + poEsc_(roomNo) + ' · No. ' + poEsc_(o.num) + '</span><small>' + poEsc_(o.time.slice(0,5)) + '</small></div>' +
         '<div class="po-pt">' + poEsc_(o.patient) + ' <small>· Dr. ' + poEsc_(o.doctor) + '</small></div>' +
         (o.procs.length ? '<div class="po-l"><b>Prosedur</b>' + o.procs.map(poEsc_).join(', ') + '</div>' : '') +
         (o.meds.length ? '<div class="po-l"><b>Ubat</b>' + o.meds.map(poEsc_).join(', ') + '</div>' : '') +
         (o.note ? '<div class="po-note">“' + poEsc_(o.note) + '”</div>' : '') + (who ? '<div class="po-who">' + who + '</div>' : '') + btns + '</div>';
     }).join('');
-    if(open.length && /[?&]proc=1/.test(location.search)) { try{ slot.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} }
+    if(doneN) html += '<div style="font-size:12px;color:#5B6B68;text-align:center;margin:4px 0">✓ ' + doneN + ' prosedur selesai hari ini</div>';
+    keyedSwap_(slot, html);
+    d.orders.forEach(o => { _poSeen[o.id] = o.status; });
+    if(live.length && /[?&]proc=1/.test(location.search)) { try{ slot.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} }
   }catch(e){ /* optional */ }
 }
 async function poAct_(action, id, btn){
@@ -1511,24 +1571,28 @@ async function loadTransportBox(){
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const t12 = hm => { const p = String(hm).split(':').map(Number); const h = p[0] || 0; return (h % 12 || 12) + ':' + String(p[1] || 0).padStart(2,'0') + (h >= 12 ? ' PM' : ' AM'); };
     let html = '';
-    if(r.isDriver && d.needReply > 0) html += '<a class="tr-line alert" href="./transport.html"><span class="n">' + d.needReply + '</span>permintaan kenderaan menunggu balasan anda</a>';
-    if(d.awaiting > 0) html += '<a class="tr-line alert" href="./transport.html"><span class="n">' + d.awaiting + '</span>menunggu kelulusan anda (pemandu telah bersedia)</a>';
+    if(r.isDriver && d.needReply > 0) html += '<a class="tr-line alert blink-wait" href="./transport.html"><span class="n">' + d.needReply + '</span>permintaan kenderaan menunggu balasan anda</a>';
+    if(d.awaiting > 0) html += '<a class="tr-line alert blink-wait" href="./transport.html"><span class="n">' + d.awaiting + '</span>menunggu kelulusan anda (pemandu telah bersedia)</a>';
     if(d.myOpen > 0) html += '<a class="tr-line" href="./transport.html"><span class="n">' + d.myOpen + '</span>permintaan kenderaan saya masih aktif</a>';
     if(d.tasks && d.tasks.length){
-      html += '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#5B6B68;margin:4px 2px 6px">Tugasan kenderaan hari ini</div>' +
-        d.tasks.map(t => '<a class="tr-task' + (t.mine ? ' mine' : '') + '" href="./transport.html?req=' + esc(t.id) + '" style="text-decoration:none;color:inherit"><span class="t">' + t12(t.time) + '</span><span><b>' + esc(t.purpose) + '</b><small>' +
-          t.pax + ' orang · Pemandu: ' + esc(t.driver) + ' · ' + esc(t.requester) + '</small></span></a>').join('');
+      html += '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#5B6B68;margin:4px 2px 6px">Tugasan kenderaan</div>' +
+        d.tasks.map(t => '<div class="tr-task' + (t.mine ? ' mine' : '') + (t.overdue ? ' late' : (t.prog ? ' prog' : '')) + '" data-k="' + esc(t.id) + '">' +
+          '<a class="trt-main" href="./transport.html?req=' + esc(t.id) + '"><span class="t">' + (t.overdue ? esc(String(t.date).slice(5)) + ' ' : '') + t12(t.time) + '</span><span><b>' + esc(t.purpose) + '</b><small>' +
+          t.pax + ' orang · Pemandu: ' + esc(t.driver) + ' · ' + esc(t.requester) + (t.overdue ? ' · BELUM DITANDA SELESAI' : t.prog ? ' · sedang berjalan' : '') + '</small></span></a>' +
+          (t.canComplete ? '<button class="trt-ok" onclick="trComplete_(\'' + esc(t.id) + '\', this)">✓ Selesai</button>' : '') + '</div>').join('');
     }
     if(d.docs && d.docs.items && d.docs.items.length){
       const lbl = i => i.level === 'none' ? 'belum diisi' : (i.days < 0 ? 'TAMAT' : i.days + ' hari');
       html += '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#5B6B68;margin:6px 2px">Cukai jalan, lesen, minyak &amp; bateri</div><div class="tr-docs">' +
         d.docs.items.map(i => '<a class="tr-chip ' + i.level + '" href="./vehicles.html">' + ({veh:'🚐 ',lic:'🪪 ',oil:'🛢 ',bat:'🔋 '}[i.kind] || '') + esc(i.label) + ' · ' + (i.text ? esc(i.text) : lbl(i)) + '</a>').join('') + '</div>';
     }
-    if(!html){ box.classList.remove('show'); return; }
-    box.innerHTML = '<div class="tr-head"><b>🚐 Pengangkutan</b><a href="./transport.html">Buka →</a></div>' + html;
+    if(!html){ keyedSwap_(box, ''); box.classList.remove('show'); return; }
+    keyedSwap_(box, '<div class="tr-head"><b>🚐 Pengangkutan</b><a href="./transport.html">Buka →</a></div>' + html);
     box.classList.add('show');
   }catch(e){ /* optional box — stays hidden */ }
 }
+  setInterval(() => { if(!document.hidden) loadTransportBox(); }, 30 * 1000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(loadTransportBox, 400); });
 
 /** Quietly fetch the face-recognition files once the dashboard is idle, so my-checkin.html finds them in cache. */
 function warmFaceAssets_(){
