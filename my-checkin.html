@@ -130,6 +130,23 @@
 
   @media (max-height:700px){ .viewfinder{ width:200px; height:200px; } .viewfinder video,.viewfinder canvas.snapshot{ width:174px; height:174px; } .b-icon{ font-size:36px; height:40px; } }
   @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+
+  /* end-of-day well-being card */
+  .wb-back{ position:fixed; inset:0; background:rgba(10,30,28,.55); display:none; align-items:flex-end; justify-content:center; z-index:9000; }
+  .wb-back.show{ display:flex; }
+  .wb-card{ background:#fff; width:100%; max-width:480px; border-radius:24px 24px 0 0; padding:20px 18px calc(18px + env(safe-area-inset-bottom)); max-height:92vh; overflow:auto; animation:wbUp .35s cubic-bezier(.2,.8,.2,1); }
+  @keyframes wbUp{ from{ transform:translateY(40px); opacity:0 } to{ transform:none; opacity:1 } }
+  .wb-card h3{ margin:0 0 2px; font-size:18px; color:#0F5C56; } .wb-card .sub{ margin:0 0 14px; font-size:13px; color:#5B6B68; }
+  .wb-q{ margin:14px 0 8px; font-weight:700; font-size:14px; color:#1d2b29; }
+  .wb-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .wb-chip{ flex:1; min-width:84px; border:2px solid #DCEAE6; background:#fff; border-radius:14px; padding:12px 8px; font-size:14px; font-weight:700; color:#1d2b29; cursor:pointer; text-align:center; min-height:48px; }
+  .wb-chip.on{ border-color:#0F5C56; background:#EAF6F2; color:#0F5C56; }
+  .wb-mood .wb-chip{ min-width:0; font-size:26px; padding:8px 0; } .wb-mood .wb-chip small{ display:block; font-size:10px; font-weight:700; color:#5B6B68; margin-top:2px; }
+  .wb-go{ width:100%; margin-top:18px; border:0; border-radius:14px; background:#0F5C56; color:#fff; font-weight:800; font-size:15px; padding:14px; cursor:pointer; min-height:50px; }
+  .wb-go:disabled{ opacity:.45; cursor:not-allowed; }
+  .wb-skip{ width:100%; margin-top:8px; border:0; background:none; color:#5B6B68; font-size:13px; padding:10px; cursor:pointer; text-decoration:underline; }
+  .wb-note{ margin-top:12px; font-size:11px; color:#7a8a87; text-align:center; }
+  .wb-help{ background:#F1FBF5; border:1px solid #bfe3cd; border-radius:14px; padding:12px 14px; font-size:13px; color:#1d2b29; margin-top:12px; line-height:1.5; }
 </style>
 <script src="./bio-help.js"></script>
 <script src="./version.js"></script>
@@ -479,7 +496,7 @@ function fmt12(hms){
 
 /* ===================== prepare (everything in parallel) ===================== */
 /* ===================== Face ID / Touch ID gate (before the camera + faceprint start) ===================== */
-const BIO_REQUIRED = false;          // false = no gate at all
+const BIO_REQUIRED = true;          // false = no gate at all
 const BIO_ALLOW_NO_SENSOR = true;   // phone without Face ID / fingerprint / screen lock: true = let it through, false = block
 let bioUntil = 0, bioFails = 0, bioSaved = null, bioErr = null;
 const bioKey = () => 'kkah_ci_cred_' + (sessionStorage.getItem('kkah_ic') || '');
@@ -820,6 +837,48 @@ function onRetry(){
   else beginStart();                         // new faceprint attempt → Face ID / Touch ID check applies again (skipped inside its 2-minute pass)
 }
 
+
+/* ===================== end-of-day well-being check (after an office-hours Check Out) ===================== */
+let wbA = { unhappy:'', tired:'', mood:0 };
+function wbGoDash_(){ window.location.href = './dashboard.html'; }
+async function wbMaybeAsk_(){
+  try{
+    const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'getWellbeingToday', token: sessionStorage.getItem('kkah_session_token') }) });
+    const d = await res.json();
+    if(!d || !d.ok || d.answered) return;
+  }catch(e){ return; }                                   // never block the normal flow
+  clearInterval(redirectTimer); $('countdown').textContent = '';
+  wbA = { unhappy:'', tired:'', mood:0 };
+  wbRender_();
+  $('wbBack').classList.add('show');
+}
+function wbPick_(k, v){ wbA[k] = v; wbRender_(); }
+function wbRender_(){
+  const chip = (k, v, label, extra) => '<button type="button" class="wb-chip' + (wbA[k] === v ? ' on' : '') + '" onclick="wbPick_(\'' + k + '\',' + (typeof v === 'number' ? v : '\'' + v + '\'') + ')" aria-pressed="' + (wbA[k] === v) + '">' + label + (extra || '') + '</button>';
+  const moods = [[1,'😞','Teruk'],[2,'🙁','Kurang'],[3,'😐','Biasa'],[4,'🙂','Baik'],[5,'😄','Hebat']];
+  $('wbCard').innerHTML =
+    '<h3 id="wbTitle">Bagaimana hari anda?</h3><p class="sub">3 soalan ringkas · jawapan anda peribadi &amp; boleh dilangkau.</p>' +
+    '<div class="wb-q">1. Adakah anda mengalami sebarang peristiwa tidak menggembirakan hari ini?</div><div class="wb-row">' + chip('unhappy','TIDAK','Tidak') + chip('unhappy','YA','Ya') + '</div>' +
+    '<div class="wb-q">2. Adakah anda berasa letih hari ini?</div><div class="wb-row">' + chip('tired','TIDAK','Tidak') + chip('tired','SEDIKIT','Sedikit') + chip('tired','SANGAT','Sangat letih') + '</div>' +
+    '<div class="wb-q">3. Nilaikan mood anda hari ini</div><div class="wb-row wb-mood">' + moods.map(m => chip('mood', m[0], m[1], '<small>' + m[2] + '</small>')).join('') + '</div>' +
+    '<button class="wb-go" id="wbGo" onclick="wbSubmit_()"' + (wbA.unhappy && wbA.tired && wbA.mood ? '' : ' disabled') + '>Hantar</button>' +
+    '<button class="wb-skip" onclick="wbGoDash_()">Langkau hari ini</button>' +
+    '<div class="wb-note">🔒 Hanya anda boleh lihat jawapan individu. Penyelia hanya nampak purata kumpulan (sekurang-kurangnya 5 orang).</div>';
+}
+async function wbSubmit_(){
+  const b = $('wbGo'); b.disabled = true; b.textContent = 'Menghantar…';
+  let d = null;
+  try{
+    const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'submitWellbeing', token: sessionStorage.getItem('kkah_session_token'), unhappy: wbA.unhappy, tired: wbA.tired, mood: wbA.mood }) });
+    d = await res.json();
+  }catch(e){}
+  if(!d || !d.ok){ b.disabled = false; b.textContent = 'Cuba lagi'; return; }
+  if(navigator.vibrate) try{ navigator.vibrate(30); }catch(e){}
+  const help = d.support ? '<div class="wb-help">💚 Terima kasih kerana berkongsi. Hari yang berat boleh berlaku kepada sesiapa. Jika anda mahu berbual dengan seseorang, <b>Talian HEAL KKM 15555</b> sedia membantu, atau dapatkan Saringan Minda di klinik.</div>' : '';
+  $('wbCard').innerHTML = '<h3>Terima kasih 🌿</h3><p class="sub">Jawapan anda disimpan. Jumpa esok — rehat secukupnya.</p>' + help + '<button class="wb-go" onclick="wbGoDash_()">Ke Dashboard</button>';
+  if(!d.support) setTimeout(wbGoDash_, 2200);
+}
+
 function onSuccess(data){
   recording = false; releaseWake();
   setStep('save', 'done');
@@ -851,8 +910,13 @@ function onSuccess(data){
   let n = data.late ? 15 : 5;                // late warning stays long enough to read
   const tick = () => { $('countdown').textContent = 'Kembali ke Dashboard dalam ' + n + ' saat…'; if(n-- <= 0){ clearInterval(redirectTimer); window.location.href = './dashboard.html'; } };
   tick(); redirectTimer = setInterval(tick, 1000);
+  if(data.type === 'OUT' && !offToday) setTimeout(wbMaybeAsk_, 1200);   // office-hours Check Out only (not On-Call, not Fri/Sat rounds)
 }
 </script>
 
+
+<div class="wb-back" id="wbBack" role="dialog" aria-modal="true" aria-labelledby="wbTitle">
+  <div class="wb-card" id="wbCard"></div>
+</div>
 </body>
 </html>
