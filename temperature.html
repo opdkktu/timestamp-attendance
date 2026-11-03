@@ -84,6 +84,15 @@
   .spin{ width:22px; height:22px; border:3px solid var(--line); border-top-color:var(--b5); border-radius:50%; animation:sp .8s linear infinite; margin:0 auto 8px; } @keyframes sp{ to{ transform:rotate(360deg); } }
   .empty{ text-align:center; padding:30px 12px; color:var(--ink2); font-size:14px; line-height:1.6; }
   :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+  #topBar{ position:fixed; left:0; top:0; height:3px; width:0; background:linear-gradient(90deg,#1d7fd1,#0a9a64); z-index:9999; opacity:0; pointer-events:none; }
+  #topBar.on{ opacity:1; width:85%; transition:width 6s cubic-bezier(.1,.7,.2,1); }
+  .view{ transition:opacity .2s, filter .2s; }
+  .wrap.busy .view.show{ opacity:.35; filter:blur(1.5px); pointer-events:none; }
+  @keyframes swIn-r{ from{ opacity:0; transform:translateX(34px) } to{ opacity:1; transform:none } }
+  @keyframes swIn-l{ from{ opacity:0; transform:translateX(-34px) } to{ opacity:1; transform:none } }
+  .wrap.in-r .view.show > :not(.mnav){ animation:swIn-r .38s cubic-bezier(.2,.8,.2,1) both; }
+  .wrap.in-l .view.show > :not(.mnav){ animation:swIn-l .38s cubic-bezier(.2,.8,.2,1) both; }
+  .fr button,.units button{ transition:background .2s, color .2s, transform .15s; } .fr button:active,.units button:active{ transform:scale(.95); }
   @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
 </style>
 <script src="./version.js"></script>
@@ -186,7 +195,23 @@ async function loadMonth(force){
     S.days = d.days; S.cache[k] = d.days; S.today = d.today || S.today;
   }catch(e){ toast(e.message, true); }
 }
-
+let busyT = 0;
+function setBusy_(on){
+  const w = document.querySelector('.wrap'); w.classList.toggle('busy', on);
+  let b = document.getElementById('topBar'); if(!b){ b = document.createElement('div'); b.id = 'topBar'; document.body.appendChild(b); }
+  b.className = ''; if(on){ void b.offsetWidth; b.className = 'on'; }
+  clearTimeout(busyT); if(on) busyT = setTimeout(() => setBusy_(false), 12000);
+}
+function swipeIn_(dir){
+  const w = document.querySelector('.wrap'); w.classList.remove('in-l', 'in-r'); void w.offsetWidth;
+  if(dir){ w.classList.add('in-' + dir); setTimeout(() => w.classList.remove('in-l', 'in-r'), 450); }
+}
+/** run fn (usually loadMonth) while showing the busy state, then render and slide the new content in */
+async function switchTo_(dir, fn){
+  setBusy_(true);
+  try{ await fn(); }catch(e){}
+  render(); setBusy_(false); swipeIn_(dir);
+}
 /* ---------------- shell ---------------- */
 function head(){
   document.querySelectorAll('#units button').forEach(b => b.setAttribute('aria-pressed', b.dataset.u === S.unit));
@@ -200,13 +225,27 @@ function head(){
 }
 function render(){ head(); if(S.view === 'log') renderLog(); if(S.view === 'graph') renderGraph(); if(S.view === 'rec') renderRec(); }
 $('nav').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; S.view = b.dataset.v; render(); window.scrollTo(0, 0); });
-$('units').addEventListener('click', async e => { const b = e.target.closest('button'); if(!b || b.dataset.u === S.unit) return; S.unit = b.dataset.u; S.fridge = (S.fridges.find(f => f.unit === S.unit) || {}).id; S.saved = false; await loadMonth(); render(); });
-$('fr').addEventListener('click', async e => { const b = e.target.closest('[data-f]'); if(!b) return; S.fridge = b.dataset.f; S.saved = false; try{ localStorage.setItem('kkah_temp_fridge', S.fridge); }catch(_){} await loadMonth(); render(); });
-document.addEventListener('click', async e => {
+$('units').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b || b.dataset.u === S.unit) return;
+  const dir = b.dataset.u > S.unit ? 'r' : 'l';
+  document.querySelectorAll('#units button').forEach(x => x.setAttribute('aria-pressed', x === b));      // instant feedback
+  S.unit = b.dataset.u; S.fridge = (S.fridges.find(f => f.unit === S.unit) || {}).id; S.saved = false;
+  switchTo_(dir, loadMonth);
+});
+$('fr').addEventListener('click', e => {
+  const b = e.target.closest('[data-f]'); if(!b || b.dataset.f === S.fridge) return;
+  const ids = S.fridges.filter(f => f.unit === S.unit).map(f => f.id), dir = ids.indexOf(b.dataset.f) > ids.indexOf(S.fridge) ? 'r' : 'l';
+  document.querySelectorAll('#fr [data-f]').forEach(x => x.setAttribute('aria-pressed', x === b));        // instant feedback
+  if(navigator.vibrate) try{ navigator.vibrate(15); }catch(_){}
+  S.fridge = b.dataset.f; S.saved = false; try{ localStorage.setItem('kkah_temp_fridge', S.fridge); }catch(_){}
+  switchTo_(dir, loadMonth);
+});
+document.addEventListener('click', e => {
   const mb = e.target.closest('[data-m]'); if(!mb) return;
   let m = S.m + Number(mb.dataset.m), y = S.y; if(m < 1){ m = 12; y--; } if(m > 12){ m = 1; y++; }
   if(y > NOW.getFullYear() || (y === NOW.getFullYear() && m > NOW.getMonth() + 1)) return;
-  S.y = y; S.m = m; S.day = isCurMonth() ? NOW.getDate() : 1; await loadMonth(); render();
+  S.y = y; S.m = m; S.day = isCurMonth() ? NOW.getDate() : 1;
+  switchTo_(Number(mb.dataset.m) > 0 ? 'r' : 'l', loadMonth);
 });
 
 /* ---------------- record ---------------- */
