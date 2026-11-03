@@ -66,7 +66,15 @@
   .c-meta{ font-size:12.5px; color:var(--ink-500); margin-top:6px; line-height:1.55; }
   .badge{ font-size:10.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; padding:5px 10px; border-radius:99px; white-space:nowrap; }
   .b-wait{ background:#FFF3D6; color:#8a6d0a; } .b-appr{ background:#E0F5E8; color:var(--green-700); } .b-need{ background:#FDE9C8; color:#9a5b00; }
-  .b-bad{ background:#FDE0E3; color:var(--red-600); } .b-done{ background:#eef1f0; color:#5B6B68; }
+  .b-bad{ background:#FDE0E3; color:var(--red-600); }
+  .b-prog{ background:#FFF1CC; color:#8A6100; } .b-ok{ background:#DDF5E6; color:#15703F; }
+  @keyframes blinkAmber{ 0%,100%{ box-shadow:0 0 0 0 rgba(232,134,12,.0) } 50%{ box-shadow:0 0 0 5px rgba(232,134,12,.28) } }
+  @keyframes blinkRed{ 0%,100%{ box-shadow:0 0 0 0 rgba(192,57,43,0) } 50%{ box-shadow:0 0 0 5px rgba(192,57,43,.28) } }
+  .card.blink-prog{ animation:blinkAmber 1.6s ease-in-out infinite; border-color:#E8860C; }
+  .card.blink-late{ animation:blinkRed 1.2s ease-in-out infinite; border-color:#C0392B; }
+  .card.finished{ opacity:.75; }
+  .a.done{ background:#1f9a57; color:#fff; }
+  @media (prefers-reduced-motion:reduce){ .card.blink-prog,.card.blink-late{ animation:none } } .b-done{ background:#eef1f0; color:#5B6B68; }
   .resp{ display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
   .rp{ font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:99px; }
   .rp.y{ background:#E0F5E8; color:var(--green-700); } .rp.n{ background:#f1f1f1; color:#777; }
@@ -225,7 +233,7 @@ async function load(silent){
 
 const STATUS = {
   PENDING_DRIVER: ['b-wait', 'Menunggu pemandu'], PENDING_APPROVAL: ['b-need', 'Menunggu kelulusan'], APPROVED: ['b-appr', 'Diluluskan'],
-  REJECTED: ['b-bad', 'Ditolak'], CANCELLED: ['b-done', 'Dibatalkan'], NO_DRIVER: ['b-bad', 'Tiada pemandu'], EXPIRED: ['b-done', 'Luput'], DONE: ['b-done', 'Selesai']
+  REJECTED: ['b-bad', 'Ditolak'], CANCELLED: ['b-done', 'Dibatalkan'], NO_DRIVER: ['b-bad', 'Tiada pemandu'], EXPIRED: ['b-done', 'Luput'], DONE: ['b-done', 'Selesai'], COMPLETED: ['b-ok', '✓ Selesai'], OVERDUE: ['b-bad', 'Belum ditanda selesai']
 };
 function actionable(i){ return i.canRespond || i.canApprove; }
 
@@ -236,7 +244,7 @@ function renderFilters(){
   const n = items.filter(actionable).length;
   $('dotList').textContent = n; $('dotList').classList.toggle('show', n > 0);
   const tasks = items.filter(i => i.isMyTask && i.isToday);
-  $('todayBox').innerHTML = tasks.length ? '<div class="today"><b>🚐 Tugasan anda hari ini</b>' + tasks.map(t => '<div class="t"><b>' + esc(when(t.date, t.time).split('·')[1].trim()) + '</b> — ' + esc(t.purpose) + ' · ' + t.pax + ' orang<br><small>Pemohon: ' + esc(t.requester) + (t.notes ? ' · ' + esc(t.notes) : '') + '</small></div>').join('') + '</div>' : '';
+  $('todayBox').innerHTML = tasks.length ? '<div class="today"><b>🚐 Tugasan anda hari ini</b>' + tasks.map(t => '<div class="t"><b>' + esc(when(t.date, t.time).split('·')[1].trim()) + '</b>' + (t.prog ? ' <span class="badge b-prog">Sedang berjalan</span>' : '') + ' — ' + esc(t.purpose) + ' · ' + t.pax + ' orang<br><small>Pemohon: ' + esc(t.requester) + (t.notes ? ' · ' + esc(t.notes) : '') + '</small>' + (t.canComplete ? '<div class="acts one" style="margin-top:8px"><button class="a done" onclick="completeTrip(\'' + t.id + '\')">✓ Tandakan selesai</button></div>' : '') + '</div>').join('') + '</div>' : '';
 }
 function setFilter(f){ filter = f; renderFilters(); render(); }
 
@@ -261,13 +269,14 @@ function card(i){
   if(i.canApprove){
     acts += '<div class="acts"><button class="a yes" onclick="decide(\'' + i.id + '\', true)">👍 Luluskan</button><button class="a no" onclick="openReject(\'' + i.id + '\')">Tolak</button></div>';
   }
+  if(i.canComplete){ acts += '<div class="acts one"><button class="a done" onclick="completeTrip(\'' + i.id + '\')">✓ Tandakan perjalanan selesai</button></div>'; }
   if(i.canCancel){ acts += '<div class="acts one"><button class="a small" onclick="cancelReq(\'' + i.id + '\')">Batalkan permintaan</button></div>'; }
   const resp = i.responses.length ? '<div class="resp">' + i.responses.map(r => '<span class="rp ' + (r.available ? 'y' : 'n') + '">' + (r.available ? '✓ ' : '✖ ') + esc(r.name) + '</span>').join('') + '</div>' : '';
   const meta = [i.pax + ' penumpang', 'Pemohon: ' + esc(i.requester) + (i.unit ? ' (' + esc(i.unit) + ')' : '')];
-  if(i.driver && (i.status === 'APPROVED' || i.status === 'DONE')) meta.push('Pemandu: <b>' + esc(i.driver) + '</b>');
+  if(i.driver && (i.status === 'APPROVED' || i.status === 'DONE' || i.status === 'COMPLETED' || i.status === 'OVERDUE')) meta.push('Pemandu: <b>' + esc(i.driver) + '</b>');
   else if(i.driver && i.status === 'PENDING_APPROVAL') meta.push('Pemandu bersedia: <b>' + esc(i.driver) + '</b>');
   if(i.auto && i.status !== 'REJECTED') meta.push('Pemohon penyelia PIC — tanpa kelulusan');
-  return '<div class="card' + (i.isMyTask ? ' mytask' : '') + '" id="c_' + i.id + '"><div class="c-top"><div><div class="c-purpose">' + esc(i.purpose) + '</div><div class="c-when">' + esc(when(i.date, i.time)) + (i.isToday ? ' · HARI INI' : '') + '</div></div><span class="badge ' + st[0] + '">' + st[1] + '</span></div>' +
+  return '<div class="card' + (i.isMyTask ? ' mytask' : '') + (i.status === 'OVERDUE' ? ' blink-late' : (i.prog && i.status === 'APPROVED' ? ' blink-prog' : '')) + (i.status === 'COMPLETED' ? ' finished' : '') + '" id="c_' + i.id + '"><div class="c-top"><div><div class="c-purpose">' + esc(i.purpose) + '</div><div class="c-when">' + esc(when(i.date, i.time)) + (i.isToday ? ' · HARI INI' : '') + '</div></div><span class="badge ' + st[0] + '">' + st[1] + '</span></div>' +
     '<div class="c-meta">' + meta.join('<br>') + '</div>' + (i.notes ? '<div class="note-box">📝 ' + esc(i.notes) + '</div>' : '') +
     (i.reason ? '<div class="note-box">Sebab: ' + esc(i.reason) + '</div>' : '') + resp + acts + '</div>';
 }
@@ -283,6 +292,11 @@ async function act(body, okMsg){
 }
 function respond(id, yes){ act({ action:'respondTransport', id, available: yes }, yes ? '✅ Anda bersedia — menunggu kelulusan' : 'Dijawab: tidak dapat'); }
 function decide(id, yes){ act({ action:'decideTransport', id, approve: yes }, '👍 Diluluskan — pemandu & pemohon dimaklumkan'); }
+function completeTrip(id){
+  if(!confirm('Tandakan perjalanan ini sebagai selesai?')) return;
+  const el = document.getElementById('c_' + id); if(el){ el.style.transition = 'transform .35s, opacity .35s'; el.style.transform = 'scale(.96)'; el.style.opacity = '.6'; }
+  act({ action:'completeTransport', id }, '✅ Perjalanan ditanda selesai');
+}
 function cancelReq(id){ if(confirm('Batalkan permintaan ini?')) act({ action:'cancelTransport', id }, 'Permintaan dibatalkan'); }
 function openReject(id){ rejectId = id; $('shReason').value = ''; $('sheet').classList.add('show'); $('shGo').onclick = () => { const reason = $('shReason').value; closeSheet(); act({ action:'decideTransport', id: rejectId, approve:false, reason }, 'Permintaan ditolak'); }; }
 function closeSheet(){ $('sheet').classList.remove('show'); }
@@ -291,5 +305,6 @@ load();
 setInterval(() => { if(document.visibilityState === 'visible' && !$('viewList').classList.contains('hide')) load(true); }, 45000);
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') load(true); });
 </script>
+
 </body>
 </html>
