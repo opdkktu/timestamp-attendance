@@ -149,6 +149,15 @@
   .toast{ position:fixed; left:50%; bottom:92px; transform:translate(-50%,30px); background:var(--teal-900); color:#fff; font-weight:700; font-size:14px; padding:13px 20px; border-radius:99px; box-shadow:0 14px 34px rgba(0,0,0,.3); opacity:0; pointer-events:none; transition:all .3s ease; z-index:80; max-width:92vw; text-align:center; }
   .toast.show{ opacity:1; transform:translate(-50%,0); } .toast.err{ background:var(--red-600); }
   :focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
+  #topBar{ position:fixed; left:0; top:0; height:3px; width:0; background:linear-gradient(90deg,var(--teal-500),var(--teal-700)); z-index:9999; opacity:0; pointer-events:none; }
+  #topBar.on{ opacity:1; width:85%; transition:width 6s cubic-bezier(.1,.7,.2,1); }
+  .wrap > :not(.head):not(#vehChips):not(#monthNav){ transition:opacity .2s, filter .2s; }
+  .wrap.busy > :not(.head):not(#vehChips):not(#monthNav){ opacity:.35; filter:blur(1.5px); pointer-events:none; }
+  @keyframes swIn-r{ from{ opacity:0; transform:translateX(34px) } to{ opacity:1; transform:none } }
+  @keyframes swIn-l{ from{ opacity:0; transform:translateX(-34px) } to{ opacity:1; transform:none } }
+  .wrap.in-r > :not(.head):not(#vehChips):not(#monthNav){ animation:swIn-r .38s cubic-bezier(.2,.8,.2,1) both; }
+  .wrap.in-l > :not(.head):not(#vehChips):not(#monthNav){ animation:swIn-l .38s cubic-bezier(.2,.8,.2,1) both; }
+  .chip,.chips .chip{ transition:background .2s, color .2s, transform .15s; } .chip:active{ transform:scale(.95); }
   @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
   @media print{ .fab,.back,.chips,.month button,.acts,.tools{ display:none !important; } body{ background:#fff; padding:0; } }
 </style>
@@ -285,7 +294,19 @@ function showTip(html, x, y){
 function hideTip(){ tip.classList.remove('show'); }
 document.addEventListener('pointerdown', e => { if(!e.target.closest('.hit,.d.has')) hideTip(); });
 window.addEventListener('scroll', hideTip, { passive:true });
-
+let swDir = null, busyT = 0;
+function setBusy_(on){
+  const w = document.querySelector('.wrap'); w.classList.toggle('busy', on);
+  let b = document.getElementById('topBar'); if(!b){ b = document.createElement('div'); b.id = 'topBar'; document.body.appendChild(b); }
+  b.className = ''; if(on){ void b.offsetWidth; b.className = 'on'; }
+  clearTimeout(busyT); if(on) busyT = setTimeout(() => setBusy_(false), 12000);     // never leave the page dimmed
+}
+function swipeIn_(dir){
+  const w = document.querySelector('.wrap'); w.classList.remove('in-l', 'in-r'); void w.offsetWidth;
+  if(dir){ w.classList.add('in-' + dir); setTimeout(() => w.classList.remove('in-l', 'in-r'), 450); }
+}
+function startSwitch_(dir){ swDir = dir; setBusy_(true); }
+function endSwitch_(){ if(swDir === null) return; setBusy_(false); swipeIn_(swDir); swDir = null; }
 /* ---------- data loading ---------- */
 function isCurrentMonth(){ return ov && ov.today && Y === +ov.today.slice(0, 4) && M === +ov.today.slice(5, 7); }
 function loadMonth(){
@@ -361,6 +382,7 @@ function renderAll(){
 
   renderInsights(); renderCalendar(); renderKm(); renderLogs();
   $('fab').classList.toggle('show', !!ov.perms.canAdd);
+  endSwitch_();
 }
 
 function renderInsights(){
@@ -508,9 +530,16 @@ function renderLogs(){
 }
 
 /* ---------- events ---------- */
-$('vehChips').addEventListener('click', e => { const b = e.target.closest('.chip'); if(!b || b.dataset.v === vid) return; vid = b.dataset.v; trend = null; trendFor = ''; loadMonth(); });
-$('mPrev').onclick = () => { M--; if(M < 1){ M = 12; Y--; } loadMonth(); };
-$('mNext').onclick = () => { M++; if(M > 12){ M = 1; Y++; } loadMonth(); };
+$('vehChips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if(!b || b.dataset.v === vid) return;
+  const ids = ov.vehicles.map(v => v.id);
+  document.querySelectorAll('#vehChips .chip').forEach(c => c.setAttribute('aria-pressed', c === b));   // instant feedback
+  if(navigator.vibrate) try{ navigator.vibrate(15); }catch(_){}
+  startSwitch_(ids.indexOf(b.dataset.v) > ids.indexOf(vid) ? 'r' : 'l');
+  vid = b.dataset.v; trend = null; trendFor = ''; loadMonth();
+});
+$('mPrev').onclick = () => { M--; if(M < 1){ M = 12; Y--; } startSwitch_('l'); loadMonth(); };
+$('mNext').onclick = () => { M++; if(M > 12){ M = 1; Y++; } startSwitch_('r'); loadMonth(); };
 $('mchips').addEventListener('click', e => { const b = e.target.closest('.mchip'); if(!b) return; metric = b.dataset.m; renderTrend(); });
 $('logs').addEventListener('click', async e => {
   const b = e.target.closest('[data-void]'); if(!b) return;
