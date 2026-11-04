@@ -3191,6 +3191,7 @@ function renderModules(role){
   const soonGrid = document.getElementById('soonGrid');
   let list = MODULES.slice();
   if(role === 'admin' || role === 'superadmin') list = list.concat(ADMIN_MODULES);
+  if(role === 'superadmin') list.push({ id: 'kkmadmin', name: 'Ambulans (Admin)', icon: '🚑', status: 'active', href: 'https://opdkktu.github.io/KKM999/admin.html' });
 
   list.forEach(m => {
     const card = document.createElement(m.status === 'active' ? 'button' : 'div');
