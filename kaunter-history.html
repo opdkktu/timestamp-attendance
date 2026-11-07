@@ -26,6 +26,8 @@
   .srch{ display:flex; gap:8px; }
   .srch input{ flex:1; min-width:0; height:54px; border-radius:14px; border:1.5px solid var(--line); padding:0 15px; font:inherit; font-size:17px; font-weight:600; letter-spacing:.02em; }
   .srch input:focus{ outline:none; border-color:var(--g5); box-shadow:0 0 0 3px rgba(46,158,115,.18); }
+  .scan{ width:54px; height:54px; flex-shrink:0; border-radius:14px; border:1.5px solid var(--g5); background:var(--mint); font-size:22px; cursor:pointer; }
+  .scan:active{ transform:scale(.95); }
   .go{ min-width:92px; height:54px; border-radius:14px; border:none; background:linear-gradient(135deg,var(--g9),var(--g5)); color:#fff; font:800 15px 'Manrope',sans-serif; cursor:pointer; }
   .go:disabled{ opacity:.55; }
   .res{ display:flex; flex-direction:column; gap:10px; margin-top:14px; }
@@ -72,12 +74,14 @@
     <p class="sub">Paparkan <b>10 lawatan terakhir</b> pesakit ke kaunter. Keputusan disimpan selama 24 jam supaya carian berulang pantas.</p>
     <form class="srch" id="f" autocomplete="off">
       <input type="text" id="q" inputmode="search" enterkeyhint="search" maxlength="20" placeholder="cth. 900101015555" aria-label="No. IC atau pasport">
+      <button class="scan" id="scan" type="button" onclick="scanIc()" aria-label="Imbas IC dengan kamera" title="Imbas IC dengan kamera">📷</button>
       <button class="go" id="go" type="submit">Cari</button>
     </form>
     <div id="res"></div>
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
+<script src="./ic-scan.js?v=2"></script>
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
 const $ = id => document.getElementById(id);
@@ -115,9 +119,18 @@ async function search(fresh){
   }catch(err){ $('res').innerHTML = '<div class="empty">Sambungan gagal. Cuba lagi.</div>'; }
   busy = false; $('go').disabled = false;
 }
+/* 📷 scan IC → fills the box and searches straight away (no name needed, nothing more to press) */
+async function scanIc(){
+  if(!window.SiagaIcScan){ toast('Pengimbas IC belum dimuatkan. Muat semula halaman.'); return; }
+  let lay = 'new'; try{ lay = localStorage.getItem('kkah_ic_layout') || 'new'; }catch(e){}
+  const r = await SiagaIcScan.open({ layout: lay, icOnly: true, direct: true, onLayout: l => { try{ localStorage.setItem('kkah_ic_layout', l); }catch(e){} } });
+  if(!r || !r.ic) return;
+  $('q').value = r.ic; toast('IC dibaca: ' + fmtIc(r.ic)); search(false);
+}
 $('f').addEventListener('submit', e => { e.preventDefault(); search(false); });
 $('res').addEventListener('click', e => { if(e.target.closest('#rf')) search(true); });
 setTimeout(() => { try{ $('q').focus(); }catch(e){} }, 150);
 </script>
+
 </body>
 </html>
