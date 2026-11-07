@@ -3,12 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIAGA · Borang Permohonan</title>
-<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
-<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="SIAGA">
-
+<title>KKAH HR Portal · Borang Permohonan</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0B3D3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -90,9 +85,27 @@
   @keyframes pop{ from{ transform:scale(0); } to{ transform:scale(1); } }
   .success-stage h2{ font-family:'Manrope',sans-serif; color:var(--teal-900); margin:0 0 6px; }
   .success-stage p{ font-size:13px; color:var(--ink-500); margin-bottom:20px; }
+
+  /* quota meters + rule overlay */
+  .quota{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
+  .qbox{ border:1.5px solid var(--line); border-radius:16px; padding:10px 12px; background:#fff; transition:border-color .3s, background .3s; }
+  .qbox .ql{ font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-500); }
+  .qbox .qn{ font:800 20px 'Manrope',sans-serif; margin:2px 0 6px; } .qbox .qn small{ font:600 12px 'Inter',sans-serif; color:var(--ink-500); }
+  .qbar{ height:7px; border-radius:99px; background:#E6EFEC; overflow:hidden; } .qbar i{ display:block; height:100%; width:0; border-radius:99px; background:var(--green-500); transition:width .5s cubic-bezier(.2,.8,.2,1), background .3s; }
+  .qbox.warn{ border-color:#E7B84B; background:#FFF8E6; } .qbox.warn .qbar i{ background:#E0A21A; } .qbox.warn .qn{ color:#8a5a00; }
+  .qbox.full{ border-color:#E58A7B; background:#FDEEEB; } .qbox.full .qbar i{ background:var(--red-500); } .qbox.full .qn{ color:var(--red-500); }
+  .qlink{ grid-column:1/-1; background:none; border:0; padding:0; font-size:12px; color:var(--teal-700); text-align:left; text-decoration:underline; cursor:pointer; }
+  .btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .lv-back{ position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(11,30,28,.66); }
+  .lv-back.show{ display:flex; animation:lvIn .25s ease; } @keyframes lvIn{ from{opacity:0} to{opacity:1} }
+  .lv-card{ width:100%; max-width:380px; background:#fff; border-radius:26px; padding:26px 22px 20px; text-align:center; animation:lvPop .4s cubic-bezier(.2,1.1,.3,1); max-height:90vh; overflow:auto; }
+  @keyframes lvPop{ from{ transform:translateY(24px) scale(.96); opacity:0 } to{ transform:none; opacity:1 } }
+  .lv-ic{ width:68px; height:68px; margin:0 auto 10px; border-radius:50%; background:#FDEEEB; display:flex; align-items:center; justify-content:center; font-size:34px; }
+  .lv-card h2{ margin:0 0 6px; font:800 20px 'Manrope',sans-serif; color:var(--red-500); } .lv-card p{ margin:0 0 10px; font-size:14px; line-height:1.55; color:var(--ink-700); }
+  .lv-rule{ text-align:left; background:#FFF8E6; border:1px solid #F0D58A; border-radius:14px; padding:12px 14px; font-size:13px; line-height:1.55; color:#5c4400; margin:12px 0 4px; } .lv-rule b{ color:#7a1f10; }
+  .lv-ok{ width:100%; margin-top:16px; border:0; border-radius:14px; padding:14px; min-height:48px; font:800 15px 'Manrope',sans-serif; color:#fff; background:var(--teal-700); cursor:pointer; }
+  @media (prefers-reduced-motion:reduce){ .lv-card,.lv-back.show,.qbar i{ animation:none; transition:none } }
 </style>
-<script src="./version.js"></script>
-<script src="./version-ui.js"></script>
 </head>
 <body>
 
@@ -105,6 +118,12 @@
 
   <div class="stage" id="formStage">
     <div class="banner error" id="formBanner"></div>
+
+    <div class="quota" id="quota" aria-live="polite">
+      <div class="qbox" id="qM"><div class="ql" id="qMl">Bulan ini</div><div class="qn" id="qMn">–<small> / 2</small></div><div class="qbar"><i id="qMb"></i></div></div>
+      <div class="qbox" id="qY"><div class="ql" id="qYl">Tahun ini</div><div class="qn" id="qYn">–<small> / 24</small></div><div class="qbar"><i id="qYb"></i></div></div>
+      <button type="button" class="qlink" onclick="showRule(false)">ℹ️ Peraturan keluar pejabat</button>
+    </div>
 
     <div class="field">
       <label>Pemohon</label>
@@ -148,6 +167,8 @@
     <button class="btn primary" id="submitBtn" onclick="handleSubmit()">Hantar Permohonan</button>
   </div>
 
+  <div class="lv-back" id="lvBack" role="alertdialog" aria-modal="true" aria-labelledby="lvTitle"><div class="lv-card" id="lvCard"></div></div>
+
   <div class="loading-stage" id="loadingStage">
     <div class="spinner"></div>
     <p>Sedang menghantar permohonan…</p>
@@ -177,10 +198,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   if(!token){ window.location.href = './login.html'; return; }
 
   document.getElementById('supervisorDisplay').textContent = DEFAULT_SUPERVISOR_NAME;
-    fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getMySupervisors', token: token }) })
-      .then(function (r) { return r.json(); })
-      .then(function (j) { if (j && j.ok && j.list.length) document.getElementById('supervisorDisplay').textContent = j.list.map(function (s) { return s.name; }).join('  •  '); })
-      .catch(function () {});
   document.getElementById('tarikh').valueAsDate = new Date();
   populateTimes();
   loadApplicantName();
@@ -271,6 +288,7 @@ async function handleSubmit(){
         document.getElementById('formStage').style.display = 'block';
         banner.textContent = data.error || 'Ralat tidak diketahui.';
         banner.classList.add('show');
+        if(/^QUOTA_/.test(data.code || '')){ quota = Object.assign({ allowed:false, error:data.error }, data.quota || {}); loadQuota().then(() => showRule(true)); }
       }
     }catch(err){
       document.getElementById('loadingStage').classList.remove('show');
@@ -293,6 +311,47 @@ async function handleSubmit(){
     send();
   }
 }
+
+/* ---------- had permohonan keluar (server enforces it too) ---------- */
+const CIRCULAR_REF = '';          // optional: e.g. 'Pekeliling Perkhidmatan Bil. X Tahun Y' — shown in the warning when filled
+const MONTHS_MS = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+let quota = null, quotaShownFor = '';
+function setBox(id, bid, nid, used, max, lvl){
+  const b = document.getElementById(id); b.className = 'qbox' + (lvl === 'ok' ? '' : ' ' + lvl);
+  document.getElementById(nid).innerHTML = used + '<small> / ' + max + '</small>';
+  document.getElementById(bid).style.width = Math.min(100, used / max * 100) + '%';
+}
+async function loadQuota(){
+  const tarikh = document.getElementById('tarikh').value;
+  try{
+    const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'getLeaveQuota', token: sessionStorage.getItem('kkah_session_token'), tarikh }) });
+    const q = await res.json(); if(!q || !q.ok) return;
+    quota = q;
+    const mi = Number(q.ym.slice(5)) - 1;
+    document.getElementById('qMl').textContent = MONTHS_MS[mi] + ' ' + q.y;
+    document.getElementById('qYl').textContent = 'Tahun ' + q.y;
+    const mLvl = q.month.used >= q.month.max ? 'full' : (q.month.max > 1 && q.month.used >= q.month.max - 1 ? 'warn' : 'ok');
+    const yLvl = q.year.used >= q.year.max ? 'full' : (q.year.used >= q.year.max - 4 ? 'warn' : 'ok');
+    setBox('qM','qMb','qMn', q.month.used, q.month.max, mLvl); setBox('qY','qYb','qYn', q.year.used, q.year.max, yLvl);
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = !q.allowed; btn.textContent = q.allowed ? 'Hantar Permohonan' : 'Had permohonan dicapai';
+    if(!q.allowed && quotaShownFor !== q.ym){ quotaShownFor = q.ym; showRule(true); }
+  }catch(e){}
+}
+function showRule(blocked){
+  const q = quota;
+  const head = blocked && q
+    ? '<div class="lv-ic">⛔</div><h2 id="lvTitle">Had permohonan dicapai</h2><p>' + (q.error || '') + '<br>Bulan ini <b>' + q.month.used + '/' + q.month.max + '</b> · Tahun ini <b>' + q.year.used + '/' + q.year.max + '</b></p>'
+    : '<div class="lv-ic" style="background:#FFF3D6">⚠️</div><h2 id="lvTitle" style="color:#8a5a00">Peraturan keluar pejabat</h2><p>Maksimum <b>2 kali sebulan</b> dan <b>24 kali setahun</b>. Mohon kebenaran penyelia <b>sebelum</b> keluar.</p>';
+  document.getElementById('lvCard').innerHTML = head +
+    '<div class="lv-rule">🚫 Keluar dari pejabat <b>tanpa kebenaran</b> boleh dikenakan <b>tindakan tatatertib</b> dan <b>kehilangan faedah ex gratia</b> mengikut pekeliling yang berkuat kuasa' + (CIRCULAR_REF ? ' (' + CIRCULAR_REF.replace(/[<>&]/g, '') + ')' : '') + '.</div>' +
+    '<button class="lv-ok" id="lvOk" type="button">Saya faham</button>';
+  document.getElementById('lvBack').classList.add('show');
+  document.getElementById('lvOk').onclick = () => document.getElementById('lvBack').classList.remove('show');
+  if(blocked && navigator.vibrate) try{ navigator.vibrate([40, 30, 40]); }catch(e){}
+}
+document.getElementById('tarikh').addEventListener('change', loadQuota);
+loadQuota();
 </script>
 </body>
 </html>
