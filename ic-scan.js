@@ -15,9 +15,9 @@
   // [x, y, w, h] as fractions of the card
   var LAYOUTS = {
     'new': { label: 'IC Baharu', hint: 'Foto di kiri', ic: [0.28, 0.22, 0.70, 0.24], name: [0.28, 0.44, 0.70, 0.24] },
-    'old': { label: 'IC Lama', hint: 'Cip di kiri', ic: [0.02, 0.17, 0.62, 0.20], name: [0.02, 0.56, 0.68, 0.20] }
+    'old': { label: 'IC Lama', hint: 'Cip di kiri', ic: [0.02, 0.17, 0.62, 0.20], name: [0.02, 0.57, 0.68, 0.16] }
   };
-  var SKIP = /^(NO|JALAN|JLN|LORONG|LRG|TAMAN|TMN|KAMPUNG|KG|BANDAR|PERSIARAN|BLOK|LOT|PETI|WARGANEGARA|LELAKI|PEREMPUAN|ISLAM|KAD|MALAYSIA|IDENTITY|CARD|MYKAD|KERAJAAN|PERSEKUTUAN|PUTRAJAYA|SELANGOR|KEDAH|PENANG|PERAK|JOHOR|SABAH|SARAWAK)\b/;
+  var SKIP = /^(NO|JALAN|JLN|LORONG|LRG|LRN|TAMAN|TMN|KAMPUNG|KG|BANDAR|BDR|PERSIARAN|BLOK|BLK|LOT|PETI|PEKAN|SEKSYEN|SEK|DESA|RUMAH|RMH|FLAT|PPR|APARTMENT|PANGSAPURI|KONDOMINIUM|MENARA|KOMPLEKS|UNIT|TINGKAT|TKT|KUALA|KEDAH|KELANTAN|TERENGGANU|PAHANG|MELAKA|PERLIS|NEGERI|LABUAN|W\.P|WP|WARGANEGARA|LELAKI|PEREMPUAN|ISLAM|KAD|MALAYSIA|IDENTITY|CARD|MYKAD|KERAJAAN|PERSEKUTUAN|PUTRAJAYA|SELANGOR|KEDAH|PENANG|PERAK|JOHOR|SABAH|SARAWAK)\b/;
 
   /* ---------------- text → IC / name ---------------- */
   function fixDigits(s) { return s.replace(/[Oo]/g, '0').replace(/[Il|]/g, '1').replace(/S/g, '5').replace(/B/g, '8').replace(/Z/g, '2'); }
@@ -32,13 +32,14 @@
     var raw = t.replace(/\D/g, ''); var k; for (k = 0; k + 12 <= raw.length; k++) if (validIc(raw.slice(k, k + 12))) return raw.slice(k, k + 12);
     return '';
   }
+  function fixTok(t) { var u = t.toUpperCase(); if (/^B[IL|!]N$/.test(u)) return 'BIN'; if (/^B[IL|!]NT[IL|!]$/.test(u)) return 'BINTI'; if (/^A\/?[L1I]$/.test(u) && t.length <= 3 && /\//.test(t)) return 'A/L'; return t; }
   /** → 'MUHAMMAD ASRAF BIN SUKADI' or '' (drops address / label lines and stray 1-letter noise) */
   function parseName(text) {
     var lines = String(text || '').split(/\n+/).map(function (l) {
-      var toks = l.replace(/[^A-Za-z '@./-]/g, ' ').split(/\s+/).filter(Boolean);
+      var toks = l.replace(/[^A-Za-z0-9 '@./-]/g, ' ').split(/\s+/).filter(function (t) { return /[A-Za-z]{2}|^[A-Za-z]$/.test(t.replace(/[0-9]/g, '')) || /[A-Za-z]/.test(t) && !/^\d+$/.test(t); }).map(function (t) { return /[A-Za-z]/.test(t) ? t.replace(/0/g, 'O').replace(/1/g, 'I').replace(/5/g, 'S').replace(/8/g, 'B').replace(/[2-46-79]/g, '') : t; }).filter(Boolean);
       while (toks.length > 1 && toks[toks.length - 1].length === 1 && /[a-z]/.test(toks[toks.length - 1])) toks.pop();      // "SUKAD j" → "SUKAD"
       while (toks.length > 1 && toks[0].length === 1 && /[a-z]/.test(toks[0])) toks.shift();
-      return toks.join(' ').toUpperCase();
+      return toks.map(fixTok).join(' ').toUpperCase();
     }).filter(function (l) { return l.replace(/[^A-Z]/g, '').length >= 3; });
     var out = [];
     for (var i = 0; i < lines.length; i++) { if (SKIP.test(lines[i])) { if (out.length) break; continue; } out.push(lines[i]); if (out.length === 2) break; }
@@ -90,12 +91,35 @@
   function readCard(card, layout, onP, icOnly) {
     var L = LAYOUTS[layout] || LAYOUTS['new'], W = card.width, H = card.height;
     function region(r) { return stretch(cropTo(card, r[0] * W, r[1] * H, r[2] * W, r[3] * H, 1100)); }
-    var ic = '', name = '', w;
+    var ic = '', name = '', conf = 0, w;
     return getWorker(onP).then(function (x) { w = x; return w.setParameters(DIG); })
       .then(function () { return w.recognize(region(L.ic)); })
-      .then(function (r) { ic = parseIc(r.data.text); if (icOnly) return; return w.setParameters(ALPHA).then(function () { return w.recognize(region(L.name)); }).then(function (r2) { name = parseName(r2.data.text); }); })
+      .then(function (r) { ic = parseIc(r.data.text); if (icOnly) return; return w.setParameters(ALPHA).then(function () { return w.recognize(region(L.name)); }).then(function (r2) { var ln = (r2.data.lines || []).filter(function (l) { return l.confidence >= 40; }); name = parseName(ln.length ? ln.map(function (l) { return l.text; }).join('\n') : r2.data.text); conf = ln.length ? ln.reduce(function (a, l) { return a + l.confidence; }, 0) / ln.length : 0; }); })
       .then(function () { if (ic && (name || icOnly)) return; return w.setParameters(FREE).then(function () { return w.recognize(stretch(cropTo(card, 0, 0, W, H, 1500))); }).then(function (f) { if (!ic) ic = parseIc(f.data.text); if (!name && !icOnly) name = parseName(f.data.text); }); })
-      .then(function () { return { ic: ic, name: name }; });
+      .then(function () { return { ic: ic, name: name, conf: conf }; });
+  }
+  /** several frames of the same card: stop early when sure, otherwise vote (IC = most common valid, name = most repeated / highest confidence) */
+  function readMany(frames, layout, onStep, icOnly) {
+    var res = [], i = 0;
+    function next() {
+      if (i >= frames.length) return Promise.resolve(vote(res, icOnly));
+      if (onStep) onStep(i + 1, frames.length);
+      return readCard(frames[i++], layout, null, icOnly).then(function (r) {
+        res.push(r);
+        if (validIc(r.ic) && (icOnly || (r.name && r.conf >= 88))) return vote(res, icOnly);
+        return next();
+      });
+    }
+    return next();
+  }
+  function vote(res, icOnly) {
+    var cnt = {}, ic = '', best = null, i;
+    res.forEach(function (r) { if (validIc(r.ic)) cnt[r.ic] = (cnt[r.ic] || 0) + 1; });
+    Object.keys(cnt).forEach(function (k) { if (!ic || cnt[k] > cnt[ic]) ic = k; });
+    if (!ic) for (i = 0; i < res.length; i++) if (res[i].ic) { ic = res[i].ic; break; }
+    var seen = {}; res.forEach(function (r) { if (r.name) seen[r.name] = (seen[r.name] || 0) + 1; });
+    res.forEach(function (r) { if (!r.name) return; var sc = (seen[r.name] > 1 ? 1000 : 0) + r.conf; if (!best || sc > best.sc) best = { sc: sc, name: r.name }; });
+    return { ic: ic, name: best ? best.name : '' };
   }
 
   /* ---------------- UI ---------------- */
@@ -200,18 +224,21 @@
         res.querySelector('#icxAgain').onclick = function () { res.classList.remove('show'); setMsg('Letakkan kad dalam bingkai'); };
         res.querySelector('#icxUse').onclick = function () { if (ic.value && !validIc(ic.value)) { ic.focus(); return; } done({ ic: ic.value, name: nm.value.trim(), layout: layout }); };
       }
-      function reading(pct) { res.innerHTML = '<div class="icx-spin"></div><div style="font-weight:700">Membaca kad…' + (pct ? ' ' + pct + '%' : '') + '</div><div style="font-size:12px;opacity:.75">Gambar tidak dihantar ke mana-mana</div>'; res.classList.add('show'); }
-      function process(canvas) {
-        busy = true; reading(0);
+      function reading(txt) { res.innerHTML = '<div class="icx-spin"></div><div style="font-weight:700">Membaca kad…' + (txt ? ' (' + txt + ')' : '') + '</div><div style="font-size:12px;opacity:.75">Gambar tidak dihantar ke mana-mana</div>'; res.classList.add('show'); }
+      function process(frames) {
+        if (!Array.isArray(frames)) frames = [frames];
+        busy = true; reading('');
         var t = setTimeout(function () { busy = false; res.classList.remove('show'); setMsg('Bacaan terlalu lama. Cuba lagi.'); }, 60000);
-        readCard(canvas, layout, function (p) { reading(Math.round(p * 100)); }, !!opts.icOnly).then(function (r) { clearTimeout(t); if (closed) return; if (opts.direct && validIc(r.ic)) { done({ ic: r.ic, name: r.name || '', layout: layout }); return; } showResult(r); })
+        readMany(frames, layout, function (n, t) { reading(t > 1 ? 'gambar ' + n + '/' + t : ''); }, !!opts.icOnly).then(function (r) { clearTimeout(t); if (closed) return; if (opts.direct && validIc(r.ic)) { done({ ic: r.ic, name: r.name || '', layout: layout }); return; } showResult(r); })
           .catch(function (e) { clearTimeout(t); busy = false; res.classList.remove('show'); setMsg((e && e.message) || 'Bacaan gagal. Cuba lagi.'); });
       }
       shot.onclick = function () {
         var f = frameInVideo(); if (!f || busy) return;
-        var c = cropTo(video, Math.max(0, f.x), Math.max(0, f.y), Math.min(video.videoWidth - Math.max(0, f.x), f.w), Math.min(video.videoHeight - Math.max(0, f.y), f.h), Math.max(1400, Math.min(2000, f.w)));
+        function grab() { var g = frameInVideo() || f; return cropTo(video, Math.max(0, g.x), Math.max(0, g.y), Math.min(video.videoWidth - Math.max(0, g.x), g.w), Math.min(video.videoHeight - Math.max(0, g.y), g.h), Math.max(1400, Math.min(2000, g.w))); }
         if (navigator.vibrate) try { navigator.vibrate(25); } catch (e) {}
-        process(c);
+        busy = true; reading('mengambil gambar');
+        var frames = [grab()];
+        setTimeout(function () { frames.push(grab()); setTimeout(function () { frames.push(grab()); process(frames); }, 300); }, 300);
       };
       $('[data-a=file]').onclick = function () { file.click(); };
       file.onchange = function () {
