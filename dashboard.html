@@ -773,6 +773,10 @@
       <span class="sidebar-item-icon"></span>
       <span class="sidebar-item-label">Semak masalah notifikasi →</span>
     </button>
+    <button class="sidebar-item" onclick="closeSidebar(); resetEmergencySound();" style="padding-top:2px; font-size:12px; font-weight:500; color:var(--ink-500);">
+      <span class="sidebar-item-icon"></span>
+      <span class="sidebar-item-label">Henti siren &amp; kosongkan cache →</span>
+    </button>
     <a class="sidebar-item" href="./about.html">
       <span class="sidebar-item-icon">ℹ️</span>
       <span class="sidebar-item-label">About System</span>
@@ -3222,6 +3226,16 @@ function logoutAsk_(title, html, okTxt, danger){
     o.onclick = e => { const b = e.target.closest('[data-a]'); if(b){ o.remove(); res(b.dataset.a === '1'); } else if(e.target === o){ o.remove(); res(false); } };
     document.body.appendChild(o);
   });
+}
+  /* Stop any siren / stuck sound, forget old emergency dismissals and clear the saved app files. Keeps login + push subscription. */
+async function resetEmergencySound(){
+  try{ if(window.SiagaEmergency) SiagaEmergency.stop(); }catch(e){}
+  try{ document.querySelectorAll('audio,video').forEach(function(m){ try{ m.pause(); m.currentTime = 0; }catch(e){} }); }catch(e){}
+  try{ Object.keys(sessionStorage).filter(function(k){ return k.indexOf('kkah_sos_ack_') === 0; }).forEach(function(k){ sessionStorage.removeItem(k); }); }catch(e){}
+  try{ if(window.caches){ const ks = await caches.keys(); await Promise.all(ks.map(function(k){ return caches.delete(k); })); } }catch(e){}
+  try{ const r = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getActiveEmergency' }) }); const d = await r.json(); console.log('getActiveEmergency →', d); }catch(e){}
+  alert('Siren dihentikan dan cache dikosongkan. Halaman akan dimuat semula.');
+  location.reload();
 }
 async function handleLogout(){
   if(VIEW_NAME){ exitViewMode(); return; }
