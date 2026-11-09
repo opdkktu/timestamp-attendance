@@ -980,7 +980,7 @@ body{background:var(--bg0);}
 (function(){
   var API = "https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec";
   var TOKEN = sessionStorage.getItem("kkah_session_token");
-  if(!TOKEN){ location.replace("./login.html"); }
+  if(!TOKEN){ location.replace((sessionStorage.getItem('kkah_via') === 'qr' || !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? './qr-login.html?next=prima-room.html' : './login.html')); }
   function call(fn, args, ok, fail){
     var body = fn === "primaRoomWho" ? { action:"primaRoomWho", token:TOKEN } : { action:"primaRoomCall", token:TOKEN, fn:fn, args:args };
     var ctl = new AbortController(), t = setTimeout(function(){ ctl.abort(); }, 45000);
@@ -989,7 +989,7 @@ body{background:var(--bg0);}
       .then(function(d){
         clearTimeout(t);
         if(d && d.ok){ if(ok) ok(d.result); }
-        else if(d && /expired/i.test(d.error || "")){ location.replace("./login.html"); }
+        else if(d && /expired/i.test(d.error || "")){ location.replace((sessionStorage.getItem('kkah_via') === 'qr' || !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? './qr-login.html?next=prima-room.html' : './login.html')); }
         else if(fail) fail(new Error((d && d.error) || "Ralat"));
       })
       .catch(function(e){ clearTimeout(t); if(fail) fail(new Error(e && e.name === "AbortError" ? "Masa tamat. Semak sambungan." : (e && e.message) || "Ralat sambungan")); });
