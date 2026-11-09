@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F4530">
+<title>NHSI — Saringan Kesihatan</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<style>
+  :root{ --bg:#EEF3F1; --card:#fff; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB; --dg:#C0392B; --dgl:#FBEAE7; --warn:#B45309; --warnl:#FEF3E2; --ok:#1f9a57; --blue:#2F7FD3; }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --dgl:#3a1d19; --warnl:#3a2c14; } }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:Inter,'Segoe UI',system-ui,sans-serif; min-height:100vh; padding-bottom:40px; }
+  .top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px; padding:calc(10px + env(safe-area-inset-top)) 14px 10px; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; box-shadow:0 6px 18px -10px rgba(0,0,0,.5); }
+  .ib{ width:42px; height:42px; border:none; border-radius:13px; background:rgba(255,255,255,.16); color:#fff; font-size:20px; cursor:pointer; flex:none; }
+  .ttl{ flex:1; font-weight:800; font-size:17px; line-height:1.15; } .ttl small{ display:block; font-weight:500; font-size:11.5px; opacity:.85; }
+  .wrap{ max-width:720px; margin:0 auto; padding:14px; }
+  .view{ display:none; } .view.on{ display:block; animation:rise .25s ease; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+  .stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+  .stat{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; text-align:center; }
+  .stat b{ display:block; font-size:28px; line-height:1.1; font-variant-numeric:tabular-nums; } .stat span{ font-size:11px; font-weight:700; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; }
+  .stat.w b{ color:var(--warn); } .stat.d b{ color:var(--ok); }
+  .st{ display:flex; align-items:center; gap:14px; width:100%; text-align:left; background:var(--card); border:1.5px solid var(--line); border-radius:22px; padding:16px; margin-bottom:10px; cursor:pointer; color:var(--ink); font-family:inherit; box-shadow:0 8px 22px -18px rgba(0,0,0,.4); transition:transform .12s, border-color .15s; }
+  .st:active{ transform:scale(.985); } .st:hover{ border-color:var(--acc); }
+  .st .no{ flex:none; width:54px; height:54px; border-radius:16px; display:grid; place-items:center; font:900 24px Inter,sans-serif; color:#fff; background:linear-gradient(135deg,var(--acc2),var(--acc)); }
+  .st .tx{ flex:1; } .st .tx b{ display:block; font-size:16.5px; } .st .tx small{ color:var(--mut); font-size:12.5px; }
+  .st .cnt{ text-align:right; } .st .cnt b{ font-size:26px; display:block; line-height:1; font-variant-numeric:tabular-nums; color:var(--warn); } .st .cnt small{ font-size:11px; color:var(--mut); }
+  .st.off{ opacity:.55; cursor:default; } .st.off .no{ background:var(--mut); } .st.off:hover{ border-color:var(--line); }
+  .acts{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px; }
+  .act{ height:54px; border-radius:16px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 14px Inter,sans-serif; cursor:pointer; }
+  .act.pri{ background:var(--accl); border-color:var(--acc); color:var(--acc2); }
+  .tabs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+  .tab{ height:48px; border-radius:14px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 14px Inter,sans-serif; cursor:pointer; } .tab.on{ background:var(--acc); border-color:var(--acc); color:#fff; }
+  .srch{ width:100%; height:48px; border-radius:14px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 15px Inter,sans-serif; padding:0 14px; outline:none; margin-bottom:10px; } .srch:focus{ border-color:var(--acc); }
+  .cl{ display:flex; gap:12px; align-items:center; width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px 14px; margin-bottom:8px; cursor:pointer; color:var(--ink); font-family:inherit; }
+  .cl.new{ animation:flash 2.4s ease; } @keyframes flash{ 0%,60%{ background:var(--accl); border-color:var(--acc); } }
+  .q{ flex:none; min-width:52px; height:52px; border-radius:14px; display:grid; place-items:center; background:var(--accl); color:var(--acc2); font:900 20px 'IBM Plex Mono',ui-monospace,monospace; }
+  .cl .tx{ flex:1; min-width:0; } .cl .tx b{ display:block; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .cl .tx small{ color:var(--mut); font-size:12px; }
+  .tags{ display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; }
+  .tag{ font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:99px; background:var(--accl); color:var(--acc2); } .tag.r{ background:var(--dgl); color:var(--dg); } .tag.w{ background:var(--warnl); color:var(--warn); }
+  .empty{ text-align:center; color:var(--mut); padding:34px 10px; font-size:14px; }
+  .sheet{ position:fixed; inset:0; z-index:40; display:none; background:rgba(0,0,0,.45); align-items:flex-end; justify-content:center; }
+  .sheet.on{ display:flex; }
+  .sh{ width:100%; max-width:560px; max-height:94vh; overflow:auto; background:var(--card); border-radius:26px 26px 0 0; padding:18px 16px calc(18px + env(safe-area-inset-bottom)); animation:up .28s ease; }
+  @keyframes up{ from{ transform:translateY(40px); opacity:0; } to{ transform:none; opacity:1; } }
+  .sh h3{ margin:0; font-size:19px; } .sh .meta{ color:var(--mut); font-size:13px; margin:3px 0 8px; } .sh .meta a{ color:var(--acc); font-weight:800; text-decoration:none; }
+  .g2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .nf label{ display:block; font-size:12px; font-weight:800; margin-bottom:4px; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; }
+  .nf input{ width:100%; height:68px; border-radius:16px; border:2px solid var(--line); background:var(--card); color:var(--ink); font:800 30px 'IBM Plex Mono',ui-monospace,monospace; text-align:center; outline:none; } .nf input:focus{ border-color:var(--acc); box-shadow:0 0 0 4px rgba(26,107,74,.16); }
+  .gauge{ margin:10px auto 0; max-width:300px; } .gauge svg{ width:100%; display:block; overflow:visible; }
+  #needle{ transform-origin:120px 120px; transition:transform .9s cubic-bezier(.2,1.2,.3,1); }
+  .bmiv{ text-align:center; margin-top:-6px; } .bmiv b{ font:900 40px Inter,sans-serif; font-variant-numeric:tabular-nums; } .bmiv div{ font-weight:800; font-size:15px; margin-top:2px; min-height:22px; }
+  .bmiv small{ display:block; color:var(--mut); font-size:11.5px; margin-top:2px; }
+  .save{ width:100%; height:58px; margin-top:12px; border:none; border-radius:18px; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; font:900 16.5px Inter,sans-serif; cursor:pointer; box-shadow:0 12px 26px -12px rgba(15,69,48,.8); } .save:disabled{ opacity:.55; cursor:default; }
+  .msg{ min-height:20px; text-align:center; font-size:13px; font-weight:700; color:var(--dg); margin-top:8px; }
+  .toast{ position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translate(-50%,30px); opacity:0; z-index:70; background:#16231F; color:#fff; padding:12px 18px; border-radius:99px; font-weight:700; font-size:14px; transition:all .25s; pointer-events:none; max-width:90vw; }
+  .toast.on{ transform:translate(-50%,0); opacity:1; }
+  #qrBox{ display:grid; place-items:center; padding:14px; } #qrBox canvas,#qrBox img{ max-width:100%; height:auto!important; }
+  .url{ word-break:break-all; font:600 12px 'IBM Plex Mono',monospace; color:var(--mut); text-align:center; }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <button class="ib" id="back" onclick="goBack()" aria-label="Kembali">←</button>
+  <div class="ttl" id="ttl">NHSI<small id="sub">National Health Screening Initiative</small></div>
+  <button class="ib" onclick="load(true)" aria-label="Muat semula" id="refresh">⟳</button>
+</div>
+
+<div class="wrap">
+  <!-- HUB -->
+  <div class="view on" id="vHub">
+    <div class="stats"><div class="stat"><b id="cTot">–</b><span>Didaftar</span></div><div class="stat w"><b id="cWait">–</b><span>Menunggu S1</span></div><div class="stat d"><b id="cDone">–</b><span>Selesai S3</span></div></div>
+    <button class="st" onclick="openS1()"><div class="no">1</div><div class="tx"><b>Stesen 1 · Tinggi &amp; berat</b><small>Pendaftaran, BMI</small></div><div class="cnt"><b id="n1">–</b><small>menunggu</small></div></button>
+    <button class="st off" disabled><div class="no">2</div><div class="tx"><b>Stesen 2 · Tekanan darah, gula, kolesterol</b><small>Fasa 2 — akan datang</small></div></button>
+    <button class="st off" disabled><div class="no">3</div><div class="tx"><b>Stesen 3 · Konsultasi &amp; pelan pengurusan</b><small>Fasa 3 — akan datang</small></div></button>
+    <div class="acts"><button class="act pri" onclick="location.href='./nhsi-form.html?staff=1'">📝 Daftar klien (petugas)</button><button class="act" onclick="openQr()">▦ Kod QR borang</button></div>
+  </div>
+
+  <!-- STATION 1 -->
+  <div class="view" id="vS1">
+    <div class="tabs"><button class="tab on" id="tabP" onclick="tab('P')">Menunggu (0)</button><button class="tab" id="tabD" onclick="tab('D')">Selesai (0)</button></div>
+    <input class="srch" id="srch" placeholder="Cari nama / no. giliran / IC…" oninput="render()" autocomplete="off">
+    <div id="list"></div>
+    <button class="act pri" style="width:100%;margin-top:6px" onclick="location.href='./nhsi-form.html?staff=1'">＋ Daftar klien baharu</button>
+  </div>
+</div>
+
+<!-- Station 1 sheet -->
+<div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sh" role="dialog" aria-modal="true">
+  <h3 id="shName">—</h3><div class="meta" id="shMeta"></div><div class="tags" id="shTags"></div>
+  <div class="g2"><div class="nf"><label for="hIn">Tinggi (cm)</label><input id="hIn" inputmode="decimal" autocomplete="off" placeholder="165"></div>
+    <div class="nf"><label for="wIn">Berat (kg)</label><input id="wIn" inputmode="decimal" autocomplete="off" placeholder="60.5"></div></div>
+  <div class="gauge" aria-hidden="true"><svg viewBox="0 0 240 140" id="gSvg"></svg></div>
+  <div class="bmiv"><b id="bmiN">–</b><div id="bmiC">Masukkan tinggi &amp; berat</div><small>BMI Asia (MOH): &lt;18.5 · 18.5–22.9 · 23–27.4 · ≥27.5</small></div>
+  <div class="msg" id="shMsg" role="status" aria-live="polite"></div>
+  <button class="save" id="saveBtn" onclick="saveS1()" disabled>Simpan &amp; seterusnya</button>
+  <button class="act" style="width:100%;margin-top:8px" onclick="closeSheet()">Tutup</button>
+</div></div>
+
+<!-- QR sheet -->
+<div class="sheet" id="qrSheet" onclick="if(event.target===this)this.classList.remove('on')"><div class="sh">
+  <h3>Kod QR borang pendaftaran</h3><div class="meta">Klien imbas dengan telefon sendiri. Paparkan atau cetak.</div>
+  <div id="qrBox"></div><div class="url" id="qrUrl"></div>
+  <button class="act" style="width:100%;margin-top:12px" onclick="copyUrl()">Salin pautan</button>
+  <button class="act" style="width:100%;margin-top:8px" onclick="document.getElementById('qrSheet').classList.remove('on')">Tutup</button>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const token = sessionStorage.getItem('kkah_session_token');
+const FORM_URL = new URL('./nhsi-form.html', location.href).href.split('?')[0];
+const $ = id => document.getElementById(id);
+if (!token) location.href = './login.html';
+let rows = [], seen = {}, firstLoad = true, view = 'hub', curTab = 'P', cur = null, busy = false, timer = null;
+
+function api(body, ms){
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms || 30000);
+  return fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)), signal: ctl.signal }).then(r => r.json()).finally(() => clearTimeout(t));
+}
+function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+function goBack(){ if (view === 'hub') location.href = './dashboard.html'; else showView('hub'); }
+function showView(v){ view = v; $('vHub').classList.toggle('on', v === 'hub'); $('vS1').classList.toggle('on', v === 's1'); $('sub').textContent = v === 's1' ? 'Stesen 1 · Tinggi & berat' : 'National Health Screening Initiative'; render(); }
+function openS1(){ showView('s1'); }
+
+/* ---------- load / poll ---------- */
+async function load(manual){
+  if (busy) return; busy = true; if (manual) $('refresh').style.opacity = .5;
+  let r; try { r = await api({ action:'nhsiCall', fn:'list', args:{} }, 25000); } catch(e){ r = { ok:false, error:'Tiada sambungan.' }; }
+  busy = false; $('refresh').style.opacity = 1;
+  if (!r || !r.ok){ if (r && /expired/i.test(r.error || '')) { location.href = './login.html'; return; } if (manual || firstLoad) toast((r && r.error) || 'Gagal memuat.'); return; }
+  const fresh = r.rows.filter(x => !seen[x.id]);
+  if (!firstLoad && fresh.length){ toast(fresh.length + ' klien baharu mendaftar'); if (navigator.vibrate) navigator.vibrate(50); }
+  r.rows.forEach(x => { x._new = !firstLoad && !seen[x.id]; seen[x.id] = 1; });
+  rows = r.rows; firstLoad = false;
+  $('cTot').textContent = r.counts.total; $('cWait').textContent = r.counts.s1Pending; $('cDone').textContent = r.counts.s3Done; $('n1').textContent = r.counts.s1Pending;
+  render();
+  const want = new URLSearchParams(location.search).get('s1');
+  if (want){ history.replaceState(null, '', location.pathname); const c = rows.filter(x => x.id === want)[0]; if (c){ showView('s1'); openSheet(c.id); } }
+}
+function startPoll(){ clearInterval(timer); timer = setInterval(() => { if (!document.hidden && !$('sheet').classList.contains('on')) load(false); }, 15000); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load(false); });
+
+/* ---------- list ---------- */
+function tab(t){ curTab = t; $('tabP').classList.toggle('on', t === 'P'); $('tabD').classList.toggle('on', t === 'D'); render(); }
+function tagsOf(c){
+  const t = [];
+  (c.history ? c.history.split('; ').filter(h => h && h !== 'Tiada') : []).forEach(h => t.push('<span class="tag w">' + esc(h) + '</span>'));
+  if (c.historyOther) t.push('<span class="tag w">' + esc(c.historyOther) + '</span>');
+  if (/Perokok|Vape/.test(c.smoking)) t.push('<span class="tag w">' + esc(c.smoking) + '</span>'); else if (c.smoking === 'Bekas perokok') t.push('<span class="tag">Bekas perokok</span>');
+  if (c.whooleyPos) t.push('<span class="tag r">Whooley +</span>');
+  if (c.source === 'STAFF') t.push('<span class="tag">Petugas</span>');
+  return t.join('');
+}
+function render(){
+  const P = rows.filter(x => !x.s1), D = rows.filter(x => x.s1);
+  $('tabP').textContent = 'Menunggu (' + P.length + ')'; $('tabD').textContent = 'Selesai (' + D.length + ')';
+  if (view !== 's1') return;
+  const q = $('srch').value.trim().toLowerCase().replace(/[-\s]/g, ''), list = (curTab === 'P' ? P : D).filter(c => !q || (c.name + c.ic + c.passport + c.queue).toLowerCase().replace(/[-\s]/g, '').indexOf(q) !== -1);
+  if (curTab === 'D') list.sort((a, b) => (b.s1At || '') < (a.s1At || '') ? -1 : 1);
+  $('list').innerHTML = list.length ? list.map(c =>
+    '<button class="cl' + (c._new ? ' new' : '') + '" onclick="openSheet(\'' + esc(c.id) + '\')"><div class="q">' + esc(c.queue) + '</div><div class="tx"><b>' + esc(c.name) + '</b><small>' + esc(c.age) + ' th · ' + esc(c.gender) + ' · ' + esc(c.created) +
+    (c.s1 ? ' · BMI <b style="display:inline">' + esc(c.bmi) + '</b> ' + esc(c.bmiCat) : '') + '</small><div class="tags">' + tagsOf(c) + '</div></div><div style="font-size:20px;color:var(--mut)">›</div></button>').join('')
+    : '<div class="empty">' + (curTab === 'P' ? '🎉 Tiada klien menunggu.<br>Klien baharu akan muncul di sini secara automatik.' : 'Belum ada klien selesai.') + '</div>';
+}
+
+/* ---------- station 1 sheet + BMI gauge ---------- */
+const BMI_MIN = 12, BMI_MAX = 40, SEG = [[12, 18.5, '#2F7FD3'], [18.5, 23, '#1f9a57'], [23, 27.5, '#E0A100'], [27.5, 40, '#C0392B']];
+function ang(b){ return Math.PI * (1 - (Math.min(BMI_MAX, Math.max(BMI_MIN, b)) - BMI_MIN) / (BMI_MAX - BMI_MIN)); }
+function arc(a0, a1, r){ const x = a => (120 + r * Math.cos(a)).toFixed(1), y = a => (120 - r * Math.sin(a)).toFixed(1); return 'M' + x(a0) + ' ' + y(a0) + ' A' + r + ' ' + r + ' 0 0 1 ' + x(a1) + ' ' + y(a1); }
+$('gSvg').innerHTML = SEG.map(s => '<path d="' + arc(ang(s[0]), ang(s[1]), 100) + '" stroke="' + s[2] + '" stroke-width="22" fill="none"/>').join('') +
+  '<g id="needle"><line x1="120" y1="120" x2="120" y2="36" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/></g><circle cx="120" cy="120" r="9" fill="var(--ink)"/>' +
+  [18.5, 23, 27.5].map(v => { const a = ang(v); return '<text x="' + (120 + 122 * Math.cos(a)).toFixed(1) + '" y="' + (124 - 122 * Math.sin(a)).toFixed(1) + '" font-size="10" font-weight="700" fill="var(--mut)" text-anchor="middle">' + v + '</text>'; }).join('');
+function setNeedle(b){ const t = b == null ? BMI_MIN : b, deg = ((t < BMI_MIN ? BMI_MIN : t > BMI_MAX ? BMI_MAX : t) - BMI_MIN) / (BMI_MAX - BMI_MIN) * 180 - 90; $('needle').style.transform = 'rotate(' + deg + 'deg)'; }
+let shown = 0;
+function countTo(el, to){ const from = shown, t0 = performance.now(); (function f(t){ const k = Math.min(1, (t - t0) / 700), e = 1 - Math.pow(1 - k, 3); shown = from + (to - from) * e; el.textContent = shown.toFixed(1); if (k < 1) requestAnimationFrame(f); else { shown = to; el.textContent = to.toFixed(1); } })(t0); }
+function cat(b){ return b < 18.5 ? ['Kurang berat badan', '#2F7FD3'] : b < 23 ? ['Normal', '#1f9a57'] : b < 27.5 ? ['Berat badan berlebihan', '#B45309'] : ['Obes', '#C0392B']; }
+let lastB = null;
+function calc(){
+  const h = parseFloat($('hIn').value.replace(',', '.')), w = parseFloat($('wIn').value.replace(',', '.'));
+  const ok = h >= 50 && h <= 250 && w >= 2 && w <= 400; $('saveBtn').disabled = !ok; $('shMsg').textContent = '';
+  if (!ok){ lastB = null; setNeedle(null); $('bmiN').textContent = '–'; $('bmiN').style.color = ''; $('bmiC').textContent = (h || w) ? 'Semak nilai tinggi / berat' : 'Masukkan tinggi & berat'; $('bmiC').style.color = ''; shown = 0; return; }
+  const b = Math.round(w / Math.pow(h / 100, 2) * 10) / 10; if (b === lastB) return; lastB = b;
+  const c = cat(b); setNeedle(b); countTo($('bmiN'), b); $('bmiN').style.color = c[1]; $('bmiC').textContent = c[0]; $('bmiC').style.color = c[1];
+}
+['hIn', 'wIn'].forEach(id => $(id).addEventListener('input', calc));
+$('hIn').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); $('wIn').focus(); } });
+$('wIn').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); if (!$('saveBtn').disabled) saveS1(); } });
+function openSheet(id){
+  cur = rows.filter(x => x.id === id)[0]; if (!cur) return;
+  $('shName').textContent = cur.name;
+  const idTxt = cur.ic ? cur.ic : 'Pasport ' + cur.passport;
+  $('shMeta').innerHTML = 'No. <b>' + esc(cur.queue) + '</b> · ' + esc(cur.age) + ' th · ' + esc(cur.gender) + ' · ' + esc(idTxt) + ' · <a href="tel:' + esc(cur.phone) + '">' + esc(cur.phone) + '</a>';
+  $('shTags').innerHTML = tagsOf(cur);
+  $('hIn').value = cur.s1 ? cur.height : ''; $('wIn').value = cur.s1 ? cur.weight : ''; lastB = null; shown = 0; setNeedle(null); $('bmiN').textContent = '–'; $('bmiN').style.color = '';
+  $('saveBtn').textContent = cur.s1 ? 'Kemas kini ukuran' : 'Simpan & seterusnya'; $('sheet').classList.add('on'); calc();
+  setTimeout(() => $('hIn').focus(), 250);
+}
+function closeSheet(){ $('sheet').classList.remove('on'); cur = null; }
+async function saveS1(){
+  if (!cur) return; const b = $('saveBtn'); b.disabled = true; b.textContent = 'Menyimpan…'; $('shMsg').textContent = '';
+  let r; try { r = await api({ action:'nhsiCall', fn:'saveS1', args:{ id: cur.id, height: $('hIn').value.replace(',', '.'), weight: $('wIn').value.replace(',', '.') } }, 25000); } catch(e){ r = { ok:false, error:'Ralat sambungan. Cuba lagi.' }; }
+  b.textContent = 'Simpan & seterusnya'; b.disabled = false;
+  if (r && r.ok){
+    const wasNew = !cur.s1, nm = cur.name.split(' ')[0]; toast('✓ ' + nm + ' · BMI ' + r.bmi + ' · ' + r.cat); if (navigator.vibrate) navigator.vibrate(60);
+    closeSheet(); await load(false);
+    if (wasNew){ const nxt = rows.filter(x => !x.s1)[0]; if (nxt && view === 's1' && curTab === 'P') setTimeout(() => openSheet(nxt.id), 450); }
+    return;
+  }
+  $('shMsg').textContent = (r && r.error) || 'Gagal menyimpan.'; if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+}
+
+/* ---------- QR ---------- */
+function openQr(){
+  $('qrSheet').classList.add('on'); $('qrBox').innerHTML = ''; $('qrUrl').textContent = FORM_URL;
+  try { new QRCode($('qrBox'), { text: FORM_URL, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M }); } catch(e){ $('qrBox').textContent = 'QR tidak dapat dijana — salin pautan di bawah.'; }
+}
+function copyUrl(){ (navigator.clipboard ? navigator.clipboard.writeText(FORM_URL) : Promise.reject()).then(() => toast('Pautan disalin'), () => toast('Salin manual pautan di atas')); }
+
+load(false); startPoll();
+</script>
+</body>
+</html>
