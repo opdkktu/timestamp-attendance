@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Log masuk laptop · SIAGA</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{ --bg:#F3F8F6; --card:#fff; --ink:#12302C; --mut:#5B6B68; --line:#DCEAE6; --acc:#0F5C56; --acc2:#1C8F84; --red:#C0392B; }
+  :root:not([data-theme="light"]){ }
+  @media (prefers-color-scheme:dark){ :root{ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --acc:#4FD1B8; --acc2:#2FAE98; } }
+  *{ box-sizing:border-box } body{ margin:0; min-height:100vh; display:grid; place-items:center; background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; padding:16px; }
+  .box{ width:100%; max-width:860px; background:var(--card); border:1px solid var(--line); border-radius:24px; padding:28px; display:grid; grid-template-columns:1fr 300px; gap:28px; box-shadow:0 20px 50px -30px rgba(15,92,86,.45); }
+  h1{ margin:0 0 4px; font-size:26px } .eb{ font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--acc) }
+  p.sub{ margin:6px 0 18px; color:var(--mut); line-height:1.5 }
+  ol{ padding-left:20px; line-height:1.9; color:var(--ink); margin:0 0 18px } ol b{ color:var(--acc) }
+  .pages{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px }
+  .pg{ flex:1; min-width:150px; border:2px solid var(--line); background:transparent; color:var(--ink); border-radius:14px; padding:12px; font-weight:700; cursor:pointer; text-align:left; font-size:14px }
+  .pg small{ display:block; font-weight:500; color:var(--mut); margin-top:2px } .pg[aria-pressed="true"]{ border-color:var(--acc); background:rgba(47,174,152,.12) }
+  .note{ font-size:12px; color:var(--mut); line-height:1.5; background:rgba(47,174,152,.08); border-radius:12px; padding:10px 12px }
+  .qrw{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px }
+  .qrb{ position:relative; width:260px; height:260px; background:#fff; border-radius:18px; padding:14px; display:grid; place-items:center; border:1px solid var(--line) }
+  #qr canvas,#qr img{ display:block; max-width:100%; height:auto }
+  .qrb.dim #qr{ opacity:.08; filter:blur(3px) } .ov{ position:absolute; inset:0; display:none; flex-direction:column; gap:10px; align-items:center; justify-content:center; text-align:center; padding:20px; color:#12302C; font-weight:700; border-radius:18px }
+  .qrb.dim .ov{ display:flex } .ov button{ border:0; border-radius:12px; background:#0F5C56; color:#fff; font-weight:800; padding:11px 18px; cursor:pointer; font-size:14px }
+  .pin{ font-size:13px; color:var(--mut) } .pin b{ font-size:22px; letter-spacing:.2em; color:var(--ink); display:block; text-align:center }
+  .bar{ width:260px; height:5px; border-radius:9px; background:var(--line); overflow:hidden } .bar i{ display:block; height:100%; width:100%; background:var(--acc2); transform-origin:left; }
+  .ok{ text-align:center; padding:30px } .ok .tick{ font-size:60px; animation:pop .5s cubic-bezier(.2,1.4,.3,1) }
+  @keyframes pop{ from{ transform:scale(.3); opacity:0 } to{ transform:none; opacity:1 } }
+  @media (max-width:760px){ .box{ grid-template-columns:1fr; padding:20px } .qrw{ order:-1 } }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important } }
+</style>
+</head>
+<body>
+<main class="box" id="box">
+  <section>
+    <div class="eb">Klinik Kesihatan Ayer Hitam</div>
+    <h1>Log masuk laptop</h1>
+    <p class="sub">Guna telefon anda yang sudah log masuk SIAGA. Tiada kata laluan ditaip di laptop ini.</p>
+    <div class="pages" id="pages" role="group" aria-label="Halaman"></div>
+    <ol>
+      <li>Buka <b>SIAGA</b> pada telefon → <b>Imbas QR Laptop</b></li>
+      <li>Halakan kamera ke kod QR di sebelah</li>
+      <li>Semak <b>kod 4 digit</b> sepadan, kemudian sahkan dengan <b>Face ID</b></li>
+    </ol>
+    <div class="note">🔒 Laptop hanya boleh membuka halaman terpilih (panggilan nombor &amp; pendaftaran). Sesi tamat sendiri selepas 30 minit tidak digunakan, dan boleh dilog keluar dari telefon.</div>
+  </section>
+  <section class="qrw" id="qrw">
+    <div class="qrb" id="qrb"><div id="qr"></div><div class="ov" id="ov"></div></div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="pin">Kod pengesahan<b id="pin">····</b></div>
+  </section>
+</main>
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const PAGES = { 'prima-room.html':['📣','Panggilan nombor','Bilik Doktor'], 'prima-reg.html':['📝','Pendaftaran','PRIMA'] };
+const $ = id => document.getElementById(id);
+const q = new URLSearchParams(location.search);
+let page = PAGES[q.get('next')] ? q.get('next') : 'prima-room.html', cur = null, pollT = 0, tickT = 0, busy = false;
+
+function dev(){ const u = navigator.userAgent; const b = /Edg\//.test(u) ? 'Edge' : /Chrome\//.test(u) ? 'Chrome' : /Firefox\//.test(u) ? 'Firefox' : /Safari\//.test(u) ? 'Safari' : 'Pelayar'; const o = /Windows/.test(u) ? 'Windows' : /Mac OS/.test(u) ? 'Mac' : /Linux/.test(u) ? 'Linux' : ''; return (b + ' · ' + o).slice(0, 40); }
+async function post(b){ const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(b) }); return r.json(); }
+function drawPages(){
+  $('pages').innerHTML = Object.keys(PAGES).map(k => '<button class="pg" data-p="' + k + '" aria-pressed="' + (k === page) + '">' + PAGES[k][0] + ' ' + PAGES[k][1] + '<small>' + PAGES[k][2] + '</small></button>').join('');
+}
+$('pages').addEventListener('click', e => { const b = e.target.closest('.pg'); if(!b || b.dataset.p === page) return; page = b.dataset.p; drawPages(); start(); });
+function overlay(html){ $('qrb').classList.toggle('dim', !!html); $('ov').innerHTML = html || ''; }
+
+async function start(){
+  clearTimeout(pollT); clearInterval(tickT); cur = null; overlay('Menjana kod…'); $('pin').textContent = '····';
+  let d; try{ d = await post({ action:'qrStart', page, dev: dev() }); }catch(e){ d = null; }
+  if(!d || !d.ok){ overlay((d && d.error) || 'Tiada sambungan.<br><button onclick="start()">Cuba lagi</button>'); return; }
+  cur = d; $('qr').innerHTML = ''; new QRCode($('qr'), { text: d.url, width: 232, height: 232, correctLevel: QRCode.CorrectLevel.M });
+  $('pin').textContent = d.pin; overlay('');
+  const t0 = Date.now(), bar = $('bar'); bar.style.transition = 'none'; bar.style.transform = 'scaleX(1)'; void bar.offsetWidth; bar.style.transition = 'transform ' + d.expires + 's linear'; bar.style.transform = 'scaleX(0)';
+  tickT = setInterval(() => { if(Date.now() - t0 > d.expires * 1000){ clearInterval(tickT); clearTimeout(pollT); overlay('Kod tamat tempoh<br><button onclick="start()">Jana QR baharu</button>'); } }, 1000);
+  poll();
+}
+async function poll(){
+  if(!cur || document.hidden && false) return;
+  let d = null; try{ d = await post({ action:'qrPoll', code: cur.code, secret: cur.secret }); }catch(e){}
+  if(d && d.ok && d.status === 'DONE'){ return done(d); }
+  if(d && d.ok && d.status === 'GONE'){ clearInterval(tickT); overlay(d.denied ? 'Ditolak dari telefon.<br><button onclick="start()">Cuba lagi</button>' : 'Kod tamat tempoh<br><button onclick="start()">Jana QR baharu</button>'); return; }
+  pollT = setTimeout(poll, 2000);
+}
+function done(d){
+  clearInterval(tickT);
+  try{ sessionStorage.setItem('kkah_session_token', d.token); sessionStorage.setItem('kkah_ic', d.ic); sessionStorage.setItem('kkah_via', 'qr'); sessionStorage.setItem('kkah_qr_page', page); }catch(e){}
+  $('box').innerHTML = '<div class="ok" style="grid-column:1/-1"><div class="tick">✅</div><h1>Selamat datang, ' + String(d.name || '').split(' ')[0].replace(/[<>&]/g,'') + '</h1><p class="sub">Membuka ' + PAGES[page][1] + '…<br>Sesi laptop tamat selepas ' + d.idleMin + ' minit tidak digunakan.</p></div>';
+  setTimeout(() => { location.replace('./' + page); }, 1300);
+}
+drawPages(); start();
+</script>
+</body>
+</html>
