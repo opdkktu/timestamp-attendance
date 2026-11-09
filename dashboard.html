@@ -110,23 +110,23 @@
   .att-dot.out{ background:#FFC9C0; }
 
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  .-card{
+  .module-card{
     background:#fff; border:1px solid var(--line); border-radius:20px; padding:20px 16px;
     text-align:left; cursor:pointer; box-shadow:0 8px 24px -16px rgba(11,61,58,0.2);
     transition:transform .15s ease, box-shadow .15s ease; display:flex; flex-direction:column; gap:10px;
     font-family:'Inter',sans-serif; color:var(--ink-700);
   }
-  .-card:hover{ transform:translateY(-2px); box-shadow:0 14px 28px -16px rgba(11,61,58,0.28); }
-  .-card:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
-  .-card.disabled{ opacity:.55; cursor:not-allowed; }
-  .-card.disabled:hover{ transform:none; box-shadow:0 8px 24px -16px rgba(11,61,58,0.2); }
-  .-icon{
+  .module-card:hover{ transform:translateY(-2px); box-shadow:0 14px 28px -16px rgba(11,61,58,0.28); }
+  .module-card:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
+  .module-card.disabled{ opacity:.55; cursor:not-allowed; }
+  .module-card.disabled:hover{ transform:none; box-shadow:0 8px 24px -16px rgba(11,61,58,0.2); }
+  .module-icon{
     width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center;
     background:var(--mint-100); font-size:20px;
   }
-  .-name{ font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; }
-  .-status{ font-size:11px; color:var(--ink-500); }
-  .-status.soon{ color:var(--gold-500); font-weight:700; }
+  .module-name{ font-family:'Manrope',sans-serif; font-weight:700; font-size:14px; }
+  .module-status{ font-size:11px; color:var(--ink-500); }
+  .module-status.soon{ color:var(--gold-500); font-weight:700; }
 
   .footer-actions{ display:flex; gap:10px; margin-top:28px; }
   .btn{
@@ -581,20 +581,20 @@
   .idwrap .location-bar{ margin:12px auto 0; background:#fff; color:var(--ink-700); border:1px solid var(--line); box-shadow:0 8px 18px -14px rgba(11,61,58,.5); max-width:100%; }
   .idwrap .location-bar:hover{ background:var(--mint-050); }
 
-  /*  tiles */
+  /* module tiles */
   .section-title{ font:800 15px 'Manrope',sans-serif; color:var(--teal-900); margin:24px 4px 12px; }
   .grid{ grid-template-columns:repeat(4,1fr); gap:18px 6px; }
-  .-card{ background:none; border:none; box-shadow:none; padding:0 2px; border-radius:0; align-items:center; text-align:center; gap:9px; }
-  .-card:hover{ transform:none; box-shadow:none; }
-  .-card:hover .-icon{ transform:translateY(-2px); }
-  .-card:active .-icon{ transform:scale(.94); }
-  .-icon{ width:62px; height:62px; border-radius:20px; font-size:28px; background:#fff; border:1.5px solid var(--line); box-shadow:0 10px 22px -16px rgba(11,61,58,.6); position:relative; transition:transform .15s ease; }
-  .-name{ font:600 12px 'Inter',sans-serif; line-height:1.25; color:var(--ink-700); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .-status{ display:none; } .-status.soon{ display:block; font-size:10px; }
-  .-card.disabled .-icon{ filter:grayscale(.6); }
-  .-icon .ribbon{ position:absolute; top:-8px; right:-12px; min-width:34px; padding:3px 7px 3px 8px; background:#D12B3D; color:#fff; font:800 10.5px 'Manrope',sans-serif; border-radius:6px 6px 0 6px; box-shadow:0 4px 10px -4px rgba(209,43,61,.7); }
-  .-icon .ribbon::after{ content:''; position:absolute; right:0; bottom:-5px; border-top:5px solid #8f1b29; border-left:6px solid transparent; }
-  .-icon .ribbon.ok{ background:#0A8F5B; } .-icon .ribbon.ok::after{ border-top-color:#066b43; }
+  .module-card{ background:none; border:none; box-shadow:none; padding:0 2px; border-radius:0; align-items:center; text-align:center; gap:9px; }
+  .module-card:hover{ transform:none; box-shadow:none; }
+  .module-card:hover .module-icon{ transform:translateY(-2px); }
+  .module-card:active .module-icon{ transform:scale(.94); }
+  .module-icon{ width:62px; height:62px; border-radius:20px; font-size:28px; background:#fff; border:1.5px solid var(--line); box-shadow:0 10px 22px -16px rgba(11,61,58,.6); position:relative; transition:transform .15s ease; }
+  .module-name{ font:600 12px 'Inter',sans-serif; line-height:1.25; color:var(--ink-700); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .module-status{ display:none; } .module-status.soon{ display:block; font-size:10px; }
+  .module-card.disabled .module-icon{ filter:grayscale(.6); }
+  .module-icon .ribbon{ position:absolute; top:-8px; right:-12px; min-width:34px; padding:3px 7px 3px 8px; background:#D12B3D; color:#fff; font:800 10.5px 'Manrope',sans-serif; border-radius:6px 6px 0 6px; box-shadow:0 4px 10px -4px rgba(209,43,61,.7); }
+  .module-icon .ribbon::after{ content:''; position:absolute; right:0; bottom:-5px; border-top:5px solid #8f1b29; border-left:6px solid transparent; }
+  .module-icon .ribbon.ok{ background:#0A8F5B; } .module-icon .ribbon.ok::after{ border-top-color:#066b43; }
   @media (max-width:340px){ .grid{ grid-template-columns:repeat(3,1fr); } }
 
   /* floating pill nav with centre emblem */
@@ -609,7 +609,7 @@
   .pnav .emb small{ font-size:9px; font-weight:700; letter-spacing:.08em; opacity:.9; margin-top:3px; }
   body.view-mode .pnav{ display:none; }
   body.view-mode{ padding-bottom:30px; }
-  @media (prefers-reduced-motion:reduce){ .-icon, .-card{ transition:none; } }
+  @media (prefers-reduced-motion:reduce){ .module-icon, .module-card{ transition:none; } }
 
   /* floating emergency button (same flow as the login screen - no need to log out) */
   .dsos-fab{ position:fixed; right:14px; bottom:calc(max(14px, env(safe-area-inset-bottom)) + 88px); z-index:55; width:54px; height:54px; border-radius:50%; border:none; background:linear-gradient(135deg,#ff2d4a,#c40020); color:#fff; font:800 12px 'Manrope',sans-serif; letter-spacing:.04em; cursor:pointer; box-shadow:0 12px 26px -8px rgba(255,45,74,.75); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
@@ -1049,7 +1049,7 @@ try{ if(localStorage.getItem('kkah_driver_mode_' + (sessionStorage.getItem('kkah
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
 const ONESIGNAL_APP_ID = 'e6ffc7a0-2572-46da-b664-2a03c6dd210a'; // public App ID — safe to expose client-side, unlike the REST API key
-const S = [
+const MODULES = [
   { id: 'borang', name: 'Borang Permohonan', icon: '📝', status: 'active', href: './borang.html' },
   { id: 'jadual', name: 'Jadual & Rekod Saya', icon: '📅', status: 'active', href: './jadual.html' },
   { id: 'myreport', name: 'Laporan Kehadiran Bulanan', icon: '📊', status: 'active', href: './report.html' },
@@ -1058,7 +1058,7 @@ const S = [
    { id:'patuh', name:'PATUH (TB)', icon:'💊', status:'active', href:'./patuh.html' },
   { id:'saringan', name:'Saringan Minda', icon:'🧠', status:'active', href:'./saringan.html' }
 ];
-const ADMIN_S = [
+const ADMIN_MODULES = [
   { id: 'addstaff', name: 'Add Staff', icon: '➕', status: 'active', href: './staff-config.html' },
   { id: 'cmeadmin', name: 'CME Admin', icon: '🎓', status: 'active', href: './cme-admin.html' }
 ];
@@ -1474,9 +1474,7 @@ async function setupSupervisorAndLog(){
     const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'getSupervisorScope', token: sessionStorage.getItem('kkah_session_token') }) });
     const d = await res.json();
-    if(d && d.ok && d.isSupervisor) addModuleCard('Penyelia — Staf Saya', '👥', './supervisor.html'); 
-    if(d && d.ok && d.isSupervisor) addModuleCard('Papan Lokasi', '📍', './locwatch.html');
-    if(d && d.ok && d.isSupervisor) addModuleCard('Peranti Staf', '📱', './devices.html');
+    if(d && d.ok && d.isSupervisor) addModuleCard('Penyelia — Staf Saya', '👥', './supervisor.html'); if(d && d.ok && d.isSupervisor) addModuleCard('Papan Lokasi', '📍', './locwatch.html');if(d && d.ok && d.isSupervisor) addModuleCard('Peranti Staf', '📱', './devices.html');
   }catch(e){}
 }
 
@@ -1572,10 +1570,7 @@ async function loadTransportBox(){
     const d = await res.json();
     if(!d || !d.ok) return;
     const r = d.role || {};
-    if(!trDocCardAdded && (r.isDriver || r.isPic || r.isTop)){ trDocCardAdded = true;
-                                                              addModuleCard('Dokumen Kenderaan', '🪪', './vehicles.html');
-                                                              addModuleCard('Minyak & Analisis', '⛽', './fuel.html');
-                                                              addModuleCard('Borang & Dokumen', '📁', './vehicle-docs.html'); }
+    if(!trDocCardAdded && (r.isDriver || r.isPic || r.isTop)){ trDocCardAdded = true; addModuleCard('Dokumen Kenderaan', '🪪', './vehicles.html'); addModuleCard('Minyak & Analisis', '⛽', './fuel.html'); addModuleCard('Borang & Dokumen', '📁', './vehicle-docs.html'); }
 
     renderTrAlert_(d, r);
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
