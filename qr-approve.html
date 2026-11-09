@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Imbas QR Laptop · SIAGA</title>
+<script src="./jsQR.min.js"></script>
+<script src="./bio-help.js"></script>
+<style>
+  :root{ --bg:#F3F8F6; --card:#fff; --ink:#12302C; --mut:#5B6B68; --line:#DCEAE6; --acc:#0F5C56; --red:#C0392B; }
+  @media (prefers-color-scheme:dark){ :root{ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --acc:#2FAE98; } }
+  *{ box-sizing:border-box } body{ margin:0; background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; min-height:100vh; padding:16px 16px calc(24px + env(safe-area-inset-bottom)); }
+  .wrap{ max-width:480px; margin:0 auto } .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px }
+  .top a{ color:var(--acc); font-weight:700; text-decoration:none; font-size:14px } h1{ font-size:22px; margin:0 }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:18px; margin-bottom:14px }
+  .cam{ position:relative; border-radius:18px; overflow:hidden; background:#000; aspect-ratio:1/1 } video{ width:100%; height:100%; object-fit:cover }
+  .frame{ position:absolute; inset:18%; border:3px solid rgba(255,255,255,.85); border-radius:18px; box-shadow:0 0 0 999px rgba(0,0,0,.35) }
+  .btn{ width:100%; border:0; border-radius:14px; background:var(--acc); color:#fff; font-weight:800; font-size:16px; padding:15px; min-height:52px; cursor:pointer; margin-top:10px }
+  .btn.sec{ background:transparent; color:var(--mut); font-weight:600; font-size:14px } .btn:disabled{ opacity:.5 }
+  .pinbox{ text-align:center; margin:14px 0; padding:14px; border-radius:16px; background:rgba(47,174,152,.1) } .pinbox b{ display:block; font-size:34px; letter-spacing:.22em; color:var(--acc) } .pinbox span{ font-size:12px; color:var(--mut) }
+  .row{ display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:14px } .row:last-child{ border:0 } .row span{ color:var(--mut) }
+  .msg{ text-align:center; color:var(--mut); line-height:1.6 } .err{ color:var(--red); font-weight:700 }
+  .sess{ display:flex; align-items:center; gap:10px; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px } .sess button{ border:1px solid var(--red); color:var(--red); background:none; border-radius:10px; padding:7px 12px; font-weight:700; cursor:pointer }
+  h2{ font-size:15px; margin:0 0 6px }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>💻 Log masuk laptop</h1><a href="./dashboard.html">← Dashboard</a></div>
+  <div id="main"></div>
+  <div class="card" id="sessCard" style="display:none"><h2>Laptop yang sedang log masuk</h2><div id="sess"></div></div>
+</div>
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const TOKEN = sessionStorage.getItem('kkah_session_token');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let code = new URLSearchParams(location.search).get('c') || '', stream = null, raf = 0;
+async function post(b){ const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token: TOKEN }, b)) }); return r.json(); }
+const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+async function bioVerify(){            // Face ID / Touch ID / screen lock (same key SIAGA made at login)
+  let id = ''; try{ id = localStorage.getItem('kkah_biometric_credential_id') || ''; }catch(e){}
+  if(!id) return true;                 // this phone never enabled Face ID → the SIAGA login itself is the proof
+  await navigator.credentials.get({ publicKey:{ challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials:[{ id:b64d(id), type:'public-key', transports:['internal'] }], userVerification:'required', timeout:60000 } });
+  return true;
+}
+function show(html){ $('main').innerHTML = html; }
+
+function init(){
+  if(!TOKEN){ show('<div class="card msg">Sila log masuk SIAGA pada telefon ini dahulu.<button class="btn" onclick="location.href=\'./login.html\'">Log masuk</button></div>'); return; }
+  loadSessions();
+  code ? review() : scan();
+}
+async function scan(){
+  show('<div class="card"><div class="cam"><video id="v" playsinline muted></video><div class="frame"></div></div><p class="msg">Halakan kamera ke kod QR di skrin laptop.</p></div>');
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+    const v = $('v'); v.srcObject = stream; await v.play();
+    const c = document.createElement('canvas'), x = c.getContext('2d', { willReadFrequently:true });
+    const tick = () => {
+      if(v.readyState >= 2){
+        const w = v.videoWidth, h = v.videoHeight, s = Math.min(1, 480 / Math.max(w, h)); c.width = Math.round(w * s); c.height = Math.round(h * s);
+        x.drawImage(v, 0, 0, c.width, c.height);
+        const r = jsQR(x.getImageData(0, 0, c.width, c.height).data, c.width, c.height, { inversionAttempts:'dontInvert' });
+        const m = r && /[?&]c=([A-Za-z0-9]+)/.exec(r.data);
+        if(m && /qr-approve\.html/.test(r.data)){ stop(); code = m[1]; if(navigator.vibrate) navigator.vibrate(40); return review(); }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+  }catch(e){ show('<div class="card msg err">Kamera tidak dapat dibuka. Benarkan akses kamera, atau guna aplikasi kamera telefon untuk mengimbas QR.<button class="btn" onclick="scan()">Cuba lagi</button></div>'); }
+}
+function stop(){ cancelAnimationFrame(raf); if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } }
+
+async function review(){
+  show('<div class="card msg">Menyemak kod…</div>');
+  let d; try{ d = await post({ action:'qrInfo', code }); }catch(e){ d = null; }
+  if(!d || !d.ok){
+    if(d && /expired/i.test(d.error || '')){ show('<div class="card msg err">Sesi telefon tamat. Log masuk semula.<button class="btn" onclick="location.href=\'./login.html\'">Log masuk</button></div>'); return; }
+    show('<div class="card msg err">' + esc((d && d.error) || 'Tiada sambungan.') + '<button class="btn" onclick="code=\'\';scan()">Imbas semula</button></div>'); return;
+  }
+  show('<div class="card"><h2>Benarkan log masuk di laptop ini?</h2>' +
+    '<div class="pinbox"><span>Pastikan kod ini sama dengan skrin laptop</span><b>' + esc(d.pin) + '</b></div>' +
+    '<div class="row"><span>Halaman</span><b>' + esc(d.page) + '</b></div><div class="row"><span>Laptop</span><b>' + esc(d.dev || '—') + '</b></div>' +
+    '<div class="row"><span>Tamat sendiri</span><b>' + d.idleMin + ' min tidak digunakan</b></div>' +
+    '<button class="btn" id="go">✔ Benarkan (Face ID)</button><button class="btn sec" id="no">Tolak</button></div>');
+  $('go').onclick = async () => {
+    $('go').disabled = true; $('go').textContent = 'Mengesahkan…';
+    try{ await bioVerify(); }catch(e){ $('go').disabled = false; $('go').textContent = '✔ Benarkan (Face ID)'; const x = window.SiagaBio ? SiagaBio.explain(e) : { text:'Pengesahan gagal.' }; alert(x.text); return; }
+    let r; try{ r = await post({ action:'qrApprove', code, approve:true }); }catch(e){ r = null; }
+    if(r && r.ok){ if(navigator.vibrate) navigator.vibrate(60); show('<div class="card msg"><div style="font-size:54px">✅</div><b>Laptop dibenarkan</b><br>Anda boleh tutup skrin ini.<button class="btn" onclick="location.href=\'./dashboard.html\'">Ke Dashboard</button></div>'); loadSessions(); }
+    else { show('<div class="card msg err">' + esc((r && r.error) || 'Tidak berjaya') + '<button class="btn" onclick="code=\'\';scan()">Imbas semula</button></div>'); }
+  };
+  $('no').onclick = async () => { try{ await post({ action:'qrApprove', code, approve:false }); }catch(e){} show('<div class="card msg">Ditolak.<button class="btn" onclick="location.href=\'./dashboard.html\'">Ke Dashboard</button></div>'); };
+}
+async function loadSessions(){
+  try{
+    const d = await post({ action:'qrList' }); if(!d || !d.ok) return;
+    $('sessCard').style.display = d.sessions.length ? '' : 'none';
+    $('sess').innerHTML = d.sessions.map(s => '<div class="sess"><div>💻 ' + esc(s.dev || 'Laptop') + '<br><small style="color:var(--mut)">sejak ' + esc(s.since) + '</small></div><button onclick="revoke(\'' + esc(s.sid) + '\')">Log keluar</button></div>').join('');
+  }catch(e){}
+}
+async function revoke(sid){ if(!confirm('Log keluar laptop ini?')) return; await post({ action:'qrRevoke', sid }); loadSessions(); }
+window.addEventListener('pagehide', stop);
+init();
+</script>
+</body>
+</html>
