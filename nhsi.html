@@ -7,8 +7,8 @@
 <title>NHSI — Saringan Kesihatan</title>
 <link rel="icon" type="image/png" href="./siaga-192.png">
 <style>
-  :root{ --bg:#EEF3F1; --card:#fff; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB; --dg:#C0392B; --dgl:#FBEAE7; --warn:#B45309; --warnl:#FEF3E2; --ok:#1f9a57; --blue:#2F7FD3; }
-  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --dgl:#3a1d19; --warnl:#3a2c14; } }
+  :root{ --bg:#EEF3F1; --card:#fff; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB; --dg:#C0392B; --dgl:#FBEAE7; --warn:#B45309; --warnl:#FEF3E2; --ok:#1f9a57; --blue:#2F7FD3;  --onacc:#0F4530; }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --onacc:#A8EBCB; --dg:#FF9A8D; --warn:#F0B35A; --dgl:#3a1d19; --warnl:#3a2c14; } }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ margin:0; }
   body{ background:var(--bg); color:var(--ink); font-family:Inter,'Segoe UI',system-ui,sans-serif; min-height:100vh; padding-bottom:40px; }
@@ -30,16 +30,16 @@
   .st.off{ opacity:.55; cursor:default; } .st.off .no{ background:var(--mut); } .st.off:hover{ border-color:var(--line); }
   .acts{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px; }
   .act{ height:54px; border-radius:16px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 14px Inter,sans-serif; cursor:pointer; }
-  .act.pri{ background:var(--accl); border-color:var(--acc); color:var(--acc2); }
+  .act.pri{ background:var(--accl); border-color:var(--acc); color:var(--onacc); }
   .tabs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
   .tab{ height:48px; border-radius:14px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 14px Inter,sans-serif; cursor:pointer; } .tab.on{ background:var(--acc); border-color:var(--acc); color:#fff; }
   .srch{ width:100%; height:48px; border-radius:14px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 15px Inter,sans-serif; padding:0 14px; outline:none; margin-bottom:10px; } .srch:focus{ border-color:var(--acc); }
   .cl{ display:flex; gap:12px; align-items:center; width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px 14px; margin-bottom:8px; cursor:pointer; color:var(--ink); font-family:inherit; }
   .cl.new{ animation:flash 2.4s ease; } @keyframes flash{ 0%,60%{ background:var(--accl); border-color:var(--acc); } }
-  .q{ flex:none; min-width:52px; height:52px; border-radius:14px; display:grid; place-items:center; background:var(--accl); color:var(--acc2); font:900 15px 'IBM Plex Mono',ui-monospace,monospace; }
+  .q{ flex:none; min-width:52px; height:52px; border-radius:14px; display:grid; place-items:center; background:var(--accl); color:var(--onacc); font:900 15px 'IBM Plex Mono',ui-monospace,monospace; }
   .cl .tx{ flex:1; min-width:0; } .cl .tx b{ display:block; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .cl .tx small{ color:var(--mut); font-size:12px; }
   .tags{ display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; }
-  .tag{ font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:99px; background:var(--accl); color:var(--acc2); } .tag.r{ background:var(--dgl); color:var(--dg); } .tag.w{ background:var(--warnl); color:var(--warn); }
+  .tag{ font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:99px; background:var(--accl); color:var(--onacc); } .tag.r{ background:var(--dgl); color:var(--dg); } .tag.w{ background:var(--warnl); color:var(--warn); }
   .empty{ text-align:center; color:var(--mut); padding:34px 10px; font-size:14px; }
   .sheet{ position:fixed; inset:0; z-index:40; display:none; background:rgba(0,0,0,.45); align-items:flex-end; justify-content:center; }
   .sheet.on{ display:flex; }
@@ -68,7 +68,7 @@
   .seg2{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px; }
   .seg2 button{ height:40px; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 13px Inter,sans-serif; cursor:pointer; } .seg2 button.on{ background:var(--acc); border-color:var(--acc); color:#fff; }
   .fl{ min-height:22px; margin-top:5px; text-align:center; font-size:12px; font-weight:800; border-radius:99px; padding:3px 8px; color:var(--mut); }
-  .fl.l0{ background:var(--accl); color:var(--acc2); } .fl.l1{ background:var(--warnl); color:var(--warn); } .fl.l2{ background:var(--dgl); color:var(--dg); } .fl.l3{ background:var(--dg); color:#fff; animation:pulse 1.2s infinite; }
+  .fl.l0{ background:var(--accl); color:var(--onacc); } .fl.l1{ background:var(--warnl); color:var(--warn); } .fl.l2{ background:var(--dgl); color:var(--dg); } .fl.l3{ background:var(--dg); color:#fff; animation:pulse 1.2s infinite; }
   @keyframes pulse{ 50%{ opacity:.6; } }
   .alert{ display:none; margin-top:12px; padding:12px 14px; border-radius:14px; background:var(--dg); color:#fff; font-weight:800; font-size:14px; line-height:1.35; } .alert.on{ display:block; animation:rise .25s; }
   .s1line{ font-size:13px; color:var(--mut); margin:2px 0 4px; } .s1line b{ color:var(--ink); }
@@ -77,11 +77,11 @@
   .tiles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(138px,1fr)); gap:8px; }
   .tile{ border:1.5px solid var(--line); border-left-width:6px; border-radius:14px; padding:9px 11px; background:var(--card); } .tile small{ display:block; font-size:10.5px; font-weight:800; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; } .tile b{ display:block; font-size:19px; margin:1px 0; font-variant-numeric:tabular-nums; } .tile span{ font-size:12px; font-weight:800; }
   .tile.l0{ border-left-color:var(--ok); } .tile.l0 span{ color:var(--ok); } .tile.l1{ border-left-color:#E0A100; } .tile.l1 span{ color:var(--warn); } .tile.l2{ border-left-color:var(--dg); } .tile.l2 span{ color:var(--dg); } .tile.l3{ border-left-color:var(--dg); background:var(--dgl); } .tile.l3 span{ color:var(--dg); } .tile.na{ opacity:.6; border-left-color:var(--line); }
-  .ovl{ padding:11px 14px; border-radius:14px; font-weight:800; font-size:14px; margin:10px 0 0; } .ovl.l0{ background:var(--accl); color:var(--acc2); } .ovl.l1{ background:var(--warnl); color:var(--warn); } .ovl.l2,.ovl.l3{ background:var(--dg); color:#fff; }
+  .ovl{ padding:11px 14px; border-radius:14px; font-weight:800; font-size:14px; margin:10px 0 0; } .ovl.l0{ background:var(--accl); color:var(--onacc); } .ovl.l1{ background:var(--warnl); color:var(--warn); } .ovl.l2,.ovl.l3{ background:var(--dg); color:#fff; }
   .pi{ display:flex; gap:8px; align-items:flex-start; margin-bottom:8px; } .pi .lv{ flex:none; width:10px; align-self:stretch; border-radius:6px; background:var(--ok); } .pi .lv.l1{ background:#E0A100; } .pi .lv.l2,.pi .lv.l3{ background:var(--dg); }
   .pi textarea{ flex:1; min-height:48px; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 14px/1.4 Inter,system-ui,sans-serif; padding:9px 11px; resize:vertical; outline:none; } .pi textarea:focus{ border-color:var(--acc); }
   .pi button{ flex:none; width:38px; height:38px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); color:var(--dg); font-size:16px; cursor:pointer; }
-  .chp{ display:flex; flex-wrap:wrap; gap:8px; } .chp label{ position:relative; } .chp input{ position:absolute; opacity:0; inset:0; width:100%; height:100%; margin:0; cursor:pointer; } .chp span{ display:block; padding:9px 13px; border-radius:99px; border:1.5px solid var(--line); font-size:13px; font-weight:700; background:var(--card); } .chp input:checked + span{ background:var(--accl); border-color:var(--acc); color:var(--acc2); }
+  .chp{ display:flex; flex-wrap:wrap; gap:8px; } .chp label{ position:relative; } .chp input{ position:absolute; opacity:0; inset:0; width:100%; height:100%; margin:0; cursor:pointer; } .chp span{ display:block; padding:9px 13px; border-radius:99px; border:1.5px solid var(--line); font-size:13px; font-weight:700; background:var(--card); } .chp input:checked + span{ background:var(--accl); border-color:var(--acc); color:var(--onacc); }
   .sel,.txt{ width:100%; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 14px Inter,system-ui,sans-serif; padding:10px 12px; outline:none; } .txt{ min-height:70px; resize:vertical; } .sel{ height:46px; }
   .mini{ height:40px; padding:0 14px; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 13px Inter,sans-serif; cursor:pointer; }
   .row2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
@@ -99,9 +99,9 @@
   <!-- HUB -->
   <div class="view on" id="vHub">
     <div class="stats"><div class="stat"><b id="cTot">–</b><span>Didaftar</span></div><div class="stat w"><b id="cWait">–</b><span>Menunggu S1</span></div><div class="stat d"><b id="cDone">–</b><span>Selesai S3</span></div></div>
-    <button class="st" onclick="openS1()"><div class="no">1</div><div class="tx"><b>Stesen 1 · Tinggi &amp; berat</b><small>Pendaftaran, BMI</small></div><div class="cnt"><b id="n1">–</b><small>menunggu</small></div></button>
-    <button class="st" onclick="openS2()"><div class="no">2</div><div class="tx"><b>Stesen 2 · Tekanan darah, gula, kolesterol</b><small>Tekanan darah · nadi · glukosa · kolesterol</small></div><div class="cnt"><b id="n2">–</b><small>menunggu</small></div></button>
-    <button class="st" onclick="openS3()"><div class="no">3</div><div class="tx"><b>Stesen 3 · Konsultasi &amp; pelan pengurusan</b><small>Keputusan saringan · pelan boleh disunting doktor</small></div><div class="cnt"><b id="n3">–</b><small>menunggu</small></div></button>
+    <button class="st" onclick="openS1()"><div class="no">1</div><div class="tx"><b>Stesen A · Tinggi &amp; berat</b><small>Pendaftaran, BMI</small></div><div class="cnt"><b id="n1">–</b><small>menunggu</small></div></button>
+    <button class="st" onclick="openS2()"><div class="no">2</div><div class="tx"><b>Stesen B · Tekanan darah, gula, kolesterol</b><small>Tekanan darah · nadi · glukosa · kolesterol</small></div><div class="cnt"><b id="n2">–</b><small>menunggu</small></div></button>
+    <button class="st" onclick="openS3()"><div class="no">3</div><div class="tx"><b>Stesen C · Konsultasi &amp; pelan pengurusan</b><small>Keputusan saringan · pelan boleh disunting doktor</small></div><div class="cnt"><b id="n3">–</b><small>menunggu</small></div></button>
     <div class="acts"><button class="act pri" onclick="location.href='./nhsi-form.html?staff=1'">📝 Daftar klien (petugas)</button><button class="act" onclick="openQr('S')">▦ Kod QR &amp; pautan</button><button class="act" style="grid-column:1/-1" onclick="location.href='./nhsi-report.html'">📊 Analisis &amp; laporan</button></div>
   </div>
 
@@ -118,7 +118,7 @@
     <div class="tabs tabs3"><button class="tab on" id="t2R" onclick="tab2('R')">Sedia (0)</button><button class="tab" id="t2B" onclick="tab2('B')">Belum S1 (0)</button><button class="tab" id="t2D" onclick="tab2('D')">Selesai (0)</button></div>
     <input class="srch" id="srch2" placeholder="Cari nama / IC…" oninput="render()" autocomplete="off">
     <div id="list2"></div>
-    <div class="empty" style="padding:8px;font-size:12px">“Belum S1” = klien yang belum diukur tinggi &amp; berat — boleh terus ke Stesen 2 jika perlu.</div>
+    <div class="empty" style="padding:8px;font-size:12px">“Belum S1” = klien yang belum diukur tinggi &amp; berat — boleh terus ke Stesen B jika perlu.</div>
   </div>
 
   <!-- STATION 3 -->
@@ -126,11 +126,11 @@
     <div class="tabs tabs3"><button class="tab on" id="t3R" onclick="tab3('R')">Sedia (0)</button><button class="tab" id="t3B" onclick="tab3('B')">Belum S2 (0)</button><button class="tab" id="t3D" onclick="tab3('D')">Selesai (0)</button></div>
     <input class="srch" id="srch3" placeholder="Cari nama / IC…" oninput="render()" autocomplete="off">
     <div id="list3"></div>
-    <div class="empty" style="padding:8px;font-size:12px">“Belum S2” = klien yang belum selesai Stesen 2 — doktor boleh teruskan dan keputusan yang ada dipaparkan.</div>
+    <div class="empty" style="padding:8px;font-size:12px">“Belum S2” = klien yang belum selesai Stesen B — doktor boleh teruskan dan keputusan yang ada dipaparkan.</div>
   </div>
 </div>
 
-<!-- Station 1 sheet -->
+<!-- Station A sheet -->
 <div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sh" role="dialog" aria-modal="true">
   <h3 id="shName">—</h3><div class="meta" id="shMeta"></div><div class="tags" id="shTags"></div>
   <div class="g2"><div class="nf"><label for="hIn">Tinggi (cm)</label><input id="hIn" inputmode="decimal" autocomplete="off" placeholder="165"></div>
@@ -142,7 +142,7 @@
   <button class="act" style="width:100%;margin-top:8px" onclick="closeSheet()">Tutup</button>
 </div></div>
 
-<!-- Station 3 sheet -->
+<!-- Station C sheet -->
 <div class="sheet" id="sheet3" onclick="if(event.target===this)closeSheet3()"><div class="sh wide" role="dialog" aria-modal="true">
   <h3 id="s3Name">—</h3><div class="meta" id="s3Meta"></div><div class="tags" id="s3Tags"></div>
   <div class="ovl l0" id="s3Ovl"></div>
@@ -161,7 +161,7 @@
   <div class="row2"><button class="act" onclick="printRes()">🖨 Cetak keputusan</button><button class="act" onclick="closeSheet3()">Tutup</button></div>
 </div></div>
 
-<!-- Station 2 sheet -->
+<!-- Station B sheet -->
 <div class="sheet" id="sheet2" onclick="if(event.target===this)closeSheet2()"><div class="sh" role="dialog" aria-modal="true">
   <h3 id="s2Name">—</h3><div class="meta" id="s2Meta"></div><div class="s1line" id="s2S1"></div><div class="tags" id="s2Tags"></div>
   <div class="grid3">
@@ -180,7 +180,7 @@
   </div>
   <div class="alert" id="s2Alert" role="alert">⚠ Tekanan darah sangat tinggi — sila maklumkan doktor / pegawai perubatan segera.</div>
   <div class="msg" id="s2Msg" role="status" aria-live="polite"></div>
-  <button class="save" id="s2Save" onclick="saveS2()" disabled>Simpan Stesen 2</button>
+  <button class="save" id="s2Save" onclick="saveS2()" disabled>Simpan Stesen B</button>
   <button class="act" style="width:100%;margin-top:8px" onclick="closeSheet2()">Tutup</button>
 </div></div>
 
@@ -229,7 +229,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&am
 function goBack(){ if (view !== 'hub') return showView('hub'); if (VIA_QR) return logoutQr(); location.href = './dashboard.html'; }
 async function logoutQr(){ if (!confirm('Log keluar laptop ini?')) return; try { await api({ action:'qrLogout' }, 8000); } catch(e){} try { sessionStorage.clear(); } catch(e){} location.replace('./qr-login.html?next=nhsi.html'); }
 setInterval(() => { if (VIA_QR && !document.hidden) api({ action:'qrPing' }, 8000).catch(() => {}); }, 240000);
-function showView(v){ view = v; $('vHub').classList.toggle('on', v === 'hub'); $('vS1').classList.toggle('on', v === 's1'); $('vS2').classList.toggle('on', v === 's2'); $('vS3').classList.toggle('on', v === 's3'); $('sub').textContent = v === 's1' ? 'Stesen 1 · Tinggi & berat' : v === 's2' ? 'Stesen 2 · Tekanan darah, gula, kolesterol' : v === 's3' ? 'Stesen 3 · Konsultasi & pelan' : 'National Health Screening Initiative'; render(); }
+function showView(v){ view = v; $('vHub').classList.toggle('on', v === 'hub'); $('vS1').classList.toggle('on', v === 's1'); $('vS2').classList.toggle('on', v === 's2'); $('vS3').classList.toggle('on', v === 's3'); $('sub').textContent = v === 's1' ? 'Stesen A · Tinggi & berat' : v === 's2' ? 'Stesen B · Tekanan darah, gula, kolesterol' : v === 's3' ? 'Stesen C · Konsultasi & pelan' : 'National Health Screening Initiative'; render(); }
 function openS1(){ showView('s1'); }
 function openS2(){ showView('s2'); }
 function openS3(){ showView('s3'); }
@@ -293,13 +293,13 @@ function render(){
     const q = $('srch3').value.trim().toLowerCase().replace(/[-\s]/g, ''), src = cur3 === 'R' ? R3 : cur3 === 'B' ? B3 : D3, list = src.filter(c => match(c, q));
     if (cur3 === 'D') list.sort((a, b) => (b.s3At || '') < (a.s3At || '') ? -1 : 1);
     $('list3').innerHTML = list.length ? list.map(c => row(c, 3, c.s2 ? ' · TD ' + esc(c.sbp) + '/' + esc(c.dbp) : '')).join('')
-      : '<div class="empty">' + (cur3 === 'R' ? 'Tiada klien menunggu konsultasi.' : cur3 === 'B' ? 'Semua klien sudah melalui Stesen 2.' : 'Belum ada konsultasi selesai.') + '</div>';
+      : '<div class="empty">' + (cur3 === 'R' ? 'Tiada klien menunggu konsultasi.' : cur3 === 'B' ? 'Semua klien sudah melalui Stesen B.' : 'Belum ada konsultasi selesai.') + '</div>';
   }
   if (view === 's2'){
     const q = $('srch2').value.trim().toLowerCase().replace(/[-\s]/g, ''), src = cur2 === 'R' ? R2 : cur2 === 'B' ? B2 : D2, list = src.filter(c => match(c, q));
     if (cur2 === 'D') list.sort((a, b) => (b.s2At || '') < (a.s2At || '') ? -1 : 1);
     $('list2').innerHTML = list.length ? list.map(c => row(c, 2, c.s1 ? ' · BMI ' + esc(c.bmi) : '')).join('')
-      : '<div class="empty">' + (cur2 === 'R' ? 'Tiada klien menunggu di Stesen 2.' : cur2 === 'B' ? 'Semua klien sudah diukur tinggi &amp; berat.' : 'Belum ada klien selesai.') + '</div>';
+      : '<div class="empty">' + (cur2 === 'R' ? 'Tiada klien menunggu di Stesen B.' : cur2 === 'B' ? 'Semua klien sudah diukur tinggi &amp; berat.' : 'Belum ada klien selesai.') + '</div>';
   }
 }
 let cur2 = 'R', cur2row = null, cur3 = 'R', cur3row = null;
@@ -381,18 +381,18 @@ $('sbpIn').addEventListener('input', () => { if ($('sbpIn').value.length === 3) 
 function openSheet2(id){
   cur2row = rows.filter(x => x.id === id)[0]; const c = cur2row; if (!c) return;
   $('s2Name').textContent = c.name; $('s2Meta').innerHTML = 'Daftar <b>' + esc(c.created) + '</b> · ' + esc(c.age) + ' th · ' + esc(c.gender) + ' · <a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a>';
-  $('s2S1').innerHTML = c.s1 ? 'Stesen 1: <b>' + esc(c.height) + ' cm · ' + esc(c.weight) + ' kg · BMI ' + esc(c.bmi) + '</b> (' + esc(c.bmiCat) + ')' : '<b style="color:var(--warn)">Belum diukur di Stesen 1</b> — boleh teruskan.';
+  $('s2S1').innerHTML = c.s1 ? 'Stesen A: <b>' + esc(c.height) + ' cm · ' + esc(c.weight) + ' kg · BMI ' + esc(c.bmi) + '</b> (' + esc(c.bmiCat) + ')' : '<b style="color:var(--warn)">Belum diukur di Stesen A</b> — boleh teruskan.';
   $('s2Tags').innerHTML = tagsOf(c);
   $('sbpIn').value = c.s2 ? c.sbp : ''; $('dbpIn').value = c.s2 ? c.dbp : ''; $('pulIn').value = c.s2 ? c.pulse : ''; $('gluIn').value = c.s2 ? c.glucose : ''; $('cholIn').value = c.s2 ? c.chol : '';
   gT = c.s2 && c.glucoseType ? c.glucoseType : 'Puasa'; gType(gT);
-  $('s2Save').textContent = c.s2 ? 'Kemas kini Stesen 2' : 'Simpan Stesen 2'; $('sheet2').classList.add('on'); calc2(); setTimeout(() => $('sbpIn').focus(), 250);
+  $('s2Save').textContent = c.s2 ? 'Kemas kini Stesen B' : 'Simpan Stesen B'; $('sheet2').classList.add('on'); calc2(); setTimeout(() => $('sbpIn').focus(), 250);
 }
 function closeSheet2(){ $('sheet2').classList.remove('on'); cur2row = null; }
 async function saveS2(){
   const c = cur2row; if (!c) return; const b = $('s2Save'); b.disabled = true; b.textContent = 'Menyimpan…'; $('s2Msg').textContent = '';
   const a = { id: c.id, sbp: $('sbpIn').value, dbp: $('dbpIn').value, pulse: $('pulIn').value, glucose: $('gluIn').value, glucoseType: gT, chol: $('cholIn').value };
   let r; try { r = await api({ action:'nhsiCall', fn:'saveS2', args:a }, 25000); } catch(e){ r = { ok:false, error:'Ralat sambungan. Cuba lagi.' }; }
-  b.textContent = 'Simpan Stesen 2'; b.disabled = false;
+  b.textContent = 'Simpan Stesen B'; b.disabled = false;
   if (r && r.ok){
     const urgent = r.flags && r.flags.bp && r.flags.bp[0] === 3; toast((urgent ? '⚠ ' : '✓ ') + c.name.split(' ')[0] + ' · TD ' + a.sbp + '/' + a.dbp + (urgent ? ' — SEGERA' : '')); if (navigator.vibrate) navigator.vibrate(urgent ? [200, 80, 200] : 60);
     const was = c.s2; closeSheet2(); await load(false);
@@ -433,7 +433,7 @@ function planOf(c){
       if (R.f.chol[0] === 2) add(2, 'Kolesterol jumlah ' + c.chol + ' mmol/L tinggi. Profil lipid penuh; nilai risiko kardiovaskular; nasihat diet rendah lemak tepu; pertimbang rawatan.');
       else if (R.f.chol[0] === 1) add(1, 'Kolesterol jumlah ' + c.chol + ' mmol/L (sempadan). Nasihat diet & senaman; ulang dalam 3–6 bulan.');
     }
-  } else add(1, 'Stesen 2 belum lengkap — bacaan tekanan darah, nadi, glukosa & kolesterol tiada. Lengkapkan jika boleh.');
+  } else add(1, 'Stesen B belum lengkap — bacaan tekanan darah, nadi, glukosa & kolesterol tiada. Lengkapkan jika boleh.');
   if (c.s1){
     if (c.bmiCat === 'Obes') add(2, 'BMI ' + c.bmi + ' (obes). Program pengurusan berat badan; rujuk pegawai pemakanan; semak risiko metabolik.');
     else if (c.bmiCat === 'Berat badan berlebihan') add(1, 'BMI ' + c.bmi + ' (berat badan berlebihan). Nasihat diet seimbang & aktiviti fizikal ≥150 minit seminggu.');
@@ -459,7 +459,7 @@ function tilesOf(c){
     t.push(tile('Tekanan darah', esc(c.sbp) + '/' + esc(c.dbp), R.f.bp[1], R.f.bp[0])); t.push(tile('Nadi', esc(c.pulse) + '/min', R.f.pulse[1], R.f.pulse[0]));
     t.push(R.f.glucose ? tile('Glukosa ' + esc((c.glucoseType || '').toLowerCase()), esc(c.glucose), R.f.glucose[1] + ' · mmol/L', R.f.glucose[0]) : tile('Glukosa', '—', 'Tidak diambil', null));
     t.push(R.f.chol ? tile('Kolesterol', esc(c.chol), R.f.chol[1] + ' · mmol/L', R.f.chol[0]) : tile('Kolesterol', '—', 'Tidak diambil', null));
-  } else t.push(tile('Stesen 2', '—', 'Belum lengkap', null));
+  } else t.push(tile('Stesen B', '—', 'Belum lengkap', null));
   const rk = riskOf(c);
   t.push(rk.ok ? tile('Risiko CVD 10 thn', rk.pct + '%', ['Rendah', 'Sederhana', 'Tinggi'][rk.level] + ' · Framingham', [0, 1, 2][rk.level]) : tile('Risiko CVD 10 thn', '—', c.age >= 30 && c.age <= 74 ? 'Data tidak lengkap' : 'Umur 30–74 sahaja', null));
   t.push(tile('Whooley', c.whooleyPos ? 'Positif' : 'Negatif', 'Kesihatan mental', c.whooleyPos ? 2 : 0));
