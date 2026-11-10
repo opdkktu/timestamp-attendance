@@ -43,7 +43,7 @@
       <li>Halakan kamera ke kod QR di sebelah</li>
       <li>Semak <b>kod 4 digit</b> sepadan, kemudian sahkan dengan <b>Face ID</b></li>
     </ol>
-    <div class="note">🔒 Laptop hanya boleh membuka halaman terpilih (panggilan nombor &amp; pendaftaran). Sesi tamat sendiri selepas 30 minit tidak digunakan, dan boleh dilog keluar dari telefon.</div>
+    <div class="note">🔒 Laptop hanya boleh membuka halaman terpilih (panggilan nombor, pendaftaran &amp; saringan NHSI). Sesi tamat sendiri selepas 30 minit tidak digunakan, dan boleh dilog keluar dari telefon.</div>
   </section>
   <section class="qrw" id="qrw">
     <div class="qrb" id="qrb"><div id="qr"></div><div class="ov" id="ov"></div></div>
@@ -53,7 +53,7 @@
 </main>
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
-const PAGES = { 'prima-room.html':['📣','Panggilan nombor','Bilik Doktor'], 'prima-reg.html':['📝','Pendaftaran','PRIMA'] };
+const PAGES = { 'prima-room.html':['📣','Panggilan nombor','Bilik Doktor'], 'prima-reg.html':['📝','Pendaftaran','PRIMA'], 'nhsi.html':['🩺','NHSI Saringan','Stesen 1 & 2'] };
 const $ = id => document.getElementById(id);
 const q = new URLSearchParams(location.search);
 let page = PAGES[q.get('next')] ? q.get('next') : 'prima-room.html', cur = null, pollT = 0, tickT = 0, busy = false;
