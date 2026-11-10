@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F4530">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>NHSI</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<style>
+  :root{ --bg:#EEF3F1; --card:#fff; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB;
+    --g:#1f9a57; --gl:#E3F4EA; --a:#C27803; --al:#FFF4D6; --r:#C0392B; --rl:#FBEAE7; --rr:#8E1B10; --rrl:#F7D6D1; }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --gl:#17352B; --al:#3a3115; --rl:#3a1d19; --rrl:#4a201b; --rr:#ff9a8d; } }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; } html,body{ margin:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:Inter,'Segoe UI','PingFang SC','Microsoft YaHei',system-ui,sans-serif; min-height:100vh; padding-bottom:40px; line-height:1.45; }
+  .top{ background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; padding:calc(12px + env(safe-area-inset-top)) 16px 54px; }
+  .top .row{ max-width:640px; margin:0 auto; display:flex; align-items:center; gap:10px; }
+  .top .ttl{ flex:1; font-weight:800; font-size:16px; } .top small{ display:block; font-weight:500; font-size:11.5px; opacity:.85; }
+  .lang{ display:flex; gap:4px; } .lang button{ height:34px; min-width:44px; padding:0 9px; border-radius:10px; border:1.5px solid rgba(255,255,255,.4); background:transparent; color:#fff; font:800 12.5px Inter,sans-serif; cursor:pointer; } .lang button.on{ background:#fff; color:var(--acc2); }
+  .wrap{ max-width:640px; margin:-40px auto 0; padding:0 14px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; margin-bottom:12px; box-shadow:0 8px 22px -16px rgba(0,0,0,.35); animation:rise .4s ease both; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+  h2{ margin:0 0 4px; font-size:17px; } .sub{ margin:0 0 12px; color:var(--mut); font-size:13px; }
+  .hello{ font-size:21px; font-weight:800; margin:0; } .meta{ color:var(--mut); font-size:13px; margin:2px 0 12px; }
+  .ovl{ padding:12px 14px; border-radius:14px; font-weight:800; font-size:15px; }
+  .l0{ background:var(--gl); color:var(--g); } .l1{ background:var(--al); color:var(--a); } .l2{ background:var(--rl); color:var(--r); } .l3{ background:var(--rrl); color:var(--rr); }
+  .tiles{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .tile{ border-radius:16px; padding:12px; border:1.5px solid transparent; } .tile small{ display:block; font-size:11.5px; font-weight:700; opacity:.85; }
+  .tile b{ display:block; font-size:24px; line-height:1.15; margin:2px 0; } .tile .st{ display:inline-block; font-size:12px; font-weight:800; padding:2px 8px; border-radius:99px; background:rgba(255,255,255,.65); } .tile p{ margin:6px 0 0; font-size:11.5px; opacity:.85; line-height:1.35; }
+  .tile.na{ background:var(--bg); color:var(--mut); }
+  .gauge{ position:relative; width:100%; max-width:320px; margin:4px auto 0; } .gauge svg{ width:100%; display:block; }
+  .needle{ transform-origin:160px 150px; transform:rotate(-90deg); transition:transform 1.6s cubic-bezier(.2,.9,.3,1.05); }
+  .gv{ text-align:center; margin-top:-6px; } .gv b{ font-size:40px; font-weight:900; } .gv span{ display:inline-block; margin-top:2px; padding:4px 12px; border-radius:99px; font-weight:800; font-size:13.5px; }
+  .note{ font-size:12px; color:var(--mut); margin-top:8px; text-align:center; }
+  .fac{ display:flex; flex-wrap:wrap; gap:8px; } .chip{ display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border-radius:99px; font-weight:700; font-size:13px; } .chip em{ font-style:normal; font-size:10.5px; font-weight:800; opacity:.8; padding-left:6px; border-left:1.5px solid currentColor; }
+  .smk{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; } .smk div{ background:var(--bg); border-radius:12px; padding:8px 12px; font-size:12px; color:var(--mut); } .smk b{ display:block; font-size:19px; color:var(--ink); }
+  .bars .br{ margin:12px 0; } .bars .lb{ display:flex; justify-content:space-between; gap:8px; font-size:13px; font-weight:700; } .bars .lb i{ font-style:normal; font-weight:900; }
+  .trk{ height:12px; border-radius:99px; background:var(--bg); overflow:hidden; margin-top:5px; } .fill{ height:100%; width:0; border-radius:99px; background:linear-gradient(90deg,var(--acc),#3fb27f); transition:width 1.2s cubic-bezier(.2,.8,.2,1); } .fill.hot{ background:linear-gradient(90deg,#e08a00,var(--r)); }
+  .you{ display:inline-block; margin-left:6px; padding:1px 8px; border-radius:99px; background:var(--rl); color:var(--r); font-size:10.5px; font-weight:800; }
+  .death{ margin-top:14px; padding:12px; border-radius:14px; background:var(--rl); color:var(--ink); font-size:13.5px; border-left:5px solid var(--r); }
+  ul.adv{ margin:0; padding-left:20px; } ul.adv li{ margin:6px 0; font-size:14px; } .plan li{ margin:6px 0; }
+  .pill{ display:inline-block; margin:3px 4px 0 0; padding:4px 10px; border-radius:99px; background:var(--accl); color:var(--acc2); font-size:12.5px; font-weight:700; }
+  .btn{ width:100%; height:52px; border:none; border-radius:16px; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; font:800 15px Inter,sans-serif; cursor:pointer; }
+  .disc{ font-size:12px; color:var(--mut); text-align:center; padding:6px 10px 0; } .src{ font-size:11.5px; color:var(--mut); margin-top:10px; } .src a{ color:var(--acc); }
+  .state{ text-align:center; padding:40px 16px; } .spin{ width:44px; height:44px; border-radius:50%; border:5px solid var(--line); border-top-color:var(--acc); margin:0 auto 12px; animation:sp 1s linear infinite; } @keyframes sp{ to{ transform:rotate(360deg); } }
+  [hidden]{ display:none!important; }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } }
+  @media print{ .lang,.btn,.noprint{ display:none!important; } body{ background:#fff; } .top{ background:#fff; color:#000; padding-bottom:10px; } .wrap{ margin-top:0; } .card{ box-shadow:none; break-inside:avoid; } .fill{ transition:none!important; } }
+</style>
+</head>
+<body>
+<div class="top"><div class="row"><div class="ttl"><span data-i="title">Keputusan Saringan Anda</span><small data-i="clinic"></small></div>
+  <div class="lang" role="group" aria-label="Language"><button type="button" data-l="ms">BM</button><button type="button" data-l="en">EN</button><button type="button" data-l="zh">中文</button></div></div></div>
+<div class="wrap">
+  <div class="card state" id="stLoad"><div class="spin"></div><div data-i="r_loading"></div></div>
+  <div class="card state" id="stErr" hidden><div style="font-size:40px">🔒</div><p id="errTxt" style="font-weight:700"></p><button class="btn noprint" style="max-width:240px" onclick="load()" data-i="r_retry"></button></div>
+  <div id="main" hidden></div>
+</div>
+<script src="./nhsi-i18n.js?v=1"></script>
+<script src="./nhsi-risk.js?v=1"></script>
+<script>
+/* >>> same NHSI exec URL as in nhsi-form.html <<< */
+const NHSI_URL = 'PASTE_NHSI_EXEC_URL_HERE';
+const $ = id => document.getElementById(id), I = NHSI_I18N, R = NHSI_RISK;
+const TOKEN = (new URLSearchParams(location.search).get('t') || '').toLowerCase();
+let LANG = 'ms', DATA = null, userChose = false;
+try { userChose = !!localStorage.getItem('nhsi_lang'); } catch (e) {}
+LANG = I.get();
+const t = k => I.t(LANG, k), esc = x => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const LC = ['l0', 'l1', 'l2', 'l3'];
+
+function paintStatic(){
+  document.documentElement.lang = LANG === 'zh' ? 'zh-CN' : LANG; document.title = t('title');
+  document.querySelectorAll('[data-i]').forEach(e => { e.innerHTML = t(e.getAttribute('data-i')); });
+  document.querySelectorAll('.lang button').forEach(b => b.classList.toggle('on', b.getAttribute('data-l') === LANG));
+}
+document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => { LANG = b.getAttribute('data-l'); I.set(LANG); userChose = true; paintStatic(); if (DATA) render(); }));
+function showErr(code){ $('stLoad').hidden = true; $('main').hidden = true; $('stErr').hidden = false; $('errTxt').textContent = t(code === 'expired' ? 'r_expired' : code === 'busy' ? 'r_busy' : code === 'bad' ? 'r_bad' : 'r_net'); }
+
+async function load(){
+  $('stErr').hidden = true; $('stLoad').hidden = false;
+  if (!/^[a-f0-9]{32}$/.test(TOKEN)) return showErr('bad');
+  if (NHSI_URL.indexOf('PASTE_') === 0) return showErr('net');
+  let r; try {
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 25000);
+    const res = await fetch(NHSI_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'nhsiResult', t: TOKEN }), signal: ctl.signal });
+    clearTimeout(tm); r = await res.json();
+  } catch (e) { return showErr('net'); }
+  if (!r || !r.ok) return showErr(r && r.code);
+  DATA = r; if (!userChose && I.D[r.lang]) LANG = r.lang;
+  $('stLoad').hidden = true; paintStatic(); render();
+  if (new URLSearchParams(location.search).get('print') === '1') setTimeout(() => window.print(), 1800);
+}
+
+function tile(label, val, lvObj, meaning, unit){
+  if (!lvObj) return '<div class="tile na"><small>' + esc(label) + '</small><b>—</b><span class="st">' + esc(t('r_na')) + '</span></div>';
+  return '<div class="tile ' + LC[lvObj.lv] + '"><small>' + esc(label) + '</small><b>' + esc(val) + '</b><span class="st">' + esc(t(lvObj.lab)) + '</span>' + (unit ? ' <small style="display:inline">' + unit + '</small>' : '') + '<p>' + esc(meaning) + '</p></div>';
+}
+function gauge(pct, lv){
+  const cap = 40, cx = 160, cy = 150, r = 110, pt = p => { const a = Math.PI * (1 - p / cap); return [cx + r * Math.cos(a), cy - r * Math.sin(a)]; };
+  const arc = (a, b, col) => { const p1 = pt(a), p2 = pt(b); return '<path d="M' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1) + ' A' + r + ' ' + r + ' 0 0 1 ' + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1) + '" stroke="' + col + '" stroke-width="22" fill="none"/>'; };
+  const ang = -90 + Math.min(pct, cap) / cap * 180;
+  return '<div class="gauge"><svg viewBox="0 0 320 170" role="img" aria-label="' + pct + '%">' + arc(0.01, 9.9, '#1f9a57') + arc(10.1, 19.9, '#e0a100') + arc(20.1, 39.99, '#C0392B') +
+    '<text x="50" y="168" font-size="11" fill="currentColor" opacity=".6" text-anchor="middle">0%</text><text x="270" y="168" font-size="11" fill="currentColor" opacity=".6" text-anchor="middle">40%+</text>' +
+    '<g class="needle" id="needle" data-a="' + ang.toFixed(1) + '"><line x1="160" y1="150" x2="160" y2="52" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><circle cx="160" cy="150" r="9" fill="currentColor"/></g></svg></div>';
+}
+function countUp(el, to, dur){ const t0 = performance.now(); (function f(n){ const k = Math.min(1, (n - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = (to * e).toFixed(1) + '%'; if (k < 1) requestAnimationFrame(f); })(t0); }
+
+function render(){
+  const d = DATA, lv = R.levels(d), cfgd = Object.assign({}, d), hist = String(d.history || '');
+  const risk = R.cvdRisk(R.inputsOf(d)), fac = R.factors(d), S = R.STATS;
+  let worst = 0; Object.keys(lv).forEach(k => { worst = Math.max(worst, lv[k].lv); }); if (risk.ok) worst = Math.max(worst, risk.level === 2 ? 2 : risk.level === 1 ? 1 : 0);
+  const ovl = worst >= 2 ? 2 : worst;
+  const dt = String(d.date || ''), first = String(d.name || '').split(' ')[0];
+  const gl = d.glucoseType === 'Puasa' ? t('r_glu_f') : t('r_glu_r');
+  let h = '';
+  h += '<div class="card"><p class="hello">' + esc(t('r_hello')) + ', ' + esc(first) + '</p><p class="meta">' + esc(t('r_date')) + ': ' + esc(dt) + ' · ' + esc(d.age) + ' ' + esc(t('years')) + '</p><div class="ovl ' + LC[ovl] + '">' + esc(t('r_ov' + ovl)) + '</div>' +
+       (lv.bp && lv.bp.lv === 3 ? '<div class="ovl l3" style="margin-top:8px">⚠ ' + esc(t('a_urgent')) + '</div>' : '') + '</div>';
+  h += '<div class="card"><h2>' + esc(t('r_res')) + '</h2><div class="tiles">' +
+    tile(t('r_bmi'), d.bmi, lv.bmi, t('m_bmi'), (d.height ? d.height + ' cm · ' + d.weight + ' kg' : '')) +
+    tile(t('r_bp'), d.sbp + '/' + d.dbp, lv.bp, t('m_bp'), 'mmHg') + tile(t('r_pulse'), d.pulse, lv.pulse, t('m_pulse'), '/min') +
+    tile(gl, d.glucose, lv.glucose, t('m_glu'), 'mmol/L') + tile(t('r_chol'), d.chol, lv.chol, t('m_chol'), 'mmol/L') + '</div></div>';
+  // risk
+  h += '<div class="card"><h2>' + esc(t('r_risk')) + '</h2><p class="sub">' + esc(t('r_risk_sub')) + '</p>';
+  if (risk.ok) h += gauge(risk.pct, risk.level) + '<div class="gv"><b id="rkv">0.0%</b><br><span class="' + LC[risk.level === 0 ? 0 : risk.level === 1 ? 1 : 2] + '">' + esc(t('rk_' + risk.level)) + '</span></div><div class="note">' + esc(t('r_risk_note')) + '</div>';
+  else h += '<div class="ovl l0" style="background:var(--bg);color:var(--mut);font-weight:600">' + esc(t(risk.reason === 'age' ? 'rk_na_age' : 'rk_na_data')) + '</div>';
+  h += '</div>';
+  // factors
+  h += '<div class="card"><h2>' + esc(t('r_factors')) + '</h2><p class="sub">' + esc(t('r_fac_sub')) + '</p><div class="fac">' +
+    fac.map(f => '<span class="chip ' + LC[f.lv === 0 ? 0 : f.lv === 1 ? 1 : 2] + '">' + (f.lv === 0 ? '✓' : f.lv === 1 ? '!' : '▲') + ' ' + esc(t('f_' + f.k)) + '<em>' + esc(t(f.mod ? 'r_mod' : 'r_nomod')) + '</em></span>').join('') + '</div>';
+  // smoking
+  const sm = d.smoking;
+  h += '<h2 style="margin-top:16px">' + esc(t('r_smoke_h')) + '</h2>';
+  if (sm === 'Perokok') {
+    const py = R.packYears(d.smokePerDay, d.smokeYears);
+    h += '<div class="smk">' + (d.smokePerDay ? '<div><b>' + esc(d.smokePerDay) + '</b>' + esc(t('r_cig')) + '</div>' : '') + (d.vapePerDay ? '<div><b>' + esc(d.vapePerDay) + '</b>' + esc(t('r_vape')) + '</div>' : '') + '<div><b>' + esc(d.smokeYears) + '</b>' + esc(t('r_yrs')) + '</div>' + (py ? '<div><b>' + py + '</b>' + esc(t('r_pack')) + '</div>' : '') + '</div>' +
+         ((d.smokeType === 'Vape' || d.smokeType === 'Kedua-duanya') ? '<p class="sub" style="margin-top:8px">' + esc(t('r_vape_note')) + '</p>' : '');
+  } else h += '<p class="sub" style="margin:0">' + esc(t(sm === 'Bekas perokok' ? 'sm_former_t' : 'sm_never_t')) + '</p>';
+  h += '</div>';
+  // Malaysia
+  const mine = { obese: d.bmiCat === 'Obes', overobese: d.bmiCat === 'Obes' || d.bmiCat === 'Berat badan berlebihan', over: d.bmiCat === 'Berat badan berlebihan', htn: !!(lv.bp && lv.bp.lv >= 2) || /Darah tinggi/.test(hist), dm: /Kencing manis/.test(hist) || !!(lv.glucose && lv.glucose.lv === 2), chol: !!(lv.chol && lv.chol.lv === 2) || /Kolesterol tinggi/.test(hist), smoker: sm === 'Perokok' && d.smokeType !== 'Vape', vape: sm === 'Perokok' && d.smokeType !== 'Rokok' };
+  const rows = [['obese', 's_obese', S.obese, 'obese'], ['over', 's_over', S.overweight, 'over'], ['overobese', 's_overobese', S.overweightObese, 'overobese'], ['htn', 's_htn', S.hypertension, 'htn'], ['dm', 's_dm', S.diabetes, 'dm'], ['chol', 's_chol', S.cholesterol, 'chol'], ['smoker', 's_smoker', S.smoker, 'smoker'], ['vape', 's_vape', S.vape, 'vape']];
+  h += '<div class="card bars"><h2>' + esc(t('r_my')) + '</h2><p class="sub">' + esc(t('r_my_sub')) + '</p>' +
+    rows.map(r => '<div class="br"><div class="lb"><span>' + esc(t(r[1])) + (mine[r[3]] ? '<span class="you">' + esc(t('r_you')) + '</span>' : '') + '</span><i>' + r[2] + '%</i></div><div class="trk"><div class="fill' + (mine[r[3]] ? ' hot' : '') + '" data-w="' + Math.min(100, r[2]) + '"></div></div></div>').join('') +
+    '<div class="death"><b>' + esc(t('r_death_h')) + '</b><br>' + t('r_death').replace('{p}', S.ihdDeathPct).replace('{n}', S.ihdDeaths.toLocaleString('en-US')) +
+    '<div class="trk" style="background:rgba(0,0,0,.08)"><div class="fill hot" data-w="' + S.ihdDeathPct + '"></div></div></div>' +
+    '<div class="src">' + esc(t('r_src')) + ': ' + S.src.map(s => '<a href="' + esc(s.u) + '" target="_blank" rel="noopener noreferrer">' + esc(s.t) + '</a>').join(' · ') + '</div></div>';
+  // advice (localised, from the numbers)
+  const adv = [];
+  if (lv.bp && lv.bp.lv === 3) adv.push('a_urgent'); else if (lv.bp && lv.bp.lv === 2) adv.push('a_bp2'); else if (fac.some(f => f.k === 'bp' && f.lv === 1)) adv.push('a_bp1');
+  if (lv.bmi) { if (lv.bmi.lab === 'c_obese') adv.push('a_bmi2'); else if (lv.bmi.lab === 'c_over') adv.push('a_bmi1'); else if (lv.bmi.lab === 'c_under') adv.push('a_bmi_u'); }
+  if (lv.glucose && lv.glucose.lv === 2) adv.push('a_glu2'); else if (lv.glucose && lv.glucose.lv === 1) adv.push('a_glu1');
+  if (lv.chol && lv.chol.lv === 2) adv.push('a_chol2'); else if (lv.chol && lv.chol.lv === 1) adv.push('a_chol1');
+  if (sm === 'Perokok') adv.push('a_smoke');
+  if (d.whooleyPos) adv.push('a_mind');
+  if (!adv.length) adv.push('a_ok');
+  h += '<div class="card"><h2>' + esc(t('r_advice')) + '</h2><ul class="adv">' + adv.map(k => '<li>' + esc(t(k)) + '</li>').join('') + '</ul></div>';
+  // doctor plan
+  if (d.s3 && (d.plan.length || d.follow || d.refer.length)) {
+    h += '<div class="card"><h2>' + esc(t('r_plan')) + '</h2>' + (LANG !== 'ms' ? '<p class="sub">' + esc(t('r_plan_note')) + '</p>' : '') + '<ol class="plan" style="padding-left:20px;margin:0">' + d.plan.map(p => '<li>' + esc(p) + '</li>').join('') + '</ol>' +
+      (d.follow ? '<p style="margin:12px 0 0"><b>' + esc(t('r_follow')) + ':</b> ' + esc(d.follow) + '</p>' : '') + (d.refer.length ? '<p style="margin:8px 0 0"><b>' + esc(t('r_refer')) + ':</b><br>' + d.refer.map(x => '<span class="pill">' + esc(x) + '</span>').join('') + '</p>' : '') + '</div>';
+  }
+  h += '<button class="btn noprint" onclick="window.print()">🖨 ' + esc(t('r_print')) + '</button><p class="disc">' + esc(t('r_disc')) + '</p><p class="disc">' + esc(t('r_footer')) + '</p>';
+  $('main').innerHTML = h; $('main').hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll('.fill').forEach((e, i) => setTimeout(() => { e.style.width = e.getAttribute('data-w') + '%'; }, 120 + i * 90));
+    const n = $('needle'); if (n) { n.style.transform = 'rotate(' + n.getAttribute('data-a') + 'deg)'; }
+    if (risk.ok) countUp($('rkv'), risk.pct, 1500);
+  }));
+}
+paintStatic(); load();
+</script>
+</body>
+</html>
