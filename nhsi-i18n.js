@@ -4,7 +4,8 @@
   'use strict';
   var D = {
   ms: {
-    lang_name:'BM', title:'Saringan Kesihatan NHSI', clinic:'Klinik Kesihatan Ayer Hitam', staff_sub:'Pendaftaran oleh petugas · Stesen 1',
+    p_next:'Selesai! Seterusnya: <b>Stesen {s}</b>.', p_done:'Semua stesen selesai! Keputusan anda sudah sedia.', p_result:'Lihat keputusan saya', p_hold:'Skrin ini bergerak sendiri apabila setiap stesen selesai. Jangan tutup halaman ini.', listen:'Dengar soalan',
+    lang_name:'BM', title:'Saringan Kesihatan NHSI', clinic:'Klinik Kesihatan Ayer Hitam', staff_sub:'Pendaftaran oleh petugas · Stesen A',
     s1h:'Maklumat diri', s1s:'Langkah 1 / 3 · Isi seperti dalam kad pengenalan.', scan:'📷 Imbas MyKad (isi nama & IC automatik)',
     name:'Nama penuh', namePh:'NAMA SEPERTI DALAM IC', ic:'No. kad pengenalan', icSm:'12 digit, tanpa “-”', passLink:'Pemegang pasport (tiada IC Malaysia)',
     passNo:'No. pasport', yob:'Tahun lahir', yobPh:'cth 1965', icBack:'← Guna No. IC Malaysia', phone:'No. telefon', phoneSm:'boleh guna no. waris',
@@ -18,8 +19,8 @@
     w1:'1. Sepanjang <b>sebulan yang lalu</b>, adakah anda sering berasa <b>sedih, murung atau putus asa</b>?', w2:'2. Sepanjang <b>sebulan yang lalu</b>, adakah anda sering berasa <b>kurang minat atau kurang seronok</b> melakukan sesuatu?',
     yes:'Ya', no:'Tidak', consent:'Saya bersetuju maklumat ini digunakan oleh Klinik Kesihatan Ayer Hitam untuk tujuan saringan & susulan kesihatan sahaja (PDPA 2010).',
     next:'Seterusnya', prev:'Kembali', submit:'Hantar pendaftaran', sending:'Menghantar…',
-    ok_reg:'Pendaftaran berjaya', ok_dup:'Sudah didaftarkan hari ini', ov_msg:'Sila ke <b>Stesen 1</b> dan nyatakan nama anda kepada petugas.', ov_msg_staff:'Teruskan ke ukuran <b>tinggi & berat</b> klien ini.',
-    stn_reg:'Pendaftaran', stn_done:'Selesai', stn1:'Stesen 1', stn1d:'Ukur tinggi & berat badan', stn2:'Stesen 2', stn2d:'Tekanan darah, nadi, gula & kolesterol', stn3:'Stesen 3', stn3d:'Bertemu doktor & pelan pengurusan', stn_here:' · anda seterusnya di sini',
+    ok_reg:'Pendaftaran berjaya', ok_dup:'Sudah didaftarkan hari ini', ov_msg:'Sila ke <b>Stesen A</b> dan nyatakan nama anda kepada petugas.', ov_msg_staff:'Teruskan ke ukuran <b>tinggi & berat</b> klien ini.',
+    stn_reg:'Pendaftaran', stn_done:'Selesai', stn1:'Stesen A', stn1d:'Antropometri: tinggi & berat', stn2:'Stesen B', stn2d:'Tekanan darah & tanda vital (nadi, gula, kolesterol)', stn3:'Stesen C', stn3d:'Konsultasi, pengurusan & rujukan', stn_here:' · anda seterusnya di sini',
     again:'Daftar klien lain', staff_next:'Seterusnya: ukur tinggi & berat',
     e_name:'Sila isi nama penuh.', e_pass:'Sila isi no. pasport.', e_yob:'Tahun lahir tidak sah.', e_ic:'No. IC mesti 12 digit yang sah.', e_phone:'No. telefon tidak sah (10–11 digit, bermula 01).', e_gender:'Sila pilih jantina.', e_email:'Format e-mel tidak sah.',
     e_smoke:'Sila pilih status merokok.', e_smoketype:'Sila pilih rokok, vape atau kedua-duanya.', e_smokeqty:'Isi bilangan batang rokok sehari (1–100).', e_vapeqty:'Isi bilangan sesi vape sehari (1–500).', e_smokeyears:'Isi sudah berapa tahun (0–80).',
@@ -49,7 +50,8 @@
     r_print:'Cetak / simpan PDF', r_disc:'Ini ringkasan saringan, bukan diagnosis. Sila ikut nasihat doktor. Pautan peribadi ini sah selama 7 hari — jangan kongsi dengan orang lain.', r_footer:'Klinik Kesihatan Ayer Hitam'
   },
   en: {
-    lang_name:'EN', title:'NHSI Health Screening', clinic:'Ayer Hitam Health Clinic', staff_sub:'Staff registration · Station 1',
+    p_next:'Done! Next: <b>Station {s}</b>.', p_done:'All stations complete! Your results are ready.', p_result:'See my results', p_hold:'This screen moves by itself as each station is completed. Please keep this page open.', listen:'Listen to the question',
+    lang_name:'EN', title:'NHSI Health Screening', clinic:'Ayer Hitam Health Clinic', staff_sub:'Staff registration · Station A',
     s1h:'Your details', s1s:'Step 1 / 3 · Fill in as on your identity card.', scan:'📷 Scan MyKad (fills name & IC automatically)',
     name:'Full name', namePh:'NAME AS IN IC', ic:'Identity card (IC) no.', icSm:'12 digits, no “-”', passLink:'Passport holder (no Malaysian IC)',
     passNo:'Passport no.', yob:'Year of birth', yobPh:'e.g. 1965', icBack:'← Use Malaysian IC', phone:'Phone no.', phoneSm:'a family member’s number is fine',
@@ -63,8 +65,8 @@
     w1:'1. Over the <b>past month</b>, have you often felt <b>down, depressed or hopeless</b>?', w2:'2. Over the <b>past month</b>, have you often felt <b>little interest or pleasure</b> in doing things?',
     yes:'Yes', no:'No', consent:'I agree that Ayer Hitam Health Clinic may use this information for health screening and follow-up only (PDPA 2010).',
     next:'Next', prev:'Back', submit:'Submit registration', sending:'Sending…',
-    ok_reg:'Registration successful', ok_dup:'Already registered today', ov_msg:'Please go to <b>Station 1</b> and tell the staff your name.', ov_msg_staff:'Continue to <b>height & weight</b> for this client.',
-    stn_reg:'Registration', stn_done:'Done', stn1:'Station 1', stn1d:'Height & weight', stn2:'Station 2', stn2d:'Blood pressure, pulse, glucose & cholesterol', stn3:'Station 3', stn3d:'See the doctor & management plan', stn_here:' · you are heading here',
+    ok_reg:'Registration successful', ok_dup:'Already registered today', ov_msg:'Please go to <b>Station A</b> and tell the staff your name.', ov_msg_staff:'Continue to <b>height & weight</b> for this client.',
+    stn_reg:'Registration', stn_done:'Done', stn1:'Station A', stn1d:'Anthropometry: height & weight', stn2:'Station B', stn2d:'BP & vital signs (pulse, glucose, cholesterol)', stn3:'Station C', stn3d:'Consultation, management & referral', stn_here:' · you are heading here',
     again:'Register another client', staff_next:'Next: measure height & weight',
     e_name:'Please enter your full name.', e_pass:'Please enter the passport no.', e_yob:'Invalid year of birth.', e_ic:'IC must be a valid 12-digit number.', e_phone:'Invalid phone no. (10–11 digits, starting with 01).', e_gender:'Please choose gender.', e_email:'Invalid e-mail format.',
     e_smoke:'Please choose your smoking status.', e_smoketype:'Please choose cigarettes, vape or both.', e_smokeqty:'Enter cigarettes per day (1–100).', e_vapeqty:'Enter vape sessions per day (1–500).', e_smokeyears:'Enter how many years (0–80).',
@@ -93,7 +95,8 @@
     r_print:'Print / save PDF', r_disc:'This is a screening summary, not a diagnosis. Please follow the doctor’s advice. This private link is valid for 7 days — do not share it.', r_footer:'Ayer Hitam Health Clinic'
   },
   zh: {
-    lang_name:'中文', title:'NHSI 健康筛查', clinic:'亚依淡卫生诊所', staff_sub:'工作人员登记 · 第1站',
+    p_next:'完成！下一站：<b>{s}站</b>。', p_done:'所有站点已完成！您的结果已准备好。', p_result:'查看我的结果', p_hold:'每完成一站，此画面会自动更新，请不要关闭此页面。', listen:'收听问题',
+    lang_name:'中文', title:'NHSI 健康筛查', clinic:'亚依淡卫生诊所', staff_sub:'工作人员登记 · A站',
     s1h:'个人资料', s1s:'第 1 / 3 步 · 请按身份证填写。', scan:'📷 扫描身份证（自动填写姓名和身份证号）',
     name:'全名', namePh:'与身份证相同（大写）', ic:'身份证号码', icSm:'12位数字，不含“-”', passLink:'护照持有人（没有马来西亚身份证）',
     passNo:'护照号码', yob:'出生年份', yobPh:'例如 1965', icBack:'← 使用马来西亚身份证', phone:'电话号码', phoneSm:'可填家人的号码',
@@ -107,8 +110,8 @@
     w1:'1. <b>过去一个月</b>，您是否经常感到<b>情绪低落、沮丧或绝望</b>？', w2:'2. <b>过去一个月</b>，您是否经常对做事<b>缺乏兴趣或乐趣</b>？',
     yes:'是', no:'否', consent:'我同意亚依淡卫生诊所仅为健康筛查和跟进之目的使用这些资料（PDPA 2010）。',
     next:'下一步', prev:'返回', submit:'提交登记', sending:'提交中…',
-    ok_reg:'登记成功', ok_dup:'今天已登记', ov_msg:'请前往<b>第1站</b>，并向工作人员报上您的姓名。', ov_msg_staff:'请继续为此客户测量<b>身高和体重</b>。',
-    stn_reg:'登记', stn_done:'完成', stn1:'第1站', stn1d:'测量身高和体重', stn2:'第2站', stn2d:'血压、脉搏、血糖和胆固醇', stn3:'第3站', stn3d:'见医生并获得管理计划', stn_here:' · 您的下一站',
+    ok_reg:'登记成功', ok_dup:'今天已登记', ov_msg:'请前往<b>A站</b>，并向工作人员报上您的姓名。', ov_msg_staff:'请继续为此客户测量<b>身高和体重</b>。',
+    stn_reg:'登记', stn_done:'完成', stn1:'A站', stn1d:'人体测量：身高和体重', stn2:'B站', stn2d:'血压与生命体征（脉搏、血糖、胆固醇）', stn3:'C站', stn3d:'诊治、管理与转介', stn_here:' · 您的下一站',
     again:'登记另一位客户', staff_next:'下一步：测量身高和体重',
     e_name:'请填写全名。', e_pass:'请填写护照号码。', e_yob:'出生年份无效。', e_ic:'身份证号码必须是有效的12位数字。', e_phone:'电话号码无效（10–11位，以01开头）。', e_gender:'请选择性别。', e_email:'电子邮件格式无效。',
     e_smoke:'请选择吸烟状况。', e_smoketype:'请选择香烟、电子烟或两者。', e_smokeqty:'请填写每天香烟支数（1–100）。', e_vapeqty:'请填写每天电子烟次数（1–500）。', e_smokeyears:'请填写已吸多少年（0–80）。',
