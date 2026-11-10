@@ -36,7 +36,7 @@
   .srch{ width:100%; height:48px; border-radius:14px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 15px Inter,sans-serif; padding:0 14px; outline:none; margin-bottom:10px; } .srch:focus{ border-color:var(--acc); }
   .cl{ display:flex; gap:12px; align-items:center; width:100%; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px 14px; margin-bottom:8px; cursor:pointer; color:var(--ink); font-family:inherit; }
   .cl.new{ animation:flash 2.4s ease; } @keyframes flash{ 0%,60%{ background:var(--accl); border-color:var(--acc); } }
-  .q{ flex:none; min-width:52px; height:52px; border-radius:14px; display:grid; place-items:center; background:var(--accl); color:var(--acc2); font:900 20px 'IBM Plex Mono',ui-monospace,monospace; }
+  .q{ flex:none; min-width:52px; height:52px; border-radius:14px; display:grid; place-items:center; background:var(--accl); color:var(--acc2); font:900 15px 'IBM Plex Mono',ui-monospace,monospace; }
   .cl .tx{ flex:1; min-width:0; } .cl .tx b{ display:block; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .cl .tx small{ color:var(--mut); font-size:12px; }
   .tags{ display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; }
   .tag{ font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:99px; background:var(--accl); color:var(--acc2); } .tag.r{ background:var(--dgl); color:var(--dg); } .tag.w{ background:var(--warnl); color:var(--warn); }
@@ -59,6 +59,32 @@
   .toast.on{ transform:translate(-50%,0); opacity:1; }
   #qrBox{ display:grid; place-items:center; padding:14px; } #qrBox canvas,#qrBox img{ max-width:100%; height:auto!important; }
   .url{ word-break:break-all; font:600 12px 'IBM Plex Mono',monospace; color:var(--mut); text-align:center; }
+  .tabs3{ grid-template-columns:1fr 1fr 1fr; } .tabs3 .tab{ font-size:12.5px; padding:0 4px; }
+  .cl{ cursor:pointer; } .cl:focus-visible{ outline:3px solid var(--acc); }
+  .call{ flex:none; width:46px; height:46px; border-radius:14px; border:1.5px solid var(--line); background:var(--card); font-size:20px; cursor:pointer; }
+  .call:active{ background:var(--accl); } .call.sent{ background:var(--accl); border-color:var(--acc); }
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px; }
+  .nf.sm input{ height:60px; font-size:24px; }
+  .seg2{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px; }
+  .seg2 button{ height:40px; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 13px Inter,sans-serif; cursor:pointer; } .seg2 button.on{ background:var(--acc); border-color:var(--acc); color:#fff; }
+  .fl{ min-height:22px; margin-top:5px; text-align:center; font-size:12px; font-weight:800; border-radius:99px; padding:3px 8px; color:var(--mut); }
+  .fl.l0{ background:var(--accl); color:var(--acc2); } .fl.l1{ background:var(--warnl); color:var(--warn); } .fl.l2{ background:var(--dgl); color:var(--dg); } .fl.l3{ background:var(--dg); color:#fff; animation:pulse 1.2s infinite; }
+  @keyframes pulse{ 50%{ opacity:.6; } }
+  .alert{ display:none; margin-top:12px; padding:12px 14px; border-radius:14px; background:var(--dg); color:#fff; font-weight:800; font-size:14px; line-height:1.35; } .alert.on{ display:block; animation:rise .25s; }
+  .s1line{ font-size:13px; color:var(--mut); margin:2px 0 4px; } .s1line b{ color:var(--ink); }
+  .lnk{ display:flex; gap:8px; margin-bottom:12px; } .lnk button{ flex:1; height:42px; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 12.5px Inter,sans-serif; cursor:pointer; } .lnk button.on{ background:var(--acc); color:#fff; border-color:var(--acc); }
+  .sh.wide{ max-width:760px; } .sec{ font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--acc); margin:16px 0 8px; display:flex; align-items:center; gap:8px; } .sec::after{ content:''; flex:1; height:1px; background:var(--line); }
+  .tiles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(138px,1fr)); gap:8px; }
+  .tile{ border:1.5px solid var(--line); border-left-width:6px; border-radius:14px; padding:9px 11px; background:var(--card); } .tile small{ display:block; font-size:10.5px; font-weight:800; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; } .tile b{ display:block; font-size:19px; margin:1px 0; font-variant-numeric:tabular-nums; } .tile span{ font-size:12px; font-weight:800; }
+  .tile.l0{ border-left-color:var(--ok); } .tile.l0 span{ color:var(--ok); } .tile.l1{ border-left-color:#E0A100; } .tile.l1 span{ color:var(--warn); } .tile.l2{ border-left-color:var(--dg); } .tile.l2 span{ color:var(--dg); } .tile.l3{ border-left-color:var(--dg); background:var(--dgl); } .tile.l3 span{ color:var(--dg); } .tile.na{ opacity:.6; border-left-color:var(--line); }
+  .ovl{ padding:11px 14px; border-radius:14px; font-weight:800; font-size:14px; margin:10px 0 0; } .ovl.l0{ background:var(--accl); color:var(--acc2); } .ovl.l1{ background:var(--warnl); color:var(--warn); } .ovl.l2,.ovl.l3{ background:var(--dg); color:#fff; }
+  .pi{ display:flex; gap:8px; align-items:flex-start; margin-bottom:8px; } .pi .lv{ flex:none; width:10px; align-self:stretch; border-radius:6px; background:var(--ok); } .pi .lv.l1{ background:#E0A100; } .pi .lv.l2,.pi .lv.l3{ background:var(--dg); }
+  .pi textarea{ flex:1; min-height:48px; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 14px/1.4 Inter,system-ui,sans-serif; padding:9px 11px; resize:vertical; outline:none; } .pi textarea:focus{ border-color:var(--acc); }
+  .pi button{ flex:none; width:38px; height:38px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); color:var(--dg); font-size:16px; cursor:pointer; }
+  .chp{ display:flex; flex-wrap:wrap; gap:8px; } .chp label{ position:relative; } .chp input{ position:absolute; opacity:0; inset:0; width:100%; height:100%; margin:0; cursor:pointer; } .chp span{ display:block; padding:9px 13px; border-radius:99px; border:1.5px solid var(--line); font-size:13px; font-weight:700; background:var(--card); } .chp input:checked + span{ background:var(--accl); border-color:var(--acc); color:var(--acc2); }
+  .sel,.txt{ width:100%; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 14px Inter,system-ui,sans-serif; padding:10px 12px; outline:none; } .txt{ min-height:70px; resize:vertical; } .sel{ height:46px; }
+  .mini{ height:40px; padding:0 14px; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 13px Inter,sans-serif; cursor:pointer; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
   @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } }
 </style>
 </head>
@@ -74,17 +100,33 @@
   <div class="view on" id="vHub">
     <div class="stats"><div class="stat"><b id="cTot">–</b><span>Didaftar</span></div><div class="stat w"><b id="cWait">–</b><span>Menunggu S1</span></div><div class="stat d"><b id="cDone">–</b><span>Selesai S3</span></div></div>
     <button class="st" onclick="openS1()"><div class="no">1</div><div class="tx"><b>Stesen 1 · Tinggi &amp; berat</b><small>Pendaftaran, BMI</small></div><div class="cnt"><b id="n1">–</b><small>menunggu</small></div></button>
-    <button class="st off" disabled><div class="no">2</div><div class="tx"><b>Stesen 2 · Tekanan darah, gula, kolesterol</b><small>Fasa 2 — akan datang</small></div></button>
-    <button class="st off" disabled><div class="no">3</div><div class="tx"><b>Stesen 3 · Konsultasi &amp; pelan pengurusan</b><small>Fasa 3 — akan datang</small></div></button>
-    <div class="acts"><button class="act pri" onclick="location.href='./nhsi-form.html?staff=1'">📝 Daftar klien (petugas)</button><button class="act" onclick="openQr()">▦ Kod QR borang</button></div>
+    <button class="st" onclick="openS2()"><div class="no">2</div><div class="tx"><b>Stesen 2 · Tekanan darah, gula, kolesterol</b><small>Tekanan darah · nadi · glukosa · kolesterol</small></div><div class="cnt"><b id="n2">–</b><small>menunggu</small></div></button>
+    <button class="st" onclick="openS3()"><div class="no">3</div><div class="tx"><b>Stesen 3 · Konsultasi &amp; pelan pengurusan</b><small>Keputusan saringan · pelan boleh disunting doktor</small></div><div class="cnt"><b id="n3">–</b><small>menunggu</small></div></button>
+    <div class="acts"><button class="act pri" onclick="location.href='./nhsi-form.html?staff=1'">📝 Daftar klien (petugas)</button><button class="act" onclick="openQr('S')">▦ Kod QR &amp; pautan</button><button class="act" style="grid-column:1/-1" onclick="location.href='./nhsi-report.html'">📊 Analisis &amp; laporan</button></div>
   </div>
 
   <!-- STATION 1 -->
   <div class="view" id="vS1">
     <div class="tabs"><button class="tab on" id="tabP" onclick="tab('P')">Menunggu (0)</button><button class="tab" id="tabD" onclick="tab('D')">Selesai (0)</button></div>
-    <input class="srch" id="srch" placeholder="Cari nama / no. giliran / IC…" oninput="render()" autocomplete="off">
+    <input class="srch" id="srch" placeholder="Cari nama / IC…" oninput="render()" autocomplete="off">
     <div id="list"></div>
     <button class="act pri" style="width:100%;margin-top:6px" onclick="location.href='./nhsi-form.html?staff=1'">＋ Daftar klien baharu</button>
+  </div>
+
+  <!-- STATION 2 -->
+  <div class="view" id="vS2">
+    <div class="tabs tabs3"><button class="tab on" id="t2R" onclick="tab2('R')">Sedia (0)</button><button class="tab" id="t2B" onclick="tab2('B')">Belum S1 (0)</button><button class="tab" id="t2D" onclick="tab2('D')">Selesai (0)</button></div>
+    <input class="srch" id="srch2" placeholder="Cari nama / IC…" oninput="render()" autocomplete="off">
+    <div id="list2"></div>
+    <div class="empty" style="padding:8px;font-size:12px">“Belum S1” = klien yang belum diukur tinggi &amp; berat — boleh terus ke Stesen 2 jika perlu.</div>
+  </div>
+
+  <!-- STATION 3 -->
+  <div class="view" id="vS3">
+    <div class="tabs tabs3"><button class="tab on" id="t3R" onclick="tab3('R')">Sedia (0)</button><button class="tab" id="t3B" onclick="tab3('B')">Belum S2 (0)</button><button class="tab" id="t3D" onclick="tab3('D')">Selesai (0)</button></div>
+    <input class="srch" id="srch3" placeholder="Cari nama / IC…" oninput="render()" autocomplete="off">
+    <div id="list3"></div>
+    <div class="empty" style="padding:8px;font-size:12px">“Belum S2” = klien yang belum selesai Stesen 2 — doktor boleh teruskan dan keputusan yang ada dipaparkan.</div>
   </div>
 </div>
 
@@ -100,9 +142,63 @@
   <button class="act" style="width:100%;margin-top:8px" onclick="closeSheet()">Tutup</button>
 </div></div>
 
+<!-- Station 3 sheet -->
+<div class="sheet" id="sheet3" onclick="if(event.target===this)closeSheet3()"><div class="sh wide" role="dialog" aria-modal="true">
+  <h3 id="s3Name">—</h3><div class="meta" id="s3Meta"></div><div class="tags" id="s3Tags"></div>
+  <div class="ovl l0" id="s3Ovl"></div>
+  <div class="sec">Faktor yang menyumbang</div><div class="tags" id="s3Fac"></div>
+  <div class="sec">Keputusan saringan</div><div class="tiles" id="s3Tiles"></div>
+  <div class="sec">Pelan pengurusan <small style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--mut)">— cadangan automatik, doktor boleh ubah</small></div>
+  <div id="s3Items"></div>
+  <div class="row2"><button class="mini" onclick="addItem()">＋ Tambah item</button><button class="mini" onclick="regen()">↻ Jana semula cadangan</button></div>
+  <div class="sec">Susulan &amp; rujukan</div>
+  <select class="sel" id="s3Follow"><option value="">Susulan: tiada / ikut keperluan</option><option>Susulan 1 minggu</option><option>Susulan 2 minggu</option><option>Susulan 1 bulan</option><option>Susulan 3 bulan</option><option>Susulan 6 bulan</option><option>Saringan semula 1 tahun</option></select>
+  <div class="chp" id="s3Refer" style="margin-top:10px"></div>
+  <div class="sec">Catatan doktor</div><textarea class="txt" id="s3Notes" maxlength="1000" placeholder="Catatan tambahan (pilihan)"></textarea>
+  <div class="msg" id="s3Msg" role="status" aria-live="polite"></div>
+  <button class="save" id="s3Save" onclick="saveS3()">Simpan konsultasi</button>
+  <button class="act" id="s3Link" style="width:100%;margin-top:8px;display:none" onclick="openResult(cur3row.id)">📱 Keputusan untuk klien (QR / cetak)</button>
+  <div class="row2"><button class="act" onclick="printRes()">🖨 Cetak keputusan</button><button class="act" onclick="closeSheet3()">Tutup</button></div>
+</div></div>
+
+<!-- Station 2 sheet -->
+<div class="sheet" id="sheet2" onclick="if(event.target===this)closeSheet2()"><div class="sh" role="dialog" aria-modal="true">
+  <h3 id="s2Name">—</h3><div class="meta" id="s2Meta"></div><div class="s1line" id="s2S1"></div><div class="tags" id="s2Tags"></div>
+  <div class="grid3">
+    <div class="nf sm"><label for="sbpIn">Sistolik</label><input id="sbpIn" inputmode="numeric" autocomplete="off" placeholder="120"></div>
+    <div class="nf sm"><label for="dbpIn">Diastolik</label><input id="dbpIn" inputmode="numeric" autocomplete="off" placeholder="80"></div>
+    <div class="nf sm"><label for="pulIn">Nadi /min</label><input id="pulIn" inputmode="numeric" autocomplete="off" placeholder="72"></div>
+  </div>
+  <div class="grid3" style="margin-top:4px"><div class="fl" id="flBp" style="grid-column:span 2">Tekanan darah</div><div class="fl" id="flPul">Nadi</div></div>
+  <div class="g2">
+    <div class="nf sm"><label for="gluIn">Glukosa (mmol/L)</label>
+      <div class="seg2"><button type="button" id="gP" class="on" onclick="gType('Puasa')">Puasa</button><button type="button" id="gR" onclick="gType('Rawak')">Rawak</button></div>
+      <input id="gluIn" inputmode="decimal" autocomplete="off" placeholder="5.6"><div class="fl" id="flGlu">Kosongkan jika tidak diambil</div></div>
+    <div class="nf sm"><label for="cholIn">Kolesterol (mmol/L)</label>
+      <div style="height:46px"></div>
+      <input id="cholIn" inputmode="decimal" autocomplete="off" placeholder="5.0"><div class="fl" id="flChol">Kosongkan jika tidak diambil</div></div>
+  </div>
+  <div class="alert" id="s2Alert" role="alert">⚠ Tekanan darah sangat tinggi — sila maklumkan doktor / pegawai perubatan segera.</div>
+  <div class="msg" id="s2Msg" role="status" aria-live="polite"></div>
+  <button class="save" id="s2Save" onclick="saveS2()" disabled>Simpan Stesen 2</button>
+  <button class="act" style="width:100%;margin-top:8px" onclick="closeSheet2()">Tutup</button>
+</div></div>
+
+<!-- Client result sheet -->
+<div class="sheet" id="resSheet" onclick="if(event.target===this)closeRes()"><div class="sh" role="dialog" aria-modal="true" style="text-align:center">
+  <h3 id="rsName">Keputusan untuk klien</h3><div class="meta" id="rsSub">Klien imbas QR dengan telefon sendiri. Pautan peribadi, sah 7 hari.</div>
+  <div id="rsQr" style="display:inline-block;padding:12px;background:#fff;border-radius:16px;margin:8px 0"></div>
+  <div class="meta" id="rsUrl" style="word-break:break-all;font-size:11px"></div><div class="msg" id="rsMsg"></div>
+  <div class="row2"><button class="act" onclick="showRes()">🖥 Papar kepada klien</button><button class="act" onclick="printResLink()">🖨 Cetak</button></div>
+  <div class="row2"><button class="act" onclick="copyRes()">📋 Salin pautan</button><button class="act" onclick="renewRes()">↻ Pautan baharu</button></div>
+  <button class="act" style="width:100%;margin-top:8px" onclick="closeRes()">Tutup</button>
+</div></div>
+
 <!-- QR sheet -->
 <div class="sheet" id="qrSheet" onclick="if(event.target===this)this.classList.remove('on')"><div class="sh">
-  <h3>Kod QR borang pendaftaran</h3><div class="meta">Klien imbas dengan telefon sendiri. Paparkan atau cetak.</div>
+  <h3>Kod QR &amp; pautan</h3><div class="meta">Pilih jenis. Anda boleh jana QR sendiri daripada pautan.</div>
+  <div class="lnk"><button id="lkS" class="on" onclick="openQr('S')">Petugas</button><button id="lkC" onclick="openQr('C')">Klien</button></div>
+  <div class="meta" id="qrNote" style="margin:0"></div>
   <div id="qrBox"></div><div class="url" id="qrUrl"></div>
   <button class="act" style="width:100%;margin-top:12px" onclick="copyUrl()">Salin pautan</button>
   <button class="act" style="width:100%;margin-top:8px" onclick="document.getElementById('qrSheet').classList.remove('on')">Tutup</button>
@@ -110,12 +206,18 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="./nhsi-risk.js?v=1"></script>
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
 const token = sessionStorage.getItem('kkah_session_token');
-const FORM_URL = new URL('./nhsi-form.html', location.href).href.split('?')[0];
+const BASE = new URL('./', location.href).href;
+const LINKS = { S: [BASE + 'nhsi.html', 'Petugas — telefon (log masuk SIAGA) atau laptop (QR Laptop, lihat bawah).'], C: [BASE + 'nhsi-form.html', 'Klien — borang awam, tanpa log masuk.'] };
+let QR_KEY = 'S';
 const $ = id => document.getElementById(id);
-if (!token) location.href = './login.html';
+const VIA_QR = sessionStorage.getItem('kkah_via') === 'qr', DESKTOP = !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+function toLogin(){ location.replace((VIA_QR || DESKTOP) ? './qr-login.html?next=nhsi.html' : './login.html'); }
+if (!token) toLogin();
+let CFG = { bp_sys_high:140, bp_dia_high:90, bp_sys_urgent:180, bp_dia_urgent:110, pulse_low:60, pulse_high:100, fbs_ifg:6.1, fbs_high:7, rbs_border:7.8, rbs_high:11.1, chol_border:5.2, chol_high:6.2 };
 let rows = [], seen = {}, firstLoad = true, view = 'hub', curTab = 'P', cur = null, busy = false, timer = null;
 
 function api(body, ms){
@@ -124,50 +226,85 @@ function api(body, ms){
 }
 function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-function goBack(){ if (view === 'hub') location.href = './dashboard.html'; else showView('hub'); }
-function showView(v){ view = v; $('vHub').classList.toggle('on', v === 'hub'); $('vS1').classList.toggle('on', v === 's1'); $('sub').textContent = v === 's1' ? 'Stesen 1 · Tinggi & berat' : 'National Health Screening Initiative'; render(); }
+function goBack(){ if (view !== 'hub') return showView('hub'); if (VIA_QR) return logoutQr(); location.href = './dashboard.html'; }
+async function logoutQr(){ if (!confirm('Log keluar laptop ini?')) return; try { await api({ action:'qrLogout' }, 8000); } catch(e){} try { sessionStorage.clear(); } catch(e){} location.replace('./qr-login.html?next=nhsi.html'); }
+setInterval(() => { if (VIA_QR && !document.hidden) api({ action:'qrPing' }, 8000).catch(() => {}); }, 240000);
+function showView(v){ view = v; $('vHub').classList.toggle('on', v === 'hub'); $('vS1').classList.toggle('on', v === 's1'); $('vS2').classList.toggle('on', v === 's2'); $('vS3').classList.toggle('on', v === 's3'); $('sub').textContent = v === 's1' ? 'Stesen 1 · Tinggi & berat' : v === 's2' ? 'Stesen 2 · Tekanan darah, gula, kolesterol' : v === 's3' ? 'Stesen 3 · Konsultasi & pelan' : 'National Health Screening Initiative'; render(); }
 function openS1(){ showView('s1'); }
+function openS2(){ showView('s2'); }
+function openS3(){ showView('s3'); }
 
 /* ---------- load / poll ---------- */
 async function load(manual){
   if (busy) return; busy = true; if (manual) $('refresh').style.opacity = .5;
   let r; try { r = await api({ action:'nhsiCall', fn:'list', args:{} }, 25000); } catch(e){ r = { ok:false, error:'Tiada sambungan.' }; }
   busy = false; $('refresh').style.opacity = 1;
-  if (!r || !r.ok){ if (r && /expired/i.test(r.error || '')) { location.href = './login.html'; return; } if (manual || firstLoad) toast((r && r.error) || 'Gagal memuat.'); return; }
+  if (!r || !r.ok){ if (r && /expired/i.test(r.error || '')) { toLogin(); return; } if (manual || firstLoad) toast((r && r.error) || 'Gagal memuat.'); return; }
   const fresh = r.rows.filter(x => !seen[x.id]);
   if (!firstLoad && fresh.length){ toast(fresh.length + ' klien baharu mendaftar'); if (navigator.vibrate) navigator.vibrate(50); }
   r.rows.forEach(x => { x._new = !firstLoad && !seen[x.id]; seen[x.id] = 1; });
-  rows = r.rows; firstLoad = false;
-  $('cTot').textContent = r.counts.total; $('cWait').textContent = r.counts.s1Pending; $('cDone').textContent = r.counts.s3Done; $('n1').textContent = r.counts.s1Pending;
+  rows = r.rows; firstLoad = false; if (r.cfg) CFG = r.cfg;
+  $('cTot').textContent = r.counts.total; $('cWait').textContent = r.counts.s1Pending; $('cDone').textContent = r.counts.s3Done; $('n1').textContent = r.counts.s1Pending; $('n2').textContent = r.rows.filter(x => !x.s2).length; $('n3').textContent = r.rows.filter(x => !x.s3).length;
   render();
   const want = new URLSearchParams(location.search).get('s1');
   if (want){ history.replaceState(null, '', location.pathname); const c = rows.filter(x => x.id === want)[0]; if (c){ showView('s1'); openSheet(c.id); } }
 }
-function startPoll(){ clearInterval(timer); timer = setInterval(() => { if (!document.hidden && !$('sheet').classList.contains('on')) load(false); }, 15000); }
+function startPoll(){ clearInterval(timer); timer = setInterval(() => { if (!document.hidden && !$('sheet').classList.contains('on') && !$('sheet2').classList.contains('on') && !$('sheet3').classList.contains('on')) load(false); }, 15000); }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) load(false); });
 
 /* ---------- list ---------- */
 function tab(t){ curTab = t; $('tabP').classList.toggle('on', t === 'P'); $('tabD').classList.toggle('on', t === 'D'); render(); }
+function smokeTxt(c){
+  if (c.smoking !== 'Perokok') return c.smoking === 'Bekas perokok' ? 'Bekas perokok' : '';
+  const ty = c.smokeType || 'Rokok', p = [];
+  if (c.smokePerDay) p.push(c.smokePerDay + ' batang/hari'); if (c.vapePerDay) p.push(c.vapePerDay + ' sesi vape/hari');
+  if (c.smokeYears !== '' && c.smokeYears != null) p.push(c.smokeYears + ' tahun');
+  const py = NHSI_RISK.packYears(c.smokePerDay, c.smokeYears); if (py) p.push(py + ' pek-tahun');
+  return 'Perokok: ' + ty.toLowerCase() + (p.length ? ' (' + p.join(', ') + ')' : '');
+}
 function tagsOf(c){
   const t = [];
   (c.history ? c.history.split('; ').filter(h => h && h !== 'Tiada') : []).forEach(h => t.push('<span class="tag w">' + esc(h) + '</span>'));
   if (c.historyOther) t.push('<span class="tag w">' + esc(c.historyOther) + '</span>');
-  if (/Perokok|Vape/.test(c.smoking)) t.push('<span class="tag w">' + esc(c.smoking) + '</span>'); else if (c.smoking === 'Bekas perokok') t.push('<span class="tag">Bekas perokok</span>');
+  if (c.smoking === 'Perokok') t.push('<span class="tag w">' + esc(smokeTxt(c)) + '</span>'); else if (c.smoking === 'Bekas perokok') t.push('<span class="tag">Bekas perokok</span>');
   if (c.whooleyPos) t.push('<span class="tag r">Whooley +</span>');
   if (c.source === 'STAFF') t.push('<span class="tag">Petugas</span>');
   return t.join('');
 }
+function row(c, st, extra){
+  return '<div class="cl' + (c._new ? ' new' : '') + '" role="button" tabindex="0" onclick="' + (st === 3 ? 'openSheet3' : st === 2 ? 'openSheet2' : 'openSheet') + '(\'' + esc(c.id) + '\')" onkeydown="if(event.key===\'Enter\')this.click()"><div class="q">' + esc(c.created) + '</div><div class="tx"><b>' + esc(c.name) + '</b><small>' + esc(c.age) + ' th · ' + esc(c.gender) + ' · ' + esc(c.created) + (extra || '') + '</small><div class="tags">' + tagsOf(c) + '</div></div>' +
+    '<div style="font-size:20px;color:var(--mut)">›</div></div>';
+}
+function match(c, q){ return !q || (c.name + c.ic + c.passport).toLowerCase().replace(/[-\s]/g, '').indexOf(q) !== -1; }
 function render(){
   const P = rows.filter(x => !x.s1), D = rows.filter(x => x.s1);
   $('tabP').textContent = 'Menunggu (' + P.length + ')'; $('tabD').textContent = 'Selesai (' + D.length + ')';
-  if (view !== 's1') return;
-  const q = $('srch').value.trim().toLowerCase().replace(/[-\s]/g, ''), list = (curTab === 'P' ? P : D).filter(c => !q || (c.name + c.ic + c.passport + c.queue).toLowerCase().replace(/[-\s]/g, '').indexOf(q) !== -1);
-  if (curTab === 'D') list.sort((a, b) => (b.s1At || '') < (a.s1At || '') ? -1 : 1);
-  $('list').innerHTML = list.length ? list.map(c =>
-    '<button class="cl' + (c._new ? ' new' : '') + '" onclick="openSheet(\'' + esc(c.id) + '\')"><div class="q">' + esc(c.queue) + '</div><div class="tx"><b>' + esc(c.name) + '</b><small>' + esc(c.age) + ' th · ' + esc(c.gender) + ' · ' + esc(c.created) +
-    (c.s1 ? ' · BMI <b style="display:inline">' + esc(c.bmi) + '</b> ' + esc(c.bmiCat) : '') + '</small><div class="tags">' + tagsOf(c) + '</div></div><div style="font-size:20px;color:var(--mut)">›</div></button>').join('')
-    : '<div class="empty">' + (curTab === 'P' ? '🎉 Tiada klien menunggu.<br>Klien baharu akan muncul di sini secara automatik.' : 'Belum ada klien selesai.') + '</div>';
+  const R2 = rows.filter(x => x.s1 && !x.s2), B2 = rows.filter(x => !x.s1 && !x.s2), D2 = rows.filter(x => x.s2);
+  $('t2R').textContent = 'Sedia (' + R2.length + ')'; $('t2B').textContent = 'Belum S1 (' + B2.length + ')'; $('t2D').textContent = 'Selesai (' + D2.length + ')';
+  if (view === 's1'){
+    const q = $('srch').value.trim().toLowerCase().replace(/[-\s]/g, ''), list = (curTab === 'P' ? P : D).filter(c => match(c, q));
+    if (curTab === 'D') list.sort((a, b) => (b.s1At || '') < (a.s1At || '') ? -1 : 1);
+    $('list').innerHTML = list.length ? list.map(c => row(c, 1, c.s1 ? ' · BMI <b style="display:inline">' + esc(c.bmi) + '</b> ' + esc(c.bmiCat) : '')).join('')
+      : '<div class="empty">' + (curTab === 'P' ? '🎉 Tiada klien menunggu.<br>Klien baharu akan muncul di sini secara automatik.' : 'Belum ada klien selesai.') + '</div>';
+  }
+  const R3 = rows.filter(x => x.s2 && !x.s3), B3 = rows.filter(x => !x.s2 && !x.s3), D3 = rows.filter(x => x.s3);
+  $('t3R').textContent = 'Sedia (' + R3.length + ')'; $('t3B').textContent = 'Belum S2 (' + B3.length + ')'; $('t3D').textContent = 'Selesai (' + D3.length + ')';
+  if (view === 's3'){
+    const q = $('srch3').value.trim().toLowerCase().replace(/[-\s]/g, ''), src = cur3 === 'R' ? R3 : cur3 === 'B' ? B3 : D3, list = src.filter(c => match(c, q));
+    if (cur3 === 'D') list.sort((a, b) => (b.s3At || '') < (a.s3At || '') ? -1 : 1);
+    $('list3').innerHTML = list.length ? list.map(c => row(c, 3, c.s2 ? ' · TD ' + esc(c.sbp) + '/' + esc(c.dbp) : '')).join('')
+      : '<div class="empty">' + (cur3 === 'R' ? 'Tiada klien menunggu konsultasi.' : cur3 === 'B' ? 'Semua klien sudah melalui Stesen 2.' : 'Belum ada konsultasi selesai.') + '</div>';
+  }
+  if (view === 's2'){
+    const q = $('srch2').value.trim().toLowerCase().replace(/[-\s]/g, ''), src = cur2 === 'R' ? R2 : cur2 === 'B' ? B2 : D2, list = src.filter(c => match(c, q));
+    if (cur2 === 'D') list.sort((a, b) => (b.s2At || '') < (a.s2At || '') ? -1 : 1);
+    $('list2').innerHTML = list.length ? list.map(c => row(c, 2, c.s1 ? ' · BMI ' + esc(c.bmi) : '')).join('')
+      : '<div class="empty">' + (cur2 === 'R' ? 'Tiada klien menunggu di Stesen 2.' : cur2 === 'B' ? 'Semua klien sudah diukur tinggi &amp; berat.' : 'Belum ada klien selesai.') + '</div>';
+  }
 }
+let cur2 = 'R', cur2row = null, cur3 = 'R', cur3row = null;
+function tab3(t){ cur3 = t; ['R', 'B', 'D'].forEach(x => $('t3' + x).classList.toggle('on', x === t)); render(); }
+function tab2(t){ cur2 = t; ['R', 'B', 'D'].forEach(x => $('t2' + x).classList.toggle('on', x === t)); render(); }
 
 /* ---------- station 1 sheet + BMI gauge ---------- */
 const BMI_MIN = 12, BMI_MAX = 40, SEG = [[12, 18.5, '#2F7FD3'], [18.5, 23, '#1f9a57'], [23, 27.5, '#E0A100'], [27.5, 40, '#C0392B']];
@@ -195,7 +332,7 @@ function openSheet(id){
   cur = rows.filter(x => x.id === id)[0]; if (!cur) return;
   $('shName').textContent = cur.name;
   const idTxt = cur.ic ? cur.ic : 'Pasport ' + cur.passport;
-  $('shMeta').innerHTML = 'No. <b>' + esc(cur.queue) + '</b> · ' + esc(cur.age) + ' th · ' + esc(cur.gender) + ' · ' + esc(idTxt) + ' · <a href="tel:' + esc(cur.phone) + '">' + esc(cur.phone) + '</a>';
+  $('shMeta').innerHTML = 'Daftar <b>' + esc(cur.created) + '</b> · ' + esc(cur.age) + ' th · ' + esc(cur.gender) + ' · ' + esc(idTxt) + ' · <a href="tel:' + esc(cur.phone) + '">' + esc(cur.phone) + '</a>';
   $('shTags').innerHTML = tagsOf(cur);
   $('hIn').value = cur.s1 ? cur.height : ''; $('wIn').value = cur.s1 ? cur.weight : ''; lastB = null; shown = 0; setNeedle(null); $('bmiN').textContent = '–'; $('bmiN').style.color = '';
   $('saveBtn').textContent = cur.s1 ? 'Kemas kini ukuran' : 'Simpan & seterusnya'; $('sheet').classList.add('on'); calc();
@@ -215,12 +352,207 @@ async function saveS1(){
   $('shMsg').textContent = (r && r.error) || 'Gagal menyimpan.'; if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
 }
 
-/* ---------- QR ---------- */
-function openQr(){
-  $('qrSheet').classList.add('on'); $('qrBox').innerHTML = ''; $('qrUrl').textContent = FORM_URL;
-  try { new QRCode($('qrBox'), { text: FORM_URL, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M }); } catch(e){ $('qrBox').textContent = 'QR tidak dapat dijana — salin pautan di bawah.'; }
+/* ---------- station 2 ---------- */
+function lvl(v){ return ['l0', 'l1', 'l2', 'l3'][v]; }
+function flagsOf(sbp, dbp, pul, glu, gt, chol){
+  const c = CFG, f = {};
+  f.bp = (sbp >= c.bp_sys_urgent || dbp >= c.bp_dia_urgent) ? [3, 'Sangat tinggi'] : (sbp >= c.bp_sys_high || dbp >= c.bp_dia_high) ? [2, 'Tinggi'] : [0, 'Normal'];
+  f.pul = pul < c.pulse_low ? [1, 'Rendah'] : pul > c.pulse_high ? [1, 'Tinggi'] : [0, 'Normal'];
+  if (glu != null) f.glu = gt === 'Puasa' ? (glu >= c.fbs_high ? [2, 'Tinggi'] : glu >= c.fbs_ifg ? [1, 'Terjejas (IFG)'] : [0, 'Normal']) : (glu >= c.rbs_high ? [2, 'Tinggi'] : glu >= c.rbs_border ? [1, 'Sempadan'] : [0, 'Normal']);
+  if (chol != null) f.chol = chol >= c.chol_high ? [2, 'Tinggi'] : chol >= c.chol_border ? [1, 'Sempadan'] : [0, 'Normal'];
+  return f;
 }
-function copyUrl(){ (navigator.clipboard ? navigator.clipboard.writeText(FORM_URL) : Promise.reject()).then(() => toast('Pautan disalin'), () => toast('Salin manual pautan di atas')); }
+let gT = 'Puasa';
+function gType(t){ gT = t; $('gP').classList.toggle('on', t === 'Puasa'); $('gR').classList.toggle('on', t === 'Rawak'); calc2(); }
+const nv = id => { const v = $(id).value.trim().replace(',', '.'); return v === '' || isNaN(+v) ? null : +v; };
+function setFl(id, f, txt){ const e = $(id); e.className = 'fl' + (f ? ' ' + lvl(f[0]) : ''); e.textContent = f ? txt + ': ' + f[1] : txt; }
+function calc2(){
+  const sbp = nv('sbpIn'), dbp = nv('dbpIn'), pul = nv('pulIn'), glu = nv('gluIn'), chol = nv('cholIn');
+  const okBp = sbp != null && dbp != null && sbp >= 50 && sbp <= 300 && dbp >= 30 && dbp <= 200 && sbp > dbp, okP = pul != null && pul >= 20 && pul <= 250;
+  const f = flagsOf(okBp ? sbp : 0, okBp ? dbp : 0, okP ? pul : 80, glu, gT, chol);
+  setFl('flBp', okBp ? f.bp : null, 'Tekanan darah'); setFl('flPul', okP ? f.pul : null, 'Nadi');
+  setFl('flGlu', glu != null ? f.glu : null, 'Glukosa ' + gT.toLowerCase()); if (glu == null) $('flGlu').textContent = 'Kosongkan jika tidak diambil';
+  setFl('flChol', chol != null ? f.chol : null, 'Kolesterol'); if (chol == null) $('flChol').textContent = 'Kosongkan jika tidak diambil';
+  $('s2Alert').classList.toggle('on', okBp && f.bp[0] === 3);
+  $('s2Save').disabled = !(okBp && okP); $('s2Msg').textContent = (sbp != null && dbp != null && sbp <= dbp) ? 'Sistolik mesti lebih tinggi daripada diastolik.' : '';
+}
+['sbpIn', 'dbpIn', 'pulIn', 'gluIn', 'cholIn'].forEach((id, i, a) => { $(id).addEventListener('input', calc2); $(id).addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); if (i < a.length - 1) $(a[i + 1]).focus(); else if (!$('s2Save').disabled) saveS2(); } }); });
+$('sbpIn').addEventListener('input', () => { if ($('sbpIn').value.length === 3) $('dbpIn').focus(); });
+function openSheet2(id){
+  cur2row = rows.filter(x => x.id === id)[0]; const c = cur2row; if (!c) return;
+  $('s2Name').textContent = c.name; $('s2Meta').innerHTML = 'Daftar <b>' + esc(c.created) + '</b> · ' + esc(c.age) + ' th · ' + esc(c.gender) + ' · <a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a>';
+  $('s2S1').innerHTML = c.s1 ? 'Stesen 1: <b>' + esc(c.height) + ' cm · ' + esc(c.weight) + ' kg · BMI ' + esc(c.bmi) + '</b> (' + esc(c.bmiCat) + ')' : '<b style="color:var(--warn)">Belum diukur di Stesen 1</b> — boleh teruskan.';
+  $('s2Tags').innerHTML = tagsOf(c);
+  $('sbpIn').value = c.s2 ? c.sbp : ''; $('dbpIn').value = c.s2 ? c.dbp : ''; $('pulIn').value = c.s2 ? c.pulse : ''; $('gluIn').value = c.s2 ? c.glucose : ''; $('cholIn').value = c.s2 ? c.chol : '';
+  gT = c.s2 && c.glucoseType ? c.glucoseType : 'Puasa'; gType(gT);
+  $('s2Save').textContent = c.s2 ? 'Kemas kini Stesen 2' : 'Simpan Stesen 2'; $('sheet2').classList.add('on'); calc2(); setTimeout(() => $('sbpIn').focus(), 250);
+}
+function closeSheet2(){ $('sheet2').classList.remove('on'); cur2row = null; }
+async function saveS2(){
+  const c = cur2row; if (!c) return; const b = $('s2Save'); b.disabled = true; b.textContent = 'Menyimpan…'; $('s2Msg').textContent = '';
+  const a = { id: c.id, sbp: $('sbpIn').value, dbp: $('dbpIn').value, pulse: $('pulIn').value, glucose: $('gluIn').value, glucoseType: gT, chol: $('cholIn').value };
+  let r; try { r = await api({ action:'nhsiCall', fn:'saveS2', args:a }, 25000); } catch(e){ r = { ok:false, error:'Ralat sambungan. Cuba lagi.' }; }
+  b.textContent = 'Simpan Stesen 2'; b.disabled = false;
+  if (r && r.ok){
+    const urgent = r.flags && r.flags.bp && r.flags.bp[0] === 3; toast((urgent ? '⚠ ' : '✓ ') + c.name.split(' ')[0] + ' · TD ' + a.sbp + '/' + a.dbp + (urgent ? ' — SEGERA' : '')); if (navigator.vibrate) navigator.vibrate(urgent ? [200, 80, 200] : 60);
+    const was = c.s2; closeSheet2(); await load(false);
+    if (!was && view === 's2' && cur2 !== 'D'){ const nxt = rows.filter(x => cur2 === 'R' ? (x.s1 && !x.s2) : (!x.s1 && !x.s2))[0]; if (nxt) setTimeout(() => openSheet2(nxt.id), 450); }
+    return;
+  }
+  $('s2Msg').textContent = (r && r.error) || 'Gagal menyimpan.'; if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+}
+
+/* ---------- station 3 ---------- */
+const REFER = ['Klinik NCD', 'Klinik Berhenti Merokok', 'Pegawai pemakanan', 'Saringan Minda / kaunseling', 'Pegawai perubatan / doktor', 'Hospital (segera)'];
+const CATLV = { 'Kurang berat badan': 1, 'Normal': 0, 'Berat badan berlebihan': 1, 'Obes': 2 };
+function resultsOf(c){
+  const n = v => (v === '' || v == null || isNaN(+v)) ? null : +v;
+  const sbp = n(c.sbp), dbp = n(c.dbp), pul = n(c.pulse), glu = n(c.glucose), chol = n(c.chol);
+  const raw = c.s2 ? flagsOf(sbp, dbp, pul, glu, c.glucoseType, chol) : {}, f = { bp: raw.bp, pulse: raw.pul, glucose: raw.glu, chol: raw.chol };
+  return { f, sbp, dbp, pul, glu, chol, bmiLv: c.s1 ? (CATLV[c.bmiCat] == null ? 0 : CATLV[c.bmiCat]) : null };
+}
+function planOf(c){
+  const R = resultsOf(c), it = [], add = (lv, t) => it.push({ t, lv, src:'auto' });
+  const hist = (c.history || '').split('; ').filter(h => h && h !== 'Tiada');
+  if (c.s2){
+    if (R.f.bp[0] === 3) add(3, 'Tekanan darah sangat tinggi (' + c.sbp + '/' + c.dbp + '). Nilaian doktor SEGERA; ulang bacaan selepas rehat 5 minit; pertimbang rujukan hospital jika disahkan atau bergejala.');
+    else if (R.f.bp[0] === 2) add(2, hist.indexOf('Darah tinggi') !== -1
+      ? 'Tekanan darah tidak terkawal (' + c.sbp + '/' + c.dbp + ') pada pesakit hipertensi. Semak pematuhan ubat & gaya hidup; ulang bacaan; susulan klinik 1–2 minggu.'
+      : 'Tekanan darah tinggi (' + c.sbp + '/' + c.dbp + '). Ulang bacaan; jika disahkan disyaki hipertensi — susulan klinik 1–2 minggu, pemantauan TD di rumah, nasihat kurangkan garam.');
+    else if (hist.indexOf('Darah tinggi') !== -1) add(0, 'Tekanan darah terkawal. Teruskan rawatan dan susulan sedia ada.');
+    if (R.f.pulse && R.f.pulse[0] === 1) add(1, 'Kadar nadi ' + R.f.pulse[1].toLowerCase() + ' (' + c.pulse + '/min). Nilai simptom; ulang bacaan; pertimbang ECG jika berterusan atau bergejala.');
+    if (R.f.glucose){
+      const gt = c.glucoseType === 'Puasa' ? 'puasa' : 'rawak';
+      if (R.f.glucose[0] === 2) add(2, hist.indexOf('Kencing manis') !== -1
+        ? 'Glukosa ' + gt + ' ' + c.glucose + ' mmol/L tinggi pada pesakit diabetes. Semak pematuhan ubat & diet; rujuk Klinik NCD untuk semakan rawatan.'
+        : 'Glukosa ' + gt + ' ' + c.glucose + ' mmol/L — dalam julat diabetes. Sahkan dengan ujian glukosa puasa / OGTT; rujuk Klinik NCD.');
+      else if (R.f.glucose[0] === 1) add(1, 'Glukosa ' + gt + ' ' + c.glucose + ' mmol/L (' + R.f.glucose[1].toLowerCase() + '). Nasihat diet & aktiviti fizikal; ulang glukosa puasa dalam 3 bulan.');
+      else if (hist.indexOf('Kencing manis') !== -1) add(0, 'Glukosa terkawal. Teruskan rawatan dan susulan sedia ada.');
+    }
+    if (R.f.chol){
+      if (R.f.chol[0] === 2) add(2, 'Kolesterol jumlah ' + c.chol + ' mmol/L tinggi. Profil lipid penuh; nilai risiko kardiovaskular; nasihat diet rendah lemak tepu; pertimbang rawatan.');
+      else if (R.f.chol[0] === 1) add(1, 'Kolesterol jumlah ' + c.chol + ' mmol/L (sempadan). Nasihat diet & senaman; ulang dalam 3–6 bulan.');
+    }
+  } else add(1, 'Stesen 2 belum lengkap — bacaan tekanan darah, nadi, glukosa & kolesterol tiada. Lengkapkan jika boleh.');
+  if (c.s1){
+    if (c.bmiCat === 'Obes') add(2, 'BMI ' + c.bmi + ' (obes). Program pengurusan berat badan; rujuk pegawai pemakanan; semak risiko metabolik.');
+    else if (c.bmiCat === 'Berat badan berlebihan') add(1, 'BMI ' + c.bmi + ' (berat badan berlebihan). Nasihat diet seimbang & aktiviti fizikal ≥150 minit seminggu.');
+    else if (c.bmiCat === 'Kurang berat badan') add(1, 'BMI ' + c.bmi + ' (kurang berat badan). Nasihat pemakanan seimbang; nilai punca; rujuk pegawai pemakanan jika perlu.');
+  }
+  if (c.smoking === 'Perokok') add(1, smokeTxt(c) + '. Nasihat berhenti merokok' + ((c.smokeType === 'Vape' || c.smokeType === 'Kedua-duanya') ? ' / vape (vape bukan alternatif selamat)' : '') + '; tawarkan rujukan Klinik Berhenti Merokok.');
+  const rk = riskOf(c);
+  if (rk.ok && rk.level === 2) add(2, 'Risiko kardiovaskular 10 tahun ' + rk.pct + '% (TINGGI, >20%). Nilai untuk rawatan pencegahan (statin / ubat tekanan darah) mengikut CPG; tekankan faktor boleh diubah.');
+  else if (rk.ok && rk.level === 1) add(1, 'Risiko kardiovaskular 10 tahun ' + rk.pct + '% (sederhana, 10–20%). Kawal faktor risiko; nilai semula dalam 6–12 bulan.');
+  if (c.whooleyPos) add(2, 'Saringan Whooley POSITIF. Lakukan penilaian kesihatan mental lanjut (PHQ-9); rujuk Saringan Minda / kaunseling; tanya risiko keselamatan.');
+  const other = hist.filter(h => ['Darah tinggi', 'Kencing manis'].indexOf(h) === -1).concat(c.historyOther ? [c.historyOther] : []);
+  if (other.length) add(0, 'Sejarah perubatan: ' + other.join(', ') + '. Pastikan susulan rawatan berterusan.');
+  if (!it.some(x => x.lv > 0) && c.s2) add(0, 'Semua bacaan dalam julat normal. Teruskan gaya hidup sihat; saringan semula dalam 1 tahun.');
+  return it;
+}
+function riskOf(c){ return NHSI_RISK.cvdRisk(NHSI_RISK.inputsOf(Object.assign({}, c, { cfg: CFG }))); }
+function overallLv(c){ const R = resultsOf(c); let m = 0; const rk0 = riskOf(c); if (rk0.ok && rk0.level === 2) m = 2; ['bp', 'pulse', 'glucose', 'chol'].forEach(k => { if (R.f[k]) m = Math.max(m, R.f[k][0]); }); if (R.bmiLv != null) m = Math.max(m, R.bmiLv); if (c.whooleyPos) m = Math.max(m, 2); return m; }
+function tile(l, v, sub, lv){ return '<div class="tile ' + (lv == null ? 'na' : 'l' + lv) + '"><small>' + l + '</small><b>' + v + '</b><span>' + sub + '</span></div>'; }
+function tilesOf(c){
+  const R = resultsOf(c), t = [];
+  t.push(c.s1 ? tile('BMI', esc(c.bmi), esc(c.bmiCat) + ' · ' + esc(c.height) + ' cm / ' + esc(c.weight) + ' kg', R.bmiLv) : tile('BMI', '—', 'Belum diukur', null));
+  if (c.s2){
+    t.push(tile('Tekanan darah', esc(c.sbp) + '/' + esc(c.dbp), R.f.bp[1], R.f.bp[0])); t.push(tile('Nadi', esc(c.pulse) + '/min', R.f.pulse[1], R.f.pulse[0]));
+    t.push(R.f.glucose ? tile('Glukosa ' + esc((c.glucoseType || '').toLowerCase()), esc(c.glucose), R.f.glucose[1] + ' · mmol/L', R.f.glucose[0]) : tile('Glukosa', '—', 'Tidak diambil', null));
+    t.push(R.f.chol ? tile('Kolesterol', esc(c.chol), R.f.chol[1] + ' · mmol/L', R.f.chol[0]) : tile('Kolesterol', '—', 'Tidak diambil', null));
+  } else t.push(tile('Stesen 2', '—', 'Belum lengkap', null));
+  const rk = riskOf(c);
+  t.push(rk.ok ? tile('Risiko CVD 10 thn', rk.pct + '%', ['Rendah', 'Sederhana', 'Tinggi'][rk.level] + ' · Framingham', [0, 1, 2][rk.level]) : tile('Risiko CVD 10 thn', '—', c.age >= 30 && c.age <= 74 ? 'Data tidak lengkap' : 'Umur 30–74 sahaja', null));
+  t.push(tile('Whooley', c.whooleyPos ? 'Positif' : 'Negatif', 'Kesihatan mental', c.whooleyPos ? 2 : 0));
+  return t.join('');
+}
+let planItems = [];
+function drawItems(){
+  $('s3Items').innerHTML = planItems.map((p, i) => '<div class="pi"><div class="lv l' + p.lv + '"></div><textarea aria-label="Item pelan ' + (i + 1) + '" oninput="planItems[' + i + '].t=this.value;planItems[' + i + '].src=\'dr\';grow(this)">' + esc(p.t) + '</textarea><button aria-label="Buang item" onclick="rmItem(' + i + ')">✕</button></div>').join('') || '<div class="empty" style="padding:10px">Tiada item. Tambah atau jana semula.</div>';
+}
+function grow(t){ t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }
+function growAll(){ $('s3Items').querySelectorAll('textarea').forEach(grow); }
+function rmItem(i){ planItems.splice(i, 1); drawItems(); growAll(); }
+function addItem(){ planItems.push({ t:'', lv:0, src:'dr' }); drawItems(); growAll(); const a = $('s3Items').querySelectorAll('textarea'); if (a.length) a[a.length - 1].focus(); }
+function regen(){ if (planItems.some(p => p.src === 'dr') && !confirm('Ganti pelan semasa dengan cadangan automatik baharu? Suntingan anda akan hilang.')) return; planItems = planOf(cur3row); drawItems(); growAll(); }
+function openSheet3(id){
+  const c = cur3row = rows.filter(x => x.id === id)[0]; if (!c) return;
+  $('s3Name').textContent = c.name; $('s3Meta').innerHTML = esc(c.age) + ' th · ' + esc(c.gender) + ' · ' + esc(c.ic || ('Pasport ' + c.passport)) + ' · <a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a>';
+  $('s3Tags').innerHTML = tagsOf(c); const lv = overallLv(c);
+  $('s3Ovl').className = 'ovl l' + lv; $('s3Ovl').textContent = lv === 3 ? '⚠ PERLU PERHATIAN SEGERA' : lv === 2 ? 'Terdapat keputusan tinggi — perlu tindakan / rujukan' : lv === 1 ? 'Terdapat keputusan sempadan — nasihat & pemantauan' : 'Semua keputusan normal';
+  $('s3Tiles').innerHTML = tilesOf(c);
+  const FN = { age:'Umur', sex:'Lelaki', bmi:'BMI', bp:'Tekanan darah', glucose:'Gula', chol:'Kolesterol', smoke:'Merokok/vape', hx:'Sejarah jantung/strok' };
+  $('s3Fac').innerHTML = NHSI_RISK.factors(Object.assign({}, c, { cfg: CFG })).filter(f => f.lv > 0).map(f => '<span class="tag ' + (f.lv === 2 ? 'r' : 'w') + '">' + FN[f.k] + (f.mod ? '' : ' (tetap)') + '</span>').join('') || '<span class="tag">Tiada faktor ketara</span>';
+  $('s3Link').style.display = c.s3 ? '' : 'none';
+  let saved = null; if (c.s3 && c.plan){ try { saved = JSON.parse(c.plan); } catch(e){} }
+  planItems = saved ? saved.items.map(x => ({ t:String(x.t || ''), lv:+x.lv || 0, src:x.src === 'dr' ? 'dr' : 'auto' })) : planOf(c); drawItems();
+  $('s3Follow').value = saved && saved.follow || '';
+  $('s3Refer').innerHTML = REFER.map((r, i) => '<label><input type="checkbox" value="' + esc(r) + '"' + (saved && (saved.refer || []).indexOf(r) !== -1 ? ' checked' : (!saved && autoRefer(c).indexOf(r) !== -1 ? ' checked' : '')) + '><span>' + esc(r) + '</span></label>').join('');
+  if (!saved && autoFollow(c)) $('s3Follow').value = autoFollow(c);
+  $('s3Notes').value = c.s3 ? c.notes : ''; $('s3Msg').textContent = ''; $('s3Save').textContent = c.s3 ? 'Kemas kini konsultasi' : 'Simpan konsultasi';
+  $('sheet3').classList.add('on'); $('sheet3').querySelector('.sh').scrollTop = 0; growAll();
+}
+function autoRefer(c){
+  const R = resultsOf(c), r = [];
+  if (c.s2 && ((R.f.glucose && R.f.glucose[0] === 2) || R.f.bp[0] >= 2 || (R.f.chol && R.f.chol[0] === 2))) r.push('Klinik NCD');
+  if (c.smoking === 'Perokok') r.push('Klinik Berhenti Merokok'); if (c.bmiCat === 'Obes' || c.bmiCat === 'Kurang berat badan') r.push('Pegawai pemakanan');
+  if (c.whooleyPos) r.push('Saringan Minda / kaunseling'); if (c.s2 && R.f.bp[0] === 3) r.push('Hospital (segera)'); return r;
+}
+function autoFollow(c){ const lv = overallLv(c); return lv === 3 ? 'Susulan 1 minggu' : lv === 2 ? 'Susulan 2 minggu' : lv === 1 ? 'Susulan 3 bulan' : 'Saringan semula 1 tahun'; }
+function closeSheet3(){ $('sheet3').classList.remove('on'); cur3row = null; }
+async function saveS3(){
+  const c = cur3row; if (!c) return; const items = planItems.map(p => ({ t:p.t.trim(), lv:p.lv, src:p.src })).filter(p => p.t);
+  if (!items.length){ $('s3Msg').textContent = 'Sila isi sekurang-kurangnya satu item pelan.'; return; }
+  const b = $('s3Save'); b.disabled = true; b.textContent = 'Menyimpan…'; $('s3Msg').textContent = '';
+  const plan = JSON.stringify({ items, follow: $('s3Follow').value, refer: [...$('s3Refer').querySelectorAll('input:checked')].map(i => i.value) });
+  let r; try { r = await api({ action:'nhsiCall', fn:'saveS3', args:{ id:c.id, plan, notes: $('s3Notes').value } }, 25000); } catch(e){ r = { ok:false, error:'Ralat sambungan. Cuba lagi.' }; }
+  b.disabled = false; b.textContent = c.s3 ? 'Kemas kini konsultasi' : 'Simpan konsultasi';
+  if (r && r.ok){
+    const was = c.s3; toast('✓ Konsultasi ' + c.name.split(' ')[0] + ' disimpan'); if (navigator.vibrate) navigator.vibrate(60);
+    closeSheet3(); await load(false);
+    if (r.token) { openResult(c.id); return; }
+    if (!was && view === 's3' && cur3 !== 'D'){ const nxt = rows.filter(x => cur3 === 'R' ? (x.s2 && !x.s3) : (!x.s2 && !x.s3))[0]; if (nxt) setTimeout(() => openSheet3(nxt.id), 450); }
+    return;
+  }
+  $('s3Msg').textContent = (r && r.error) || 'Gagal menyimpan.'; if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+}
+function printRes(){
+  const c = cur3row; if (!c) return; const w = window.open('', '_blank'); if (!w){ toast('Benarkan pop-up untuk mencetak.'); return; }
+  const lvTxt = ['Normal', 'Sempadan', 'Tinggi', 'Segera'], R = resultsOf(c);
+  const li = planItems.filter(p => p.t.trim()).map(p => '<li>' + esc(p.t) + '</li>').join(''), refer = [...$('s3Refer').querySelectorAll('input:checked')].map(i => i.value).join(', ');
+  const rowx = (a, b, l) => '<tr><td>' + a + '</td><td><b>' + b + '</b></td><td>' + (l == null ? '' : lvTxt[l]) + '</td></tr>';
+  w.document.write('<!doctype html><meta charset="utf-8"><title>Keputusan saringan</title><style>body{font:14px/1.5 system-ui,sans-serif;max-width:720px;margin:24px auto;padding:0 16px;color:#111}h1{font-size:20px;margin:0}h2{font-size:14px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.06em;color:#0F4530}table{border-collapse:collapse;width:100%}td{border-bottom:1px solid #ddd;padding:6px 4px}small{color:#555}</style>' +
+    '<h1>Saringan Kesihatan NHSI</h1><small>Klinik Kesihatan Ayer Hitam · ' + new Date().toLocaleDateString('ms-MY') + '</small><h2>Klien</h2><div><b>' + esc(c.name) + '</b> · ' + esc(c.age) + ' tahun · ' + esc(c.gender) + '</div>' +
+    '<h2>Keputusan</h2><table>' + (c.s1 ? rowx('BMI', esc(c.bmi) + ' (' + esc(c.bmiCat) + ')', R.bmiLv) : '') + (c.s2 ? rowx('Tekanan darah', esc(c.sbp) + '/' + esc(c.dbp) + ' mmHg', R.f.bp[0]) + rowx('Nadi', esc(c.pulse) + '/min', R.f.pulse[0]) + (R.f.glucose ? rowx('Glukosa ' + esc((c.glucoseType || '').toLowerCase()), esc(c.glucose) + ' mmol/L', R.f.glucose[0]) : '') + (R.f.chol ? rowx('Kolesterol', esc(c.chol) + ' mmol/L', R.f.chol[0]) : '') : '') + '</table>' +
+    '<h2>Pelan pengurusan</h2><ol>' + li + '</ol>' + ($('s3Follow').value ? '<div><b>' + esc($('s3Follow').value) + '</b></div>' : '') + (refer ? '<div>Rujukan: <b>' + esc(refer) + '</b></div>' : '') + ($('s3Notes').value.trim() ? '<h2>Catatan</h2><div>' + esc($('s3Notes').value) + '</div>' : '') +
+    '<p><small>Cetakan ini ialah ringkasan saringan, bukan diagnosis. Sila ikut nasihat doktor.</small></p><script>setTimeout(function(){window.print()},300)<\/script>');
+  w.document.close();
+}
+
+/* ---------- client result link ---------- */
+let resTok = '', resId = '';
+function resUrl(tok, extra){ return new URL('./nhsi-result.html?t=' + tok + (extra || ''), location.href).href; }
+async function openResult(id, renew){
+  resId = id; const c = rows.filter(x => x.id === id)[0];
+  $('resSheet').classList.add('on'); $('rsName').textContent = c ? c.name : 'Keputusan untuk klien'; $('rsMsg').textContent = 'Menjana pautan…'; $('rsQr').innerHTML = ''; $('rsUrl').textContent = '';
+  let r; try { r = await api({ action:'nhsiCall', fn:'resultLink', args:{ id: id, renew: !!renew } }, 25000); } catch(e){ r = { ok:false, error:'Ralat sambungan.' }; }
+  if (!r || !r.ok){ $('rsMsg').textContent = (r && r.error) || 'Gagal menjana pautan.'; return; }
+  resTok = r.token; const u = resUrl(resTok); $('rsMsg').textContent = ''; $('rsUrl').textContent = u.replace(/(t=.{6}).*/, '$1…');
+  try { new QRCode($('rsQr'), { text: u, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M }); } catch(e){ $('rsMsg').textContent = 'QR tidak dapat dijana — guna Salin pautan.'; }
+}
+function closeRes(){ $('resSheet').classList.remove('on'); }
+function showRes(){ if (resTok) window.open(resUrl(resTok), '_blank'); }
+function printResLink(){ if (resTok) window.open(resUrl(resTok, '&print=1'), '_blank'); }
+function copyRes(){ if (!resTok) return; (navigator.clipboard ? navigator.clipboard.writeText(resUrl(resTok)) : Promise.reject()).then(() => toast('Pautan disalin'), () => toast('Salin tidak berjaya')); }
+function renewRes(){ if (resId && confirm('Jana pautan baharu? Pautan lama tidak lagi berfungsi.')) openResult(resId, true); }
+
+/* ---------- QR ---------- */
+function openQr(k){
+  QR_KEY = k || QR_KEY; const L = LINKS[QR_KEY];
+  $('qrSheet').classList.add('on'); $('qrBox').innerHTML = ''; $('qrUrl').textContent = L[0]; $('qrNote').textContent = L[1];
+  ['S', 'C'].forEach(x => $('lk' + x).classList.toggle('on', x === QR_KEY));
+  try { new QRCode($('qrBox'), { text: L[0], width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M }); } catch(e){ $('qrBox').textContent = 'QR tidak dapat dijana — salin pautan di bawah.'; }
+}
+function copyUrl(){ const u = LINKS[QR_KEY][0]; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => toast('Pautan disalin'), () => toast('Salin manual pautan di atas')); }
 
 load(false); startPoll();
 </script>
