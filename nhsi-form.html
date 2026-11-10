@@ -7,8 +7,8 @@
 <title>NHSI</title>
 <link rel="icon" type="image/png" href="./siaga-192.png">
 <style>
-  :root{ --bg:#EEF3F1; --card:#fff; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB; --dg:#C0392B; --dgl:#FBEAE7; --warn:#B45309; --ok:#1f9a57; }
-  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --dgl:#3a1d19; } }
+  :root{ --bg:#EEF3F1; --card:#fff; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB; --dg:#C0392B; --dgl:#FBEAE7; --warn:#B45309; --ok:#1f9a57; --onacc:#0F4530; --onred:#C0392B; }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --dgl:#3a1d19; --onacc:#A8EBCB; --onred:#FF9A8D; --dg:#FF9A8D; --warn:#F0B35A; } }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ margin:0; }
   body{ background:var(--bg); color:var(--ink); font-family:Inter,'Segoe UI',system-ui,sans-serif; min-height:100vh; padding-bottom:calc(100px + env(safe-area-inset-bottom)); }
@@ -40,17 +40,21 @@
   .opt{ position:relative; }
   .opt input{ position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer; margin:0; }
   .opt span{ display:flex; align-items:center; justify-content:center; text-align:center; min-height:52px; padding:8px 10px; border-radius:14px; border:1.5px solid var(--line); background:var(--card); font-weight:700; font-size:14.5px; line-height:1.2; transition:all .15s; }
-  .opt input:checked + span{ border-color:var(--acc); background:var(--accl); color:var(--acc2); box-shadow:0 0 0 3px rgba(26,107,74,.14); }
+  .opt input:checked + span{ border-color:var(--acc); background:var(--accl); color:var(--onacc); box-shadow:0 0 0 3px rgba(26,107,74,.14); }
   .opt input:focus-visible + span{ outline:3px solid var(--acc); outline-offset:2px; }
   .opt.no input:checked + span{ border-color:var(--ok); }
-  .opt.yes input:checked + span{ border-color:var(--dg); background:var(--dgl); color:var(--dg); box-shadow:0 0 0 3px rgba(192,57,43,.14); }
+  .opt.yes input:checked + span{ border-color:var(--dg); background:var(--dgl); color:var(--onred); box-shadow:0 0 0 3px rgba(192,57,43,.14); }
   .chips{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .auto{ display:inline-block; margin-left:6px; padding:2px 8px; border-radius:99px; background:var(--accl); color:var(--acc2); font-size:10.5px; font-weight:800; }
-  .link{ background:none; border:none; color:var(--acc); font-weight:800; font-size:13px; padding:6px 0; cursor:pointer; text-decoration:underline; }
-  .scan{ width:100%; height:54px; border-radius:16px; border:2px dashed var(--acc); background:var(--accl); color:var(--acc2); font:800 15px Inter,sans-serif; cursor:pointer; margin-bottom:14px; }
+  .auto{ display:inline-block; margin-left:6px; padding:2px 8px; border-radius:99px; background:var(--accl); color:var(--onacc); font-size:10.5px; font-weight:800; }
+  .link{ background:none; border:none; color:var(--onacc); font-weight:800; font-size:13px; padding:6px 0; cursor:pointer; text-decoration:underline; }
+  .scan{ width:100%; height:54px; border-radius:16px; border:2px dashed var(--acc); background:var(--accl); color:var(--onacc); font:800 15px Inter,sans-serif; cursor:pointer; margin-bottom:14px; }
   .q{ padding:12px 0; border-top:1px solid var(--line); } .q:first-of-type{ border-top:none; padding-top:0; } .q p{ margin:0 0 8px; font-weight:700; font-size:14.5px; line-height:1.4; }
+  .hint.err,.status{ color:var(--onred); }
   .consent{ display:flex; gap:10px; align-items:flex-start; font-size:12.5px; color:var(--mut); line-height:1.45; padding:12px; border-radius:14px; background:var(--accl); }
   .consent input{ width:22px; height:22px; margin-top:1px; flex:none; accent-color:var(--acc); }
+  .spk{ display:inline-grid; place-items:center; width:32px; height:32px; margin-left:8px; vertical-align:middle; border-radius:50%; border:1.5px solid var(--acc); background:var(--accl); color:var(--onacc); font-size:15px; cursor:pointer; padding:0; line-height:1; }
+  .spk.on{ background:var(--acc); color:#fff; animation:ping 1.4s infinite; }
+  .rbtn{ display:none; } .rbtn.on{ display:block; }
   .hp{ position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
   .bar{ position:fixed; left:0; right:0; bottom:0; z-index:25; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,transparent,var(--bg) 30%); }
   .bar .in{ max-width:560px; margin:0 auto; display:flex; gap:10px; }
@@ -96,21 +100,21 @@
     <h2 data-i="s1h">Maklumat diri</h2><p class="sub" data-i="s1s">Langkah 1 / 3 · Isi seperti dalam kad pengenalan.</p>
     <button class="scan" id="scanBtn" type="button" onclick="scanIc()" data-i="scan">📷 Imbas MyKad (isi nama &amp; IC automatik)</button>
 
-    <div class="field"><label for="name"><span data-i="name">Nama penuh</span> <span class="req">*</span></label>
+    <div class="field"><label for="name" data-au="name"><span data-i="name">Nama penuh</span> <span class="req">*</span></label>
       <input type="text" id="name" autocomplete="off" autocapitalize="characters" enterkeyhint="next" data-ph="namePh" placeholder="NAMA SEPERTI DALAM IC"></div>
 
-    <div id="icBox" class="field"><label for="ic"><span data-i="ic">No. kad pengenalan</span> <span class="req">*</span> <small data-i="icSm">12 digit, tanpa “-”</small></label>
+    <div id="icBox" class="field"><label for="ic" data-au="ic"><span data-i="ic">No. kad pengenalan</span> <span class="req">*</span> <small data-i="icSm">12 digit, tanpa “-”</small></label>
       <input type="text" id="ic" class="mono" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="000000000000">
       <div class="hint" id="icHint"></div>
       <button type="button" class="link" onclick="setPass(true)" data-i="passLink">Pemegang pasport (tiada IC Malaysia)</button></div>
 
     <div id="passBox" hidden>
-      <div class="field"><label for="passport"><span data-i="passNo">No. pasport</span> <span class="req">*</span></label><input type="text" id="passport" autocapitalize="characters" autocomplete="off" maxlength="20"></div>
+      <div class="field"><label for="passport" data-au="passport"><span data-i="passNo">No. pasport</span> <span class="req">*</span></label><input type="text" id="passport" autocapitalize="characters" autocomplete="off" maxlength="20"></div>
       <div class="field"><label for="yob"><span data-i="yob">Tahun lahir</span> <span class="req">*</span></label><input type="text" id="yob" inputmode="numeric" maxlength="4" data-ph="yobPh" placeholder="cth 1965"></div>
       <button type="button" class="link" onclick="setPass(false)" data-i="icBack">← Guna No. IC Malaysia</button>
     </div>
 
-    <div class="field"><label for="phone"><span data-i="phone">No. telefon</span> <span class="req">*</span> <small data-i="phoneSm">boleh guna no. waris</small></label>
+    <div class="field"><label for="phone" data-au="phone"><span data-i="phone">No. telefon</span> <span class="req">*</span> <small data-i="phoneSm">boleh guna no. waris</small></label>
       <input type="tel" id="phone" class="mono" inputmode="numeric" maxlength="11" autocomplete="off" value="01">
       <div class="hint" id="phHint"></div></div>
 
@@ -121,33 +125,33 @@
     </div>
     <div class="hint" style="margin-top:-6px;margin-bottom:12px" data-i="ageNote">Jantina &amp; umur diisi automatik daripada IC — boleh diubah jika perlu.</div>
 
-    <div class="field" style="margin-bottom:0"><label for="email"><span data-i="email">E-mel</span> <small data-i="optional">(tidak wajib)</small></label><input type="email" id="email" autocomplete="off" inputmode="email" placeholder="nama@contoh.com"></div>
+    <div class="field" style="margin-bottom:0"><label for="email" data-au="email"><span data-i="email">E-mel</span> <small data-i="optional">(tidak wajib)</small></label><input type="email" id="email" autocomplete="off" inputmode="email" placeholder="nama@contoh.com"></div>
   </div></section>
 
   <!-- STEP 2 -->
   <section class="step" id="s2"><div class="card">
     <h2 data-i="s2h">Sejarah kesihatan &amp; merokok</h2><p class="sub" data-i="s2s">Langkah 2 / 3 · Pilih semua yang berkenaan.</p>
-    <div class="field"><div class="lb" data-i="histQ">Adakah anda pernah dimaklumkan menghidap:</div>
+    <div class="field"><div class="lb" data-au="hist"><span data-i="histQ"></span></div>
       <div class="chips" id="hist"></div>
       <div id="histOtherBox" style="margin-top:8px"><input type="text" id="histOther" maxlength="100" data-ph="histOtherPh" placeholder="Penyakit lain (jika ada)"></div></div>
-    <div class="field" style="margin-bottom:0"><div class="lb"><span data-i="smokeQ">Adakah anda merokok?</span> <span class="req">*</span></div>
+    <div class="field" style="margin-bottom:0"><div class="lb" data-au="smokeQ"><span data-i="smokeQ">Adakah anda merokok?</span> <span class="req">*</span></div>
       <div class="seg grp" id="smoke" style="grid-auto-flow:row;grid-template-columns:repeat(3,1fr)"></div>
       <div class="sub2" id="smokeBox" hidden>
-        <div class="field"><div class="lb" data-i="smokeWhat">Apa yang anda hisap?</div><div class="seg grp" id="stype" style="grid-auto-flow:row;grid-template-columns:repeat(3,1fr)"></div></div>
-        <div class="field" id="cigBox" hidden><label for="cigN" data-i="cigQ">Berapa batang rokok sehari?</label><input type="number" id="cigN" inputmode="numeric" min="1" max="100" data-ph="cigPh" placeholder="cth 10"></div>
-        <div class="field" id="vapeBox" hidden><label for="vapeN" data-i="vapeQ">Berapa kali (sesi) vape sehari?</label><input type="number" id="vapeN" inputmode="numeric" min="1" max="500" data-ph="vapePh" placeholder="cth 20"></div>
-        <div class="field"><label for="yrsN" data-i="yearsQ">Sudah berapa tahun merokok / vape?</label><input type="number" id="yrsN" inputmode="decimal" min="0" max="80" step="0.5" data-ph="yearsPh" placeholder="cth 8"></div>
+        <div class="field"><div class="lb" data-au="smokeWhat"><span data-i="smokeWhat"></span></div><div class="seg grp" id="stype" style="grid-auto-flow:row;grid-template-columns:repeat(3,1fr)"></div></div>
+        <div class="field" id="cigBox" hidden><label for="cigN" data-au="cig"><span data-i="cigQ"></span></label><input type="number" id="cigN" inputmode="numeric" min="1" max="100" data-ph="cigPh" placeholder="cth 10"></div>
+        <div class="field" id="vapeBox" hidden><label for="vapeN" data-au="vape"><span data-i="vapeQ"></span></label><input type="number" id="vapeN" inputmode="numeric" min="1" max="500" data-ph="vapePh" placeholder="cth 20"></div>
+        <div class="field"><label for="yrsN" data-au="years"><span data-i="yearsQ"></span></label><input type="number" id="yrsN" inputmode="decimal" min="0" max="80" step="0.5" data-ph="yearsPh" placeholder="cth 8"></div>
       </div></div>
   </div></section>
 
   <!-- STEP 3 -->
   <section class="step" id="s3"><div class="card">
     <h2 data-i="s3h">Kesihatan mental</h2><p class="sub" data-i="s3s">Langkah 3 / 3 · Dua soalan ringkas. Jawapan anda dirahsiakan.</p>
-    <div class="q"><p data-i="w1">1.</p>
+    <div class="q"><p data-au="w1"><span data-i="w1">1.</span></p>
       <div class="seg grp" id="w1"><label class="opt yes"><input type="radio" name="w1" value="Y"><span data-i="yes">Ya</span></label><label class="opt no"><input type="radio" name="w1" value="N"><span data-i="no">Tidak</span></label></div></div>
-    <div class="q"><p data-i="w2">2.</p>
+    <div class="q"><p data-au="w2"><span data-i="w2">2.</span></p>
       <div class="seg grp" id="w2"><label class="opt yes"><input type="radio" name="w2" value="Y"><span data-i="yes">Ya</span></label><label class="opt no"><input type="radio" name="w2" value="N"><span data-i="no">Tidak</span></label></div></div>
-    <label class="consent" style="margin-top:6px"><input type="checkbox" id="consent"><span data-i="consent">PDPA</span></label>
+    <label class="consent" style="margin-top:6px" data-au="consent"><input type="checkbox" id="consent"><span data-i="consent">PDPA</span></label>
   </div></section>
 </div>
 
@@ -162,16 +166,18 @@
   <div class="metro" id="metro" aria-label="Laluan saringan anda">
     <div class="fill" id="mFill"></div><div class="train" id="mTrain" aria-hidden="true">🚆</div>
     <div class="stop done"><span class="dot">✓</span><div><b data-i="stn_reg">Pendaftaran</b><small data-i="stn_done">Selesai</small></div></div>
-    <div class="stop cur"><span class="dot">1</span><div><b data-i="stn1">Stesen 1</b><small data-i="stn1d">Ukur tinggi</small></div></div>
-    <div class="stop"><span class="dot">2</span><div><b data-i="stn2">Stesen 2</b><small data-i="stn2d">TD</small></div></div>
-    <div class="stop"><span class="dot">3</span><div><b data-i="stn3">Stesen 3</b><small data-i="stn3d">Dr</small></div></div>
+    <div class="stop cur"><span class="dot">1</span><div><b data-i="stn1">Stesen A</b><small data-i="stn1d">Ukur tinggi</small></div></div>
+    <div class="stop"><span class="dot">2</span><div><b data-i="stn2">Stesen B</b><small data-i="stn2d">TD</small></div></div>
+    <div class="stop"><span class="dot">3</span><div><b data-i="stn3">Stesen C</b><small data-i="stn3d">Dr</small></div></div>
   </div>
   <p id="ovMsg"></p>
+  <button class="rbtn" id="rBtn" onclick="openResult()"></button>
+  <p id="ovHold" style="font-size:12.5px;opacity:.85"></p>
   <button id="ovBtn" onclick="afterDone()">Daftar klien lain</button>
 </div>
 
 <script src="./ic-scan.js?v=3"></script>
-<script src="./nhsi-i18n.js?v=1"></script>
+<script src="./nhsi-i18n.js?v=2"></script>
 <script>
 /* >>> After deploying the NHSI Apps Script project, paste its exec URL here <<< */
 const NHSI_URL = 'https://script.google.com/macros/s/AKfycbx_L5ABNFjNvFB6jS8YnhenzTiz0buichOO7zQ6XdWbf_de66zLWC9mowXjuIHkNg7q/exec';
@@ -203,6 +209,7 @@ document.querySelectorAll('input[name=smoke],input[name=stype]').forEach(r => r.
 
 /* ---------- language ---------- */
 function applyLang(){
+  stopSpk();
   document.documentElement.lang = LANG === 'zh' ? 'zh-CN' : LANG; document.title = t('title');
   document.querySelectorAll('[data-i]').forEach(e => { e.innerHTML = t(e.getAttribute('data-i')); });
   document.querySelectorAll('[data-ph]').forEach(e => { e.placeholder = t(e.getAttribute('data-ph')); });
@@ -210,6 +217,7 @@ function applyLang(){
   document.querySelectorAll('.lang button').forEach(b => b.classList.toggle('on', b.getAttribute('data-l') === LANG));
   document.documentElement.style.setProperty('--here', JSON.stringify(t('stn_here')));
   if (STAFF) $('sub').textContent = t('staff_sub');
+  addSpk();
   $('nextBtn').textContent = step === 3 ? t('submit') : t('next');
   if ($('ov').classList.contains('on')) paintDone();
   const h = $('icHint'); if ($('ic').value.length === 12) $('ic').dispatchEvent(new Event('input'));
@@ -217,8 +225,29 @@ function applyLang(){
 document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => { LANG = b.getAttribute('data-l'); I.set(LANG); applyLang(); }));
 
 if (STAFF) { $('backBtn').style.display = 'block'; }
-applyLang();
 function goBack(){ location.href = './nhsi.html'; }
+
+/* ---------- audio (your mp3 folders ms / en / zh; falls back to the phone's own voice if a file is missing) ---------- */
+const BASE_AUDIO_URL = 'https://opdkktu.github.io/google-form-audio/';
+const AUDIO = { name:'question 1.mp3', phone:'question 2.mp3', email:'question 3.mp3', ic:'question 5.mp3', passport:'question 8.mp3',
+  hist:'nhsi-history.mp3', smokeQ:'nhsi-smoke.mp3', smokeWhat:'nhsi-smoketype.mp3', cig:'nhsi-cigs.mp3', vape:'nhsi-vape.mp3', years:'nhsi-years.mp3', w1:'nhsi-whooley1.mp3', w2:'nhsi-whooley2.mp3', consent:'nhsi-consent.mp3' };
+const player = new Audio(); let curSpk = null;
+function stopSpk(){ try { player.pause(); player.onerror = null; player.onended = null; } catch(e){} try { speechSynthesis.cancel(); } catch(e){} if (curSpk) curSpk.classList.remove('on'); curSpk = null; }
+function tts(text){
+  try { const u = new SpeechSynthesisUtterance(text); u.lang = LANG === 'zh' ? 'zh-CN' : LANG === 'en' ? 'en-US' : 'ms-MY'; u.onend = u.onerror = () => { if (curSpk) curSpk.classList.remove('on'); }; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+  catch(e){ if (curSpk) curSpk.classList.remove('on'); }
+}
+function speak(btn){
+  const was = curSpk === btn; stopSpk(); if (was) return;
+  const host = btn.parentElement, f = AUDIO[host.getAttribute('data-au')]; curSpk = btn; btn.classList.add('on');
+  const c = host.cloneNode(true); c.querySelectorAll('.spk,.req,.auto').forEach(e => e.remove()); const text = c.textContent.replace(/\s+/g, ' ').trim();
+  let fell = false; const fb = () => { if (fell) return; fell = true; tts(text); };
+  player.onerror = fb; player.onended = () => { btn.classList.remove('on'); curSpk = null; };
+  player.src = BASE_AUDIO_URL + LANG + '/' + f; player.play().catch(fb);
+}
+function addSpk(){
+  document.querySelectorAll('[data-au]').forEach(h => { let b = h.querySelector(':scope > .spk'); if (!b){ b = document.createElement('button'); b.type = 'button'; b.className = 'spk'; b.textContent = '🔊'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); speak(b); }); h.appendChild(b); } b.setAttribute('aria-label', t('listen')); b.title = t('listen'); });
+}
 
 /* ---------- IC logic ---------- */
 function parseIc(ic){
@@ -308,7 +337,7 @@ function val3(){
   return true;
 }
 function show(n){
-  step = n; [1,2,3].forEach(i => { $('s'+i).classList.toggle('on', i === n); $('p'+i).classList.toggle('on', i <= n); });
+  stopSpk(); step = n; [1,2,3].forEach(i => { $('s'+i).classList.toggle('on', i === n); $('p'+i).classList.toggle('on', i <= n); });
   $('prevBtn').style.display = n > 1 ? 'block' : 'none';
   $('nextBtn').textContent = n === 3 ? t('submit') : t('next');
   flash(''); window.scrollTo({ top:0, behavior:'smooth' });
@@ -342,7 +371,7 @@ async function submit(){
     clearTimeout(t); r = await res.json();
   } catch(e){ r = { ok:false, code: e.message === 'cfg' ? 'cfg' : 'net' }; }
   sending = false; b.disabled = false; b.textContent = t('submit');
-  if (r && r.ok){ lastId = r.id || ''; done(d.name, r.dup); return; }
+  if (r && r.ok){ lastId = r.id || ''; done(d.name, r.dup, r.pt); return; }
   if (r && (/expired/i.test(r.error || '') || r.code === 'QR_EXPIRED')) { toLogin(); return; }
   flash(errMsg(r)); if (navigator.vibrate) navigator.vibrate([80,60,80]);
 }
@@ -350,25 +379,68 @@ function errMsg(r){
   const c = r && r.code, map = { name:'e_name', pass:'e_pass', yob:'e_yob', gender:'e_gender', ic:'e_ic', phone:'e_phone', email:'e_email', smoke:'e_smoke', smoketype:'e_smoketype', smokeqty:'e_smokeqty', vapeqty:'e_vapeqty', smokeyears:'e_smokeyears', whooley:'e_whooley', busy:'e_busy', net:'e_net', cfg:'e_cfg' };
   return map[c] ? t(map[c]) : ((STAFF && r && r.error) || t('e_fail'));
 }
-let doneState = null;
+let doneState = null, PT = '', progN = -1, pollT = null, RT = '';
 function paintDone(){
   if (!doneState) return;
   $('ovName').textContent = (doneState.dup ? t('ok_dup') : t('ok_reg')) + ' · ' + (doneState.name || '').split(' ').slice(0, 3).join(' ');
-  $('ovMsg').innerHTML = STAFF ? t('ov_msg_staff') : t('ov_msg'); $('ovBtn').textContent = STAFF ? t('staff_next') : t('again');
+  const n = Math.max(0, progN), L = ['A', 'B', 'C'];
+  $('ovMsg').innerHTML = STAFF ? t('ov_msg_staff') : n >= 3 ? t('p_done') : n === 0 ? t('ov_msg') : t('p_next').replace('{s}', L[n]);
+  $('ovHold').textContent = (!STAFF && PT && n < 3) ? t('p_hold') : '';
+  $('ovBtn').textContent = STAFF ? t('staff_next') : t('again');
+  const rb = $('rBtn'); rb.textContent = '📄 ' + t('p_result'); rb.classList.toggle('on', !STAFF && n >= 3 && !!RT);
 }
-function done(name, dup){
-  doneState = { name: name, dup: dup }; paintDone();
-  const ov = $('ov'); ov.classList.add('on'); ov.scrollTop = 0;
-  // the train rolls from "Pendaftaran" to the next stop (Stesen 1)
-  const stops = ov.querySelectorAll('.stop'), top1 = stops[0].offsetTop + 6, top2 = stops[1].offsetTop + 6;
-  const tr = $('mTrain'), fl = $('mFill'); tr.style.transition = 'none'; tr.style.top = top1 + 'px'; fl.style.transition = 'none'; fl.style.height = '0px'; void tr.offsetWidth;
-  tr.style.transition = ''; fl.style.transition = ''; tr.style.top = top2 + 'px'; fl.style.height = (stops[1].offsetTop - stops[0].offsetTop) + 'px';
+/* train position: n = stations finished (0..3). Stops: 0 registration, 1 A, 2 B, 3 C */
+function paintTrain(n, instant){
+  const stops = $('ov').querySelectorAll('.stop'), tr = $('mTrain'), fl = $('mFill'), nx = Math.min(3, n + 1);
+  stops.forEach((st, i) => { st.classList.toggle('done', i === 0 || n >= i); st.classList.toggle('cur', n < 3 && i === n + 1); });
+  const ph = stops[0].querySelector('.dot'); void ph;
+  if (instant){ tr.style.transition = 'none'; fl.style.transition = 'none'; }
+  tr.style.top = (stops[nx].offsetTop + 6) + 'px'; fl.style.height = (stops[nx].offsetTop - stops[0].offsetTop) + 'px';
+  if (instant){ void tr.offsetWidth; tr.style.transition = ''; fl.style.transition = ''; }
+}
+function setProgress(n, instant){
+  const first = progN < 0; if (n === progN) return;
+  progN = n; paintTrain(n, instant && first); paintDone();
+  stops2done(n);
+}
+function stops2done(n){ $('ov').querySelectorAll('.stop .dot').forEach((d, i) => { d.textContent = (i === 0 || n >= i) ? '✓' : String(i === 1 ? 'A' : i === 2 ? 'B' : 'C'); }); }
+async function pollProgress(){
+  if (!PT || STAFF) return;
+  let r; try { const res = await fetch(NHSI_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'nhsiProgress', p: PT }) }); r = await res.json(); } catch(e){ r = null; }
+  if (r && r.ok){
+    const n = r.c ? 3 : r.b ? 2 : r.a ? 1 : 0; if (r.rt) RT = r.rt; setProgress(n);
+    if (n >= 3 && RT){ if (navigator.vibrate) navigator.vibrate([100, 60, 100]); return; }   // finished — stop polling
+  } else if (r && (r.code === 'bad' || r.code === 'expired')){ try { localStorage.removeItem('nhsi_pt'); } catch(e){} return; }
+  pollT = setTimeout(pollProgress, document.hidden ? 20000 : 7000);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && PT && progN < 3){ clearTimeout(pollT); pollProgress(); } });
+function openResult(){ if (RT) location.href = './nhsi-result.html?t=' + RT; }
+function startProgress(pt, name){
+  PT = pt; progN = -1; RT = '';
+  try { localStorage.setItem('nhsi_pt', JSON.stringify({ pt: pt, name: name, t: Date.now() })); } catch(e){}
+  clearTimeout(pollT); pollT = setTimeout(pollProgress, 4000);
+}
+function done(name, dup, pt){
+  doneState = { name: name, dup: dup }; if (pt) startProgress(pt, name); else { PT = ''; }
+  const ov = $('ov'); ov.classList.add('on'); ov.scrollTop = 0; progN = -1; paintDone();
+  // the train rolls from "Pendaftaran" to the first stop (Stesen A)
+  const stops = ov.querySelectorAll('.stop'), tr = $('mTrain'), fl = $('mFill');
+  tr.style.transition = 'none'; tr.style.top = (stops[0].offsetTop + 6) + 'px'; fl.style.transition = 'none'; fl.style.height = '0px'; void tr.offsetWidth;
+  tr.style.transition = ''; fl.style.transition = ''; setProgress(0);
   if (navigator.vibrate) navigator.vibrate(60);
 }
+/* a client who closed/reloaded the page comes back to the same train screen */
+(function resume(){
+  if (STAFF) return; let o = null; try { o = JSON.parse(localStorage.getItem('nhsi_pt') || 'null'); } catch(e){}
+  if (!o || !o.pt || Date.now() - o.t > 2 * 86400000) return;
+  doneState = { name: o.name, dup: false }; PT = o.pt; $('ov').classList.add('on'); paintDone(); setTimeout(() => { paintTrain(0, true); pollProgress(); }, 60);
+})();
 function afterDone(){
   if (STAFF && lastId) { location.href = './nhsi.html?s1=' + encodeURIComponent(lastId); return; }
+  try { localStorage.removeItem('nhsi_pt'); } catch(e){}
   location.reload();   // clears the form for the next client
 }
+applyLang();
 </script>
 </body>
 </html>
