@@ -48,7 +48,8 @@
     return s;
   }
 
-  function capture(video, loc, preview) {
+  function capture(video, loc, preview, opts) {
+    opts = opts || {};
     var vw = video.videoWidth || 480, vh = video.videoHeight || 480;
     var s = Math.min(vw, vh), sx = (vw - s) / 2, sy = (vh - s) / 2;
 
@@ -66,7 +67,9 @@
     // ---- stamp ----
     var fs = Math.max(11, Math.round(out * 0.036));
     var cur = current(); lastCode = cur;
-    var lines = [when(), where(loc), 'KOD: ' + (cur.code || '------')];
+    var manual = !!opts.manual, RED = '#d00000';
+    var lines = manual ? [when(), where(loc), String(opts.name || '').toUpperCase()] : [when(), where(loc), 'KOD: ' + (cur.code || '------')];
+    if (manual) lastCode = { code: '', w: 0 };
     ctx.font = '600 ' + fs + 'px Arial, Helvetica, sans-serif';
     ctx.textBaseline = 'alphabetic';
     var w = 0;
@@ -77,13 +80,22 @@
     var bx = CORNER === 'right' ? out - boxW - margin : margin;
     var by = out - boxH - margin;
 
-    ctx.fillStyle = 'rgba(0,0,0,0.58)';
+    ctx.fillStyle = manual ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.58)';
     ctx.fillRect(bx, by, boxW, boxH);
-    ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'left';
+    ctx.fillStyle = manual ? RED : '#ffffff';
     ctx.fillText(lines[0], bx + padX, by + padY + fs - Math.round(fs * 0.15));
     ctx.fillText(lines[1], bx + padX, by + padY + fs * 2 + gap - Math.round(fs * 0.15));
-    ctx.fillStyle = '#ffe066'; ctx.fillText(lines[2], bx + padX, by + padY + fs * 3 + gap * 2 - Math.round(fs * 0.15));
+    ctx.fillStyle = manual ? RED : '#ffe066'; ctx.fillText(lines[2], bx + padX, by + padY + fs * 3 + gap * 2 - Math.round(fs * 0.15));
+    if (manual) {                                   // manual capture mark: two red strikes "//" at the top-left (no security code)
+      var m = Math.round(out * 0.03), h = Math.round(out * 0.09), lw = Math.max(3, Math.round(out * 0.014));
+      ctx.lineCap = 'round';
+      [0, 1].forEach(function (k) {
+        var x = m + k * Math.round(out * 0.045);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = lw + 3; ctx.beginPath(); ctx.moveTo(x, m + h); ctx.lineTo(x + Math.round(h * 0.45), m); ctx.stroke();
+        ctx.strokeStyle = RED; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(x, m + h); ctx.lineTo(x + Math.round(h * 0.45), m); ctx.stroke();
+      });
+    }
 
     return c.toDataURL('image/jpeg', QUALITY);
   }
