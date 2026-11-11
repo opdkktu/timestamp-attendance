@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F4530">
+<title>ICOPE · Saringan Warga Emas</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<style>
+  :root{ --bg:#EEF3F1; --card:#fff; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB; --onacc:#0F4530;
+    --dg:#C0392B; --dgl:#FBEAE7; --warn:#B45309; --warnl:#FFF4D6; --ok:#1f9a57; --okl:#E3F4EA; }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --onacc:#A8EBCB;
+    --dg:#FF9A8D; --dgl:#3a1d19; --warn:#F0B35A; --warnl:#3a2c14; --ok:#6fd49a; --okl:#17352B; } }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; } html,body{ margin:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:Inter,'Segoe UI',system-ui,sans-serif; min-height:100vh; padding-bottom:calc(110px + env(safe-area-inset-bottom)); line-height:1.4; }
+  .top{ position:sticky; top:0; z-index:20; padding:calc(10px + env(safe-area-inset-top)) 14px 12px; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; box-shadow:0 6px 18px -10px rgba(0,0,0,.5); }
+  .top .row{ max-width:760px; margin:0 auto; display:flex; align-items:center; gap:10px; }
+  .back{ width:40px; height:40px; border:none; border-radius:12px; background:rgba(255,255,255,.16); color:#fff; font-size:20px; cursor:pointer; }
+  .ttl{ flex:1; font-weight:800; font-size:17px; line-height:1.15; } .ttl small{ display:block; font-weight:500; font-size:11.5px; opacity:.85; }
+  .prog{ max-width:760px; margin:10px auto 0; height:5px; border-radius:99px; background:rgba(255,255,255,.28); overflow:hidden; } .prog i{ display:block; height:100%; width:0; background:#fff; transition:width .35s; }
+  .wrap{ max-width:760px; margin:0 auto; padding:14px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; margin-bottom:12px; box-shadow:0 8px 22px -16px rgba(0,0,0,.35); }
+  h2{ margin:0 0 4px; font-size:18px; } .sub{ margin:0 0 12px; color:var(--mut); font-size:13px; }
+  label,.lb{ display:block; font-size:12.5px; font-weight:700; margin:12px 0 5px; } label small,.lb small{ font-weight:500; color:var(--mut); } .req{ color:var(--dg); }
+  input[type=text],input[type=tel],input[type=number],input[type=date],select,textarea{ width:100%; border-radius:14px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 16px Inter,system-ui,sans-serif; padding:0 14px; height:50px; outline:none; appearance:none; -webkit-appearance:none; }
+  textarea{ height:auto; min-height:84px; padding:12px 14px; resize:vertical; font-weight:500; }
+  input:focus,select:focus,textarea:focus{ border-color:var(--acc); box-shadow:0 0 0 4px rgba(26,107,74,.16); }
+  .bad{ border-color:var(--dg)!important; box-shadow:0 0 0 4px rgba(192,57,43,.14); animation:shake .3s; } @keyframes shake{ 25%{ transform:translateX(-5px); } 75%{ transform:translateX(5px); } }
+  .mono{ font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace; letter-spacing:.1em; } .hint{ font-size:12px; color:var(--mut); margin-top:5px; min-height:16px; } .hint.err{ color:var(--dg); font-weight:700; }
+  .g2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; } .g3{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .srch{ display:flex; gap:8px; } .srch input{ flex:1; min-width:0; height:54px; font-size:17px; }
+  .btn{ min-width:92px; height:54px; border-radius:14px; border:none; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; font:800 15px Inter,sans-serif; cursor:pointer; padding:0 14px; } .btn:disabled{ opacity:.55; }
+  .btn2{ height:46px; border-radius:13px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 13.5px Inter,sans-serif; padding:0 14px; cursor:pointer; }
+  .link{ background:none; border:none; color:var(--onacc); font-weight:800; font-size:13px; padding:8px 0; cursor:pointer; text-decoration:underline; }
+  .seg{ display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:8px; } .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .opt{ position:relative; } .opt input{ position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer; margin:0; }
+  .opt span{ display:flex; align-items:center; justify-content:center; text-align:center; min-height:48px; padding:6px 12px; border-radius:14px; border:1.5px solid var(--line); background:var(--card); font-weight:700; font-size:14px; transition:all .15s; }
+  .opt input:checked + span{ border-color:var(--acc); background:var(--accl); color:var(--onacc); box-shadow:0 0 0 3px rgba(26,107,74,.14); }
+  .opt.yes input:checked + span{ border-color:var(--dg); background:var(--dgl); color:var(--dg); } .opt.sm span{ min-height:42px; padding:4px 10px; font-size:13.5px; }
+  .opt input:focus-visible + span{ outline:3px solid var(--acc); outline-offset:2px; }
+  .pt{ border:1.5px solid var(--line); border-radius:16px; padding:12px 14px; display:flex; gap:12px; align-items:center; margin-top:10px; background:var(--card); }
+  .pt .mid{ flex:1; min-width:0; } .pt b{ display:block; font-size:15px; word-break:break-word; } .pt small{ color:var(--mut); font-size:12.5px; }
+  .pill{ display:inline-block; padding:3px 10px; border-radius:99px; font-size:11.5px; font-weight:800; } .pill.l0{ background:var(--okl); color:var(--ok); } .pill.l2{ background:var(--dgl); color:var(--dg); } .pill.l1{ background:var(--warnl); color:var(--warn); } .pill.na{ background:var(--accl); color:var(--mut); }
+  .dots{ display:flex; gap:4px; margin-top:6px; } .dots i{ width:10px; height:10px; border-radius:50%; background:var(--line); } .dots i.l0{ background:var(--ok); } .dots i.l2{ background:var(--dg); } .dots i.na{ background:var(--mut); opacity:.5; }
+  .empty{ text-align:center; color:var(--mut); padding:22px 10px; font-size:14px; }
+  .dom{ scroll-margin-top:90px; } .dom .hd{ display:flex; align-items:center; gap:10px; margin-bottom:6px; } .dom .hd .ic{ font-size:24px; } .dom .hd b{ flex:1; font-size:16px; }
+  .qtxt{ font-size:14px; margin:10px 0 6px; font-weight:600; } .qtxt small{ color:var(--mut); font-weight:500; display:block; }
+  .sug{ margin-top:12px; padding:10px 12px; border-radius:14px; background:var(--bg); font-size:13px; } .sug b{ display:block; margin-bottom:2px; } .sug ul{ margin:4px 0 0; padding-left:18px; } .sug .nt{ color:var(--mut); }
+  .sug.l0{ background:var(--okl); } .sug.l2{ background:var(--dgl); }
+  .conf{ margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px; } .conf.three{ grid-template-columns:1fr 1fr 1fr; }
+  .conf button{ min-height:48px; border-radius:14px; border:2px dashed var(--line); background:var(--card); color:var(--ink); font:800 13.5px Inter,sans-serif; cursor:pointer; padding:6px 8px; }
+  .conf button.sg{ border-color:var(--acc); } .conf button.on{ border-style:solid; color:#fff; } .conf button.on.l0{ background:var(--ok); border-color:var(--ok); color:#06210f; } .conf button.on.l2{ background:var(--dg); border-color:var(--dg); color:#2a0500; } .conf button.on.na{ background:var(--mut); border-color:var(--mut); color:#111; }
+  .cfd{ font-size:12px; color:var(--mut); margin-top:6px; }
+  .bar{ position:fixed; left:0; right:0; bottom:0; z-index:25; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,transparent,var(--bg) 30%); }
+  .bar .in{ max-width:760px; margin:0 auto; display:flex; gap:10px; align-items:center; position:relative; } .bar .btn{ flex:1; height:56px; font-size:16px; } .status{ position:absolute; left:0; right:0; top:-26px; text-align:center; font-weight:700; font-size:13px; color:var(--dg); }
+  .ovr{ padding:14px; border-radius:16px; font-weight:800; font-size:16px; text-align:center; margin:4px 0 6px; } .ovr.l0{ background:var(--okl); color:var(--ok); } .ovr.l2{ background:var(--dgl); color:var(--dg); } .ovr.na{ background:var(--bg); color:var(--mut); }
+  .toast{ position:fixed; left:50%; bottom:100px; transform:translate(-50%,20px); background:var(--ink); color:var(--bg); padding:12px 18px; border-radius:99px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:all .25s; z-index:50; max-width:90vw; } .toast.on{ opacity:1; transform:translate(-50%,0); }
+  .view{ display:none; } .view.on{ display:block; } [hidden]{ display:none!important; }
+  .spin{ width:22px; height:22px; border:3px solid var(--line); border-top-color:var(--acc); border-radius:50%; animation:sp .8s linear infinite; margin:0 auto 8px; } @keyframes sp{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+</head>
+<body>
+<div class="top"><div class="row"><button class="back" id="backBtn" onclick="goBack()" aria-label="Kembali">←</button>
+  <div class="ttl">ICOPE · Saringan Warga Emas<small id="sub">Klinik Kesihatan Ayer Hitam</small></div></div>
+  <div class="prog" id="progW" hidden><i id="prog"></i></div></div>
+
+<div class="wrap">
+<!-- HOME -->
+<section class="view on" id="vHome">
+  <div class="card"><h2>Cari pesakit</h2><p class="sub">Taip <b>IC</b>, no. giliran atau nama (min. 3 aksara). Pesakit yang didaftarkan <b>hari ini</b> di PRIMA dipaparkan.</p>
+    <form class="srch" id="sf" autocomplete="off"><input type="text" id="q" inputmode="search" enterkeyhint="search" maxlength="40" placeholder="cth. 570102025533" aria-label="Carian pesakit"><button class="btn" id="go" type="submit">Cari</button></form>
+    <div id="res"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="btn2" onclick="newForm(null)">✍ Tiada dalam senarai — isi manual</button><button class="btn2" onclick="scanFirst()">📷 Imbas MyKad</button></div></div>
+  <div class="card"><h2>Saringan yang telah dibuat</h2><div class="g2" style="margin:8px 0"><input type="date" id="ld" aria-label="Tarikh"><input type="text" id="lq" placeholder="Cari nama / IC" aria-label="Tapis senarai"></div><div id="list"><div class="empty"><div class="spin"></div>Memuatkan…</div></div></div>
+</section>
+
+<!-- FORM -->
+<section class="view" id="vForm">
+  <div class="card" id="cInfo"><h2>Maklumat individu</h2><p class="sub" id="infoSub">Isi atau semak maklumat pesakit.</p>
+    <label for="serial">No. siri borang <small>(jika ada pada kertas)</small></label><input type="text" id="serial" maxlength="20" inputmode="numeric" placeholder="cth 01892">
+    <label for="name">Nama penuh <span class="req">*</span></label><input type="text" id="name" autocomplete="off" autocapitalize="characters" placeholder="NAMA SEPERTI DALAM IC">
+    <div id="icBox"><label for="ic">No. kad pengenalan <span class="req">*</span> <small>12 digit, tanpa “-”</small></label><input type="text" id="ic" class="mono" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="000000000000"><div class="hint" id="icHint"></div>
+      <button type="button" class="link" onclick="setPass(true)">Pemegang pasport (tiada IC Malaysia)</button></div>
+    <div id="passBox" hidden><label for="passport">No. pasport <span class="req">*</span></label><input type="text" id="passport" maxlength="20" autocapitalize="characters"><button type="button" class="link" onclick="setPass(false)">← Guna No. IC Malaysia</button></div>
+    <div class="g2"><div><label for="phone">No. telefon</label><input type="tel" id="phone" class="mono" inputmode="numeric" maxlength="11" value="01" autocomplete="off"></div>
+      <div><label for="age">Umur</label><input type="number" id="age" inputmode="numeric" min="0" max="130"></div></div>
+    <div class="lb">Jantina</div><div class="seg" id="gSeg"><label class="opt"><input type="radio" name="gender" value="Lelaki"><span>Lelaki</span></label><label class="opt"><input type="radio" name="gender" value="Perempuan"><span>Perempuan</span></label></div>
+    <label for="addr">Alamat <small>(tidak wajib)</small></label><textarea id="addr" maxlength="200" rows="2"></textarea>
+    <div class="lb">Sejarah kesihatan <small>(pilih semua yang berkenaan)</small></div><div class="chips" id="hist"></div>
+    <label for="histOther" style="margin-top:10px">Lain-lain <small>(tidak wajib)</small></label><input type="text" id="histOther" maxlength="100">
+  </div>
+  <div id="doms"></div>
+  <div class="card"><h2>Keputusan saringan</h2><p class="sub">Dikira daripada keputusan domain yang telah anda sahkan.</p><div class="ovr na" id="ovr">Sahkan semua domain dahulu</div>
+    <label for="cmt">Komen / catatan <small>(rujukan & temu janji boleh ditulis di sini)</small></label><textarea id="cmt" maxlength="1500" rows="3"></textarea>
+    <div class="cfd" id="meta"></div></div>
+</section>
+</div>
+
+<div class="bar" id="bar" hidden><div class="in"><div class="status" id="status" role="status" aria-live="polite"></div>
+  <button class="btn2" id="prn" onclick="printRec()" style="height:56px" hidden>🖨</button><button class="btn2" id="allBtn" onclick="confirmAll()" style="height:56px" hidden>✓ Sahkan semua cadangan</button><button class="btn" id="save" onclick="save()">Simpan saringan</button></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="./ic-scan.js?v=3"></script>
+<script src="./icope-rules.js?v=1"></script>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const token = sessionStorage.getItem('kkah_session_token');
+const $ = id => document.getElementById(id), D = ICOPE;
+const VIA_QR = sessionStorage.getItem('kkah_via') === 'qr', DESKTOP = !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+function toLogin(){ location.replace((VIA_QR || DESKTOP) ? './qr-login.html?next=icope.html' : './login.html'); }
+if (!token) toLogin();
+const HIST = ['Kencing manis','Darah tinggi','Kolesterol tinggi','Penyakit jantung','Strok','Penyakit buah pinggang','Asma / COPD','Kanser','Demensia','Parkinson','Sakit sendi / artritis','Osteoporosis','Katarak / glaukoma','Kemurungan','Tiada'];
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove('on'), 3200); }
+function api(body, ms){ const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms || 30000);
+  return fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)), signal: ctl.signal }).then(r => r.json()).finally(() => clearTimeout(t)); }
+function expired(r){ return r && /expired|tidak tersedia pada log masuk/i.test(r.error || ''); }
+function fmtIc(s){ const d = String(s || '').replace(/\D/g, ''); return d.length === 12 ? d.slice(0, 6) + '-' + d.slice(6, 8) + '-' + d.slice(8) : (s || ''); }
+const today = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+
+let A = {}, R = {}, REC = null, view = 'home', passMode = false, source = 'MANUAL', patients = [], listRows = [], genderAuto = true, ageAuto = true, saving = false;
+
+/* ---------- navigation ---------- */
+function show(v){ view = v; $('vHome').classList.toggle('on', v === 'home'); $('vForm').classList.toggle('on', v === 'form'); $('bar').hidden = v !== 'form'; $('progW').hidden = v !== 'form';
+  $('sub').textContent = v === 'form' ? (REC ? 'Kemas kini saringan' : 'Saringan baharu') : 'Klinik Kesihatan Ayer Hitam'; window.scrollTo({ top:0 }); }
+function goBack(){ if (view === 'form'){ if (dirty && !confirm('Keluar tanpa menyimpan?')) return; show('home'); loadList(); return; } if (VIA_QR) return logoutQr(); location.href = './dashboard.html'; }
+async function logoutQr(){ if (!confirm('Log keluar laptop ini?')) return; try { await api({ action:'qrLogout' }, 8000); } catch(e){} try { sessionStorage.clear(); } catch(e){} location.replace('./qr-login.html?next=icope.html'); }
+setInterval(() => { if (VIA_QR && !document.hidden) api({ action:'qrPing' }, 8000).catch(() => {}); }, 240000);
+let dirty = false;
+
+/* ---------- home: PRIMA search + list ---------- */
+$('sf').addEventListener('submit', async e => {
+  e.preventDefault(); const q = $('q').value.trim(); if (q.length < 3){ toast('Masukkan sekurang-kurangnya 3 aksara'); return; }
+  $('go').disabled = true; $('res').innerHTML = '<div class="empty"><div class="spin"></div>Mencari…</div>';
+  let r; try { r = await api({ action:'icopeFind', q }, 30000); } catch(x){ r = { ok:false, error:'Sambungan gagal. Cuba lagi.' }; }
+  $('go').disabled = false; if (expired(r)) return toLogin();
+  if (!r.ok){ $('res').innerHTML = '<div class="empty">' + esc(r.error || 'Carian gagal') + '</div>'; return; }
+  patients = r.rows || [];
+  $('res').innerHTML = patients.length ? patients.map((p, i) => '<div class="pt"><div class="mid"><b>' + esc(p.nama) + '</b><small>' + esc(p.ic ? fmtIc(p.ic) : (p.passport || '')) + (p.queueNum ? ' · No. ' + esc(p.queueNum) : '') + (p.klinik ? ' · ' + esc(p.klinik) : '') + '</small></div><button class="btn" style="height:46px;min-width:80px" data-i="' + i + '">Pilih ›</button></div>').join('')
+    : '<div class="empty">Tiada pesakit sepadan hari ini.<br>Semak ejaan, atau isi secara manual.</div>';
+});
+$('res').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) newForm(patients[+b.dataset.i]); });
+async function scanFirst(){ newForm(null); await scanIc(); }
+$('ld').value = today(); $('ld').addEventListener('change', loadList); $('lq').addEventListener('input', drawList);
+async function loadList(){
+  $('list').innerHTML = '<div class="empty"><div class="spin"></div>Memuatkan…</div>';
+  let r; try { r = await api({ action:'icopeList', date: $('ld').value || today() }, 30000); } catch(x){ r = { ok:false, error:'Sambungan gagal.' }; }
+  if (expired(r)) return toLogin();
+  if (!r.ok){ $('list').innerHTML = '<div class="empty">' + esc(r.error || 'Gagal memuatkan') + '</div>'; return; }
+  listRows = r.rows || []; drawList();
+}
+function drawList(){
+  const q = $('lq').value.trim().toLowerCase().replace(/[-\s]/g, ''), rows = listRows.filter(x => !q || (x.name + x.ic + x.passport).toLowerCase().replace(/[-\s]/g, '').indexOf(q) !== -1);
+  const lanjut = listRows.filter(x => x.overall === 'LANJUT').length;
+  $('list').innerHTML = (listRows.length ? '<div class="sub">' + listRows.length + ' saringan · <b>' + lanjut + '</b> perlu penilaian lanjut</div>' : '') +
+    (rows.length ? rows.map(x => '<div class="pt" role="button" tabindex="0" data-o="' + esc(x.id) + '" style="cursor:pointer"><div class="mid"><b>' + esc(x.name) + '</b><small>' + esc(x.age) + ' th · ' + esc(x.ic ? fmtIc(x.ic) : x.passport) + ' · ' + esc(x.time) + ' · ' + esc(x.by) + '</small><div class="dots">' +
+      D.DOMAINS.map(d => '<i class="' + (x.res[d[0]] === 'LULUS' ? 'l0' : x.res[d[0]] === 'LANJUT' ? 'l2' : 'na') + '" title="' + esc(d[1]) + '"></i>').join('') + '</div></div><span class="pill ' + (x.overall === 'LANJUT' ? 'l2' : 'l0') + '">' + (x.overall === 'LANJUT' ? 'Lanjut' : 'Lulus') + '</span></div>').join('')
+      : '<div class="empty">' + (listRows.length ? 'Tiada padanan.' : 'Belum ada saringan pada tarikh ini.') + '</div>');
+}
+$('list').addEventListener('click', e => { const b = e.target.closest('[data-o]'); if (b) openRec(b.dataset.o); });
+$('list').addEventListener('keydown', e => { if (e.key === 'Enter'){ const b = e.target.closest('[data-o]'); if (b) openRec(b.dataset.o); } });
+async function openRec(id){
+  toast('Membuka…'); let r; try { r = await api({ action:'icopeGet', id }, 30000); } catch(x){ r = { ok:false, error:'Sambungan gagal.' }; }
+  if (expired(r)) return toLogin(); if (!r.ok) return toast(r.error || 'Gagal membuka');
+  REC = r.rec; loadRec(r.rec);
+}
+
+/* ---------- form: fields ---------- */
+$('hist').innerHTML = HIST.map(h => '<label class="opt sm"><input type="checkbox" name="hist" value="' + h + '"><span>' + h + '</span></label>').join('');
+document.querySelectorAll('input[name=hist]').forEach(cb => cb.addEventListener('change', () => {
+  if (cb.value === 'Tiada' && cb.checked) document.querySelectorAll('input[name=hist]').forEach(o => { if (o !== cb) o.checked = false; });
+  else if (cb.checked) document.querySelector('input[name=hist][value="Tiada"]').checked = false; dirty = true; }));
+function parseIc(ic){ if (!/^\d{12}$/.test(ic)) return null; const yy = +ic.slice(0,2), mm = +ic.slice(2,4), dd = +ic.slice(4,6), now = new Date(); let yr = 2000 + yy; if (new Date(yr, mm-1, dd) > now) yr = 1900 + yy;
+  const dt = new Date(yr, mm-1, dd); if (dt.getMonth() !== mm-1 || dt.getDate() !== dd) return null; let age = now.getFullYear() - yr; if (now < new Date(now.getFullYear(), mm-1, dd)) age--; return { yob: yr, age: Math.max(0, age), gender: (+ic.slice(-1)) % 2 ? 'Lelaki' : 'Perempuan' }; }
+function setGender(g){ document.querySelectorAll('input[name=gender]').forEach(r => r.checked = r.value === g); }
+$('name').addEventListener('input', e => { const p = e.target.selectionStart; e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9 '\/.@\-]/g, ''); try { e.target.setSelectionRange(p, p); } catch(x){} dirty = true; });
+$('ic').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 12); dirty = true; const v = e.target.value, h = $('icHint'); h.className = 'hint';
+  if (v.length < 12){ h.textContent = v.length ? v.length + ' / 12 digit' : ''; return; } const p = parseIc(v);
+  if (!p){ h.textContent = 'No. IC tidak sah — semak tarikh lahir.'; h.className = 'hint err'; return; }
+  h.innerHTML = 'Lahir ' + p.yob + ' · <b>' + p.gender + '</b> · ' + p.age + ' tahun'; setGender(p.gender); $('age').value = p.age; if (p.age < 60) h.innerHTML += ' · <span style="color:var(--warn)">umur &lt; 60 tahun</span>'; });
+$('passport').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); dirty = true; });
+function setPass(on){ passMode = on; $('icBox').hidden = on; $('passBox').hidden = !on; $('icHint').textContent = ''; setTimeout(() => (on ? $('passport') : $('ic')).focus(), 50); }
+const ph = $('phone'); ph.addEventListener('input', () => { let d = ph.value.replace(/\D/g, ''); if (!d.startsWith('01')) d = '01' + d.replace(/^0+/, '').replace(/^1/, ''); ph.value = d.slice(0, 11); dirty = true; });
+ph.addEventListener('keydown', e => { if (e.key === 'Backspace' && ph.value.length <= 2) e.preventDefault(); });
+['serial', 'addr', 'histOther', 'cmt', 'age'].forEach(id => $(id).addEventListener('input', () => { dirty = true; }));
+async function scanIc(){
+  if (!window.SiagaIcScan){ toast('Pengimbas tidak tersedia pada peranti ini.'); return; }
+  let r; try { r = await SiagaIcScan.open({}); } catch(e){ toast('Kamera tidak dapat dibuka. Sila taip sendiri.'); return; } if (!r) return;
+  if (passMode) setPass(false); if (r.name){ $('name').value = r.name.toUpperCase(); $('name').dispatchEvent(new Event('input')); } if (r.ic){ $('ic').value = r.ic; $('ic').dispatchEvent(new Event('input')); }
+}
+$('infoSub').insertAdjacentHTML('afterend', '<button class="btn2" type="button" onclick="scanIc()" style="width:100%;margin-bottom:6px">📷 Imbas MyKad (isi nama &amp; IC automatik)</button>');
+
+/* ---------- domains UI ---------- */
+const yn = (p, y, n, opt) => '<div class="seg" role="radiogroup">' + [['Y', y || 'Ya', 'yes'], ['N', n || 'Tidak', '']].map(o => '<label class="opt ' + (opt && opt.flip ? (o[0] === 'Y' ? '' : 'yes') : o[2]) + '"><input type="radio" name="' + p + '" data-p="' + p + '" value="' + o[0] + '"><span>' + o[1] + '</span></label>').join('') + '</div>';
+const okbad = p => yn(p, '✓ Betul', '✗ Salah', { flip:true });
+const chipRow = (p, arr) => '<div class="chips">' + arr.map(v => '<label class="opt sm"><input type="radio" name="' + p + '" data-p="' + p + '" value="' + esc(v) + '"><span>' + esc(v) + '</span></label>').join('') + '</div>';
+function domHtml(k){
+  const d = D.DOMAINS.filter(x => x[0] === k)[0], q = (t, s) => '<div class="qtxt">' + t + (s ? '<small>' + s + '</small>' : '') + '</div>'; let b = '';
+  if (k === 'cog'){
+    b += q('Adakah anda mempunyai masalah ingatan atau orientasi (seperti tidak tahu di mana anda berada atau hari ini hari apa)?') + yn('cog.q');
+    b += q('Orientasi masa & ruang', 'Minta pesakit nyatakan tarikh, bulan, tahun, hari, dan di mana mereka sekarang.') + D.ORI.map(o => '<div class="g2" style="align-items:center;margin-top:6px"><b style="text-transform:capitalize">' + o + '</b>' + okbad('cog.ori.' + o) + '</div>').join('') + '<button type="button" class="link" data-all="cog.ori">Semua betul</button>';
+    b += q('Ingat semula 3 perkataan', 'Sebut “bunga, pintu, nasi”, kemudian minta diulang selepas beberapa minit.') + D.WORDS.map(o => '<div class="g2" style="align-items:center;margin-top:6px"><b style="text-transform:capitalize">' + o + '</b>' + yn('cog.rec.' + o, '✓ Ingat', '✗ Lupa', { flip:true }) + '</div>').join('') + '<button type="button" class="link" data-all="cog.rec">Ingat semua</button>';
+  } else if (k === 'mob'){
+    b += q('Chair Rise Test', 'Bangun dari kerusi 5 kali tanpa menggunakan tangan. Berjaya dalam masa 14 saat?') + yn('mob.ok', '✓ Berjaya (≤14 s)', '✗ Tidak berjaya', { flip:true }) + '<label for="mobSec">Masa diambil <small>(saat, tidak wajib)</small></label><input type="number" id="mobSec" data-p="mob.sec" inputmode="decimal" min="0" max="300" step="0.1" placeholder="cth 12.5">';
+  } else if (k === 'nut'){
+    b += q('Penurunan berat badan', 'Kehilangan lebih dari 3 kg dalam 3 bulan terakhir tanpa disengajakan?') + yn('nut.loss') + q('Hilang selera makan', 'Adakah anda mengalami kehilangan selera makan?') + yn('nut.appetite');
+  } else if (k === 'vis'){
+    b += q('Adakah anda mempunyai masalah mata (kabur, sakit, ketidakselesaan) atau menghidap diabetes / hipertensi / menggunakan steroid atau ubat mata?') + yn('vis.q');
+    b += q('Memakai cermin mata semasa ujian?') + yn('vis.glasses');
+    b += q('Penglihatan jarak jauh — mata KANAN', 'Carta WHO 6 meter. Tanpa pinhole dahulu, kemudian dengan pinhole.') + '<div class="lb">Kanan · tanpa pinhole <span class="req">*</span></div>' + chipRow('vis.ru', D.SNELLEN) + '<div class="lb">Kanan · dengan pinhole</div>' + chipRow('vis.rp', D.SNELLEN);
+    b += q('Penglihatan jarak jauh — mata KIRI') + '<div class="lb">Kiri · tanpa pinhole <span class="req">*</span></div>' + chipRow('vis.lu', D.SNELLEN) + '<div class="lb">Kiri · dengan pinhole</div>' + chipRow('vis.lp', D.SNELLEN);
+    b += q('Penglihatan jarak dekat', 'Kedua-dua mata, kad N (lulus: N6 atau lebih baik).') + chipRow('vis.near', D.NEAR);
+  } else if (k === 'hear'){
+    b += q('Adakah anda mempunyai masalah pendengaran? (Bagi yang memakai alat bantu dengar, jawab dengan alat bantu dengar.)') + yn('hear.q');
+    b += q('Kaedah ujian') + chipRow('hear.method', ['Ujian bisikan', 'Audiometri saringan', 'Digit-triplet-dalam-bunyi']) + q('Keputusan ujian pendengaran') + yn('hear.res', '✓ Lulus', '✗ Gagal', { flip:true }).replace('value="Y"', 'value="LULUS"').replace('value="N"', 'value="GAGAL"');
+  } else if (k === 'dep'){
+    b += q('Dalam tempoh 2 minggu terakhir, adakah anda mengalami:') + '<div class="g2" style="align-items:center;margin-top:6px"><b>Rasa sedih, tertekan atau putus asa?</b>' + yn('dep.d1') + '</div><div class="g2" style="align-items:center;margin-top:10px"><b>Kehilangan minat atau keseronokan melakukan sesuatu?</b>' + yn('dep.d2') + '</div>';
+  } else if (k === 'soc'){
+    [['home', '<u>Persekitaran rumah</u> — Adakah anda mempunyai masalah dengan rumah anda (keadaan, lokasi, keselamatan)?'], ['money', '<u>Keadaan kewangan</u> — Adakah anda sering kekurangan dana untuk makanan, perumahan dan kos penjagaan kesihatan?'], ['lonely', '<u>Pengasingan sosial & kesunyian</u> — Adakah anda sering berasa kesepian?'], ['part', '<u>Penglibatan sosial & penyertaan</u> — Adakah anda sukar meneruskan aktiviti riadah dan aktiviti lain yang penting?']].forEach(x => { b += q(x[1]) + yn('soc.' + x[0]); });
+  } else if (k === 'care'){
+    b += q('Adakah warga emas ini mempunyai penjaga / waris?', 'Jika tiada, pilih “Tiada” — domain ini tidak berkenaan.') + yn('care.has', 'Ada penjaga', 'Tiada').replace('opt yes', 'opt');
+    b += '<div id="careQs">' + q('Adakah anda rasa mendapat sokongan yang mencukupi dalam peranan sebagai penjaga / waris?') + yn('care.support', 'Ya', 'Tidak', { flip:true }) + q('Adakah anda yakin dengan keupayaan anda memberikan penjagaan dan sokongan?') + yn('care.confident', 'Ya', 'Tidak', { flip:true }) + q('Nilai sama ada terdapat kesan negatif terhadap peranan penjaga / waris (fizikal, mental, kewangan, sosial).') + yn('care.neg', 'Ada kesan negatif', 'Tiada kesan') + '</div>';
+  } else if (k === 'uri'){
+    b += q('Adakah anda mempunyai masalah mengawal pundi kencing, seperti kebocoran air kencing secara tidak sengaja?') + yn('uri.q');
+  }
+  return '<div class="card dom" id="d_' + k + '"><div class="hd"><span class="ic">' + d[2] + '</span><b>' + (D.DOMAINS.indexOf(d) + 1) + '. ' + d[1] + '</b><span class="pill na" id="pl_' + k + '">belum disahkan</span></div>' + b +
+    '<div class="sug" id="sg_' + k + '"></div><div class="conf' + (k === 'care' ? ' three' : '') + '" id="cf_' + k + '"><button type="button" data-c="' + k + ':LULUS" class="l0">Sahkan: Lulus</button><button type="button" data-c="' + k + ':LANJUT" class="l2">Sahkan: Perlu penilaian lanjut</button>' + (k === 'care' ? '<button type="button" data-c="care:TB" class="na">Tidak berkenaan</button>' : '') + '</div><div class="cfd" id="cd_' + k + '"></div></div>';
+}
+$('doms').innerHTML = D.DOMAINS.map(d => domHtml(d[0])).join('');
+
+/* answers <-> inputs */
+function getP(p){ return p.split('.').reduce((o, k) => (o == null ? undefined : o[k]), A); }
+function setP(p, v){ const a = p.split('.'); let o = A; a.slice(0, -1).forEach(k => { o = o[k] = o[k] || {}; }); o[a[a.length - 1]] = v; }
+function paintInputs(){
+  document.querySelectorAll('#doms [data-p]').forEach(el => { const v = getP(el.dataset.p); if (el.type === 'radio') el.checked = v !== undefined && String(v) === el.value; else if (el.type === 'number') el.value = v == null ? '' : v; });
+  $('careQs').hidden = getP('care.has') !== 'Y';
+}
+$('doms').addEventListener('input', e => { const el = e.target; if (!el.dataset.p) return; if (el.type === 'radio'){ setP(el.dataset.p, el.value); }
+  else { setP(el.dataset.p, el.value); if (el.dataset.p === 'mob.sec' && el.value !== ''){ const s = parseFloat(el.value); if (isFinite(s)){ setP('mob.ok', s <= 14 ? 'Y' : 'N'); paintInputs(); } } }
+  dirty = true; $('careQs').hidden = getP('care.has') !== 'Y'; refresh(el.dataset.p.split('.')[0]); });
+$('doms').addEventListener('click', e => {
+  const al = e.target.closest('[data-all]'); if (al){ const p = al.dataset.all; (p === 'cog.ori' ? D.ORI : D.WORDS).forEach(k => setP(p + '.' + k, 'Y')); paintInputs(); dirty = true; refresh('cog'); return; }
+  const c = e.target.closest('[data-c]'); if (c){ const [k, v] = c.dataset.c.split(':'); R[k] = v; dirty = true; paintDom(k); upd(); }
+});
+
+/* suggestion + confirmation */
+let S = {};
+function lv(r){ return r === 'LULUS' ? 'l0' : r === 'LANJUT' ? 'l2' : 'na'; }
+function refresh(k){ S = D.suggest(A); if (k) { if (R[k] && S[k].r && S[k].r !== 'TB' && S[k].r !== R[k] && k !== 'care') { /* answers changed so the suggestion no longer matches what was confirmed → ask again */ if (!R[k + '_manual']) R[k] = ''; } if (k === 'care' && S.care.r === 'TB') R.care = R.care || ''; paintDom(k); } else D.DOMAINS.forEach(d => paintDom(d[0])); upd(); }
+function paintDom(k){
+  const s = S[k] || { r:'', why:[], note:[] }, conf = R[k] || '', box = $('sg_' + k);
+  box.className = 'sug ' + (s.r ? lv(s.r) : '');
+  box.innerHTML = s.r ? '<b>Cadangan sistem: ' + (s.r === 'LULUS' ? '✓ Lulus' : s.r === 'LANJUT' ? '⚠ Perlu penilaian lanjut' : 'Tidak berkenaan') + '</b>' + (s.why.length ? '<ul>' + s.why.map(w => '<li>' + esc(w) + '</li>').join('') + '</ul>' : '') + (s.note.length ? '<div class="nt">' + s.note.map(esc).join('<br>') + '</div>' : '')
+    : '<span class="nt">' + esc(s.why[0] || 'Isi jawapan untuk mendapatkan cadangan') + '</span>';
+  $('cf_' + k).querySelectorAll('button').forEach(b => { const v = b.dataset.c.split(':')[1]; b.classList.toggle('on', conf === v); b.classList.toggle('sg', s.r === v && conf !== v); });
+  const pl = $('pl_' + k); pl.className = 'pill ' + (conf ? lv(conf) : 'na'); pl.textContent = conf === 'LULUS' ? 'Lulus ✓' : conf === 'LANJUT' ? 'Lanjut ✓' : conf === 'TB' ? 'Tidak berkenaan' : 'belum disahkan';
+  $('cd_' + k).textContent = conf && s.r && conf !== s.r && s.r !== '' ? 'Keputusan staf berbeza daripada cadangan sistem.' : conf ? 'Disahkan oleh staf.' : '';
+}
+function confirmAll(){ D.DOMAINS.forEach(d => { const s = S[d[0]]; if (s && s.r && !R[d[0]]) R[d[0]] = s.r; }); dirty = true; D.DOMAINS.forEach(d => paintDom(d[0])); upd(); }
+function upd(){
+  const o = D.overall(R), done = D.DOMAINS.filter(d => R[d[0]]).length;
+  $('prog').style.width = Math.round(done / 9 * 100) + '%'; $('allBtn').hidden = !(D.DOMAINS.some(d => S[d[0]] && S[d[0]].r && !R[d[0]]));
+  const e = $('ovr'); e.className = 'ovr ' + (o.overall === 'LANJUT' ? 'l2' : o.overall === 'LULUS' ? 'l0' : 'na');
+  e.textContent = o.overall === 'LULUS' ? '✓ LULUS — semua domain baik' : o.overall === 'LANJUT' ? '⚠ PERLU PENILAIAN LANJUT (' + D.DOMAINS.filter(d => R[d[0]] === 'LANJUT').map(d => d[1]).join(', ') + ')' : 'Sahkan semua domain dahulu (' + done + '/9)';
+}
+
+/* ---------- open / new ---------- */
+function resetForm(){
+  A = {}; R = {}; REC = REC || null; passMode = false; dirty = false; $('icBox').hidden = false; $('passBox').hidden = true;
+  ['serial', 'name', 'ic', 'passport', 'age', 'addr', 'histOther', 'cmt'].forEach(id => $(id).value = ''); $('phone').value = '01'; $('icHint').textContent = ''; setGender('');
+  document.querySelectorAll('input[name=hist]').forEach(c => c.checked = false); $('meta').textContent = ''; $('prn').hidden = true;
+}
+function newForm(p){
+  REC = null; resetForm(); source = 'MANUAL';
+  if (p){ source = 'PRIMA'; $('name').value = String(p.nama || '').toUpperCase(); if (p.ic){ $('ic').value = String(p.ic).replace(/\D/g, '').slice(0, 12); $('ic').dispatchEvent(new Event('input')); } else if (p.passport){ setPass(true); $('passport').value = String(p.passport).toUpperCase(); }
+    const t = String(p.phone || '').replace(/\D/g, ''); if (/^01\d{8,9}$/.test(t)) $('phone').value = t; $('name').dispatchEvent(new Event('input')); }
+  paintInputs(); refresh(); dirty = false; show('form'); if (!p) setTimeout(() => $('name').focus(), 100);
+}
+function loadRec(r){
+  resetForm(); source = r.source || 'MANUAL'; $('serial').value = r.serial || ''; $('name').value = r.name || '';
+  if (r.passport && !r.ic){ setPass(true); $('passport').value = r.passport; } else { $('ic').value = r.ic || ''; }
+  $('phone').value = r.phone || '01'; $('age').value = r.age || ''; setGender(r.gender || ''); $('addr').value = r.address || ''; $('histOther').value = r.historyOther || ''; $('cmt').value = r.comments || '';
+  document.querySelectorAll('input[name=hist]').forEach(c => { c.checked = (r.history || []).indexOf(c.value) !== -1; });
+  A = (r.data && r.data.a) || {}; R = {}; D.DOMAINS.forEach(d => { R[d[0]] = r.res[d[0]] || ''; });
+  paintInputs(); refresh(); D.DOMAINS.forEach(d => { R[d[0]] = r.res[d[0]] || ''; paintDom(d[0]); }); upd();
+  $('meta').textContent = 'Tarikh ' + r.date + ' · disaring oleh ' + r.by + (r.updatedBy && r.updatedBy !== r.by ? ' · dikemas kini oleh ' + r.updatedBy : '');
+  $('prn').hidden = false; dirty = false; show('form');
+}
+
+/* ---------- save ---------- */
+function flash(m){ const s = $('status'); s.textContent = m || ''; if (m) setTimeout(() => { if (s.textContent === m) s.textContent = ''; }, 4500); }
+function bad(el, m){ el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 1500); flash(m); try { el.focus({ preventScroll:true }); } catch(x){} el.scrollIntoView({ block:'center', behavior:'smooth' }); return false; }
+function collect(forceNew){
+  return { id: REC ? REC.id : '', serial: $('serial').value.trim(), name: $('name').value.trim(), passportMode: passMode, ic: $('ic').value, passport: $('passport').value, phone: $('phone').value,
+    age: $('age').value, gender: (document.querySelector('input[name=gender]:checked') || {}).value || '', address: $('addr').value.trim(), source,
+    history: [...document.querySelectorAll('input[name=hist]:checked')].map(c => c.value), historyOther: $('histOther').value.trim(), comments: $('cmt').value.trim(),
+    res: Object.assign({}, R), data: { a: A, auto: Object.fromEntries(D.DOMAINS.map(d => [d[0], (S[d[0]] || {}).r || ''])) }, forceNew: !!forceNew };
+}
+function validate(){
+  if ($('name').value.trim().length < 3) return bad($('name'), 'Sila isi nama pesakit.');
+  if (passMode){ if ($('passport').value.length < 5) return bad($('passport'), 'Sila isi no. pasport.'); } else if (!parseIc($('ic').value)) return bad($('ic'), 'No. IC mesti 12 digit yang sah.');
+  const p = $('phone').value; if (p.length > 2 && !/^01\d{8,9}$/.test(p)) return bad($('phone'), 'No. telefon tidak sah (10–11 digit).');
+  const miss = D.DOMAINS.filter(d => !R[d[0]]); if (miss.length){ const el = $('d_' + miss[0][0]); el.scrollIntoView({ block:'start', behavior:'smooth' }); flash('Sahkan keputusan: ' + miss.map(d => d[1]).slice(0, 2).join(', ') + (miss.length > 2 ? ' +' + (miss.length - 2) : '')); return false; }
+  return true;
+}
+async function save(forceNew){
+  if (saving || !validate()) return; saving = true; const b = $('save'); b.disabled = true; b.textContent = 'Menyimpan…';
+  let r; try { r = await api({ action:'icopeSave', rec: collect(forceNew === true) }, 30000); } catch(x){ r = { ok:false, error:'Ralat sambungan. Data anda masih ada — cuba lagi.' }; }
+  saving = false; b.disabled = false; b.textContent = 'Simpan saringan'; if (expired(r)) return toLogin();
+  if (r.ok){ dirty = false; toast((r.updated ? '✓ Dikemas kini · ' : '✓ Disimpan · ') + (r.overall === 'LANJUT' ? 'Perlu penilaian lanjut' : 'Lulus')); if (navigator.vibrate) navigator.vibrate(60);
+    const id = r.id; REC = REC || { id }; REC.id = id; $('prn').hidden = false; show('home'); loadList(); return; }
+  if (r.code === 'dup'){ if (confirm('Pesakit ini sudah disaring hari ini.\n\nOK = buka rekod yang sedia ada\nBatal = simpan sebagai saringan baharu')) { dirty = false; openRec(r.id); } else save(true); return; }
+  flash(r.error || 'Gagal menyimpan.'); if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+}
+
+/* ---------- print ---------- */
+function printRec(){
+  const c = collect(), o = D.overall(R), w = window.open('', '_blank'); if (!w){ toast('Benarkan pop-up untuk mencetak.'); return; }
+  const rr = k => R[k] === 'LULUS' ? 'Lulus' : R[k] === 'LANJUT' ? 'Perlu penilaian lanjut' : R[k] === 'TB' ? 'Tidak berkenaan' : '—';
+  const vis = A.vis || {}, row = d => { const s = S[d[0]] || { why:[] }; return '<tr><td>' + esc(d[1]) + '</td><td><b>' + rr(d[0]) + '</b></td><td>' + esc((s.why || []).join('; ')) + '</td></tr>'; };
+  const eyes = vis.ru ? '<p>Penglihatan — Kanan: ' + esc(vis.ru) + ' (pinhole ' + esc(vis.rp || '—') + ') · Kiri: ' + esc(vis.lu) + ' (pinhole ' + esc(vis.lp || '—') + ') · Dekat: ' + esc(vis.near || '—') + '</p>' : '';
+  w.document.write('<!doctype html><meta charset="utf-8"><title>ICOPE</title><style>body{font:13px/1.5 system-ui,sans-serif;max-width:760px;margin:20px auto;padding:0 14px;color:#111}h1{font-size:17px;margin:0}table{border-collapse:collapse;width:100%}td{border-bottom:1px solid #ddd;padding:5px 4px;vertical-align:top}.r{font-size:15px;font-weight:800;margin:10px 0}</style>' +
+    '<h1>Saringan Asas Kapasiti Intrinsik Kesihatan Warga Emas (ICOPE)</h1><div>Klinik Kesihatan Ayer Hitam · ' + esc((REC && REC.date) || today()) + (c.serial ? ' · No. siri ' + esc(c.serial) : '') + '</div>' +
+    '<p><b>' + esc(c.name) + '</b> · ' + esc(c.passportMode ? c.passport : fmtIc(c.ic)) + ' · ' + esc(c.age) + ' tahun · ' + esc(c.gender) + (c.phone.length > 2 ? ' · ' + esc(c.phone) : '') + (c.address ? '<br>' + esc(c.address) : '') + (c.history.length ? '<br>Sejarah: ' + esc(c.history.join(', ')) + (c.historyOther ? ', ' + esc(c.historyOther) : '') : '') + '</p>' +
+    '<table>' + D.DOMAINS.map(row).join('') + '</table>' + eyes + '<div class="r">Keputusan saringan: ' + (o.overall === 'LANJUT' ? 'PERLU PENILAIAN LANJUT' : o.overall === 'LULUS' ? 'LULUS' : '—') + '</div>' +
+    (c.comments ? '<p><b>Komen:</b> ' + esc(c.comments) + '</p>' : '') + '<p style="color:#555">Disahkan oleh staf: ' + esc((REC && (REC.updatedBy || REC.by)) || '') + '</p><script>setTimeout(function(){window.print()},300)<\/script>');
+  w.document.close();
+}
+window.addEventListener('beforeunload', e => { if (view === 'form' && dirty){ e.preventDefault(); e.returnValue = ''; } });
+refresh(); loadList();
+</script>
+</body>
+</html>
