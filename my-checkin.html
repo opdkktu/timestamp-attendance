@@ -620,20 +620,11 @@ async function requestLocation(){
   userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy, name: '' };
   if(!EXTRA_ZONES.length) await loadZones(); else loadZones();
   const violation = checkGeofence(userLocation.lat, userLocation.lng);
-  if(violation){
-    $('geofenceZoneMsg').textContent = violation.zoneMsg;
-    const w = $('geofenceWarning');
-    if(violation.weak){
-      w.textContent = 'Hidupkan "Lokasi Tepat / Precise Location" & Wi-Fi, dan berdiri berhampiran tingkap atau di kawasan terbuka. Kemudian tekan Semak Semula.';
-      w.style.animation = 'none'; w.style.fontSize = '14px';
-    }else{
-      w.textContent = '⚠ AMARAN! ANDA DILARANG UNTUK TERUSKAN FACEPRINT.';
-      w.style.animation = ''; w.style.fontSize = '';
-    }
-    $('geofenceDistance').textContent = 'Jarak dari klinik: ~' + violation.dist + ' m  ·  ketepatan GPS: ±' + Math.round(violation.acc) + ' m';
-    $('geofenceBlocker').classList.add('show');
-    cue.fail();
-    throw new Error('Outside allowed zone');
+  if(violation){                                     // OUTSIDE the clinic / listed places: never blocked — manual capture (red-ink stamp, no security code)
+    userLocation.outside = true; userLocation.dist = violation.dist;
+    userLocation.name = 'LUAR KLINIK · ~' + (violation.dist >= 1000 ? (violation.dist / 1000).toFixed(1) + ' km' : violation.dist + ' m');
+    $('tip').textContent = 'Di luar klinik — gambar manual akan diambil';
+    return;
   }
   if(!userLocation.name) reverseGeocode(userLocation.lat, userLocation.lng);          // background — never holds anything up
 }
@@ -775,7 +766,7 @@ async function detectLoop(my){
 async function captureAndRecord(){
   // 1) the photo is taken the instant you are recognised — flash + shutter + buzz, then the phone can be put away
   const canvas = $('snapshotCanvas');
-  capturedImage = SiagaStamp.capture(video, userLocation, canvas);   // stamped upload copy (date/time + lat/long); canvas = small preview
+  capturedImage = SiagaStamp.capture(video, userLocation, canvas, userLocation && userLocation.outside ? { manual:true, name: myName } : null);   // stamped upload copy (date/time + lat/long); canvas = small preview
   const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
   cue.shutter();
   video.style.display = 'none'; canvas.style.display = 'block';
@@ -795,7 +786,7 @@ async function recordAttendance(){
   const mk = () => JSON.stringify({
     action:'logAttendance', token: sessionStorage.getItem('kkah_session_token'), name: myName,
     lat: userLocation ? userLocation.lat : '', lng: userLocation ? userLocation.lng : '', locName: userLocation ? userLocation.name : '',
-    oncall: ocIntent === true, reqId: attReq.reqId, clientTs: attReq.ts, retry: attReq.sent
+    oncall: ocIntent === true, outside: !!(userLocation && userLocation.outside), reqId: attReq.reqId, clientTs: attReq.ts, retry: attReq.sent
   });
   const waits = [0, 1500, 3500, 7000];
   for(let n = 0; n < waits.length; n++){
@@ -896,12 +887,13 @@ function onSuccess(data){
   $('resultTime').textContent = fmt12(data.time);
   $('resultDate').textContent = data.date;
   $('resultPlace').textContent = (userLocation && userLocation.name) ? userLocation.name : 'Klinik Kesihatan Ayer Hitam';
+  if(userLocation && userLocation.outside) setBanner('warn', '📍', (isOut ? 'CHECK OUT' : 'CHECK IN') + ' DIREKOD — DI LUAR KLINIK', 'Gambar manual telah diambil & penyelia dimaklumkan.');
   $('resultCard').classList.add('show');
 
   // Snapshot goes to Drive in the background; keepalive lets it finish even while we return to the dashboard.
   try{
     fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, keepalive: true,
-      body: JSON.stringify({ action:'attachSnapshot', ic: myIc, date: data.date, type: data.type, imageBase64: capturedImage, token: sessionStorage.getItem('kkah_session_token'), code: SiagaStamp.lastCode().code, cw: SiagaStamp.lastCode().w }) }
+      body: JSON.stringify({ action:'attachSnapshot', ic: myIc, date: data.date, type: data.type, imageBase64: capturedImage, token: sessionStorage.getItem('kkah_session_token'), code: SiagaStamp.lastCode().code, cw: SiagaStamp.lastCode().w, manual: !!(userLocation && userLocation.outside) }) }
     ).catch(err => console.warn('Snapshot upload failed (attendance row still saved):', err));
   }catch(e){}
 
