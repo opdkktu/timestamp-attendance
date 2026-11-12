@@ -78,6 +78,7 @@
   .pdfbox{ background:var(--card); color:var(--ink); border-radius:20px; width:min(860px,100%); height:min(92vh,1000px); display:flex; flex-direction:column; overflow:hidden; box-shadow:0 30px 80px -20px rgba(0,0,0,.6); }
   .pdfbar{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line); } .pdfbar b{ flex:1; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pdfbar button{ height:40px; padding:0 12px; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 13px Inter,sans-serif; cursor:pointer; } .pdfbar .x{ width:40px; padding:0; font-size:18px; }
+  .pdfld{ position:absolute; inset:52px 0 0 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:var(--card); color:var(--mut); font-weight:700; font-size:14px; z-index:2; } .pdfld[hidden]{ display:none; } .pdfsp{ width:34px; height:34px; border:4px solid var(--line); border-top-color:var(--acc); border-radius:50%; animation:sp .8s linear infinite; } @keyframes sp{ to{ transform:rotate(360deg); } } .pdfbox{ position:relative; }
   .pdfbox iframe{ flex:1; border:0; width:100%; background:#fff; } .pdfld{ position:absolute; left:0; right:0; top:50%; text-align:center; color:#fff; font-weight:700; }
   @media print{ .pdfov{ display:none!important; } .top,.fp,.act,.toast,.tw ~ *{ display:none!important; } body{ background:#fff; } .card,.kpi{ break-inside:avoid; box-shadow:none; } .bar{ transform:scaleX(1)!important; } .vc .col i{ transform:scaleY(1)!important; } .vc .v{ opacity:1!important; } }
 </style>
@@ -116,7 +117,8 @@
 </div>
 <div class="pdfov" id="pdfov" onclick="if(event.target===this)closePdf()"><div class="pdfbox" role="dialog" aria-modal="true" aria-labelledby="pdfT">
   <div class="pdfbar"><b id="pdfT">Keputusan saringan</b><button onclick="printPdf()">🖨 Cetak / PDF</button><button onclick="openPdfTab()">↗ Tab baharu</button><button class="x" onclick="closePdf()" aria-label="Tutup">✕</button></div>
-  <iframe id="pdfF" title="Keputusan saringan klien"></iframe></div></div>
+  <div class="pdfld" id="pdfLd" role="status"><div class="pdfsp"></div><span id="pdfLdT">Memuatkan keputusan…</span></div>
+  <iframe id="pdfF" title="Keputusan saringan klien" onload="if(this.src.indexOf('about:blank')<0)setTimeout(function(){$('pdfLd').hidden=true},900)"></iframe></div></div>
 <div class="toast" id="toast"></div>
 
 <script src="./nhsi-risk.js?v=1"></script>
@@ -285,18 +287,19 @@ const lvPill = (lv, t) => lv == null ? '<span style="color:var(--mut)">—</span
 function drawTable(){
   const rows = view.slice(0, shown);
   const stat = r => r.s3 ? '<span class="pill l0">Selesai</span>' : r.s2 ? '<span class="pill l1">Tunggu doktor</span>' : r.s1 ? '<span class="pill l1">Tunggu S2</span>' : '<span class="pill l1">Tunggu S1</span>';
-  const icTxt = r => r.i ? r.i.replace(/^(\d{6})(\d{2})(\d{4})$/, '$1-$2-$3') : (r.pp ? 'Pasport ' + r.pp : '—');
+  const icTxt = r => r.i ? r.i : (r.pp ? 'Pasport ' + r.pp : '—');
   $('tb').innerHTML = rows.length ? rows.map(r => '<tr><td>' + fmtD(r.d) + '</td><td class="mono">' + esc(icTxt(r)) + '</td><td><b>' + esc(r.n) + '</b></td><td>' + (r.p ? '<a href="tel:' + esc(r.p) + '" style="color:inherit">' + esc(r.p) + '</a>' : '—') + '</td><td>' + r.a + '</td><td>' + r.g + '</td><td>' + (r.s1 ? lvPill(r.bmiLv, esc(r.bmi)) : '—') + '</td><td>' + (r.s2 ? lvPill(r.bp, esc(r.sb) + '/' + esc(r.db)) : '—') + '</td><td>' + (r.s2 ? lvPill(r.pul, esc(r.pu)) : '—') + '</td><td>' + (r.glu != null ? lvPill(r.glu, esc(r.gl) + ' ' + (r.gt === 'Puasa' ? 'P' : 'R')) : '—') + '</td><td>' + (r.chol != null ? lvPill(r.chol, esc(r.ch)) : '—') + '</td><td>' + (r.cvd ? lvPill(r.cvd.level, r.cvd.pct + '%') : '—') + '</td><td>' + (r.smk ? '<span class="pill l2">Ya</span>' : r.sm ? 'Tidak' : '—') + '</td><td>' + (r.w ? '<span class="pill l2">Positif</span>' : 'Negatif') + '</td><td style="white-space:normal;min-width:130px">' + (esc((r.rf || []).join(', ')) || '—') + '</td><td>' + (esc(r.fu) || '—') + '</td><td>' + stat(r) + '</td><td>' + (r.s3 ? '<button class="eye" aria-label="Lihat keputusan ' + esc(r.n) + '" onclick="viewPdf(\'' + esc(r.id) + '\',this)">👁</button>' : '<span style="color:var(--mut)" title="Konsultasi belum selesai">—</span>') + '</td></tr>').join('') : '<tr><td colspan="18" class="none">Tiada klien sepadan.</td></tr>';
   $('more').style.display = view.length > shown ? 'inline-block' : 'none'; $('tcount').textContent = '(' + view.length + ')';
 }
 let pdfUrl = '';
 async function viewPdf(id, btn){
   const r0 = ALL.filter(x => x.id === id)[0]; if (btn) btn.disabled = true;
+  $('pdfT').textContent = r0 ? r0.n : 'Keputusan saringan'; $('pdfLd').hidden = false; $('pdfLdT').textContent = 'Memuatkan keputusan…';
+  $('pdfF').src = 'about:blank'; $('pdfov').classList.add('on'); document.body.style.overflow = 'hidden';        // overlay + spinner show at once
   let r; try { r = await api({ action:'nhsiCall', fn:'resultLink', args:{ id } }, 25000); } catch(e){ r = { ok:false, error:'Tiada sambungan.' }; }
   if (btn) btn.disabled = false;
-  if (!r || !r.ok){ if (r && (/expired/i.test(r.error || '') || r.code === 'QR_EXPIRED')) { toLogin(); return; } toast((r && r.error) || 'Gagal membuka keputusan.'); return; }
-  pdfUrl = new URL('./nhsi-result.html?t=' + r.token, location.href).href;
-  $('pdfT').textContent = r0 ? r0.n : 'Keputusan saringan'; $('pdfF').src = pdfUrl; $('pdfov').classList.add('on'); document.body.style.overflow = 'hidden';
+  if (!r || !r.ok){ closePdf(); if (r && (/expired/i.test(r.error || '') || r.code === 'QR_EXPIRED')) { toLogin(); return; } toast((r && r.error) || 'Gagal membuka keputusan.'); return; }
+  pdfUrl = new URL('./nhsi-result.html?t=' + r.token, location.href).href; $('pdfF').src = pdfUrl;
 }
 function closePdf(){ $('pdfov').classList.remove('on'); $('pdfF').src = 'about:blank'; document.body.style.overflow = ''; }
 function printPdf(){ try { $('pdfF').contentWindow.focus(); $('pdfF').contentWindow.print(); } catch(e){ openPdfTab(); } }
