@@ -1,300 +1,364 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0F4530">
-<title>NHSI — Analisis Saringan</title>
-<link rel="icon" type="image/png" href="./siaga-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIAGA · Sign Up</title>
+<link rel="icon" type="image/png" href="./siaga-192.png?v=1.21.1">
+<link rel="apple-touch-icon" href="./siaga-512.png?v=1.21.1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SIAGA">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0B3D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{ --bg:#EEF3F1; --card:#fff; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB; --dg:#C0392B; --dgl:#FBEAE7; --warn:#B45309; --warnl:#FEF3E2; --ok:#1f9a57; --blue:#2F7FD3; --amber:#E0A100; --track:#EAF0ED;  --onacc:#0F4530; }
-  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --onacc:#A8EBCB; --dg:#FF9A8D; --warn:#F0B35A; --dgl:#3a1d19; --warnl:#3a2c14; --track:#1d332c; } }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body{ margin:0; }
-  body{ background:var(--bg); color:var(--ink); font-family:Inter,'Segoe UI',system-ui,sans-serif; min-height:100vh; padding-bottom:60px; }
-  .top{ position:sticky; top:0; z-index:30; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; box-shadow:0 6px 18px -10px rgba(0,0,0,.5); padding:calc(10px + env(safe-area-inset-top)) 14px 10px; }
-  .top .r{ display:flex; align-items:center; gap:10px; max-width:1100px; margin:0 auto; }
-  .ib{ width:42px; height:42px; border:none; border-radius:13px; background:rgba(255,255,255,.16); color:#fff; font-size:19px; cursor:pointer; flex:none; }
-  .ttl{ flex:1; font-weight:800; font-size:17px; line-height:1.15; } .ttl small{ display:block; font-weight:500; font-size:11.5px; opacity:.85; }
-  .wrap{ max-width:1100px; margin:0 auto; padding:14px; }
-  /* filter panel */
-  .fp{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:12px; margin-bottom:14px; box-shadow:0 8px 22px -18px rgba(0,0,0,.4); }
-  .seg{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; background:var(--track); padding:4px; border-radius:14px; }
-  .seg button{ height:42px; border:none; border-radius:11px; background:transparent; color:var(--ink); font:800 13.5px Inter,sans-serif; cursor:pointer; transition:all .2s; }
-  .seg button.on{ background:var(--card); color:var(--onacc); box-shadow:0 3px 10px -4px rgba(0,0,0,.35); }
-  .rng{ display:none; grid-template-columns:1fr 1fr auto; gap:8px; margin-top:10px; align-items:end; } .rng.on{ display:grid; animation:rise .25s; }
-  .rng label{ font-size:11px; font-weight:800; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:3px; }
-  .rng input{ width:100%; height:44px; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 15px Inter,sans-serif; padding:0 10px; }
-  .go{ height:44px; padding:0 18px; border:none; border-radius:12px; background:var(--acc); color:#fff; font:800 14px Inter,sans-serif; cursor:pointer; }
-  .tg{ width:100%; margin-top:10px; height:44px; border-radius:12px; border:1.5px dashed var(--line); background:transparent; color:var(--onacc); font:800 13.5px Inter,sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
-  .tg b{ background:var(--acc); color:#fff; border-radius:99px; padding:1px 8px; font-size:12px; } .tg b:empty{ display:none; }
-  .fx{ display:none; margin-top:12px; } .fx.on{ display:block; animation:rise .25s; }
-  .fx h4{ margin:12px 0 6px; font-size:11px; font-weight:800; color:var(--mut); text-transform:uppercase; letter-spacing:.07em; display:flex; justify-content:space-between; align-items:center; }
-  .chips{ display:flex; flex-wrap:wrap; gap:7px; }
-  .chip{ border:1.5px solid var(--line); background:var(--card); color:var(--ink); border-radius:99px; padding:8px 13px; font:700 13px Inter,sans-serif; cursor:pointer; transition:all .15s; }
-  .chip:active{ transform:scale(.96); } .chip.on{ background:var(--accl); border-color:var(--acc); color:var(--onacc); box-shadow:0 0 0 3px rgba(26,107,74,.12); } .chip.bad.on{ background:var(--dgl); border-color:var(--dg); color:var(--dg); box-shadow:0 0 0 3px rgba(192,57,43,.12); }
-  .mini{ border:none; background:none; color:var(--acc); font:800 12px Inter,sans-serif; cursor:pointer; text-decoration:underline; }
-  .mode{ display:inline-flex; background:var(--track); border-radius:10px; padding:2px; } .mode button{ border:none; background:transparent; font:800 11.5px Inter,sans-serif; padding:5px 10px; border-radius:8px; color:var(--mut); cursor:pointer; } .mode button.on{ background:var(--card); color:var(--onacc); }
-  .act{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 12px; align-items:center; } .act .sp{ flex:1; }
-  .tag{ display:inline-flex; align-items:center; gap:6px; background:var(--accl); color:var(--onacc); border-radius:99px; padding:5px 6px 5px 11px; font:800 12px Inter,sans-serif; } .tag button{ border:none; background:rgba(0,0,0,.12); color:inherit; width:20px; height:20px; border-radius:50%; cursor:pointer; font-size:11px; line-height:1; }
-  .btn{ height:40px; padding:0 14px; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 13px Inter,sans-serif; cursor:pointer; }
-  .per{ color:var(--mut); font-size:13px; font-weight:600; margin:0 0 10px; } .per b{ color:var(--ink); }
-  /* KPI */
-  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px; }
-  .kpi{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; position:relative; overflow:hidden; }
-  .kpi::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:5px; background:var(--c,var(--acc)); }
-  .kpi small{ display:block; font-size:11px; font-weight:800; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; } .kpi b{ display:block; font-size:32px; line-height:1.15; font-variant-numeric:tabular-nums; margin-top:2px; } .kpi span{ font-size:12px; color:var(--mut); font-weight:600; }
-  /* cards / charts */
-  .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:14px; }
-  .card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; box-shadow:0 8px 22px -18px rgba(0,0,0,.4); }
-  .card.wide{ grid-column:1/-1; }
-  .card h3{ margin:0 0 2px; font-size:15px; } .card .sub{ margin:0 0 12px; font-size:12px; color:var(--mut); }
-  .hb{ display:grid; grid-template-columns:minmax(90px,34%) 1fr auto; gap:10px; align-items:center; padding:6px 4px; border-radius:10px; cursor:pointer; }
-  .hb:hover{ background:var(--accl); } .hb.sel{ background:var(--accl); outline:2px solid var(--acc); }
-  .hb .l{ font-size:13px; font-weight:700; line-height:1.2; } .hb .t{ height:14px; border-radius:99px; background:var(--track); overflow:hidden; } .hb .n{ font-size:13px; font-weight:800; font-variant-numeric:tabular-nums; min-width:62px; text-align:right; } .hb .n small{ color:var(--mut); font-weight:600; }
-  .bar{ display:block; height:100%; border-radius:99px; background:var(--c,var(--acc)); transform:scaleX(0); transform-origin:left; transition:transform .9s cubic-bezier(.2,.8,.2,1); transition-delay:calc(var(--i,0) * 70ms); }
-  .vb{ display:flex; align-items:flex-end; gap:8px; height:190px; padding-top:18px; }
-  .vc{ flex:1; min-width:0; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; cursor:pointer; border-radius:10px; }
-  .vc:hover{ background:var(--accl); } .vc.sel{ background:var(--accl); outline:2px solid var(--acc); }
-  .vc .v{ font-size:12px; font-weight:800; margin-bottom:4px; font-variant-numeric:tabular-nums; opacity:0; transition:opacity .4s .6s; }
-  .vc .col{ width:70%; max-width:46px; flex:1 1 0; display:flex; align-items:flex-end; } .vc .col i{ display:block; width:100%; height:var(--h); min-height:3px; border-radius:8px 8px 3px 3px; background:var(--c,var(--acc)); transform:scaleY(0); transform-origin:bottom; transition:transform .9s cubic-bezier(.2,.8,.2,1); transition-delay:calc(var(--i,0) * 70ms); }
-  .vc .x{ font-size:11px; color:var(--mut); font-weight:700; margin-top:6px; text-align:center; line-height:1.1; height:26px; }
-  .play .bar{ transform:scaleX(1); } .play .vc .col i{ transform:scaleY(1); } .play .vc .v{ opacity:1; }
-  .donut{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; justify-content:center; }
-  .donut svg{ width:150px; height:150px; transform:rotate(-90deg); } .donut circle{ fill:none; stroke-width:20; transition:stroke-dasharray 1s cubic-bezier(.2,.8,.2,1); }
-  .lg div{ display:flex; align-items:center; gap:8px; margin:6px 0; font-size:13px; font-weight:700; cursor:pointer; } .lg i{ width:12px; height:12px; border-radius:4px; background:var(--c); } .lg small{ color:var(--mut); font-weight:600; }
-  .none{ color:var(--mut); font-size:13px; padding:18px 4px; text-align:center; }
-  /* table */
-  .tw{ overflow:auto; border:1px solid var(--line); border-radius:14px; } table{ border-collapse:collapse; width:100%; font-size:13px; min-width:760px; } th{ text-align:left; background:var(--track); padding:9px 10px; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--mut); position:sticky; top:0; } td{ padding:8px 10px; border-top:1px solid var(--line); white-space:nowrap; }
-  .pill{ display:inline-block; padding:2px 8px; border-radius:99px; font-size:11.5px; font-weight:800; } .pill.l0{ background:var(--accl); color:var(--onacc); } .pill.l1{ background:var(--warnl); color:var(--warn); } .pill.l2,.pill.l3{ background:var(--dgl); color:var(--dg); }
-  .sk{ background:linear-gradient(90deg,var(--track) 25%,var(--line) 50%,var(--track) 75%); background-size:200% 100%; animation:sh 1.2s infinite; border-radius:14px; height:110px; } @keyframes sh{ to{ background-position:-200% 0; } }
-  .toast{ position:fixed; left:50%; bottom:24px; transform:translate(-50%,30px); opacity:0; z-index:70; background:#16231F; color:#fff; padding:12px 18px; border-radius:99px; font-weight:700; font-size:14px; transition:all .25s; pointer-events:none; max-width:90vw; } .toast.on{ transform:translate(-50%,0); opacity:1; }
-  @keyframes rise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
-  @media (max-width:520px){ .grid{ grid-template-columns:1fr; } .hb{ grid-template-columns:minmax(80px,38%) 1fr auto; } }
-  @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } .bar{ transform:scaleX(1); } .vc .col i{ transform:scaleY(1); } .vc .v{ opacity:1; } }
-  @media print{ .top,.fp,.act,.toast,.tw ~ *{ display:none!important; } body{ background:#fff; } .card,.kpi{ break-inside:avoid; box-shadow:none; } .bar{ transform:scaleX(1)!important; } .vc .col i{ transform:scaleY(1)!important; } .vc .v{ opacity:1!important; } }
+  :root{
+    --teal-900:#0B3D3A; --teal-700:#0F5C56; --teal-500:#1C8F84;
+    --mint-100:#EAF6F2; --mint-050:#F6FBF9;
+    --gold-500:#C9A227; --green-500:#2FAE60; --red-500:#B3311A;
+    --ink-700:#1E2B29; --ink-500:#5B6B68; --line:#DCEAE6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 800px at 50% -10%, var(--mint-100), var(--mint-050));
+    font-family:'Inter',sans-serif; color:var(--ink-700);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card{ width:100%; max-width:440px; background:#fff; border-radius:28px; box-shadow:0 20px 60px -20px rgba(11,61,58,0.25); overflow:hidden; border:1px solid var(--line); }
+  .head{ padding:22px 28px 18px; background:linear-gradient(135deg, var(--teal-900), var(--teal-700)); color:#fff; position:relative; }
+  .head .eyebrow{ font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.75; font-weight:600; }
+  .head h1{ font-family:'Manrope',sans-serif; font-size:20px; font-weight:800; margin:4px 0 0; }
+  .gold-dot{ position:absolute; top:24px; right:28px; width:8px;height:8px;border-radius:50%; background:var(--gold-500); box-shadow:0 0 0 4px rgba(201,162,39,0.18); }
+  .stage{ padding:26px; }
+
+  .step{ display:none; }
+  .step.show{ display:block; }
+
+  .scanbtn{ width:100%; padding:12px; margin-bottom:14px; border-radius:12px; border:1.5px dashed var(--teal-500); background:var(--mint-100); color:var(--teal-700); font:700 14px 'Inter',sans-serif; cursor:pointer; }
+  .scanbtn:active{ transform:scale(.98); }
+  .field{ margin-bottom:14px; }
+  .field label{ font-size:12px; font-weight:600; color:var(--ink-500); display:block; margin-bottom:6px; }
+  input[type=text], input[type=email], input[type=password],input[type=tel]{
+    width:100%; padding:11px 13px; border-radius:12px; font-size:14px;
+    border:1px solid var(--line); font-family:'Inter',sans-serif; color:var(--ink-700);
+  }
+  input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(28,143,132,0.15); }
+
+  .viewfinder{ position:relative; width:180px; height:180px; margin:0 auto 14px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .viewfinder video, .viewfinder canvas{ width:150px; height:150px; border-radius:50%; object-fit:cover; background:#0B3D3A; }
+  .viewfinder canvas{ display:none; }
+  .viewfinder.captured video{ display:none; }
+  .viewfinder.captured canvas{ display:block; }
+  .ring{ position:absolute; inset:0; border-radius:50%; border:3px solid var(--line); transition:border-color .4s ease; }
+  .ring.ready{ border-color:var(--teal-500); }
+  .ring.captured{ border-color:var(--green-500); box-shadow:0 0 0 8px rgba(47,174,96,0.15); }
+  .fsteps{ list-style:none; margin:0 0 14px; padding:12px 14px; border-radius:14px; background:var(--mint-050); border:1px solid var(--line); display:none; }
+  .fsteps.show{ display:block; }
+  .fsteps li{ display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.4; padding:5px 0; color:var(--ink-500); }
+  .fsteps li i{ flex:0 0 20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-style:normal; font-size:12px; font-weight:800; background:var(--line); color:#fff; }
+  .fsteps li.run{ color:var(--ink-700); font-weight:600; } .fsteps li.run i{ background:var(--gold-500); animation:fsp 1s infinite; }
+  .fsteps li.ok{ color:var(--ink-700); } .fsteps li.ok i{ background:var(--green-500); }
+  .fsteps li.err{ color:var(--red-500); font-weight:600; } .fsteps li.err i{ background:var(--red-500); }
+  @keyframes fsp{ 50%{ opacity:.45; } }
+  .camera-status{ text-align:center; font-size:12px; color:var(--ink-500); margin-bottom:10px; }
+  .camera-actions{ display:flex; gap:10px; margin-bottom:16px; }
+  .camera-actions .btn{ margin-top:0; }
+  .btn.outline{ background:transparent; color:var(--teal-700); border:1.5px solid var(--line); }
+  .btn.outline:hover{ background:var(--mint-100); }
+
+  .btn{
+    width:100%; padding:13px 14px; border-radius:12px; font-size:14px; font-family:'Inter',sans-serif;
+    border:none; background:var(--teal-700); color:#fff; font-weight:700; cursor:pointer;
+    margin-top:6px; transition:background .2s ease;
+  }
+  .btn:hover{ background:var(--teal-900); }
+  .btn:disabled{ background:var(--line); color:var(--ink-500); cursor:not-allowed; }
+  .btn:focus-visible{ outline:3px solid var(--gold-500); outline-offset:2px; }
+
+  .strength-list{ font-size:11px; color:var(--ink-500); margin:-6px 0 14px; line-height:1.7; }
+  .strength-list li{ list-style:none; padding-left:18px; position:relative; }
+  .strength-list li::before{ content:'○'; position:absolute; left:0; color:var(--ink-500); }
+  .strength-list li.met{ color:var(--green-500); }
+  .strength-list li.met::before{ content:'●'; color:var(--green-500); }
+
+  .banner{ display:none; padding:12px 14px; border-radius:12px; font-size:13px; margin-bottom:16px; }
+  .banner.show{ display:block; }
+  .banner.error{ background:rgba(179,49,26,0.1); color:var(--red-500); }
+  .banner.success{ background:rgba(47,174,96,0.12); color:#1E7A45; }
+
+  .login-link{ text-align:center; font-size:13px; color:var(--ink-500); margin-top:16px; }
+  .login-link a{ color:var(--teal-700); font-weight:600; text-decoration:none; }
+
+  .spinner-inline{ width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; animation:spin .8s linear infinite; display:inline-block; vertical-align:middle; margin-right:8px; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .confirm-icon{ width:56px; height:56px; border-radius:50%; background:var(--green-500); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+  .confirm-icon svg{ width:28px; height:28px; }
+  .confirm-text{ text-align:center; font-size:14px; color:var(--ink-500); margin-bottom:20px; line-height:1.6; }
 </style>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
 </head>
 <body>
-<div class="top"><div class="r">
-  <button class="ib" onclick="goBack()" aria-label="Kembali">←</button>
-  <div class="ttl">Analisis Saringan NHSI<small id="sub">Klinik Kesihatan Ayer Hitam</small></div>
-  <button class="ib" onclick="load(true)" aria-label="Muat semula" id="rf">⟳</button>
-</div></div>
 
-<div class="wrap">
-  <div class="fp">
-    <div class="seg" id="seg" role="tablist"><button class="on" data-p="today" onclick="setPeriod('today')">Hari ini</button><button data-p="month" onclick="setPeriod('month')">Bulan ini</button><button data-p="range" onclick="setPeriod('range')">Pilih tarikh</button></div>
-    <div class="rng" id="rng"><div><label for="dFrom">Dari</label><input type="date" id="dFrom"></div><div><label for="dTo">Hingga</label><input type="date" id="dTo"></div><button class="go" onclick="applyRange()">Papar</button></div>
-    <button class="tg" id="tg" onclick="toggleFx()">⚙ Penapis <b id="fc"></b></button>
-    <div class="fx" id="fx">
-      <h4>Jantina</h4><div class="chips" id="fGender"></div>
-      <h4>Umur <button class="mini" onclick="clearSet('ages')">kosongkan</button></h4><div class="chips" id="fAge"></div>
-      <h4>Keputusan <span><span class="mode" id="fMode"><button data-m="AND" class="on" onclick="setMode('AND')">Semua</button><button data-m="OR" onclick="setMode('OR')">Mana-mana</button></span> <button class="mini" onclick="clearSet('res')">kosongkan</button></span></h4><div class="chips" id="fRes"></div>
-      <div style="margin-top:12px"><button class="mini" onclick="clearAll()">↺ Set semula semua penapis</button></div>
-    </div>
+<div class="card">
+  <div class="head">
+    <div class="eyebrow">Klinik Kesihatan Ayer Hitam</div>
+    <h1>Create Account</h1>
+    <div class="gold-dot"></div>
   </div>
+  <div class="stage">
 
-  <div class="per" id="per"></div>
-  <div class="act" id="act"></div>
-  <div class="kpis" id="kpis"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
-  <div class="grid" id="charts"></div>
+    <!-- Step 1: Signup form -->
+    <div class="step show" id="stepForm">
+      <div class="banner error" id="banner"></div>
 
-  <div class="card wide" style="margin-top:14px">
-    <h3>Senarai klien <span id="tcount" style="color:var(--mut);font-weight:600"></span></h3><p class="sub">Mengikut penapis semasa · tiada No. IC dipaparkan</p>
-    <div class="act"><button class="btn" onclick="exportCsv()">⬇ CSV</button><button class="btn" onclick="window.print()">🖨 Cetak</button></div>
-    <div class="tw"><table><thead><tr><th>Tarikh</th><th>Nama</th><th>Umur</th><th>Jantina</th><th>BMI</th><th>TD</th><th>Glukosa</th><th>Kolesterol</th><th>Status</th></tr></thead><tbody id="tb"></tbody></table></div>
-    <div style="text-align:center;margin-top:10px"><button class="btn" id="more" onclick="showMore()" style="display:none">Tunjuk lagi</button></div>
+      <div class="field">
+        <label>Photo</label>
+        <div class="viewfinder" id="viewfinder">
+          <div class="ring" id="camRing"></div>
+          <video id="video" autoplay muted playsinline></video>
+          <canvas id="snapshotCanvas"></canvas>
+        </div>
+        <div class="camera-status" id="camStatus">Starting camera…</div>
+        <ul class="fsteps" id="fSteps" aria-live="polite">
+          <li id="fs1"><i>1</i><span>Gambar diambil</span></li>
+          <li id="fs2"><i>2</i><span>Membaca faceprint daripada gambar</span></li>
+          <li id="fs3"><i>3</i><span>Ujian pengecaman muka (kamera sebenar)</span></li>
+        </ul>
+        <div class="camera-actions">
+          <button class="btn" id="captureBtn" onclick="capturePhoto()" disabled>Capture Photo</button>
+          <button class="btn outline" id="retakeBtn" onclick="retakePhoto()" style="display:none;">Retake</button>
+        </div>
+        <div class="login-link" style="margin-top:10px;">
+          Already have a photo on file with the clinic? <a href="#" onclick="skipPhoto(event)">Skip this step</a>
+        </div>
+      </div>
+
+      <button type="button" class="scanbtn" onclick="scanIc()">📷 Scan your myKad with camera</button>
+      <div class="field"><label for="nameInput">Full Name</label><input type="text" id="nameInput" autocomplete="name" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase" placeholder="NUR AINA BINTI ALI" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="field"><label for="icInput">IC Number</label><input type="text" id="icInput" autocomplete="off" inputmode="numeric" maxlength="12" placeholder="010203040506" oninput="this.value=this.value.replace(/\D/g,'').slice(0,12)"></div>
+      <div class="field"><label for="phoneInput">Phone Number</label><input type="tel" id="phoneInput" autocomplete="tel" inputmode="tel" placeholder="0123456789"></div>
+      <div class="field"><label for="emailInput">Email</label><input type="email" id="emailInput" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="nama@gmail.com" oninput="this.value=this.value.toLowerCase().replace(/\s/g,'')"></div>
+      <div class="field"><label for="passwordInput">Password</label><input type="password" id="passwordInput" autocomplete="new-password" oninput="updateStrength()"></div>
+      <ul class="strength-list" id="strengthList">
+        <li id="reqLen">At least 10 characters</li>
+        <li id="reqLower">A lowercase letter</li>
+        <li id="reqUpper">An uppercase letter</li>
+        <li id="reqNum">A number</li>
+        <li id="reqSym">A symbol</li>
+      </ul>
+
+      <button class="btn" id="signupBtn" onclick="handleSignup()">Create Account</button>
+      <div class="login-link">Already have an account? <a href="./login.html">Log in</a></div>
+    </div>
+
+    <!-- Step 2: Check your email -->
+    <div class="step" id="stepConfirm">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 6l8 6 8-6M4 6h16v12H4V6z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+       <ul class="fsteps show" id="doneSteps" style="display:none;margin-top:4px"></ul>
+      <div class="confirm-text">We've sent a verification link to your email. Click it to activate your account, then come back and log in.</div>
+      <button class="btn outline" onclick="handleResend()" id="resendBtn">Resend Email</button>
+      <div class="login-link" style="margin-top:16px;"><a href="./login.html">Back to Log In</a></div>
+    </div>
+
   </div>
 </div>
-<div class="toast" id="toast"></div>
 
-<script src="./nhsi-risk.js?v=1"></script>
+<script src="./ic-scan.js?v=1"></script>
+<script>
+async function scanIc(){
+  if(!window.SiagaIcScan){ alert('IC scanner not loaded. Please refresh the page.'); return; }
+  let lay = 'new'; try{ lay = localStorage.getItem('kkah_ic_layout') || 'new'; }catch(e){}
+  const r = await SiagaIcScan.open({ layout: lay, onLayout: l => { try{ localStorage.setItem('kkah_ic_layout', l); }catch(e){} } });
+  if(!r) return;
+  const put = (id, v) => { if(!v) return; const el = document.getElementById(id); el.value = v; el.dispatchEvent(new Event('input', { bubbles:true })); };
+  put('nameInput', r.name); put('icInput', r.ic);
+  try{ document.getElementById(r.ic && r.name ? 'emailInput' : (r.ic ? 'nameInput' : 'icInput')).focus(); }catch(e){}
+}
+</script>
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
-const token = sessionStorage.getItem('kkah_session_token');
-const $ = id => document.getElementById(id);
-const VIA_QR = sessionStorage.getItem('kkah_via') === 'qr', DESKTOP = !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-function toLogin(){ location.replace((VIA_QR || DESKTOP) ? './qr-login.html?next=nhsi.html' : './login.html'); }
-if (!token) toLogin();
-function goBack(){ location.href = './nhsi.html'; }
-const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
-function api(body, ms){ const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms || 40000); return fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)), signal: ctl.signal }).then(r => r.json()).finally(() => clearTimeout(t)); }
-const pad = n => String(n).padStart(2, '0'), ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
-const fmtD = s => { const [y, m, d] = s.split('-'); return d + '/' + m + '/' + y; };
+let selectedImageBase64 = null;
+let signedUpIc = null;
 
-/* ---------- state ---------- */
-let CFG = { bp_sys_high:140, bp_dia_high:90, bp_sys_urgent:180, bp_dia_urgent:110, pulse_low:60, pulse_high:100, fbs_ifg:6.1, fbs_high:7, rbs_border:7.8, rbs_high:11.1, chol_border:5.2, chol_high:6.2 };
-const S = { period:'today', from:ymd(new Date()), to:ymd(new Date()), gender:'', ages:new Set(), res:new Set(), mode:'AND' };
-let ALL = [], truncated = false, shown = 60, view = [], busy = false;
-const AGES = [['<18', 0, 17], ['18–29', 18, 29], ['30–39', 30, 39], ['40–49', 40, 49], ['50–59', 50, 59], ['60–69', 60, 69], ['70+', 70, 200]];
-const RES = [['cvdHigh', 'Risiko CVD tinggi', 1], ['cvdMid', 'Risiko CVD sederhana', 0], ['bpHigh', 'TD tinggi', 1], ['bpUrgent', 'TD segera', 1], ['gluHigh', 'Glukosa tinggi', 1], ['gluBorder', 'Glukosa sempadan', 0], ['cholHigh', 'Kolesterol tinggi', 1], ['cholBorder', 'Kolesterol sempadan', 0],
-  ['bmiObese', 'Obes', 1], ['bmiOver', 'Berat berlebihan', 0], ['bmiUnder', 'Kurang berat', 0], ['smoker', 'Perokok / vape', 1], ['whooley', 'Whooley +', 1], ['refer', 'Ada rujukan', 0], ['allNormal', 'Semua normal', 0], ['s3pending', 'Belum konsultasi', 0]];
+const video = document.getElementById('video');
+const canvas = document.getElementById('snapshotCanvas');
+const viewfinder = document.getElementById('viewfinder');
+const camRing = document.getElementById('camRing');
+const camStatus = document.getElementById('camStatus');
+const captureBtn = document.getElementById('captureBtn');
+const retakeBtn = document.getElementById('retakeBtn');
 
-/* ---------- classification ---------- */
-function flagsOf(sbp, dbp, pul, glu, gt, chol){
-  const c = CFG, f = {};
-  f.bp = (sbp >= c.bp_sys_urgent || dbp >= c.bp_dia_urgent) ? 3 : (sbp >= c.bp_sys_high || dbp >= c.bp_dia_high) ? 2 : 0;
-  f.pul = pul < c.pulse_low || pul > c.pulse_high ? 1 : 0;
-  if (glu != null) f.glu = gt === 'Puasa' ? (glu >= c.fbs_high ? 2 : glu >= c.fbs_ifg ? 1 : 0) : (glu >= c.rbs_high ? 2 : glu >= c.rbs_border ? 1 : 0);
-  if (chol != null) f.chol = chol >= c.chol_high ? 2 : chol >= c.chol_border ? 1 : 0;
-  return f;
-}
-const num = v => (v === '' || v == null || isNaN(+v)) ? null : +v;
-function enrich(r){
-  r.bmiN = num(r.bmi); r.bmiLv = r.s1 ? ({ 'Kurang berat badan':1, 'Normal':0, 'Berat badan berlebihan':1, 'Obes':2 }[r.bc] ?? null) : null;
-  if (r.s2){ const f = flagsOf(num(r.sb), num(r.db), num(r.pu), num(r.gl), r.gt, num(r.ch)); r.bp = f.bp; r.glu = f.glu; r.chol = f.chol; r.pul = f.pul; } else { r.bp = r.glu = r.chol = r.pul = null; }
-  let m = 0; [r.bp, r.glu, r.chol, r.bmiLv].forEach(x => { if (x != null) m = Math.max(m, x); }); if (r.w) m = Math.max(m, 2); r.lv = m;
-  r.smk = r.sm === 'Perokok' || /Vape/.test(r.sm); r.k = {};
-  r.cvd = null; if (r.s1 && r.s2){ const q = NHSI_RISK.cvdRisk({ age: r.a, gender: r.g === 'L' ? 'Lelaki' : 'Perempuan', bmi: r.bmi, sbp: r.sb, treated: /Darah tinggi/.test(r.h || ''), smoker: r.sm === 'Perokok' && r.st !== 'Vape', diabetes: /Kencing manis/.test(r.h || '') || r.glu === 2 }); if (q.ok) r.cvd = q; }
-  r.k.cvdHigh = !!(r.cvd && r.cvd.level === 2); r.k.cvdMid = !!(r.cvd && r.cvd.level === 1);
-  if (r.k.cvdHigh) r.lv = Math.max(r.lv, 2);
-  r.k.bpHigh = r.bp === 2; r.k.bpUrgent = r.bp === 3; r.k.bpNormal = r.bp === 0;
-  r.k.gluHigh = r.glu === 2; r.k.gluBorder = r.glu === 1; r.k.gluNormal = r.glu === 0;
-  r.k.cholHigh = r.chol === 2; r.k.cholBorder = r.chol === 1; r.k.cholNormal = r.chol === 0;
-  r.k.bmiObese = r.bc === 'Obes'; r.k.bmiOver = r.bc === 'Berat badan berlebihan'; r.k.bmiUnder = r.bc === 'Kurang berat badan'; r.k.bmiNormal = r.bc === 'Normal';
-  r.k.smoker = r.smk; r.k.whooley = r.w; r.k.refer = (r.rf || []).length > 0; r.k.allNormal = r.s2 && r.lv === 0; r.k.s3pending = !r.s3;
-  return r;
-}
-function passes(r){
-  if (S.gender && r.g !== S.gender) return false;
-  if (S.ages.size && ![...S.ages].some(i => r.a >= AGES[i][1] && r.a <= AGES[i][2])) return false;
-  if (S.res.size){ const ks = [...S.res]; return S.mode === 'AND' ? ks.every(k => r.k[k]) : ks.some(k => r.k[k]); }
-  return true;
-}
+window.addEventListener('DOMContentLoaded', () => { startCamera(); loadFaceModels().catch(() => {}); });
 
-/* ---------- data ---------- */
-async function load(manual){
-  if (busy) return; busy = true; $('rf').style.opacity = .5;
-  let r; try { r = await api({ action:'nhsiCall', fn:'report', args:{ from:S.from, to:S.to } }); } catch(e){ r = { ok:false, error:'Tiada sambungan.' }; }
-  busy = false; $('rf').style.opacity = 1;
-  if (!r || !r.ok){ if (r && (/expired/i.test(r.error || '') || r.code === 'QR_EXPIRED')) { toLogin(); return; } toast((r && r.error) || 'Gagal memuat.'); if (!ALL.length) draw(); return; }
-  if (r.cfg) CFG = Object.assign(CFG, r.cfg); ALL = r.rows.map(enrich); truncated = !!r.truncated; draw();
-  if (manual) toast('Dikemas kini');
+/* ---------- face check BEFORE the account is created: a photo the check-in cannot read is the #1 reason a new account fails to check in ---------- */
+const MODEL_URL = './models', MATCH_THRESHOLD = 0.5;
+let faceDesc = null, faceOk = false, modelsP = null, analyseRun = 0;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function loadFaceModels(){
+  if(!modelsP) modelsP = new Promise(r => { (function poll(){ if(window.faceapi) r(); else setTimeout(poll, 50); })(); })
+    .then(() => Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)]))
+    .catch(e => { modelsP = null; throw e; });
+  return modelsP;
 }
-function setPeriod(p){
-  S.period = p; const t = new Date();
-  [...$('seg').children].forEach(b => b.classList.toggle('on', b.dataset.p === p)); $('rng').classList.toggle('on', p === 'range');
-  if (p === 'today'){ S.from = S.to = ymd(t); load(); }
-  else if (p === 'month'){ S.from = t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-01'; S.to = ymd(t); load(); }
-  else { $('dFrom').value = S.from; $('dTo').value = S.to; $('dFrom').max = $('dTo').max = ymd(t); }
+function fstep(n, state, text){
+  const li = document.getElementById('fs' + n); li.className = state;
+  li.querySelector('i').textContent = state === 'ok' ? '✓' : state === 'err' ? '!' : n;
+  if(text) li.querySelector('span').textContent = text;
 }
-function applyRange(){
-  const a = $('dFrom').value, b = $('dTo').value; if (!a || !b) return toast('Sila pilih kedua-dua tarikh.');
-  let f = a, t = b; if (f > t){ f = b; t = a; }
-  if ((new Date(t) - new Date(f)) / 86400000 > 366) return toast('Julat maksimum 366 hari.');
-  S.from = f; S.to = t; load();
-}
+async function analysePhoto(){
+  const my = ++analyseRun; faceOk = false; faceDesc = null;
+  document.getElementById('fSteps').classList.add('show');
+  fstep(1, 'ok', 'Gambar diambil'); fstep(2, 'run', 'Membaca faceprint daripada gambar…'); fstep(3, '', 'Ujian pengecaman muka (kamera sebenar)');
+  try{
+    await loadFaceModels();
+    const dets = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptors();
+    if(my !== analyseRun) return;
+    if(!dets.length){ fstep(2, 'err', 'Tiada muka dikesan. Tekan Retake — pastikan muka penuh dalam bulatan, cahaya terang, tanpa topi/pelitup.'); return; }
+    if(dets.length > 1){ fstep(2, 'err', 'Lebih daripada satu muka dikesan. Hanya anda sahaja dalam gambar — tekan Retake.'); return; }
+    faceDesc = dets[0].descriptor;
+    fstep(2, 'ok', 'Faceprint berjaya dibaca (' + Math.round(dets[0].detection.score * 100) + '% yakin)');
+  }catch(e){ fstep(2, 'err', 'Tidak dapat memuatkan pengecam muka. Semak internet dan muat semula halaman.'); return; }
 
-/* ---------- filters ui ---------- */
-function toggleFx(){ $('fx').classList.toggle('on'); }
-function drawFilters(){
-  $('fGender').innerHTML = [['', 'Semua'], ['L', 'Lelaki'], ['P', 'Perempuan']].map(g => '<button class="chip' + (S.gender === g[0] ? ' on' : '') + '" onclick="setGender(\'' + g[0] + '\')">' + g[1] + '</button>').join('');
-  $('fAge').innerHTML = AGES.map((a, i) => '<button class="chip' + (S.ages.has(i) ? ' on' : '') + '" onclick="togSet(\'ages\',' + i + ')">' + a[0] + '</button>').join('');
-  $('fRes').innerHTML = RES.map(r => '<button class="chip' + (r[2] ? ' bad' : '') + (S.res.has(r[0]) ? ' on' : '') + '" onclick="togSet(\'res\',\'' + r[0] + '\')">' + r[1] + '</button>').join('');
-  [...$('fMode').children].forEach(b => b.classList.toggle('on', b.dataset.m === S.mode));
-  const n = (S.gender ? 1 : 0) + S.ages.size + S.res.size; $('fc').textContent = n ? n : '';
-  const tags = []; if (S.gender) tags.push(['gender', '', S.gender === 'L' ? 'Lelaki' : 'Perempuan']); S.ages.forEach(i => tags.push(['ages', i, 'Umur ' + AGES[i][0]])); S.res.forEach(k => tags.push(['res', k, RES.filter(r => r[0] === k)[0]?.[1] || k]));
-  $('act').innerHTML = tags.map(t => '<span class="tag">' + esc(t[2]) + '<button aria-label="Buang" onclick="' + (t[0] === 'gender' ? "setGender('')" : "togSet('" + t[0] + "'," + (typeof t[1] === 'number' ? t[1] : "'" + t[1] + "'") + ')') + '">✕</button></span>').join('') + (tags.length ? '<button class="mini" onclick="clearAll()">Set semula</button>' : '');
-}
-function setGender(g){ S.gender = g; draw(); }
-function togSet(k, v){ const s = S[k]; s.has(v) ? s.delete(v) : s.add(v); draw(); }
-function clearSet(k){ S[k].clear(); draw(); }
-function setMode(m){ S.mode = m; draw(); }
-function clearAll(){ S.gender = ''; S.ages.clear(); S.res.clear(); draw(); }
-
-/* ---------- charts ---------- */
-const cnt = (arr, fn) => arr.filter(fn).length;
-const pct = (n, d) => d ? Math.round(n / d * 100) + '%' : '–';
-let uid = 0;
-function hbars(title, sub, items, den){
-  const max = Math.max(1, ...items.map(i => i.n)), id = 'c' + (uid++);
-  const body = items.every(i => !i.n) ? '<div class="none">Tiada data</div>' : items.map((i, k) => '<div class="hb' + (i.key && (i.key[0] === 'age' ? S.ages.has(i.key[1]) : S.res.has(i.key[1])) ? ' sel' : '') + '" ' + (i.key ? 'onclick="' + (i.key[0] === 'age' ? 'togSet(\'ages\',' + i.key[1] + ')' : "togSet('res','" + i.key[1] + "')") + '"' : '') + '><div class="l">' + esc(i.l) + '</div><div class="t"><span class="bar" style="--c:' + i.c + ';--i:' + k + ';width:' + Math.max(i.n ? 3 : 0, i.n / max * 100) + '%"></span></div><div class="n">' + i.n + ' <small>' + pct(i.n, den) + '</small></div></div>').join('');
-  return '<div class="card"><h3>' + title + '</h3><p class="sub">' + sub + '</p>' + body + '</div>';
-}
-function vbars(title, sub, items, wide){
-  const max = Math.max(1, ...items.map(i => i.n));
-  const body = items.every(i => !i.n) ? '<div class="none">Tiada data</div>' : '<div class="vb">' + items.map((i, k) => '<div class="vc' + (i.key && S.ages.has(i.key[1]) ? ' sel' : '') + '" ' + (i.key ? 'onclick="togSet(\'ages\',' + i.key[1] + ')"' : '') + '><div class="v">' + i.n + '</div><div class="col"><i style="--c:' + i.c + ';--i:' + k + ';--h:' + (i.n / max * 100) + '%"></i></div><div class="x">' + esc(i.l) + '</div></div>').join('') + '</div>';
-  return '<div class="card' + (wide ? ' wide' : '') + '"><h3>' + title + '</h3><p class="sub">' + sub + '</p>' + body + '</div>';
-}
-function donut(title, sub, items){
-  const tot = items.reduce((a, b) => a + b.n, 0), R = 60, C = 2 * Math.PI * R; let off = 0;
-  const arcs = items.map(i => { const len = tot ? i.n / tot * C : 0, el = '<circle cx="75" cy="75" r="' + R + '" stroke="' + i.c + '" stroke-dasharray="0 ' + C + '" data-len="' + len + '" data-c="' + C + '" stroke-dashoffset="' + (-off) + '"/>'; off += len; return el; }).join('');
-  const body = tot ? '<div class="donut"><svg viewBox="0 0 150 150" aria-hidden="true"><circle cx="75" cy="75" r="' + R + '" stroke="var(--track)"/>' + arcs + '</svg><div class="lg">' + items.map(i => '<div style="--c:' + i.c + '" onclick="' + i.click + '"><i></i>' + esc(i.l) + ' <b>' + i.n + '</b> <small>' + pct(i.n, tot) + '</small></div>').join('') + '</div></div>' : '<div class="none">Tiada data</div>';
-  return '<div class="card"><h3>' + title + '</h3><p class="sub">' + sub + '</p>' + body + '</div>';
-}
-function drawCharts(v){
-  const M2 = v.filter(r => r.s2), M1 = v.filter(r => r.s1), card = [];
-  card.push(hbars('Aliran stesen', 'Berapa klien sampai setiap stesen', [
-    { l:'Didaftar', n:v.length, c:'#1A6B4A' }, { l:'Stesen A · tinggi/berat', n:cnt(v, r => r.s1), c:'#2F7FD3' }, { l:'Stesen B · TD/gula/kol.', n:cnt(v, r => r.s2), c:'#E0A100' }, { l:'Stesen C · konsultasi', n:cnt(v, r => r.s3), c:'#1f9a57' }], v.length));
-  card.push(vbars('Kumpulan umur', 'Tekan lajur untuk menapis', AGES.map((a, i) => ({ l:a[0], n:cnt(v, r => r.a >= a[1] && r.a <= a[2]), c:'#1A6B4A', key:['age', i] }))));
-  const L = cnt(v, r => r.g === 'L'), P = v.length - L;
-  card.push(donut('Jantina', 'Tekan untuk menapis', [{ l:'Lelaki', n:L, c:'#2F7FD3', click:"setGender('L')" }, { l:'Perempuan', n:P, c:'#D6578B', click:"setGender('P')" }]));
-  card.push(hbars('Indeks jisim badan (BMI Asia)', M1.length + ' klien diukur', [
-    { l:'Kurang berat badan', n:cnt(M1, r => r.k.bmiUnder), c:'#2F7FD3', key:['res', 'bmiUnder'] }, { l:'Normal', n:cnt(M1, r => r.k.bmiNormal), c:'#1f9a57' }, { l:'Berat berlebihan', n:cnt(M1, r => r.k.bmiOver), c:'#E0A100', key:['res', 'bmiOver'] }, { l:'Obes', n:cnt(M1, r => r.k.bmiObese), c:'#C0392B', key:['res', 'bmiObese'] }], M1.length));
-  card.push(hbars('Tekanan darah', M2.length + ' klien diukur', [
-    { l:'Normal', n:cnt(M2, r => r.bp === 0), c:'#1f9a57' }, { l:'Tinggi', n:cnt(M2, r => r.bp === 2), c:'#E0A100', key:['res', 'bpHigh'] }, { l:'Sangat tinggi (segera)', n:cnt(M2, r => r.bp === 3), c:'#C0392B', key:['res', 'bpUrgent'] }], M2.length));
-  const G = M2.filter(r => r.glu != null);
-  card.push(hbars('Glukosa', G.length + ' klien diambil (puasa ' + cnt(G, r => r.gt === 'Puasa') + ' · rawak ' + cnt(G, r => r.gt !== 'Puasa') + ')', [
-    { l:'Normal', n:cnt(G, r => r.glu === 0), c:'#1f9a57' }, { l:'Sempadan / IFG', n:cnt(G, r => r.glu === 1), c:'#E0A100', key:['res', 'gluBorder'] }, { l:'Tinggi (julat diabetes)', n:cnt(G, r => r.glu === 2), c:'#C0392B', key:['res', 'gluHigh'] }], G.length));
-  const K = M2.filter(r => r.chol != null);
-  card.push(hbars('Kolesterol jumlah', K.length + ' klien diambil', [
-    { l:'Normal', n:cnt(K, r => r.chol === 0), c:'#1f9a57' }, { l:'Sempadan', n:cnt(K, r => r.chol === 1), c:'#E0A100', key:['res', 'cholBorder'] }, { l:'Tinggi', n:cnt(K, r => r.chol === 2), c:'#C0392B', key:['res', 'cholHigh'] }], K.length));
-  const sm = x => cnt(v, r => r.sm === x);
-  card.push(hbars('Status merokok', 'Semua klien berdaftar', [{ l:'Tidak pernah', n:sm('Tidak pernah'), c:'#1f9a57' }, { l:'Bekas perokok', n:sm('Bekas perokok'), c:'#E0A100' }, { l:'Perokok semasa', n:sm('Perokok') + sm('Vape / e-rokok'), c:'#C0392B', key:['res', 'smoker'] }], v.length));
-  const CV = v.filter(r => r.cvd); card.push(hbars('Risiko kardiovaskular 10 tahun', CV.length + ' klien (umur 30–74, S1 & S2 lengkap) · Framingham BMI', [{ l:'Rendah (<10%)', n:cnt(CV, r => r.cvd.level === 0), c:'#1f9a57' }, { l:'Sederhana (10–20%)', n:cnt(CV, r => r.cvd.level === 1), c:'#E0A100', key:['res', 'cvdMid'] }, { l:'Tinggi (>20%)', n:cnt(CV, r => r.cvd.level === 2), c:'#C0392B', key:['res', 'cvdHigh'] }], CV.length));
-  const SM = v.filter(r => r.sm === 'Perokok'); card.push(hbars('Jenis rokok (perokok semasa)', SM.length + ' perokok semasa', [{ l:'Rokok sahaja', n:cnt(SM, r => !r.st || r.st === 'Rokok'), c:'#C0392B' }, { l:'Vape sahaja', n:cnt(SM, r => r.st === 'Vape'), c:'#E0A100' }, { l:'Kedua-duanya', n:cnt(SM, r => r.st === 'Kedua-duanya'), c:'#8E1B10' }], SM.length));
-  card.push(hbars('Kesihatan mental (Whooley)', 'Saringan 2 soalan', [{ l:'Negatif', n:cnt(v, r => !r.w), c:'#1f9a57' }, { l:'Positif', n:cnt(v, r => r.w), c:'#C0392B', key:['res', 'whooley'] }], v.length));
-  const hc = {}; v.forEach(r => (r.h || '').split('; ').forEach(h => { if (h && h !== 'Tiada') hc[h] = (hc[h] || 0) + 1; }));
-  const hl = Object.entries(hc).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([l, n]) => ({ l, n, c:'#2F7FD3' }));
-  card.push(hbars('Sejarah penyakit dilapor', 'Disahkan sendiri oleh klien', hl.length ? hl : [{ l:'Tiada', n:0, c:'#2F7FD3' }], v.length));
-  card.push(hbars('Tahap keseluruhan', 'Berdasarkan semua keputusan', [{ l:'Normal', n:cnt(v, r => r.s2 && r.lv === 0), c:'#1f9a57', key:['res', 'allNormal'] }, { l:'Sempadan', n:cnt(v, r => r.s2 && r.lv === 1), c:'#E0A100' }, { l:'Tinggi / perlu tindakan', n:cnt(v, r => r.lv >= 2), c:'#C0392B' }, { l:'Belum lengkap (tiada S2)', n:cnt(v, r => !r.s2), c:'#97ADA5' }], v.length));
-  const rc = {}; v.forEach(r => (r.rf || []).forEach(x => rc[x] = (rc[x] || 0) + 1)); const rl = Object.entries(rc).sort((a, b) => b[1] - a[1]).map(([l, n]) => ({ l, n, c:'#1A6B4A' }));
-  card.push(hbars('Rujukan oleh doktor', 'Klien yang sudah konsultasi', rl.length ? rl : [{ l:'Tiada', n:0, c:'#1A6B4A' }], cnt(v, r => r.s3)));
-  // trend
-  const days = {}; v.forEach(r => days[r.d] = (days[r.d] || 0) + 1); const keys = Object.keys(days).sort();
-  if (S.from !== S.to){
-    const span = (new Date(S.to) - new Date(S.from)) / 86400000 + 1, byMonth = span > 62, agg = {};
-    keys.forEach(k => { const g = byMonth ? k.slice(0, 7) : k; agg[g] = (agg[g] || 0) + days[k]; });
-    const ks = Object.keys(agg).sort(), tl = ks.map(k => ({ l: byMonth ? k.slice(5) + '/' + k.slice(2, 4) : k.slice(8) + '/' + k.slice(5, 7), n: agg[k], c:'#1A6B4A' }));
-    card.push(vbars('Pendaftaran ' + (byMonth ? 'mengikut bulan' : 'mengikut hari'), 'Jumlah klien berdaftar', tl.length ? tl : [{ l:'-', n:0, c:'#1A6B4A' }], true));
+  // trial recognition with the live camera, exactly as check-in will do it
+  fstep(3, 'run', 'Ujian pengecaman — pandang terus ke kamera…');
+  viewfinder.classList.remove('captured'); camRing.classList.remove('captured'); camRing.classList.add('ready');
+  let best = 9, hits = 0; const t0 = Date.now();
+  while(Date.now() - t0 < 10000 && my === analyseRun){
+    try{
+      const d = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptor();
+      if(d){ const dist = faceapi.euclideanDistance(d.descriptor, faceDesc); best = Math.min(best, dist); if(dist <= MATCH_THRESHOLD){ if(++hits >= 2) break; } else hits = 0; }
+    }catch(e){}
+    await sleep(90);
   }
-  $('charts').innerHTML = card.join('');
-  $('charts').classList.remove('play'); void $('charts').offsetWidth;
-  requestAnimationFrame(() => requestAnimationFrame(() => { $('charts').classList.add('play'); $('charts').querySelectorAll('.donut circle[data-len]').forEach(c => c.setAttribute('stroke-dasharray', c.dataset.len + ' ' + c.dataset.c)); }));
+  if(my !== analyseRun) return;
+  viewfinder.classList.add('captured'); camRing.classList.remove('ready'); camRing.classList.add('captured');
+  if(hits >= 2){ faceOk = true; fstep(3, 'ok', 'Padanan berjaya (jarak ' + best.toFixed(2) + ') — akaun anda akan dapat Check In dengan lancar'); camStatus.textContent = 'Muka disahkan ✓'; }
+  else fstep(3, 'err', 'Padanan lemah' + (best < 9 ? ' (jarak ' + best.toFixed(2) + ')' : ' — tiada muka dikesan') + '. Tekan Retake dengan cahaya lebih terang dan muka menghadap kamera.');
 }
-function countUp(el, to, dec){ const t0 = performance.now(), from = 0; (function f(t){ const k = Math.min(1, (t - t0) / 800), e = 1 - Math.pow(1 - k, 3); el.textContent = dec ? (from + (to - from) * e).toFixed(1) : Math.round(from + (to - from) * e); if (k < 1) requestAnimationFrame(f); else el.textContent = dec ? to.toFixed(1) : to; })(t0); }
-function drawKpis(v){
-  const n = v.length, att = cnt(v, r => r.lv >= 2), ages = v.map(r => r.a).filter(a => a > 0), avg = ages.length ? ages.reduce((a, b) => a + b, 0) / ages.length : 0;
-  const k = [['Didaftar', n, '', '#1A6B4A'], ['Selesai konsultasi', cnt(v, r => r.s3), pct(cnt(v, r => r.s3), n) + ' daripada didaftar', '#1f9a57'], ['Perlu perhatian', att, 'keputusan tinggi / Whooley +', '#C0392B'], ['Purata umur', avg, 'tahun', '#2F7FD3', 1], ['Perempuan', cnt(v, r => r.g === 'P'), pct(cnt(v, r => r.g === 'P'), n), '#D6578B'], ['Perokok', cnt(v, r => r.smk), pct(cnt(v, r => r.smk), n), '#E0A100']];
-  $('kpis').innerHTML = k.map((x, i) => '<div class="kpi" style="--c:' + x[3] + '"><small>' + x[0] + '</small><b id="kp' + i + '">0</b><span>' + (x[2] || '&nbsp;') + '</span></div>').join('');
-  k.forEach((x, i) => countUp($('kp' + i), x[1], x[4]));
+
+async function startCamera(){
+  camStatus.textContent = 'Starting camera…';
+  try{
+     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:{ ideal:640 }, height:{ ideal:480 } } });
+    video.srcObject = stream;
+    await new Promise(r => video.onloadedmetadata = r);
+    camRing.classList.add('ready');
+    camStatus.textContent = 'Center your face, then capture';
+    captureBtn.disabled = false;
+  }catch(err){
+    camStatus.textContent = 'Camera access denied — please allow camera access and reload.';
+    showBanner('Camera access is required to sign up.');
+  }
 }
-const lvPill = (lv, t) => lv == null ? '<span style="color:var(--mut)">—</span>' : '<span class="pill l' + lv + '">' + t + '</span>';
-function drawTable(){
-  const rows = view.slice(0, shown);
-  $('tb').innerHTML = rows.length ? rows.map(r => '<tr><td>' + fmtD(r.d) + '</td><td><b>' + esc(r.n) + '</b></td><td>' + r.a + '</td><td>' + r.g + '</td><td>' + (r.s1 ? lvPill(r.bmiLv, esc(r.bmi)) : '—') + '</td><td>' + (r.s2 ? lvPill(r.bp, esc(r.sb) + '/' + esc(r.db)) : '—') + '</td><td>' + (r.glu != null ? lvPill(r.glu, esc(r.gl) + ' ' + (r.gt === 'Puasa' ? 'P' : 'R')) : '—') + '</td><td>' + (r.chol != null ? lvPill(r.chol, esc(r.ch)) : '—') + '</td><td>' + (r.s3 ? '<span class="pill l0">Selesai</span>' : r.s2 ? '<span class="pill l1">Tunggu doktor</span>' : r.s1 ? '<span class="pill l1">Tunggu S2</span>' : '<span class="pill l1">Tunggu S1</span>') + '</td></tr>').join('') : '<tr><td colspan="9" class="none">Tiada klien sepadan.</td></tr>';
-  $('more').style.display = view.length > shown ? 'inline-block' : 'none'; $('tcount').textContent = '(' + view.length + ')';
+
+function capturePhoto(){
+  const vw = video.videoWidth || 480, vh = video.videoHeight || 480, side = Math.min(vw, vh), S = 400;   // centred square crop at a size the face reader likes
+  canvas.width = S; canvas.height = S;
+  canvas.getContext('2d').drawImage(video, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, S, S);
+  selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.9);
+  viewfinder.classList.add('captured');
+  camRing.classList.remove('ready'); camRing.classList.add('captured');
+  camStatus.textContent = 'Photo captured';
+  captureBtn.style.display = 'none'; retakeBtn.style.display = 'inline-block';
+  analysePhoto();
 }
-function showMore(){ shown += 100; drawTable(); }
-function draw(){
-  drawFilters(); view = ALL.filter(passes); shown = 60;
-  $('per').innerHTML = (S.from === S.to ? '<b>' + fmtD(S.from) + '</b>' : '<b>' + fmtD(S.from) + '</b> hingga <b>' + fmtD(S.to) + '</b>') + ' · ' + view.length + ' daripada ' + ALL.length + ' klien' + (truncated ? ' · <span style="color:var(--warn)">dipaparkan 20,000 terkini</span>' : '');
-  $('sub').textContent = S.period === 'today' ? 'Hari ini' : S.period === 'month' ? 'Bulan ini' : 'Julat tarikh';
-  if (!ALL.length){ $('kpis').innerHTML = ''; $('charts').innerHTML = '<div class="card wide none">Tiada klien berdaftar dalam tempoh ini.</div>'; $('tb').innerHTML = ''; $('more').style.display = 'none'; $('tcount').textContent = ''; return; }
-  drawKpis(view); drawCharts(view); drawTable();
+
+function retakePhoto(){
+  analyseRun++; faceOk = false; faceDesc = null; document.getElementById('fSteps').classList.remove('show');
+  selectedImageBase64 = null;
+  photoSkipped = false;
+  viewfinder.classList.remove('captured'); camRing.classList.remove('captured'); camRing.classList.add('ready');
+  camStatus.textContent = 'Center your face, then capture';
+  captureBtn.style.display = 'inline-block'; retakeBtn.style.display = 'none';
 }
-function exportCsv(){
-  if (!view.length) return toast('Tiada data untuk dieksport.');
-  const q = s => { s = String(s == null ? '' : s); if (/^[=+\-@]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; };
-  const head = ['Tarikh', 'Nama', 'Telefon', 'Umur', 'Jantina', 'BMI', 'Kategori BMI', 'Sistolik', 'Diastolik', 'Nadi', 'Glukosa', 'Jenis glukosa', 'Kolesterol', 'Merokok', 'Jenis rokok', 'Risiko CVD 10 thn (%)', 'Whooley positif', 'Rujukan', 'Susulan', 'Status'];
-  const lines = [head.map(q).join(',')].concat(view.map(r => [r.d, r.n, r.p, r.a, r.g === 'L' ? 'Lelaki' : 'Perempuan', r.bmi, r.bc, r.sb, r.db, r.pu, r.gl, r.gt, r.ch, r.sm, r.st || '', r.cvd ? r.cvd.pct : '', r.w ? 'Ya' : 'Tidak', (r.rf || []).join('; '), r.fu, r.s3 ? 'Selesai' : r.s2 ? 'Tunggu doktor' : r.s1 ? 'Tunggu S2' : 'Tunggu S1'].map(q).join(',')));
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' })); a.download = 'NHSI_' + S.from + '_' + S.to + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+
+/**
+ * For staff whose name/IC are already in DATABASE from before the portal
+ * existed — the backend reuses their existing photo on file, so a new
+ * capture isn't required. If it turns out there's no photo on file (brand
+ * new staff), signup() will say so and they can come back and capture one.
+ */
+let photoSkipped = false;
+function skipPhoto(e){
+  e.preventDefault();
+  analyseRun++; document.getElementById('fSteps').classList.remove('show');
+  photoSkipped = true;
+  camStatus.textContent = 'Skipped — will use the photo already on file, if any';
+  showBanner(null);
 }
-drawFilters(); load();
-setInterval(() => { if (S.period === 'today' && !document.hidden) load(); }, 60000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && S.period === 'today') load(); });
+
+function showBanner(message){
+  const b = document.getElementById('banner');
+  if(!message){ b.classList.remove('show'); return; }
+  b.textContent = message; b.classList.add('show');
+}
+
+function updateStrength(){
+  const pw = document.getElementById('passwordInput').value;
+  setReq('reqLen', pw.length >= 10);
+  setReq('reqLower', /[a-z]/.test(pw));
+  setReq('reqUpper', /[A-Z]/.test(pw));
+  setReq('reqNum', /[0-9]/.test(pw));
+  setReq('reqSym', /[^a-zA-Z0-9]/.test(pw));
+}
+function setReq(id, met){ document.getElementById(id).classList.toggle('met', met); }
+
+async function handleSignup(){
+  document.getElementById('nameInput').value.replace(/\s+/g, ' ').trim().toUpperCase();      // names are saved in CAPITAL letters
+  const ic = document.getElementById('icInput').value.replace(/\D/g, '');
+  const email = document.getElementById('emailInput').value.trim().toLowerCase();
+  const phone = document.getElementById('phoneInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+
+   if(!name || !ic || !email || !password || !phone){ showBanner('Please fill in all fields.'); return; }
+  if(!/^\d{12}$/.test(ic)){ showBanner('IC number must be 12 digits (no dash), e.g. 010203040506.'); return; }
+  if(!/^[a-z0-9._%+\-]+@[a-z0-9\-]+(\.[a-z0-9\-]+)*\.[a-z]{2,}$/.test(email) || /\.\./.test(email)){ showBanner('Please enter a valid email address, e.g. nama@gmail.com.'); return; }
+  if(!/^(\+?60|0)?1?\d{8,10}$/.test(phone.replace(/[\s-]/g, ''))){ showBanner('Please enter a valid phone number, e.g. 0123456789.'); return; }
+  if(!selectedImageBase64 && !photoSkipped){ showBanner('Please capture a photo, or tap "Skip this step" if one is already on file.'); return; }
+  if(selectedImageBase64 && !photoSkipped && !faceOk){ showBanner('Pengesahan muka belum lulus. Tunggu semua langkah di bawah kamera siap (✓), atau tekan Retake.'); return; }
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Creating account…';
+  showBanner(null);
+
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'signup', name, ic, email, phone,password, imageBase64: selectedImageBase64 })
+    });
+    const data = await res.json();
+    if(!data.ok){ showBanner(data.error || 'Could not create account.'); }
+    else{
+      signedUpIc = data.ic;
+      try{ if(faceDesc) localStorage.setItem('kkah_my_desc_v1', JSON.stringify({ ic: data.ic || ic, name, hash: '', at: Date.now(), desc: Array.from(faceDesc) })); }catch(e){}   // check-in is instant on this phone
+      const ds = document.getElementById('doneSteps');
+      if(ds){ ds.style.display = 'block'; ds.innerHTML = ['Gambar & akaun dimuat naik', faceDesc ? 'Faceprint dibaca & disimpan pada telefon ini' : 'Menggunakan gambar sedia ada', faceDesc ? 'Ujian pengecaman muka lulus' : 'Gambar sedia ada akan disemak semasa Check In'].map(t => '<li class="ok"><i>✓</i><span>' + t + '</span></li>').join(''); }
+      if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+      document.getElementById('stepForm').classList.remove('show');
+      document.getElementById('stepConfirm').classList.add('show');
+    }
+  }catch(err){ showBanner('Network error — please try again.'); }
+
+  btn.disabled = false; btn.textContent = 'Create Account';
+}
+
+async function handleResend(){
+  const btn = document.getElementById('resendBtn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  try{
+    await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'resendVerification', ic: signedUpIc })
+    });
+  }catch(err){}
+  btn.disabled = false; btn.textContent = 'Resend Email';
+}
 </script>
 </body>
 </html>
