@@ -73,7 +73,7 @@
   <div class="card"><h2>Cari pesakit</h2><p class="sub">Taip <b>IC</b>, no. giliran atau nama (min. 3 aksara). Pesakit yang didaftarkan <b>hari ini</b> di PRIMA dipaparkan.</p>
     <form class="srch" id="sf" autocomplete="off"><input type="text" id="q" inputmode="search" enterkeyhint="search" maxlength="40" placeholder="cth. 570102025533" aria-label="Carian pesakit"><button class="btn" id="go" type="submit">Cari</button></form>
     <div id="res"></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="btn2" onclick="newForm(null)">✍ Tiada dalam senarai — isi manual</button><button class="btn2" onclick="scanFirst()">📷 Imbas MyKad</button></div></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="btn2" onclick="manualFromQuery()">✍ Tiada dalam senarai — isi manual</button><button class="btn2" onclick="scanFirst()">📷 Imbas MyKad</button></div></div>
   <div class="card"><h2>Saringan yang telah dibuat</h2><div class="g2" style="margin:8px 0"><input type="date" id="ld" aria-label="Tarikh"><input type="text" id="lq" placeholder="Cari nama / IC" aria-label="Tapis senarai"></div><div id="list"><div class="empty"><div class="spin"></div>Memuatkan…</div></div></div>
 </section>
 
@@ -143,6 +143,15 @@ $('sf').addEventListener('submit', async e => {
     : '<div class="empty">Tiada pesakit sepadan hari ini.<br>Semak ejaan, atau isi secara manual.</div>';
 });
 $('res').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) newForm(patients[+b.dataset.i]); });
+function manualFromQuery(){                       // carry what was typed in the search box so nothing is retyped
+  const q = $('q').value.trim(), digits = q.replace(/\D/g, ''); newForm(null);
+  if (!q) return;
+  if (digits.length === 12){ $('ic').value = digits; $('ic').dispatchEvent(new Event('input')); setTimeout(() => $('name').focus(), 100); }
+  else if (/[A-Za-z]/.test(q) && digits.length < q.replace(/\s/g, '').length / 2){ $('name').value = q; $('name').dispatchEvent(new Event('input')); setTimeout(() => $('name').focus(), 100); }
+  else if (digits.length >= 5 && digits.length < 12){ $('ic').value = digits; $('ic').dispatchEvent(new Event('input')); setTimeout(() => $('ic').focus(), 100); }
+  else if (/^[A-Za-z]\d{5,}$/.test(q.replace(/\s/g, ''))){ setPass(true); $('passport').value = q.replace(/\s/g, '').toUpperCase(); $('passport').dispatchEvent(new Event('input')); }
+  dirty = false;
+}
 async function scanFirst(){ newForm(null); await scanIc(); }
 $('ld').value = today(); $('ld').addEventListener('change', loadList); $('lq').addEventListener('input', drawList);
 async function loadList(){
