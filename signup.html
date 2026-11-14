@@ -311,7 +311,7 @@ function updateStrength(){
 function setReq(id, met){ document.getElementById(id).classList.toggle('met', met); }
 
 async function handleSignup(){
-  document.getElementById('nameInput').value.replace(/\s+/g, ' ').trim().toUpperCase();      // names are saved in CAPITAL letters
+  const name = document.getElementById('nameInput').value.replace(/\s+/g, ' ').trim().toUpperCase();    // names are saved in CAPITAL letters
   const ic = document.getElementById('icInput').value.replace(/\D/g, '');
   const email = document.getElementById('emailInput').value.trim().toLowerCase();
   const phone = document.getElementById('phoneInput').value.trim();
