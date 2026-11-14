@@ -280,6 +280,20 @@
     .stage{ padding:20px; }
   }
 
+  /* loading checklist (overlay) + sending status + rejection */
+  .os{ list-style:none; margin:16px 0 0; padding:0; text-align:left; font-size:13px; min-width:250px; }
+  .os li,.ss li{ display:flex; gap:10px; align-items:flex-start; padding:4px 0; opacity:.6; line-height:1.35; }
+  .os li i,.ss li i{ flex:0 0 20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-style:normal; font-size:11px; font-weight:800; background:rgba(255,255,255,.25); color:#fff; }
+  .os li.run,.ss li.run{ opacity:1; font-weight:600; } .os li.run i,.ss li.run i{ background:var(--gold-500); animation:fsp 1s infinite; }
+  .os li.ok,.ss li.ok{ opacity:1; } .os li.ok i,.ss li.ok i{ background:var(--green-500); }
+  .os li.err,.ss li.err{ opacity:1; color:#FFB4A8; font-weight:600; } .os li.err i,.ss li.err i{ background:#B3311A; }
+  @keyframes fsp{ 50%{ opacity:.45; } }
+  .ss{ list-style:none; margin:0 0 14px; padding:10px 14px; border-radius:14px; background:var(--mint-050); border:1px solid var(--line); display:none; font-size:13px; }
+  .ss.show{ display:block; } .ss li{ color:var(--ink-500); } .ss li.run,.ss li.ok{ color:var(--ink-700); } .ss li.err{ color:#B3311A; } .ss li i{ background:var(--line); }
+  .ring.reject{ border-color:#B3311A; box-shadow:0 0 0 8px rgba(179,49,26,0.15); }
+  .result-card.rej{ background:#FBEAE7; border-color:#E8B9B0; } .result-card.rej .result-name{ color:#B3311A; }
+  .result-msg{ font-size:14px; font-weight:600; margin:8px 0 0; color:#B3311A; display:none; line-height:1.45; }
+  .type-pill.rej{ background:#B3311A; }
   .geofence-blocker{
     position:fixed; inset:0; z-index:80; background:#4A1010;
     display:none; align-items:center; justify-content:center; padding:24px; text-align:center; color:#fff;
@@ -323,6 +337,12 @@
   <div class="msg" id="overlayMsg">Preparing check-in system…</div>
   <div class="sub" id="overlaySub">Loading recognition models</div>
   <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
+  <ul class="os" id="osteps" aria-live="polite">
+    <li id="os1"><i>1</i><span>Lokasi</span></li>
+    <li id="os2"><i>2</i><span>Model pengecam muka</span></li>
+    <li id="os3"><i>3</i><span>Data muka staf</span></li>
+    <li id="os4"><i>4</i><span>Kamera</span></li>
+  </ul>
   <button class="retry-btn" id="overlayRetry" onclick="init()">Try again</button>
 </div>
 
@@ -330,7 +350,7 @@
   <div class="blocker-box">
     <h2>Location access needed</h2>
     <p>This kiosk requires location access to confirm check-ins happen on-site. If you already tapped "Allow" and it's still not working, check iPhone Settings → Safari → Location, or Settings → Privacy → Location Services, and make sure this site is allowed.</p>
-    <button class="retry-btn" onclick="requestLocation().then(startCamera).then(()=>{hideOverlay();detectLoop();}).catch(()=>{})">Allow location</button>
+    <button class="retry-btn" onclick="init()">Allow location</button>
   </div>
 </div>
 
@@ -362,6 +382,11 @@
     </div>
 
     <div class="status-line" id="statusLine">Position your face in the frame</div>
+    <ul class="ss" id="sendSteps" aria-live="polite">
+      <li id="ss1"><i>1</i><span>Muka dikenali</span></li>
+      <li id="ss2"><i>2</i><span>Menghantar rekod</span></li>
+      <li id="ss3"><i>3</i><span>Memuat naik gambar</span></li>
+    </ul>
 
     <div class="result-card" id="resultCard">
       <span class="type-pill" id="typePill">IN</span>
@@ -369,6 +394,7 @@
       <div class="result-row"><span class="label">IC Number</span><span class="value" id="resultIc">—</span></div>
       <div class="result-row"><span class="label">Time</span><span class="value" id="resultTime">—</span></div>
       <div class="result-row"><span class="label">Date</span><span class="value" id="resultDate">—</span></div>
+      <p class="result-msg" id="resultMsg"></p>
     </div>
 
     <div class="foot-note" id="locationNote">Location is recorded with every check-in to prevent misuse.</div>
@@ -383,6 +409,7 @@
   </div>
 </div>
 
+<audio id="verifySound" src="./verify.mp3" preload="auto"></audio>
 <audio id="successSound" src="https://opdkktu.github.io/trial1/register.mp3" preload="auto"></audio>
 
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -414,7 +441,7 @@ function checkGeofence(lat, lng){
 
 const MATCH_THRESHOLD = 0.5;         // lower = stricter match
 const AMBIGUITY_MARGIN = 0.07;       // min gap needed between best and 2nd-best match
-const RECOGNIZE_STABLE_FRAMES = 3;   // consecutive detections before we lock a match
+const RECOGNIZE_STABLE_FRAMES = 2;   // consecutive detections before we lock a match
 const COOLDOWN_MS = 15000;           // ignore repeat scans of same person for this long
 
 let video, ring, statusLine, overlay, overlaySub, progressFill;
@@ -425,8 +452,16 @@ let stableCount = 0;
 let lastCandidate = null;
 let lastLoggedIc = null;
 let lastLoggedAt = 0;
+let lastWasReject = false;
 let isOffline = false;
 let modelsReady = false;
+let stream = null, runId = 0;
+const PENDING_KEY = 'kkah_kiosk_pending_v1';
+const SEND_WAITS = [0, 1500, 3500, 7000];
+const REJECT_COOLDOWN_MS = 20000;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function ost(n, state, text){ const li = document.getElementById('os' + n); if(!li) return; li.className = state || ''; li.querySelector('i').textContent = state === 'ok' ? '✓' : state === 'err' ? '!' : n; if(text) li.querySelector('span').textContent = text; }
+function sst(n, state, text){ const li = document.getElementById('ss' + n); if(!li) return; li.className = state || ''; li.querySelector('i').textContent = state === 'ok' ? '✓' : state === 'err' ? '!' : n; if(text) li.querySelector('span').textContent = text; }
 
 window.addEventListener('unhandledrejection', (e) => {
   console.error('Unhandled error:', e.reason);
@@ -453,6 +488,7 @@ function setOffline(state){
 }
 
 async function init(){
+  const my = ++runId;
   video = document.getElementById('video');
   ring = document.getElementById('ring');
   statusLine = document.getElementById('statusLine');
@@ -461,23 +497,41 @@ async function init(){
   progressFill = document.getElementById('progressFill');
 
   overlay.classList.remove('error', 'hide');
+  document.getElementById('overlayMsg').textContent = 'Menyediakan check-in…';
+  overlaySub.textContent = 'Semua dimuatkan serentak';
   setOffline(!navigator.onLine);
-  modelsReady = false;
+  modelsReady = false; setProgress(5);
+  ost(1, 'run', 'Lokasi'); ost(2, 'run', 'Model pengecam muka'); ost(3, 'run', 'Data muka staf'); ost(4, 'run', 'Kamera');
 
+  let done = 0; const bump = w => { done += w; setProgress(5 + done); };
+  const guard = p => { p.catch(() => {}); return p; };           // each task reports its own error; no stray "unhandled" noise
   try{
-    await requestLocation();
-    await loadModels();
-    await loadStaffDescriptors();
-    await startCamera();
+    // everything at once (was one after another): location, models, staff faces (cached = instant) and camera
+    const modelsP = guard(loadModels().then(() => { ost(2, 'ok', 'Model pengecam dimuatkan'); bump(30); }));
+    const locP    = guard(requestLocation().then(() => { ost(1, 'ok', 'Lokasi disahkan di klinik'); bump(15); }));
+    const descP   = guard(loadStaffDescriptors(modelsP).then(() => { ost(3, 'ok', 'Data muka staf sedia (' + labeledDescriptors.length + ')'); bump(30); }));
+    const camP    = guard((stream && stream.active ? Promise.resolve() : startCamera()).then(() => { ost(4, 'ok', 'Kamera sedia'); bump(15); }));
+    await Promise.all([modelsP, locP, descP, camP]);
+    if(my !== runId) return;
+    overlaySub.textContent = 'Memanaskan pengecam muka…';
+    await warmUp();
     hideOverlay();
-    detectLoop();
+    flushPending();
+    if(!looping){ looping = true; detectLoop(); }
   }catch(err){
     console.error(err);
-    if(err.message !== 'Location permission denied' && err.message !== 'Camera permission denied' && err.message !== 'Outside allowed zone'){
-      showLoadError(err.message);
+    const m = err && err.message;
+    if(m === 'Outside allowed zone'){ ost(1, 'err', 'Di luar kawasan klinik'); stopCamera(); }
+    else if(m === 'Location permission denied'){ ost(1, 'err', 'Lokasi tidak dibenarkan'); }
+    else if(m === 'Camera permission denied'){ ost(4, 'err', 'Kamera tidak dibenarkan'); }
+    if(m !== 'Location permission denied' && m !== 'Camera permission denied' && m !== 'Outside allowed zone'){
+      showLoadError(m);
     }
   }
 }
+let looping = false;
+async function warmUp(){ try{ await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })).withFaceLandmarks().withFaceDescriptor(); }catch(e){} }
+function stopCamera(){ try{ if(stream) stream.getTracks().forEach(t => t.stop()); }catch(e){} stream = null; }
 
 function showLoadError(message){
   document.getElementById('overlayMsg').textContent = 'Could not start check-in';
@@ -490,7 +544,7 @@ async function retryCamera(){
   try{
     await startCamera();
     hideOverlay();
-    detectLoop();
+    if(!looping){ looping = true; detectLoop(); }
   }catch(err){
     document.getElementById('cameraBlocker').classList.add('show');
   }
@@ -580,21 +634,14 @@ function recheckGeofence(){
   init();
 }
 
-async function loadModels(){
+let modelsPromise = null;
+function loadModels(){ if(modelsReady) return Promise.resolve(); if(!modelsPromise) modelsPromise = loadModelsRaw().catch(e => { modelsPromise = null; throw e; }); return modelsPromise; }
+async function loadModelsRaw(){
+  await new Promise(r => { (function poll(){ if(window.faceapi) r(); else setTimeout(poll, 50); })(); });   // face-api.js is deferred
   setProgress(10, 'Loading face detection model');
-  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-  if(!faceapi.nets.tinyFaceDetector.isLoaded) throw new Error('Face detection model failed to load');
-
-  setProgress(30, 'Loading landmark model');
-  await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-  if(!faceapi.nets.faceLandmark68Net.isLoaded) throw new Error('Landmark model failed to load');
-
-  setProgress(50, 'Loading recognition model');
-  await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-  if(!faceapi.nets.faceRecognitionNet.isLoaded) throw new Error('Recognition model failed to load');
-
+  await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)]);
+  if(!faceapi.nets.tinyFaceDetector.isLoaded || !faceapi.nets.faceLandmark68Net.isLoaded || !faceapi.nets.faceRecognitionNet.isLoaded) throw new Error('Face models failed to load');
   modelsReady = true;
-  setProgress(60, 'Models ready');
 }
 
 const FACE_CACHE_KEY = 'kkah_face_cache_v1';
@@ -614,35 +661,37 @@ function hashStaffList(list){
  * per-photo face detection on the frontend. Only falls back to the full,
  * slow path when staff have actually been added/changed.
  */
-async function loadStaffDescriptors(){
-  setProgress(65, 'Checking staff database');
-  const listRes = await fetch(API_URL + '?action=getStaffList');
-  const listData = await listRes.json();
-  if(!listData.ok) throw new Error(listData.error || 'Failed to load staff list');
-  const currentHash = hashStaffList(listData.staff);
-
+async function loadStaffDescriptors(modelsP){
   let cached = null;
   try{ cached = JSON.parse(localStorage.getItem(FACE_CACHE_KEY)); }catch(e){}
-
-  if(cached && cached.hash === currentHash && cached.descriptors && cached.descriptors.length){
-    setProgress(95, 'Using cached staff data');
+  if(cached && cached.descriptors && cached.descriptors.length){
+    // instant start from the faces saved on this device; the staff list is re-checked quietly in the background
     labeledDescriptors = cached.descriptors.map(d => ({ ic: d.ic, name: d.name, descriptor: new Float32Array(d.descriptor) }));
-    setProgress(100, 'Ready');
+    refreshStaffInBackground(cached.hash, modelsP);
     return;
   }
-
-  setProgress(65, 'Loading staff photos (first time only — this can take a while)');
-  const res = await fetch(API_URL + '?action=getStaff');
-  const data = await res.json();
+  ost(3, 'run', 'Memuat gambar staf (kali pertama sahaja)…');
+  const listData = await (await fetch(API_URL + '?action=getStaffList')).json();
+  if(!listData.ok) throw new Error(listData.error || 'Failed to load staff list');
+  const currentHash = hashStaffList(listData.staff);
+  const data = await (await fetch(API_URL + '?action=getStaff')).json();
   if(!data.ok) throw new Error(data.error || 'Failed to load staff');
-  await buildFaceMatcher(data.staff);
-
+  await modelsP;
+  await buildFaceMatcher(data.staff, false);
+  saveFaceCache(currentHash);
+}
+function saveFaceCache(hash){
+  try{ localStorage.setItem(FACE_CACHE_KEY, JSON.stringify({ hash, descriptors: labeledDescriptors.map(d => ({ ic: d.ic, name: d.name, descriptor: Array.from(d.descriptor) })) })); }
+  catch(e){ console.warn('Could not cache staff face data (storage full?):', e); }
+}
+async function refreshStaffInBackground(oldHash, modelsP){
   try{
-    localStorage.setItem(FACE_CACHE_KEY, JSON.stringify({
-      hash: currentHash,
-      descriptors: labeledDescriptors.map(d => ({ ic: d.ic, name: d.name, descriptor: Array.from(d.descriptor) }))
-    }));
-  }catch(e){ console.warn('Could not cache staff face data (storage full?):', e); }
+    const listData = await (await fetch(API_URL + '?action=getStaffList')).json();
+    if(!listData.ok) return;
+    const h = hashStaffList(listData.staff); if(h === oldHash) return;
+    const data = await (await fetch(API_URL + '?action=getStaff')).json(); if(!data.ok) return;
+    await modelsP; await buildFaceMatcher(data.staff, true); saveFaceCache(h);
+  }catch(e){ console.warn('Background staff refresh skipped:', e); }
 }
 
 async function fetchStaff(){
@@ -653,23 +702,19 @@ async function fetchStaff(){
   return data.staff;
 }
 
-async function buildFaceMatcher(staff){
-  labeledDescriptors = [];
-  const total = staff.length;
+async function buildFaceMatcher(staff, quiet){
+  const out = [], total = staff.length;
   for(let i = 0; i < total; i++){
-    const s = staff[i];
+    const st = staff[i];
     try{
-      const img = await faceapi.fetchImage(s.photo);
-      const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks().withFaceDescriptor();
-      if(det){
-        labeledDescriptors.push({ ic: s.ic, name: s.name, descriptor: det.descriptor });
-      }
-    }catch(e){ console.warn('Skipping staff photo', s.name, e); }
-    setProgress(65 + Math.round((i / total) * 30), `Indexing staff faces (${i+1}/${total})`);
+      const img = await faceapi.fetchImage(st.photo);
+      const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+      if(det) out.push({ ic: st.ic, name: st.name, descriptor: det.descriptor });
+    }catch(e){ console.warn('Skipping staff photo', st.name, e); }
+    if(!quiet) ost(3, 'run', 'Mengindeks muka staf (' + (i + 1) + '/' + total + ')');
   }
-  if(labeledDescriptors.length === 0) throw new Error('No usable staff photos found');
-  setProgress(100, 'Ready');
+  if(out.length === 0) throw new Error('No usable staff photos found');
+  labeledDescriptors = out;                                   // swapped in one go — a running scan never sees a half-built list
 }
 
 /**
@@ -694,7 +739,7 @@ function matchFace(descriptor){
 
 async function startCamera(){
   try{
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { width:320, height:320 } });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:{ ideal:480 }, height:{ ideal:480 } } });
     video.srcObject = stream;
     await new Promise(r => video.onloadedmetadata = r);
   }catch(err){
@@ -716,7 +761,7 @@ async function detectLoop(){
 
   let det = null;
   try{
-    det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+    det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
       .withFaceLandmarks().withFaceDescriptor();
   }catch(err){
     console.warn('Detection frame skipped:', err);
@@ -743,8 +788,8 @@ async function detectLoop(){
       if(stableCount >= RECOGNIZE_STABLE_FRAMES){
         const [ic, name] = best.label.split('|');
         const now = Date.now();
-        if(ic === lastLoggedIc && (now - lastLoggedAt) < COOLDOWN_MS){
-          statusLine.textContent = 'Already recorded — thank you';
+        if(ic === lastLoggedIc && (now - lastLoggedAt) < (lastWasReject ? REJECT_COOLDOWN_MS : COOLDOWN_MS)){
+          statusLine.textContent = lastWasReject ? 'Sudah ditolak sebentar tadi — sila tunggu' : 'Already recorded — thank you';
         }else{
           scanning = false;
           await handleMatch(ic, name);
@@ -764,86 +809,128 @@ async function detectLoop(){
   requestAnimationFrame(detectLoop);
 }
 
+function showSend(on){ document.getElementById('sendSteps').classList.toggle('show', on); }
+function savePending(item){ try{ const l = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); l.push(item); localStorage.setItem(PENDING_KEY, JSON.stringify(l.slice(-30))); }catch(e){} }
+async function flushPending(){
+  let l = []; try{ l = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); }catch(e){}
+  if(!l.length || !navigator.onLine) return;
+  const keep = [];
+  for(const it of l){
+    if(Date.now() - it.at > 6 * 3600 * 1000) continue;            // too old — the server would not accept the original time any more
+    try{ const r = await (await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: it.body })).json(); if(!r.ok && r.retry) keep.push(it); }
+    catch(e){ keep.push(it); }
+  }
+  try{ localStorage.setItem(PENDING_KEY, JSON.stringify(keep)); }catch(e){}
+}
+window.addEventListener('online', flushPending);
+
+function showReject(ic, name, data){
+  const msg = (data && data.error) || 'Rekod tidak dapat diterima.';
+  const code = data && data.code;
+  const title = code === 'ATT_RECORDED' || /sudah/i.test(msg) ? 'SUDAH DIREKODKAN' : code === 'CHECKOUT_TOO_EARLY' ? 'CHECK OUT BELUM DIBUKA' : 'TIDAK BERJAYA';
+  ring.classList.remove('scanning'); ring.classList.add('reject');
+  const card = document.getElementById('resultCard'); card.classList.add('rej', 'show');
+  document.getElementById('resultName').textContent = name; document.getElementById('resultIc').textContent = ic;
+  document.getElementById('resultTime').textContent = (data && data.time) || '—'; document.getElementById('resultDate').textContent = (data && data.date) || '—';
+  const pill = document.getElementById('typePill'); pill.textContent = 'DITOLAK'; pill.className = 'type-pill rej';
+  const m = document.getElementById('resultMsg'); m.textContent = title + ' — ' + msg; m.style.display = 'block';
+  statusLine.textContent = 'Ditolak: ' + title;
+  sst(2, 'err', 'Ditolak oleh sistem'); sst(3, '', 'Tiada gambar dimuat naik');
+  lastLoggedIc = ic; lastLoggedAt = Date.now(); lastWasReject = true;
+  try{ if(navigator.vibrate) navigator.vibrate([120, 80, 120]); }catch(e){}
+}
+
 async function handleMatch(ic, name){
   if(isOffline){
     statusLine.textContent = 'No connection — please try again in a moment';
-    resetAfterDelay();
+    resetAfterDelay(2500);
     return;
   }
   statusLine.textContent = 'Checking…';
+  showSend(true); sst(1, 'ok', 'Muka dikenali: ' + name); sst(2, 'run', 'Menghantar rekod…'); sst(3, '', 'Memuat naik gambar');
 
-  // Snapshot — captured now, but uploaded separately in the background
+  // Snapshot — captured now, uploaded separately in the background
   const canvas = document.getElementById('snapshotCanvas');
   const imageBase64 = SiagaStamp.capture(video, userLocation, canvas);   // stamped upload copy (date/time + lat/long)
   video.style.display = 'none';
   canvas.style.display = 'block';
+  try{ const v = document.getElementById('verifySound'); v.currentTime = 0; v.play().catch(()=>{}); }catch(e){}   // verify.mp3 — face matched + photo taken
 
-  try{
-    // Fast call: just confirms + writes the attendance row. No image payload,
-    // so this is quick — the sound only plays once this is genuinely saved.
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight
-      body: JSON.stringify({
-        action: 'logAttendance',
-        ic, name,
-        lat: userLocation ? userLocation.lat : '',
-        lng: userLocation ? userLocation.lng : '',
-        locName: userLocation ? userLocation.name : ''
-      })
-    });
-    const data = await res.json();
+  const reqId = ic + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8), clientTs = Date.now();
+  let sentOnce = false;
+  const mk = () => JSON.stringify({ action: 'logAttendance', ic, name, lat: userLocation ? userLocation.lat : '', lng: userLocation ? userLocation.lng : '',
+    locName: userLocation ? userLocation.name : '', reqId, clientTs, retry: sentOnce });
 
-    if(!data.ok){
-      statusLine.textContent = data.error || 'Could not record check-in';
-      resetAfterDelay();
-      return;
-    }
-
-    // Success UI — fires as soon as the row write is confirmed, doesn't wait on the photo
-    ring.classList.remove('scanning');
-    ring.classList.add('success');
-    document.getElementById('checkBadge').classList.add('show');
-    document.getElementById('successSound').play().catch(()=>{});
-
-    document.getElementById('resultName').textContent = name;
-    document.getElementById('resultIc').textContent = ic;
-    document.getElementById('resultTime').textContent = data.time;
-    document.getElementById('resultDate').textContent = data.date;
-    const pill = document.getElementById('typePill');
-    pill.textContent = data.type;
-    pill.className = 'type-pill' + (data.type === 'OUT' ? ' out' : '');
-    document.getElementById('resultCard').classList.add('show');
-    statusLine.textContent = `Checked ${data.type} successfully`;
-
-    lastLoggedIc = ic;
-    lastLoggedAt = Date.now();
-
-    // Slow call: uploads the snapshot to Drive and links it into the row just
-    // written. Runs in the background — never blocks the confirmation above.
-    fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'attachSnapshot', ic, date: data.date, type: data.type, imageBase64 })
-    }).catch(err => console.warn('Snapshot upload failed (attendance row still saved):', err));
-
-  }catch(err){
-    statusLine.textContent = 'Network error — please try again';
+  let data = null;
+  for(let n = 0; n < SEND_WAITS.length; n++){
+    if(SEND_WAITS[n]){ sst(2, 'run', 'Menghantar semula… (cubaan ' + (n + 1) + '/' + SEND_WAITS.length + ')'); await sleep(SEND_WAITS[n]); }
+    if(!navigator.onLine) continue;
+    try{
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 25000);
+      const body = mk(); sentOnce = true;
+      const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, signal: ctl.signal, body });   // text/plain avoids CORS preflight
+      clearTimeout(to);
+      const d = await res.json();
+      if(d && d.retry && !d.ok) continue;                         // server busy → same reqId again, never written twice
+      data = d; break;
+    }catch(err){ /* network / timeout → next attempt */ }
   }
 
-  resetAfterDelay();
+  if(!data){                                                      // every attempt failed — keep it on this device, send later automatically
+    savePending({ body: mk(), at: Date.now() });
+    sst(2, 'err', 'Sambungan bermasalah — rekod DISIMPAN pada peranti & dihantar automatik'); sst(3, '', 'Gambar tidak dimuat naik');
+    statusLine.textContent = 'Rekod disimpan — akan dihantar bila sambungan pulih';
+    resetAfterDelay(6000);
+    return;
+  }
+
+  if(!data.ok){ showReject(ic, name, data); resetAfterDelay(7000); return; }   // already checked in / too early / other rule → rejected, clearly shown
+
+  // Success UI — fires as soon as the row write is confirmed, doesn't wait on the photo
+  lastWasReject = false;
+  ring.classList.remove('scanning'); ring.classList.add('success');
+  document.getElementById('checkBadge').classList.add('show');
+  document.getElementById('successSound').play().catch(()=>{});
+  document.getElementById('resultName').textContent = name;
+  document.getElementById('resultIc').textContent = ic;
+  document.getElementById('resultTime').textContent = data.time;
+  document.getElementById('resultDate').textContent = data.date;
+  const pill = document.getElementById('typePill');
+  pill.textContent = data.type;
+  pill.className = 'type-pill' + (data.type === 'OUT' ? ' out' : '');
+  document.getElementById('resultCard').classList.add('show');
+  statusLine.textContent = 'Checked ' + data.type + ' successfully';
+  sst(2, 'ok', 'Rekod ' + data.type + ' disimpan · ' + data.time); sst(3, 'run', 'Memuat naik gambar…');
+  lastLoggedIc = ic; lastLoggedAt = Date.now();
+
+  // Slow call: snapshot → Drive, linked into the row just written. Background; retried twice; status shown.
+  (async () => {
+    for(let n = 0; n < 3; n++){
+      try{
+        const r = await (await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ action:'attachSnapshot', ic, date: data.date, type: data.type, imageBase64 }) })).json();
+        if(r && r.ok){ sst(3, 'ok', 'Gambar dimuat naik'); return; }
+      }catch(e){}
+      await sleep(1500 * (n + 1));
+    }
+    sst(3, 'err', 'Gambar tidak dapat dimuat naik (rekod masa tetap disimpan)');
+  })();
+
+  resetAfterDelay(5000);
 }
 
-function resetAfterDelay(){
+function resetAfterDelay(ms){
   setTimeout(() => {
     document.getElementById('checkBadge').classList.remove('show');
-    document.getElementById('resultCard').classList.remove('show');
-    ring.classList.remove('success');
+    const card = document.getElementById('resultCard'); card.classList.remove('show', 'rej');
+    document.getElementById('resultMsg').style.display = 'none';
+    document.getElementById('typePill').className = 'type-pill';
+    ring.classList.remove('success', 'reject');
     video.style.display = 'block';
     document.getElementById('snapshotCanvas').style.display = 'none';
+    showSend(false);
     statusLine.textContent = 'Position your face in the frame';
     scanning = true;
-  }, 4000);
+  }, ms || 4000);
 }
 </script>
 <script src="./emergency-alert.js"></script>
