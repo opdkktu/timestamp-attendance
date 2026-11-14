@@ -294,6 +294,15 @@
   .result-card.rej{ background:#FBEAE7; border-color:#E8B9B0; } .result-card.rej .result-name{ color:#B3311A; }
   .result-msg{ font-size:14px; font-weight:600; margin:8px 0 0; color:#B3311A; display:none; line-height:1.45; }
   .type-pill.rej{ background:#B3311A; }
+  .pp{ position:fixed; inset:0; z-index:90; background:rgba(11,61,58,.82); display:none; align-items:center; justify-content:center; padding:24px; }
+  .pp.show{ display:flex; animation:ppin .25s ease; } @keyframes ppin{ from{ opacity:0; } to{ opacity:1; } }
+  .pp-box{ width:100%; max-width:380px; background:#fff; border-radius:26px; padding:28px 24px 22px; text-align:center; box-shadow:0 30px 80px -20px rgba(0,0,0,.5); }
+  .pp-ic{ width:64px; height:64px; border-radius:50%; background:var(--green-500); margin:0 auto 14px; display:flex; align-items:center; justify-content:center; font-size:32px; color:#fff; }
+  .pp-name{ font-family:'Manrope',sans-serif; font-size:20px; font-weight:800; color:var(--teal-900); margin:0 0 8px; }
+  .pp-t{ font-size:16px; font-weight:600; line-height:1.45; margin:0 0 6px; } .pp-t b{ color:var(--teal-700); font-size:20px; }
+  .pp-s{ font-size:14px; color:var(--ink-500); margin:0 0 16px; line-height:1.5; }
+  .pp-btn{ width:100%; padding:13px; border:none; border-radius:14px; background:var(--teal-700); color:#fff; font:700 15px 'Inter',sans-serif; cursor:pointer; }
+  .pp-bar{ height:4px; border-radius:4px; background:var(--line); margin-top:14px; overflow:hidden; } .pp-bar i{ display:block; height:100%; width:100%; background:var(--gold-500); transform-origin:left; }
   .geofence-blocker{
     position:fixed; inset:0; z-index:80; background:#4A1010;
     display:none; align-items:center; justify-content:center; padding:24px; text-align:center; color:#fff;
@@ -409,6 +418,16 @@
   </div>
 </div>
 
+<div class="pp" id="popup" role="alertdialog" aria-modal="true" aria-labelledby="ppName">
+  <div class="pp-box">
+    <div class="pp-ic" aria-hidden="true">✓</div>
+    <p class="pp-name" id="ppName">—</p>
+    <p class="pp-t" id="ppMain">—</p>
+    <p class="pp-s" id="ppSub">Tiada tindakan diperlukan. Sila teruskan bekerja.</p>
+    <button class="pp-btn" onclick="closePopup()">OK, teruskan bekerja</button>
+    <div class="pp-bar"><i id="ppBar"></i></div>
+  </div>
+</div>
 <audio id="verifySound" src="./verify.mp3" preload="auto"></audio>
 <audio id="successSound" src="https://opdkktu.github.io/trial1/register.mp3" preload="auto"></audio>
 
@@ -809,6 +828,24 @@ async function detectLoop(){
   requestAnimationFrame(detectLoop);
 }
 
+const T12 = t => { const m = /^(\d{1,2}):(\d{2})/.exec(String(t || '')); if(!m) return String(t || ''); let h = +m[1]; const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + ':' + m[2] + ' ' + ap; };
+const INKEY = 'kkah_kiosk_in_v1', todayStr = () => new Date().toLocaleDateString('en-CA', { timeZone:'Asia/Kuala_Lumpur' });
+function rememberIn(ic, time){ try{ const o = JSON.parse(localStorage.getItem(INKEY) || '{}'); if(o.d !== todayStr()){ o.d = todayStr(); o.t = {}; } if(!o.t[ic]) o.t[ic] = time; localStorage.setItem(INKEY, JSON.stringify(o)); }catch(e){} }
+function recallIn(ic){ try{ const o = JSON.parse(localStorage.getItem(INKEY) || '{}'); return o.d === todayStr() && o.t ? (o.t[ic] || '') : ''; }catch(e){ return ''; } }
+let ppTimer = null;
+function showPopup(name, ic, data){
+  const inT = (data && data.inTime) || recallIn(ic), outT = data && data.outTime;
+  document.getElementById('ppName').textContent = name;
+  document.getElementById('ppMain').innerHTML = outT ? 'Check In <b>' + T12(inT) + '</b> · Check Out <b>' + T12(outT) + '</b>' : inT ? 'Muka ini telah Check In pada <b>' + T12(inT) + '</b>' : 'Muka ini telah Check In hari ini';
+  document.getElementById('ppSub').textContent = (data && data.code === 'CHECKOUT_TOO_EARLY' && data.opensAt ? 'Check Out dibuka jam ' + data.opensAt + '. ' : '') + 'Tiada tindakan diperlukan. Sila teruskan bekerja.';
+  const bar = document.getElementById('ppBar'); bar.style.transition = 'none'; bar.style.transform = 'scaleX(1)'; void bar.offsetWidth; bar.style.transition = 'transform 6s linear'; bar.style.transform = 'scaleX(0)';
+  document.getElementById('popup').classList.add('show');
+  clearTimeout(ppTimer); ppTimer = setTimeout(closePopup, 6000);
+  lastLoggedIc = ic; lastLoggedAt = Date.now(); lastWasReject = true;
+  statusLine.textContent = 'Sudah Check In — tiada tindakan diperlukan';
+  sst(2, 'ok', 'Sudah direkodkan'); sst(3, '', 'Tiada gambar dimuat naik');
+}
+function closePopup(){ clearTimeout(ppTimer); document.getElementById('popup').classList.remove('show'); }
 function showSend(on){ document.getElementById('sendSteps').classList.toggle('show', on); }
 function savePending(item){ try{ const l = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); l.push(item); localStorage.setItem(PENDING_KEY, JSON.stringify(l.slice(-30))); }catch(e){} }
 async function flushPending(){
@@ -884,7 +921,12 @@ async function handleMatch(ic, name){
     return;
   }
 
-  if(!data.ok){ showReject(ic, name, data); resetAfterDelay(7000); return; }   // already checked in / too early / other rule → rejected, clearly shown
+  if(!data.ok){
+    const friendly = data.code === 'CHECKOUT_TOO_EARLY' || data.code === 'ATT_RECORDED' || /sudah\s+check/i.test(data.error || '');
+    if(friendly){ showPopup(name, ic, data); resetAfterDelay(6200); }          // already checked in → friendly pop-up, no action needed
+    else { showReject(ic, name, data); resetAfterDelay(7000); }
+    return;
+  }   // already checked in / too early / other rule → rejected, clearly shown
 
   // Success UI — fires as soon as the row write is confirmed, doesn't wait on the photo
   lastWasReject = false;
@@ -900,6 +942,7 @@ async function handleMatch(ic, name){
   pill.className = 'type-pill' + (data.type === 'OUT' ? ' out' : '');
   document.getElementById('resultCard').classList.add('show');
   statusLine.textContent = 'Checked ' + data.type + ' successfully';
+  if(data.type === 'IN') rememberIn(ic, data.time);
   sst(2, 'ok', 'Rekod ' + data.type + ' disimpan · ' + data.time); sst(3, 'run', 'Memuat naik gambar…');
   lastLoggedIc = ic; lastLoggedAt = Date.now();
 
