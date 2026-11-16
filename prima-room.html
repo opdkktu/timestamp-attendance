@@ -2557,5 +2557,79 @@ window.addEventListener('orientationchange', function(){ setTimeout(fixVh, 300);
   </div>
 </div>
 
+<!-- ===== Pilih Kaunter / Bilik (shown only when the page is opened without ?room= , e.g. from the laptop QR login) ===== -->
+<style>
+  .pc-ov{position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0F4530,#1A6B4A);display:none;align-items:center;justify-content:center;padding:18px;font-family:Inter,'Segoe UI',system-ui,sans-serif}
+  .pc-ov.on{display:flex}
+  .pc-box{width:100%;max-width:560px;background:#fff;color:#16231F;border-radius:26px;padding:24px 22px;box-shadow:0 30px 80px -20px rgba(0,0,0,.55);max-height:94vh;overflow:auto}
+  .pc-box h2{margin:0 0 4px;font-size:22px}.pc-box p{margin:0 0 16px;color:#5E7069;font-size:14px}
+  .pc-box h3{margin:16px 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5E7069}
+  .pc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.pc-grid.five{grid-template-columns:repeat(5,1fr)}
+  .pc-b{height:64px;border-radius:16px;border:2px solid #D6E0DB;background:#fff;color:#16231F;font:800 17px Inter,sans-serif;cursor:pointer;transition:all .15s}
+  .pc-b:hover,.pc-b:focus-visible{border-color:#1A6B4A;background:#E3F0EB;outline:none;transform:translateY(-1px)}
+  .pc-b small{display:block;font-size:10.5px;font-weight:600;color:#5E7069;margin-top:2px}
+  .pc-in{width:100%;height:84px;border-radius:18px;border:2px solid #D6E0DB;text-align:center;font:800 44px 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.25em;outline:none;color:#16231F;background:#fff}
+  .pc-in:focus{border-color:#1A6B4A;box-shadow:0 0 0 4px rgba(26,107,74,.16)}
+  .pc-msg{min-height:54px;margin-top:12px;border-radius:14px;padding:12px;text-align:center;font-weight:700;font-size:15px;background:#EEF3F1;color:#5E7069}
+  .pc-msg.ok{background:#E3F4EA;color:#14703d}.pc-msg.bad{background:#FBEAE7;color:#B3311A}
+  .pc-back{margin-top:14px;background:none;border:none;color:#0F4530;font:800 14px Inter,sans-serif;cursor:pointer;text-decoration:underline;padding:8px 0}
+  .pc-swap{position:fixed;left:12px;bottom:12px;z-index:9000;height:40px;padding:0 14px;border-radius:99px;border:none;background:#0F4530;color:#fff;font:800 13px Inter,sans-serif;cursor:pointer;box-shadow:0 6px 18px -6px rgba(0,0,0,.5)}
+</style>
+<div class="pc-ov" id="pcOv" role="dialog" aria-modal="true" aria-labelledby="pcT">
+  <div class="pc-box">
+    <div id="pcPick">
+      <h2 id="pcT">📣 Panggilan nombor</h2><p>Pilih dahulu tempat anda bertugas.</p>
+      <h3>Kaunter</h3>
+      <div class="pc-grid"><button class="pc-b" data-k="A">Kaunter A</button><button class="pc-b" data-k="B">Kaunter B</button><button class="pc-b" data-k="C">Kaunter C</button></div>
+      <h3>Bilik Doktor</h3>
+      <div class="pc-grid five"><button class="pc-b" data-r="1">1</button><button class="pc-b" data-r="2">2</button><button class="pc-b" data-r="3">3</button><button class="pc-b" data-r="4">4</button><button class="pc-b" data-r="5">5<small>PPP</small></button></div>
+    </div>
+    <div id="pcKaunter" hidden>
+      <h2 id="pcKT">Kaunter</h2><p>Taip 4 digit nombor giliran — pesakit dipanggil automatik.</p>
+      <input class="pc-in" id="pcNum" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000" aria-label="Nombor giliran 4 digit">
+      <div class="pc-msg" id="pcMsg" role="status" aria-live="polite">Sedia</div>
+      <button class="pc-back" id="pcBack">← Tukar kaunter / bilik</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var q = new URLSearchParams(location.search);
+  var API = "https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec";
+  var ov = document.getElementById("pcOv"), pick = document.getElementById("pcPick"), kp = document.getElementById("pcKaunter"), num = document.getElementById("pcNum"), msg = document.getElementById("pcMsg"), kc = "", busy = false, idle = 0;
+  function $(id){ return document.getElementById(id); }
+  function say(t, c){ msg.className = "pc-msg" + (c ? " " + c : ""); msg.textContent = t; }
+  function showPick(){ kp.hidden = true; pick.hidden = false; ov.classList.add("on"); }
+  function showKaunter(k){ kc = k; pick.hidden = true; kp.hidden = false; $("pcKT").textContent = "Kaunter " + k; num.value = ""; say("Sedia"); setTimeout(function(){ num.focus(); }, 60); }
+  /* a swap button on the room page (only on laptop / QR) */
+  if(q.get("room") || q.get("num")){
+    if(sessionStorage.getItem("kkah_via") === "qr"){ var b = document.createElement("button"); b.className = "pc-swap"; b.textContent = "⇄ Tukar kaunter / bilik"; b.onclick = function(){ location.href = "./prima-room.html"; }; document.body.appendChild(b); }
+    return;
+  }
+  showPick();
+  pick.addEventListener("click", function(e){
+    var k = e.target.closest("[data-k]"), r = e.target.closest("[data-r]");
+    if(k) showKaunter(k.dataset.k);
+    else if(r) location.replace("./prima-room.html?room=" + r.dataset.r);
+  });
+  $("pcBack").onclick = showPick;
+  num.addEventListener("input", function(){ num.value = num.value.replace(/\D/g, "").slice(0, 4); clearTimeout(idle); if(num.value.length === 4) call(num.value); });
+  function call(n){
+    if(busy) return; busy = true; say("Mencari " + n + "…");
+    var t = sessionStorage.getItem("kkah_session_token");
+    var ctl = new AbortController(), to = setTimeout(function(){ ctl.abort(); }, 30000);
+    fetch(API, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body:JSON.stringify({ action:"callKaunter", kaunter:kc, token:t, num:n }), signal:ctl.signal })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        clearTimeout(to); busy = false;
+        if(d && d.ok){ say("✓ " + n + " · " + (d.name || "") + " — dipanggil (Kaunter " + kc + ")", "ok"); if(navigator.vibrate) navigator.vibrate(60); }
+        else if(d && /expired/i.test(d.error || "")){ location.replace("./qr-login.html?next=prima-room.html"); return; }
+        else { say((d && d.notFound) ? "Nama tidak dijumpai — nombor " + n + " tidak dapat dipanggil" : ((d && d.error) || "Panggilan gagal"), "bad"); if(navigator.vibrate) navigator.vibrate([80,60,80]); }
+        idle = setTimeout(function(){ num.value = ""; say("Sedia"); num.focus(); }, 2400);
+      })
+      .catch(function(){ clearTimeout(to); busy = false; say("Ralat sambungan. Cuba lagi.", "bad"); idle = setTimeout(function(){ num.value = ""; say("Sedia"); num.focus(); }, 2400); });
+  }
+})();
+</script>
 </body>
 </html>
