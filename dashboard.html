@@ -1238,44 +1238,138 @@ setTimeout(loadProcTasks_, 1500);
 setInterval(() => { if(!document.hidden && _poAmo) loadProcTasks_(); }, 25 * 1000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(loadProcTasks_, 400); });
 
+
 async function loadExtraTiles_(){
   if(VIEW_NAME) return;
+
   try{
-    const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action:'getMyTiles', token: sessionStorage.getItem('kkah_session_token') }) });
+    const res = await fetch(API_URL_DASHBOARD, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({
+        action:'getMyTiles',
+        token: sessionStorage.getItem('kkah_session_token')
+      })
+    });
+
     const d = await res.json();
     if(!d || !d.ok) return;
+
     const nochk = !!d.hideChecklists;
     document.body.classList.toggle('no-chk', nochk);
-    try{ localStorage.setItem('kkah_nochk_' + (sessionStorage.getItem('kkah_ic') || ''), nochk ? '1' : '0'); }catch(e){}
-    const slot = document.getElementById('actSlot'); if(!slot) return;
+
+    try{
+      localStorage.setItem(
+        'kkah_nochk_' + (sessionStorage.getItem('kkah_ic') || ''),
+        nochk ? '1' : '0'
+      );
+    }catch(e){}
+
+    const slot = document.getElementById('actSlot');
+    if(!slot) return;
+
     slot.innerHTML = '';
-    const TRIO = { primareg: ['📝', 'Registration'], eclerk: ['📋', 'e-Clerking'], kaunterhist: ['🔎', 'Search visit'] };
-    const trio = document.getElementById('prTrio'); if(trio){ trio.innerHTML = ''; trio.hidden = true; }
-    (d.tiles || []).forEach(t => {                               // PRIMA big box → 3 small boxes under it /* Queue analysis — inside PRIMA big box */
-if(trio && !trio.hidden){
-  const q = document.createElement('button');
-  q.type = 'button';
-  q.className = 'wide';
-  q.innerHTML = '<span class="ai">📊</span><span></span>';
-  q.lastChild.textContent = 'Analisis giliran menunggu';
-  q.setAttribute('aria-label', 'Analisis giliran menunggu');
-  q.onclick = () => {
-    window.open(
-      'https://opdkktu.github.io/queue-analysis/',
-      '_blank',
-      'noopener'
-    );
-  };
-      if(t.id === 'bersih'){ addModuleCard(t.name, t.icon, t.href, false); return; }   // BERSIH → icon grid
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'status-box sb-act';
-      const sub = t.id === 'amo' ? 'Buka borang \u2014 nama anda telah diisi' : '';
-      b.innerHTML = '<span class="ai">' + t.icon + '</span><span><b></b><small>' + sub + '</small></span><span class="go">\u203A</span>';
+
+    const TRIO = {
+      primareg: ['📝', 'Registration'],
+      eclerk: ['📋', 'e-Clerking'],
+      kaunterhist: ['🔎', 'Search visit']
+    };
+
+    const trio = document.getElementById('prTrio');
+
+    if(trio){
+      trio.innerHTML = '';
+      trio.hidden = true;
+    }
+
+    // Existing PRIMA buttons
+    (d.tiles || []).forEach(t => {
+
+      if(TRIO[t.id] && trio){
+        const b = document.createElement('button');
+        b.type = 'button';
+
+        b.innerHTML =
+          '<span class="ai">' + TRIO[t.id][0] +
+          '</span><span></span>';
+
+        b.lastChild.textContent = TRIO[t.id][1];
+        b.setAttribute('aria-label', TRIO[t.id][1]);
+
+        b.onclick = () => {
+          window.location.href = t.href;
+        };
+
+        trio.appendChild(b);
+        trio.hidden = false;
+        return;
+      }
+
+      if(t.id === 'bersih'){
+        addModuleCard(t.name, t.icon, t.href, false);
+        return;
+      }
+
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'status-box sb-act';
+
+      const sub = t.id === 'amo'
+        ? 'Buka borang — nama anda telah diisi'
+        : '';
+
+      b.innerHTML =
+        '<span class="ai">' + t.icon +
+        '</span><span><b></b><small>' + sub +
+        '</small></span><span class="go">›</span>';
+
       b.querySelector('b').textContent = t.name;
-      b.onclick = () => { if(t.ext) window.open(t.href, '_blank', 'noopener'); else window.location.href = t.href; };
+
+      b.onclick = () => {
+        if(t.ext){
+          window.open(t.href, '_blank', 'noopener');
+        }else{
+          window.location.href = t.href;
+        }
+      };
+
       slot.appendChild(b);
     });
-  }catch(e){ /* optional */ }
+
+    // Queue analysis — added AFTER the existing PRIMA buttons
+    if(trio && !trio.hidden){
+
+      const q = document.createElement('button');
+      q.type = 'button';
+      q.className = 'wide';
+
+      q.innerHTML =
+        '<span class="ai">📊</span><span></span>';
+
+      q.lastChild.textContent = 'Analisis giliran menunggu';
+
+      q.setAttribute(
+        'aria-label',
+        'Analisis giliran menunggu'
+      );
+
+      q.onclick = () => {
+        window.open(
+          'https://opdkktu.github.io/queue-analysis/',
+          '_blank',
+          'noopener'
+        );
+      };
+
+      trio.appendChild(q);
+    }
+
+  }catch(e){
+    /* optional */
+  }
 }
+
 /* Corner ribbons on module tiles (e.g. my rank on "Mata & Ranking"). Remembered, so order of loading doesn't matter. */
 const TILE_RIBBONS = {};
 function setModuleRibbon(name, text, ok){ TILE_RIBBONS[name] = { text: text, ok: !!ok }; applyRibbons_(); }
