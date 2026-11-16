@@ -1270,7 +1270,7 @@ async function loadExtraTiles_(){
     if(trio && !trio.hidden){
       const q = document.createElement('button'); q.type = 'button'; q.className = 'wide';
       q.innerHTML = '<span class="ai">\uD83D\uDCCA</span><span></span>';
-      q.lastChild.textContent = 'Analisis giliran menunggu'; q.setAttribute('aria-label', 'Analisis giliran menunggu');
+      q.lastChild.textContent = 'Queue Number Analysis'; q.setAttribute('aria-label', 'Queue Number Analysis');
       q.onclick = () => { window.open('https://opdkktu.github.io/queue-analysis/', '_blank', 'noopener'); };
       trio.appendChild(q);
     }
