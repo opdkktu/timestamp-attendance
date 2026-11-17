@@ -61,6 +61,23 @@
   .toast{ position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translate(-50%,24px); background:var(--ink); color:var(--bg); padding:12px 18px; border-radius:99px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:all .25s; z-index:99; max-width:92vw; text-align:center; } .toast.on{ opacity:1; transform:translate(-50%,0); }
   .shield path{ stroke-dasharray:140; stroke-dashoffset:140; animation:draw 1.3s .1s ease forwards; } @keyframes draw{ to{ stroke-dashoffset:0; } }
   .spin{ width:30px; height:30px; border:3px solid var(--line); border-top-color:var(--acc); border-radius:50%; animation:sp .8s linear infinite; margin:14px auto; } @keyframes sp{ to{ transform:rotate(360deg); } }
+
+  /* phase 2 */
+  .pill{font:800 11.5px Inter,sans-serif;padding:5px 10px;border-radius:99px;background:var(--card2);border:1px solid var(--line);color:var(--mut);white-space:nowrap}.pill.run{color:var(--gold);border-color:var(--gold)}.pill.ok{color:var(--ok);border-color:var(--ok)}
+  .rh{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:12px}.rh small{color:var(--mut);font-weight:700;font-size:11.5px;letter-spacing:.06em}.rh h2{white-space:nowrap;font:800 22px 'IBM Plex Mono',monospace;margin:2px 0 0}
+  .cp{display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;border:1px solid var(--line);background:var(--card);margin-bottom:9px;transition:all .25s}.cp .dot{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font:800 16px Inter,sans-serif;background:var(--card2);color:var(--mut);border:2px solid var(--line)}
+  .cp .cpb{flex:1;min-width:0}.cp b{display:block;font-size:15px}.cp small{color:var(--mut);font-size:12.5px}.cp.lock{opacity:.5}
+  .cp.next{border-color:var(--acc);background:var(--card2);box-shadow:0 0 0 3px var(--glow)}.cp.next .dot{border-color:var(--acc);color:var(--acc);animation:pulse 2s infinite}
+  .cp.ok .dot{background:var(--acc);border-color:var(--acc);color:var(--onacc);animation:pop .45s cubic-bezier(.3,1.6,.5,1)}.cp.ok small{color:var(--ok);font-family:'IBM Plex Mono',monospace;font-weight:700}
+  @keyframes pop{0%{transform:scale(.3)}100%{transform:scale(1)}}
+  .cp .btn{width:auto;min-height:46px;padding:0 16px;font-size:14px;border-radius:14px}
+  .tl div.dn{border-color:var(--ok);color:var(--ok)}.tl div.ms{border-color:var(--dg);color:var(--dg);opacity:.85}.tl div small{display:block;font-size:10px;font-weight:600;margin-top:1px}.tl div.fu{opacity:.55}
+  .done-box{text-align:center;padding:10px 4px 2px}.done-box .big{animation:pop .6s cubic-bezier(.3,1.6,.5,1)}.done-box b{font-size:18px;display:block}.done-box small{color:var(--mut)}
+  .tick{display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;border:1.5px solid var(--line);background:var(--card);cursor:pointer;margin:6px 0 12px;user-select:none}.tick input{display:none}
+  .tick .box{width:30px;height:30px;border-radius:9px;border:2px solid var(--mut);flex:none;display:flex;align-items:center;justify-content:center;transition:all .2s;color:transparent;font-weight:900}.tick input:checked+.box{background:var(--acc);border-color:var(--acc);color:var(--onacc);transform:scale(1.06)}.tick span:last-child{font-weight:700;font-size:15px}
+  textarea{width:100%;min-height:120px;border-radius:16px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:600 16px Inter,sans-serif;padding:14px;outline:none;resize:vertical}textarea:focus{border-color:var(--acc);box-shadow:0 0 0 4px var(--glow)}
+  .ph{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.ph .t{width:64px;height:64px;border-radius:14px;overflow:hidden;border:1.5px solid var(--line);position:relative;animation:pop .35s}.ph .t img{width:100%;height:100%;object-fit:cover}.ph .t.up::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.5)}.ph .t.up::before{content:'';position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px;border:3px solid #fff;border-top-color:transparent;border-radius:50%;animation:sp .8s linear infinite;z-index:2}
+  .amb{display:grid;grid-template-columns:1fr 1fr;gap:10px}.amb button{min-height:64px;border-radius:18px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:800 17px Inter,sans-serif;cursor:pointer;transition:all .15s}.amb button.y.on{background:var(--ok);border-color:var(--ok);color:#052013;transform:scale(1.03)}.amb button.n.on{background:var(--dg);border-color:var(--dg);color:#2a0606;transform:scale(1.03)}
   [hidden]{ display:none!important; }
   @media (max-width:360px){ .ic span{ width:22px; height:40px; font-size:22px; } .pad button{ height:54px; } }
   @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } .shield path{ stroke-dashoffset:0; } }
@@ -128,14 +145,30 @@
       <div class="me"><div class="av" id="av"></div><div><b id="hName"></b><small id="hSub"></small></div></div>
       <div class="clock"><b id="clk">--:--</b><small id="dte"></small></div>
     </div>
-    <div class="card" style="margin-top:12px">
-      <h2>Rondaan hari ini</h2><p class="sub" style="margin-bottom:0">Setiap 2 jam · 4 checkpoint setiap pusingan</p>
-      <div class="tl" id="tl"></div>
-      <div class="soon">🛠️ Pusingan & checkpoint akan diaktifkan dalam kemas kini seterusnya.</div>
-    </div>
-    <div class="card" style="margin-top:12px"><h2>📞 Bertugas hari ini</h2><div class="soon" style="margin-top:10px">AMO & juruterbang bertugas akan dipaparkan di sini.</div></div>
+    <div class="card" style="margin-top:12px" id="rnd"><div class="spin"></div></div>
+    <div class="card" style="margin-top:12px"><h2>Jadual 24 jam</h2><p class="sub" style="margin-bottom:0">Setiap 2 jam · 07:00 hingga 07:00</p><div class="tl" id="tl"></div></div>
+    <div class="card" style="margin-top:12px"><h2>📞 Bertugas hari ini</h2><div class="soon" style="margin-top:10px">AMO &amp; juruterbang bertugas akan dipaparkan di sini.</div></div>
     <button class="link" onclick="logout()">Log keluar</button>
   </section>
+
+  <!-- 4 report -->
+  <section class="screen" id="sRep">
+    <h1>Laporan rondaan 📝</h1><p class="sub" id="rSub"></p>
+    <div class="card">
+      <label class="tick"><input type="checkbox" id="rTick"><span class="box">✓</span><span>Keadaan selamat dan terkawal</span></label>
+      <label for="rText" style="margin-top:4px">Laporan</label>
+      <textarea id="rText" maxlength="1000" placeholder="Tulis laporan atau catatan di sini…"></textarea>
+      <label>Gambar (pilihan) · <span id="rPhN">0</span>/6</label>
+      <div class="ph" id="rPh"></div>
+      <button class="btn ghost" id="rAdd" onclick="pickPhoto(0)">📷 Tambah gambar</button>
+      <label>Ambulans tersedia di klinik?</label>
+      <div class="amb"><button class="y" data-a="YA" type="button">✅ Ya</button><button class="n" data-a="TIDAK" type="button">❌ Tidak</button></div>
+      <div class="msg" id="rMsg" style="margin-top:12px"></div>
+      <button class="btn" id="rGo" disabled onclick="finishRound()">Hantar laporan</button>
+      <button class="btn ghost" onclick="go('sHome')">← Kembali</button>
+    </div>
+  </section>
+  <input type="file" id="phFile" accept="image/*" hidden>
 </div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -160,7 +193,7 @@ async function boot(){
   go('sLoad');
   const tok = store.get('gd_token'), exp = +store.get('gd_exp') || 0;
   if (tok && Date.now() < exp){                                    // still signed in on this phone → straight to the home screen
-    try { const r = await api({ action:'guardMe', token: tok }); if (r && r.ok){ return home(r.name, r.ic); } } catch (e) {}
+    try { const r = await api({ action:'guardMe', token: tok }); if (r && r.ok){ TOK = tok; return home(r.name, r.ic); } } catch (e) {}
     clearSession();
   }
   if (!KEY){ $('badMsg').textContent = 'Sila imbas kod QR yang ditampal di pondok pengawal.'; return go('sBad'); }
@@ -227,23 +260,89 @@ async function submitCam(){
   let r; try { r = await api(body, 60000); } catch (e) { r = { ok:false, error:'Tiada sambungan / masa tamat. Tekan sekali lagi.' }; }
   busy = false; setBusy(b, false);
   if (!r.ok){ if (r.code === 'exists'){ FOUND = true; toast('Profil sudah wujud — log masuk diteruskan.'); return submitCam(); } setMsg('camMsg', r.error || 'Gagal', 'err'); buzz([60, 40, 60]); return; }
-  store.set('gd_token', r.token); store.set('gd_exp', String(Date.now() + 13.5 * 3600 * 1000)); store.set('gd_name', r.name); store.set('gd_ic', r.ic);
+  TOK = r.token; store.set('gd_token', r.token); store.set('gd_exp', String(Date.now() + 13.5 * 3600 * 1000)); store.set('gd_name', r.name); store.set('gd_ic', r.ic);
   const thumb = PHOTO; PHOTO = ''; home(r.name, r.ic, thumb, r.created ? 'Profil dicipta · selamat bertugas!' : (r.newDevice ? 'Log masuk dari telefon baharu direkodkan.' : 'Log masuk berjaya · selamat bertugas!'));
 }
 
-/* ---------- home ---------- */
+/* ---------- home & rounds ---------- */
+let TOK = '', ST = null, srvOff = 0, pollT = 0, AMB = '', PHCP = 0, THUMBS = {}, TICKED = '';
+const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+function authFail(r){ if (r && (r.code === 'auth' || /Session expired/i.test(r.error || ''))){ toast('Sesi tamat. Sila log masuk semula.'); clearSession(); TOK = ''; clearInterval(clockT); clearInterval(pollT); boot(); return true; } return false; }
 function home(name, ic, thumb, note){
+  TOK = store.get('gd_token') || TOK;
   $('hName').textContent = name; $('hSub').textContent = 'IC ' + ic.slice(0, 6) + '-' + ic.slice(6, 8) + '-' + ic.slice(8);
   const av = $('av'); av.innerHTML = thumb ? '<img alt="" src="' + thumb + '">' : ''; if (!thumb) av.textContent = (name || '?').trim().charAt(0);
-  buildTl(); tick(); clearInterval(clockT); clockT = setInterval(tick, 1000); go('sHome'); if (note) toast(note);
+  tick(); clearInterval(clockT); clockT = setInterval(tick, 1000); clearInterval(pollT); pollT = setInterval(loadState, 30000);
+  go('sHome'); if (note) toast(note); loadState();
 }
-const SLOTS = [7, 9, 11, 13, 15, 17, 19, 21, 23, 1, 3, 5];
+document.addEventListener('visibilitychange', () => { if (!document.hidden && TOK && $('sHome').classList.contains('on')) loadState(); });
 function kl(){ return new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Kuala_Lumpur' })); }
-function slotNow(d){ const h = d.getHours() + d.getMinutes() / 60; let best = null; SLOTS.forEach(s => { const sh = s; let diff = h - sh; if (diff < 0) diff += 24; if (diff >= 0 && diff < 2 && best === null) best = s; }); return best; }
-function buildTl(){ const n = slotNow(kl()); $('tl').innerHTML = SLOTS.map(s => '<div data-s="' + s + '" class="' + (s === n ? 'now' : '') + '">' + String(s).padStart(2, '0') + ':00</div>').join(''); }
 function tick(){ const d = kl(), p = n => String(n).padStart(2, '0'); $('clk').textContent = p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
-  $('dte').textContent = d.toLocaleDateString('ms-MY', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); if (d.getSeconds() === 0) buildTl(); }
-function logout(){ if (!confirm('Log keluar?')) return; clearSession(); clearInterval(clockT); boot(); }
+  $('dte').textContent = d.toLocaleDateString('ms-MY', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  if (ST && ST.slots[ST.cur + 1] && Date.now() + srvOff >= ST.slots[ST.cur + 1].startMs) loadState(); else if (ST && !ST.slots[ST.cur + 1] && Date.now() + srvOff >= ST.slots[ST.cur].startMs + 7200000) loadState(); }
+async function loadState(){
+  if (!TOK) return; let r; try { r = await api({ action:'guardRoundState', token:TOK }, 25000); } catch (e) { if (!ST) $('rnd').innerHTML = '<div class="msg err">Tiada sambungan. Akan cuba lagi…</div>'; return; }
+  if (!r.ok){ if (!authFail(r)) toast(r.error || 'Gagal memuat'); return; }
+  srvOff = r.nowMs - Date.now(); ST = r; render();
+}
+function render(){ renderTl(); renderRound(); }
+function renderTl(){ $('tl').innerHTML = ST.slots.map(s => { const c = s.state === 'done' ? 'dn' : s.state === 'missed' ? 'ms' : s.state === 'open' ? 'now' : 'fu';
+  const sm = s.state === 'done' ? '✓' : s.state === 'missed' ? (s.cps ? s.cps + '/4 ✕' : '✕') : s.state === 'open' ? (s.cps ? s.cps + '/4' : 'kini') : '';
+  return '<div class="' + c + '">' + s.hr + '<small>' + sm + '</small></div>'; }).join(''); }
+function renderRound(){
+  const S = ST, cur = S.slots[S.cur], r = S.round, fin = r && r.status === 'SELESAI', n = r ? r.cps.filter(Boolean).length : 0;
+  let h = '<div class="rh"><div><small>PUSINGAN SEKARANG</small><h2>' + cur.hr + ' – ' + cur.end + '</h2></div><span class="pill ' + (fin ? 'ok' : n ? 'run' : '') + '">' + (fin ? 'Selesai ✓' : n ? n + '/4 checkpoint' : 'Belum mula') + '</span></div>';
+  if (fin){
+    h += '<div class="done-box"><div class="big">🎉</div><b>Pusingan ini selesai</b><small>' + esc((r.tamat || '').slice(11, 16)) + ' · ambulans ' + (r.ambulans === 'YA' ? 'tersedia' : 'TIDAK tersedia') + '</small></div>';
+    const nx = S.slots[S.cur + 1]; if (nx) h += '<div class="soon" id="nxt" style="margin-top:14px">Pusingan seterusnya ' + nx.hr + '</div>';
+    $('rnd').innerHTML = h; return;
+  }
+  S.cpNames.forEach((nm, i) => { const t = r && r.cps[i], prev = i === 0 || (r && r.cps[i - 1]), st = t ? 'ok' : prev ? 'next' : 'lock';
+    h += '<div class="cp ' + st + '"><div class="dot">' + (t ? '✓' : i + 1) + '</div><div class="cpb"><b>' + esc(nm) + '</b><small>' + (t ? esc(t.slice(11, 19)) : st === 'next' ? 'Tekan apabila anda tiba' : 'Selepas checkpoint sebelumnya') + '</small></div>' + (st === 'next' ? '<button class="btn" data-cp="' + (i + 1) + '">Tandakan</button>' : '') + '</div>'; });
+  if (n === 4) h += '<button class="btn" id="toRep" style="margin-top:6px">📝 Tulis laporan &amp; hantar</button>';
+  if (n >= 1) h += '<button class="btn ghost" id="toPh">📷 Tambah gambar (' + (r.photos || 0) + '/' + S.maxPhotos + ')</button>';
+  $('rnd').innerHTML = h;
+  $('rnd').querySelectorAll('[data-cp]').forEach(b => b.onclick = () => doCp(+b.dataset.cp, b));
+  const tr = $('toRep'); if (tr) tr.onclick = openRep; const tp = $('toPh'); if (tp) tp.onclick = () => pickPhoto(n);
+}
+async function doCp(n, btn){
+  if (busy) return; busy = true; setBusy(btn, true, '…'); const cur = ST.slots[ST.cur];
+  let r; try { r = await api({ action:'guardCheckpoint', token:TOK, key:cur.key, cp:n }); } catch (e) { r = { ok:false, error:'Tiada sambungan. Tekan sekali lagi.' }; }
+  busy = false; if (authFail(r)) return;
+  if (!r.ok){ toast(r.error || 'Gagal'); buzz([60, 40, 60]); if (r.code === 'slot') loadState(); else if (r.round){ ST.round = r.round; render(); } else setBusy(btn, false); return; }
+  ST.round = r.round; buzz(40); toast('✓ Checkpoint ' + n + ' · ' + r.time.slice(11, 19)); const sl = ST.slots[ST.cur]; sl.cps = r.round.cps.filter(Boolean).length; render();
+  if (n === 4) setTimeout(openRep, 700);
+}
+/* photos */
+function pickPhoto(cp){ if (ST && ST.round && (ST.round.photos || 0) >= ST.maxPhotos) return toast('Maksimum ' + ST.maxPhotos + ' gambar.'); PHCP = cp; $('phFile').value = ''; $('phFile').click(); }
+function shrink(img, max, q){ const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', q); }
+$('phFile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (!f || !ST) return; const url = URL.createObjectURL(f), img = new Image();
+  img.onload = async () => { const full = shrink(img, 1280, 0.75), th = shrink(img, 160, 0.7), key = ST.slots[ST.cur].key; URL.revokeObjectURL(url);
+    const box = $('rPh'), onRep = $('sRep').classList.contains('on'); let tEl = null;
+    if (onRep){ tEl = document.createElement('div'); tEl.className = 't up'; tEl.innerHTML = '<img alt="" src="' + th + '">'; box.appendChild(tEl); }
+    let r; try { r = await api({ action:'guardPhoto', token:TOK, key:key, cp:PHCP, photo:full }, 70000); } catch (x) { r = { ok:false, error:'Gambar gagal dihantar (sambungan).' }; }
+    if (authFail(r)) return;
+    if (!r.ok){ if (tEl) tEl.remove(); toast(r.error || 'Gagal'); if (r.code === 'slot') loadState(); return; }
+    (THUMBS[key] = THUMBS[key] || []).push(th); if (tEl) tEl.classList.remove('up'); if (ST.round) ST.round.photos = r.n; $('rPhN').textContent = r.n; toast('📷 Gambar disimpan (' + r.n + '/' + ST.maxPhotos + ')'); if (!onRep) renderRound(); };
+  img.onerror = () => toast('Gambar tidak dapat dibaca.'); img.src = url; });
+/* report */
+function openRep(){
+  const cur = ST.slots[ST.cur], r = ST.round; $('rSub').textContent = 'Pusingan ' + cur.hr + ' – ' + cur.end + ' · 4 checkpoint lengkap';
+  AMB = ''; $('rTick').checked = false; $('rText').value = ''; $('rMsg').textContent = ''; document.querySelectorAll('.amb button').forEach(b => b.classList.remove('on'));
+  $('rPh').innerHTML = (THUMBS[cur.key] || []).map(t => '<div class="t"><img alt="" src="' + t + '"></div>').join(''); $('rPhN').textContent = r ? r.photos || 0 : 0; chkRep(); go('sRep');
+}
+$('rTick').addEventListener('change', e => { const t = $('rText'), P = ST.safeText; if (e.target.checked){ if (t.value.indexOf(P) < 0) t.value = (t.value.trim() ? t.value.trim() + '\n' : '') + P; } else t.value = t.value.replace(P, '').replace(/\n{2,}/g, '\n').trim(); chkRep(); });
+$('rText').addEventListener('input', () => { $('rTick').checked = $('rText').value.indexOf(ST.safeText) >= 0; chkRep(); });
+document.querySelector('.amb').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; AMB = b.dataset.a; document.querySelectorAll('.amb button').forEach(x => x.classList.toggle('on', x === b)); buzz(10); chkRep(); });
+function chkRep(){ $('rGo').disabled = !($('rText').value.trim().length >= 3 && AMB); }
+async function finishRound(){
+  if (busy) return; busy = true; const b = $('rGo'); setBusy(b, true, 'Menghantar…'); const cur = ST.slots[ST.cur];
+  let r; try { r = await api({ action:'guardFinish', token:TOK, key:cur.key, laporan:$('rText').value.trim(), selamat:$('rTick').checked, ambulans:AMB }, 45000); } catch (e) { r = { ok:false, error:'Tiada sambungan. Tekan sekali lagi.' }; }
+  busy = false; setBusy(b, false); if (authFail(r)) return;
+  if (!r.ok){ setMsg('rMsg', r.error || 'Gagal', 'err'); buzz([60, 40, 60]); if (r.code === 'slot'){ go('sHome'); loadState(); } return; }
+  ST.round = r.round; ST.slots[ST.cur].state = 'done'; buzz([40, 30, 80]); go('sHome'); render(); toast('Laporan dihantar · terima kasih!');
+}
+function logout(){ if (!confirm('Log keluar?')) return; clearSession(); TOK = ''; ST = null; clearInterval(clockT); clearInterval(pollT); boot(); }
 boot();
 </script>
 </body>
