@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ms"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Poster QR Pengawal</title>
+<style>
+ body{margin:0;background:#eef4f6;font-family:Inter,'Segoe UI',system-ui,sans-serif;color:#0B2430;display:flex;justify-content:center;padding:24px}
+ .sheet{width:210mm;max-width:100%;background:#fff;border-radius:18px;padding:14mm 12mm;text-align:center;box-shadow:0 20px 50px -25px rgba(0,0,0,.4)}
+ h1{font-size:34px;margin:6px 0 2px} .sub{color:#4D6B7A;font-size:16px;margin:0 0 18px}
+ #qr{display:inline-block;padding:14px;border:6px solid #0E9F7E;border-radius:26px} #qr svg,#qr img{display:block;width:min(70vw,360px);height:auto}
+ ol{display:inline-block;text-align:left;font-size:18px;line-height:1.7;margin:18px 0 6px;padding-left:24px} .f{color:#4D6B7A;font-size:13px;margin-top:10px}
+ .bar{margin:0 auto 14px;max-width:210mm;display:flex;gap:10px;justify-content:center} button{font:700 15px Inter,sans-serif;padding:12px 20px;border-radius:12px;border:0;background:#0E9F7E;color:#fff;cursor:pointer}
+ .err{color:#C0392B;font-weight:700}
+ @media print{ body{background:#fff;padding:0} .sheet{box-shadow:none;border-radius:0} .bar,.noprint{display:none} @page{size:A4;margin:0} }
+</style></head><body>
+<div><div class="bar noprint"><button onclick="print()">🖨️ Cetak poster</button></div>
+<div class="sheet">
+ <div style="font-size:54px">🛡️</div>
+ <h1>Rondaan Pengawal Keselamatan</h1><p class="sub">Klinik Kesihatan Ayer Hitam</p>
+ <div id="qr"></div>
+ <ol><li>Imbas kod QR ini dengan telefon</li><li>Masukkan no. kad pengenalan</li><li>Ambil gambar muka</li><li>Mulakan rondaan &amp; checkpoint</li></ol>
+ <div class="f">Untuk pengawal bertugas sahaja · Jangan kongsi gambar poster ini</div>
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function(){
+  const k=(new URLSearchParams(location.search).get('k')||'').replace(/[^\w\-]/g,''), el=document.getElementById('qr');
+  if(!k){ el.outerHTML='<p class="err">Kunci tiada. Buka pautan "POSTER QR" daripada guardSetup().</p>'; return; }
+  const url=location.href.replace(/guard-qr\.html.*$/,'guard.html')+'?k='+k;
+  try{ const q=qrcode(0,'M'); q.addData(url); q.make(); el.innerHTML=q.createSvgTag({cellSize:8,margin:0,scalable:true}); }
+  catch(e){ el.outerHTML='<p class="err">Gagal jana QR.</p>'; }
+})();
+</script></body></html>
