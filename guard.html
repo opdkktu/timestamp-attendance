@@ -224,7 +224,8 @@ async function doLookup(){
   busy = false; setBusy(b, false);
   if (!r.ok){ setMsg('icMsg', r.error || 'Gagal', 'err'); buzz([60, 40, 60]); return; }
   FOUND = !!r.found; FIRST = r.first || ''; PHOTO = '';
-  if (FOUND){ $('camH').textContent = 'Hai, ' + FIRST + '! 👋'; $('camSub').textContent = 'Ambil gambar muka untuk log masuk.'; openCam(); }
+  if (FOUND && r.needPhoto === false){ return quickLogin(); }                       // face already scanned today on this phone
+  if (FOUND){ $('camH').textContent = 'Hai, ' + FIRST + '! 👋'; $('camSub').textContent = 'Ambil gambar muka untuk log masuk. Sekali sahaja sehari.'; openCam(); }
   else { $('nIc').value = IC.slice(0, 6) + '-' + IC.slice(6, 8) + '-' + IC.slice(8); $('nName').value = ''; $('nPhone').value = '01'; go('sNew'); setTimeout(() => $('nName').focus(), 350); }
 }
 
@@ -255,6 +256,13 @@ function snap(){
 function showSnap(){ buzz(30); const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); $('snap').src = PHOTO; $('snap').hidden = false; $('vid').hidden = true; $('scan').hidden = true; $('shutter').hidden = true; $('camAfter').hidden = false; stopCam(); }
 function retake(){ openCam(); }
 $('camFile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (!f) return; const img = new Image(); img.onload = () => { const s = Math.min(img.width, img.height), c = document.createElement('canvas'); c.width = c.height = Math.min(s, 720); c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, c.width, c.height); PHOTO = c.toDataURL('image/jpeg', 0.8); showSnap(); }; img.src = URL.createObjectURL(f); });
+async function quickLogin(){
+  busy = true; const b = $('icGo'); setBusy(b, true, 'Log masuk…'); let r; try { r = await api({ action:'guardLogin', ic: IC }, 40000); } catch (e) { r = { ok:false, error:'Tiada sambungan. Cuba lagi.' }; }
+  busy = false; setBusy(b, false);
+  if (!r.ok){ if (r.code === 'photo'){ $('camH').textContent = 'Hai, ' + FIRST + '! 👋'; $('camSub').textContent = 'Ambil gambar muka untuk log masuk.'; return openCam(); } setMsg('icMsg', r.error || 'Gagal', 'err'); buzz([60, 40, 60]); return; }
+  TOK = r.token; store.set('gd_token', r.token); store.set('gd_exp', String(Date.now() + 13.5 * 3600 * 1000)); store.set('gd_name', r.name); store.set('gd_ic', r.ic);
+  home(r.name, r.ic, '', 'Selamat kembali, ' + FIRST + '!');
+}
 async function submitCam(){
   if (busy || !PHOTO) return; busy = true; const b = $('camGo'); setBusy(b, true, FOUND ? 'Log masuk…' : 'Mendaftar…'); setMsg('camMsg', '');
   const body = FOUND ? { action:'guardLogin', ic: IC, photo: PHOTO } : { action:'guardRegister', ic: IC, name: $('nName').value.trim(), phone: $('nPhone').value, photo: PHOTO };
