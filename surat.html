@@ -205,19 +205,20 @@ async function openLetter(id){
 function closeAg(){ $('ovAg').classList.remove('on'); }
 let agMode = 'PERSON';
 function openAg(){
-  const r = window._det, isTop = ME.isTop; agMode = isTop ? 'UNIT' : 'PERSON'; $('ovAg').classList.add('on');
-  const units = isTop ? ME.allUnits : r.unitScope.map(u => (ME.allUnits || []).find(x => x.toLowerCase() === u.toLowerCase()) || u);
+  const r = window._det, isTop = ME.isTop, canUnit = isTop || r.canUnit, own = (r.unitScope || []).length > 0; $('ovAg').classList.add('on');
+  const modes = []; if (canUnit) modes.push(['UNIT', 'Unit']); if (isTop || own) modes.push(['PERSON', 'Individu']); if (!isTop && own) modes.push(['UNITALL', 'Semua dalam unit']); if (isTop) modes.push(['ALL', 'Semua']);
+  agMode = modes[0][0]; window._agUnits = { UNIT: isTop ? ME.allUnits : (ME.everyUnit || ME.allUnits || []), UNITALL: (r.unitScope || []).map(u => (ME.allUnits || []).find(x => x.toLowerCase() === u.toLowerCase()) || u) };
   $('agBody').innerHTML = '<div class="hd"><b>📤 Agihkan surat</b><button class="x" onclick="closeAg()" aria-label="Tutup">✕</button></div>'
     + '<p class="sub">' + esc(r.rec.title) + '</p>'
-    + '<div class="tabs" id="agTabs">' + (isTop ? '<button data-m="UNIT" class="on">Unit</button><button data-m="PERSON">Individu</button><button data-m="ALL">Semua</button>' : '<button data-m="PERSON" class="on">Individu</button><button data-m="UNITALL">Semua dalam unit</button>') + '</div>'
-    + '<div id="agUnits" hidden><div class="opts">' + units.map(u => '<label class="ck"><input type="checkbox" class="u" value="' + esc(u) + '"><span>' + esc(u) + '</span></label>').join('') + '</div><div class="hint">' + (isTop ? 'Penyelia unit akan dimaklumkan untuk mengagihkan kepada kakitangan.' : 'Semua kakitangan unit akan dimaklumkan.') + '</div></div>'
+    + '<div class="tabs" id="agTabs">' + modes.map((m, i) => '<button data-m="' + m[0] + '"' + (i ? '' : ' class="on"') + '>' + m[1] + '</button>').join('') + '</div>'
+    + '<div id="agUnits" hidden><div class="opts" id="agUnitList"></div><div class="hint" id="agUnitHint"></div></div>'
     + '<div id="agStaff" hidden><input type="search" id="agQ" placeholder="Cari nama…" oninput="filterStaff()" aria-label="Cari nama"><div class="opts" id="agList" style="margin-top:8px">' + (ME.staff || []).map(s => '<label class="ck" data-n="' + esc(s.name.toLowerCase()) + '"><input type="checkbox" class="s" value="' + esc(s.ic) + '"><span>' + esc(s.name) + '<br><small>' + esc(s.unit) + '</small></span></label>').join('') + '</div>' + (isTop ? '<div class="hint">Penyelia individu itu juga akan dimaklumkan.</div>' : '') + '</div>'
     + '<div id="agAll" hidden><div class="card" style="margin:0">Surat akan dimaklumkan kepada <b>semua kakitangan</b>.</div></div>'
     + '<label for="agNote">Nota <small>(pilihan)</small></label><input type="text" id="agNote" maxlength="160" placeholder="cth: Sila ambil tindakan sebelum 20/11">'
     + '<button class="btn full" style="margin-top:14px" id="agGo" onclick="doAg()">Hantar</button>';
   $('agTabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; agMode = b.dataset.m; [...$('agTabs').children].forEach(x => x.classList.toggle('on', x === b)); syncAg(); }; syncAg();
 }
-function syncAg(){ $('agUnits').hidden = !(agMode === 'UNIT' || agMode === 'UNITALL'); $('agStaff').hidden = agMode !== 'PERSON'; $('agAll').hidden = agMode !== 'ALL'; }
+function syncAg(){ if (agMode === 'UNIT' || agMode === 'UNITALL'){ $('agUnitList').innerHTML = (window._agUnits[agMode] || []).map(u => '<label class="ck"><input type="checkbox" class="u" value="' + esc(u) + '"><span>' + esc(u) + '</span></label>').join(''); $('agUnitHint').textContent = agMode === 'UNIT' ? 'Penyelia unit itu akan dimaklumkan untuk mengagihkan kepada kakitangan mereka.' : 'Semua kakitangan unit akan dimaklumkan.'; } $('agUnits').hidden = !(agMode === 'UNIT' || agMode === 'UNITALL'); $('agStaff').hidden = agMode !== 'PERSON'; $('agAll').hidden = agMode !== 'ALL'; }
 function filterStaff(){ const q = $('agQ').value.trim().toLowerCase(); document.querySelectorAll('#agList .ck').forEach(l => l.hidden = q && l.dataset.n.indexOf(q) === -1); }
 async function doAg(){
   const units = [...document.querySelectorAll('.u:checked')].map(x => x.value), ics = [...document.querySelectorAll('.s:checked')].map(x => x.value);
