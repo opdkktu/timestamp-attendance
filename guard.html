@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#06121C">
+<meta name="robots" content="noindex,nofollow">
+<title>Pengawal · Rondaan</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<style>
+  :root{
+    --bg:#06121C; --bg2:#0B2233; --card:rgba(255,255,255,.07); --card2:rgba(255,255,255,.11); --line:rgba(255,255,255,.14);
+    --ink:#EAF4F8; --mut:#8FA9B8; --acc:#2EE5B8; --acc2:#19B896; --onacc:#032B22; --gold:#FFC857; --dg:#FF7A7A; --ok:#5CF2A0; --glow:rgba(46,229,184,.35);
+  }
+  @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){
+    --bg:#EAF3F6; --bg2:#D7E8EE; --card:rgba(255,255,255,.78); --card2:#fff; --line:rgba(8,40,56,.14); --ink:#0B2430; --mut:#4D6B7A;
+    --acc:#0E9F7E; --acc2:#0B7D63; --onacc:#fff; --gold:#B87400; --dg:#C0392B; --ok:#128A4E; --glow:rgba(14,159,126,.28); } }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; } html,body{ margin:0; height:100%; }
+  body{ background:radial-gradient(1200px 700px at 80% -10%, var(--bg2), var(--bg)); color:var(--ink); font-family:Inter,'Segoe UI',system-ui,sans-serif; overflow-x:hidden; line-height:1.4; }
+  .radar{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .radar i{ position:absolute; left:50%; top:30%; width:120px; height:120px; margin:-60px; border-radius:50%; border:1.5px solid var(--acc); opacity:0; animation:ring 7s ease-out infinite; }
+  .radar i:nth-child(2){ animation-delay:2.3s; } .radar i:nth-child(3){ animation-delay:4.6s; }
+  @keyframes ring{ 0%{ transform:scale(.4); opacity:.35; } 100%{ transform:scale(9); opacity:0; } }
+  .app{ position:relative; z-index:1; max-width:460px; margin:0 auto; min-height:100%; padding:calc(18px + env(safe-area-inset-top)) 18px calc(26px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; }
+  .brand{ display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+  .brand svg{ width:44px; height:44px; flex:none; filter:drop-shadow(0 6px 14px var(--glow)); }
+  .brand b{ display:block; font-size:16px; letter-spacing:.02em; } .brand small{ color:var(--mut); font-size:12px; }
+  .screen{ display:none; flex:1; flex-direction:column; animation:in .45s cubic-bezier(.2,.8,.2,1); } .screen.on{ display:flex; }
+  @keyframes in{ from{ opacity:0; transform:translateY(18px) scale(.98); } }
+  .card{ background:var(--card); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border:1px solid var(--line); border-radius:26px; padding:20px; box-shadow:0 20px 50px -24px rgba(0,0,0,.6); }
+  h1{ font-size:27px; line-height:1.15; margin:6px 0 6px; letter-spacing:-.01em; } h2{ font-size:20px; margin:0 0 4px; } .sub{ color:var(--mut); font-size:14px; margin:0 0 16px; }
+  .steps{ display:flex; gap:8px; margin:2px 0 18px; } .steps i{ flex:1; height:5px; border-radius:9px; background:var(--line); overflow:hidden; position:relative; } .steps i.on::after,.steps i.done::after{ content:''; position:absolute; inset:0; background:linear-gradient(90deg,var(--acc2),var(--acc)); border-radius:9px; animation:fill .5s ease forwards; } .steps i.on::after{ width:50%; } @keyframes fill{ from{ transform:scaleX(0); transform-origin:left; } }
+  /* IC display + keypad */
+  .ic{ display:flex; justify-content:center; gap:4px; flex-wrap:wrap; margin:8px 0 6px; font:700 26px 'IBM Plex Mono',ui-monospace,Menlo,monospace; }
+  .ic span{ width:25px; height:44px; border-radius:9px; background:var(--card); border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; transition:all .15s; } .ic span.f{ border-color:var(--acc); background:var(--card2); transform:translateY(-2px); } .ic span.c{ border-color:var(--acc); box-shadow:0 0 0 3px var(--glow); }
+  .ic em{ width:8px; align-self:center; color:var(--mut); font-style:normal; }
+  .msg{ min-height:22px; text-align:center; font-size:13.5px; font-weight:600; color:var(--mut); margin:4px 0 10px; } .msg.err{ color:var(--dg); animation:shake .35s; } .msg.ok{ color:var(--ok); } @keyframes shake{ 25%{ transform:translateX(-6px); } 75%{ transform:translateX(6px); } }
+  .pad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; } .pad button{ height:60px; border-radius:18px; border:1px solid var(--line); background:var(--card); color:var(--ink); font:700 24px Inter,sans-serif; cursor:pointer; transition:transform .08s, background .15s; } .pad button:active{ transform:scale(.92); background:var(--card2); } .pad .fn{ font-size:16px; color:var(--mut); }
+  .btn{ width:100%; min-height:58px; border:none; border-radius:18px; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:var(--onacc); font:800 17px Inter,sans-serif; cursor:pointer; box-shadow:0 14px 30px -12px var(--glow); transition:transform .1s, opacity .2s; position:relative; overflow:hidden; } .btn:active{ transform:scale(.98); } .btn:disabled{ opacity:.45; box-shadow:none; }
+  .btn.ghost{ background:var(--card); color:var(--ink); border:1px solid var(--line); box-shadow:none; min-height:50px; font-size:15px; } .btn + .btn{ margin-top:10px; }
+  .btn.busy::after{ content:''; position:absolute; inset:0; background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.4),transparent 70%); animation:sheen 1s linear infinite; } @keyframes sheen{ from{ transform:translateX(-100%); } to{ transform:translateX(100%); } }
+  label{ display:block; font-size:12.5px; font-weight:700; color:var(--mut); margin:14px 0 6px; letter-spacing:.03em; text-transform:uppercase; }
+  input[type=text],input[type=tel]{ width:100%; height:56px; border-radius:16px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:700 18px Inter,sans-serif; padding:0 16px; outline:none; transition:border-color .15s, box-shadow .15s; }
+  input:focus{ border-color:var(--acc); box-shadow:0 0 0 4px var(--glow); } input[readonly]{ opacity:.75; } input.bad{ border-color:var(--dg); animation:shake .35s; }
+  .mono{ font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace; letter-spacing:.06em; }
+  /* camera */
+  .cam{ position:relative; width:min(78vw,300px); aspect-ratio:1; margin:6px auto 14px; }
+  .cam .v{ position:absolute; inset:0; border-radius:50%; overflow:hidden; background:#000; border:3px solid var(--acc); box-shadow:0 0 0 6px var(--glow), 0 20px 50px -20px rgba(0,0,0,.7); } .cam video,.cam img{ width:100%; height:100%; object-fit:cover; transform:scaleX(-1); display:block; } .cam img{ transform:none; }
+  .cam .scan{ position:absolute; left:8%; right:8%; height:3px; border-radius:3px; background:linear-gradient(90deg,transparent,var(--acc),transparent); animation:scan 2.4s ease-in-out infinite; top:12%; } @keyframes scan{ 0%,100%{ top:12%; } 50%{ top:86%; } }
+  .cam .flash{ position:absolute; inset:0; border-radius:50%; background:#fff; opacity:0; pointer-events:none; } .cam .flash.go{ animation:flash .45s ease; } @keyframes flash{ 0%{ opacity:.95; } 100%{ opacity:0; } }
+  .cam .hint{ position:absolute; left:0; right:0; bottom:-2px; text-align:center; font-size:12px; color:var(--mut); }
+  .shutter{ width:76px; height:76px; border-radius:50%; border:4px solid var(--ink); background:transparent; padding:0; margin:0 auto; display:block; cursor:pointer; position:relative; } .shutter::after{ content:''; position:absolute; inset:6px; border-radius:50%; background:linear-gradient(135deg,var(--acc2),var(--acc)); transition:transform .1s; } .shutter:active::after{ transform:scale(.85); }
+  /* home */
+  .me{ display:flex; align-items:center; gap:14px; } .av{ width:62px; height:62px; border-radius:50%; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:var(--onacc); font:800 24px Inter,sans-serif; display:flex; align-items:center; justify-content:center; overflow:hidden; flex:none; box-shadow:0 0 0 4px var(--glow); } .av img{ width:100%; height:100%; object-fit:cover; }
+  .me b{ font-size:18px; display:block; } .me small{ color:var(--mut); }
+  .clock{ text-align:center; margin:16px 0 4px; } .clock b{ font:800 44px 'IBM Plex Mono',ui-monospace,monospace; letter-spacing:.02em; } .clock small{ display:block; color:var(--mut); font-size:13px; }
+  .tl{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px; } .tl div{ border-radius:14px; border:1px solid var(--line); background:var(--card); padding:9px 4px; text-align:center; font:700 13px 'IBM Plex Mono',monospace; color:var(--mut); } .tl div.now{ border-color:var(--acc); color:var(--ink); background:var(--card2); box-shadow:0 0 0 3px var(--glow); animation:pulse 2s ease-in-out infinite; } .tl div.past{ opacity:.55; } @keyframes pulse{ 50%{ box-shadow:0 0 0 6px transparent; } }
+  .soon{ margin-top:14px; border:1.5px dashed var(--line); border-radius:18px; padding:14px; color:var(--mut); font-size:13.5px; text-align:center; }
+  .link{ background:none; border:none; color:var(--mut); font:700 13.5px Inter,sans-serif; padding:14px; cursor:pointer; text-decoration:underline; align-self:center; }
+  .center{ text-align:center; } .big{ font-size:56px; margin:6px 0; }
+  .toast{ position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translate(-50%,24px); background:var(--ink); color:var(--bg); padding:12px 18px; border-radius:99px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:all .25s; z-index:99; max-width:92vw; text-align:center; } .toast.on{ opacity:1; transform:translate(-50%,0); }
+  .shield path{ stroke-dasharray:140; stroke-dashoffset:140; animation:draw 1.3s .1s ease forwards; } @keyframes draw{ to{ stroke-dashoffset:0; } }
+  .spin{ width:30px; height:30px; border:3px solid var(--line); border-top-color:var(--acc); border-radius:50%; animation:sp .8s linear infinite; margin:14px auto; } @keyframes sp{ to{ transform:rotate(360deg); } }
+  [hidden]{ display:none!important; }
+  @media (max-width:360px){ .ic span{ width:22px; height:40px; font-size:22px; } .pad button{ height:54px; } }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } .shield path{ stroke-dashoffset:0; } }
+</style>
+</head>
+<body>
+<div class="radar" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="app">
+  <div class="brand">
+    <svg class="shield" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 4 8 10v12c0 10 6.6 18.4 16 22 9.4-3.6 16-12 16-22V10L24 4Z" stroke="var(--acc)" stroke-width="2.6" stroke-linejoin="round" fill="rgba(46,229,184,.12)"/><path d="m16 24 6 6 11-12" stroke="var(--acc)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><b>Pengawal Keselamatan</b><small>Klinik Kesihatan Ayer Hitam</small></div>
+  </div>
+
+  <!-- 0 checking the QR key -->
+  <section class="screen on" id="sLoad"><div class="card center"><div class="spin"></div><b>Menyemak kod QR…</b></div></section>
+
+  <!-- X QR not valid -->
+  <section class="screen" id="sBad"><div class="card center"><div class="big">📵</div><h2>Imbas QR di pondok pengawal</h2><p class="sub" id="badMsg">Kod QR tidak sah atau tamat.</p><button class="btn ghost" onclick="boot()">Cuba semula</button></div></section>
+
+  <!-- 1 IC -->
+  <section class="screen" id="sIc">
+    <h1>Selamat datang 👋</h1><p class="sub">Masukkan no. kad pengenalan anda untuk memulakan tugas.</p>
+    <div class="steps"><i class="on"></i><i></i><i></i></div>
+    <div class="card">
+      <div class="ic" id="icBox" aria-live="polite" aria-label="No. IC"></div>
+      <div class="msg" id="icMsg">12 digit, tanpa tanda "-"</div>
+      <div class="pad" id="pad"></div>
+      <button class="btn" id="icGo" style="margin-top:14px" disabled onclick="doLookup()">Seterusnya</button>
+    </div>
+  </section>
+
+  <!-- 2a new profile -->
+  <section class="screen" id="sNew">
+    <h1>Profil baharu ✨</h1><p class="sub">IC anda belum didaftarkan. Lengkapkan maklumat ini — sekali sahaja.</p>
+    <div class="steps"><i class="done"></i><i class="on"></i><i></i></div>
+    <div class="card">
+      <label for="nIc">No. IC</label><input type="text" id="nIc" class="mono" readonly>
+      <label for="nName">Nama penuh</label><input type="text" id="nName" maxlength="80" autocomplete="name" autocapitalize="characters" placeholder="NAMA SEPERTI DI KAD PENGENALAN">
+      <label for="nPhone">No. telefon</label><input type="tel" id="nPhone" class="mono" inputmode="numeric" maxlength="11" autocomplete="tel" placeholder="01XXXXXXXX">
+      <button class="btn" style="margin-top:20px" onclick="newNext()">Seterusnya · ambil gambar</button>
+      <button class="btn ghost" onclick="showIc()">← Tukar IC</button>
+    </div>
+  </section>
+
+  <!-- 2b selfie -->
+  <section class="screen" id="sCam">
+    <h1 id="camH">Ambil gambar muka</h1><p class="sub" id="camSub">Pandang kamera. Gambar ini disimpan sebagai bukti kehadiran.</p>
+    <div class="steps"><i class="done"></i><i class="done"></i><i class="on"></i></div>
+    <div class="card center">
+      <div class="cam"><div class="v"><video id="vid" playsinline muted autoplay></video><img id="snap" alt="Gambar anda" hidden><div class="scan" id="scan"></div></div><div class="flash" id="flash"></div></div>
+      <input type="file" id="camFile" accept="image/*" capture="user" hidden>
+      <button class="shutter" id="shutter" onclick="snap()" aria-label="Ambil gambar"></button>
+      <div id="camAfter" hidden>
+        <button class="btn" id="camGo" onclick="submitCam()">✓ Sahkan & masuk</button>
+        <button class="btn ghost" onclick="retake()">Ambil semula</button>
+      </div>
+      <div class="msg" id="camMsg"></div>
+      <button class="link" onclick="$('camFile').click()">Kamera tidak berfungsi? Guna gambar dari telefon</button>
+    </div>
+  </section>
+
+  <!-- 3 home -->
+  <section class="screen" id="sHome">
+    <div class="card">
+      <div class="me"><div class="av" id="av"></div><div><b id="hName"></b><small id="hSub"></small></div></div>
+      <div class="clock"><b id="clk">--:--</b><small id="dte"></small></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h2>Rondaan hari ini</h2><p class="sub" style="margin-bottom:0">Setiap 2 jam · 4 checkpoint setiap pusingan</p>
+      <div class="tl" id="tl"></div>
+      <div class="soon">🛠️ Pusingan & checkpoint akan diaktifkan dalam kemas kini seterusnya.</div>
+    </div>
+    <div class="card" style="margin-top:12px"><h2>📞 Bertugas hari ini</h2><div class="soon" style="margin-top:10px">AMO & juruterbang bertugas akan dipaparkan di sini.</div></div>
+    <button class="link" onclick="logout()">Log keluar</button>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const $ = id => document.getElementById(id);
+const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch(e){} }, del(k){ try { localStorage.removeItem(k); } catch(e){} } };
+const KEY = (new URLSearchParams(location.search).get('k') || store.get('gd_k') || '').replace(/[^\w\-]/g, '');
+if (KEY) store.set('gd_k', KEY);
+let DEV = store.get('gd_dev'); if (!DEV){ DEV = 'D' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); store.set('gd_dev', DEV); }
+let IC = '', FOUND = false, FIRST = '', PHOTO = '', stream = null, busy = false, clockT = 0;
+
+function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove('on'), 3400); }
+function go(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); window.scrollTo({ top:0 }); if (id !== 'sCam') stopCam(); }
+function api(body, ms){ const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms || 40000);
+  return fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ k: KEY, dev: DEV }, body)), signal: ctl.signal }).then(r => r.json()).finally(() => clearTimeout(t)); }
+function setBusy(btn, on, txt){ btn.disabled = on; btn.classList.toggle('busy', on); if (txt) btn.dataset.t = btn.dataset.t || btn.textContent, btn.textContent = on ? txt : btn.dataset.t; }
+function buzz(p){ try { navigator.vibrate && navigator.vibrate(p); } catch(e){} }
+
+/* ---------- boot ---------- */
+async function boot(){
+  go('sLoad');
+  const tok = store.get('gd_token'), exp = +store.get('gd_exp') || 0;
+  if (tok && Date.now() < exp){                                    // still signed in on this phone → straight to the home screen
+    try { const r = await api({ action:'guardMe', token: tok }); if (r && r.ok){ return home(r.name, r.ic); } } catch (e) {}
+    clearSession();
+  }
+  if (!KEY){ $('badMsg').textContent = 'Sila imbas kod QR yang ditampal di pondok pengawal.'; return go('sBad'); }
+  let r; try { r = await api({ action:'guardPing' }, 20000); } catch (e) { $('badMsg').textContent = 'Tiada sambungan internet. Semak data telefon, kemudian cuba semula.'; return go('sBad'); }
+  if (!r || !r.ok){ store.del('gd_k'); $('badMsg').textContent = (r && r.error) || 'Kod QR tidak sah.'; return go('sBad'); }
+  showIc();
+}
+function clearSession(){ ['gd_token','gd_exp','gd_name','gd_ic'].forEach(store.del); }
+
+/* ---------- IC step ---------- */
+(function buildPad(){
+  const p = $('pad'); '123456789'.split('').forEach(n => p.insertAdjacentHTML('beforeend', '<button type="button" data-d="' + n + '">' + n + '</button>'));
+  p.insertAdjacentHTML('beforeend', '<button type="button" class="fn" data-x="clr" aria-label="Kosongkan">Padam semua</button><button type="button" data-d="0">0</button><button type="button" class="fn" data-x="bs" aria-label="Padam">⌫</button>');
+  p.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; buzz(8); if (b.dataset.d) press(b.dataset.d); else if (b.dataset.x === 'bs') IC = IC.slice(0, -1), drawIc(); else if (b.dataset.x === 'clr') IC = '', drawIc(); });
+})();
+document.addEventListener('keydown', e => { if (!$('sIc').classList.contains('on')) return; if (/^\d$/.test(e.key)) press(e.key); else if (e.key === 'Backspace'){ IC = IC.slice(0, -1); drawIc(); } else if (e.key === 'Enter' && IC.length === 12) doLookup(); });
+function press(d){ if (IC.length < 12){ IC += d; drawIc(); } }
+function drawIc(){
+  let h = ''; for (let i = 0; i < 12; i++){ if (i === 6 || i === 8) h += '<em>-</em>'; h += '<span class="' + (i < IC.length ? 'f' : i === IC.length ? 'c' : '') + '">' + (IC[i] || '') + '</span>'; }
+  $('icBox').innerHTML = h; $('icGo').disabled = IC.length !== 12; setMsg('icMsg', IC.length === 12 ? 'Semak no. IC, kemudian tekan Seterusnya' : '12 digit, tanpa tanda "-"');
+}
+function setMsg(id, t, c){ const m = $(id); m.textContent = t; m.className = 'msg' + (c ? ' ' + c : ''); }
+function showIc(){ IC = ''; drawIc(); go('sIc'); }
+async function doLookup(){
+  if (busy || IC.length !== 12) return; busy = true; const b = $('icGo'); setBusy(b, true, 'Menyemak…');
+  let r; try { r = await api({ action:'guardLookup', ic: IC }); } catch (e) { r = { ok:false, error:'Tiada sambungan. Cuba lagi.' }; }
+  busy = false; setBusy(b, false);
+  if (!r.ok){ setMsg('icMsg', r.error || 'Gagal', 'err'); buzz([60, 40, 60]); return; }
+  FOUND = !!r.found; FIRST = r.first || ''; PHOTO = '';
+  if (FOUND){ $('camH').textContent = 'Hai, ' + FIRST + '! 👋'; $('camSub').textContent = 'Ambil gambar muka untuk log masuk.'; openCam(); }
+  else { $('nIc').value = IC.slice(0, 6) + '-' + IC.slice(6, 8) + '-' + IC.slice(8); $('nName').value = ''; $('nPhone').value = '01'; go('sNew'); setTimeout(() => $('nName').focus(), 350); }
+}
+
+/* ---------- new profile ---------- */
+$('nName').addEventListener('input', e => { const el = e.target, p = el.selectionStart; el.value = el.value.toUpperCase().replace(/[^A-Z0-9 '\/.@\-]/g, ''); try { el.setSelectionRange(p, p); } catch(x){} });
+$('nPhone').addEventListener('input', e => { let v = e.target.value.replace(/\D/g, ''); if (v.slice(0, 2) !== '01') v = '01' + v.replace(/^0?1?/, ''); e.target.value = v.slice(0, 11); });
+function newNext(){
+  const n = $('nName').value.trim(), p = $('nPhone').value;
+  if (n.length < 3){ $('nName').classList.add('bad'); setTimeout(() => $('nName').classList.remove('bad'), 500); return toast('Sila isi nama penuh.'); }
+  if (!/^01\d{8,9}$/.test(p)){ $('nPhone').classList.add('bad'); setTimeout(() => $('nPhone').classList.remove('bad'), 500); return toast('No. telefon tidak sah (cth 0123456789).'); }
+  $('camH').textContent = 'Ambil gambar muka'; $('camSub').textContent = 'Pandang kamera. Gambar ini disimpan sebagai bukti kehadiran.'; openCam();
+}
+
+/* ---------- selfie ---------- */
+async function openCam(){
+  go('sCam'); PHOTO = ''; $('snap').hidden = true; $('vid').hidden = false; $('scan').hidden = false; $('camAfter').hidden = true; $('shutter').hidden = false; setMsg('camMsg', '');
+  try { stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal:720 }, height:{ ideal:720 } }, audio:false }); $('vid').srcObject = stream; }
+  catch (e) { setMsg('camMsg', 'Kamera tidak dapat dibuka. Benarkan akses kamera, atau guna butang di bawah.', 'err'); $('shutter').hidden = true; }
+}
+function stopCam(){ if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } }
+function toJpeg(src, w, h){ const k = Math.min(1, 720 / Math.max(w, h)), c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k); c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.8); }
+function snap(){
+  const v = $('vid'); if (!v.videoWidth) return toast('Kamera belum sedia.');
+  const s = Math.min(v.videoWidth, v.videoHeight), c = document.createElement('canvas'); c.width = c.height = Math.min(s, 720);
+  const x = c.getContext('2d'); x.translate(c.width, 0); x.scale(-1, 1); x.drawImage(v, (v.videoWidth - s) / 2, (v.videoHeight - s) / 2, s, s, 0, 0, c.width, c.height);
+  PHOTO = c.toDataURL('image/jpeg', 0.8); showSnap();
+}
+function showSnap(){ buzz(30); const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); $('snap').src = PHOTO; $('snap').hidden = false; $('vid').hidden = true; $('scan').hidden = true; $('shutter').hidden = true; $('camAfter').hidden = false; stopCam(); }
+function retake(){ openCam(); }
+$('camFile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (!f) return; const img = new Image(); img.onload = () => { const s = Math.min(img.width, img.height), c = document.createElement('canvas'); c.width = c.height = Math.min(s, 720); c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, c.width, c.height); PHOTO = c.toDataURL('image/jpeg', 0.8); showSnap(); }; img.src = URL.createObjectURL(f); });
+async function submitCam(){
+  if (busy || !PHOTO) return; busy = true; const b = $('camGo'); setBusy(b, true, FOUND ? 'Log masuk…' : 'Mendaftar…'); setMsg('camMsg', '');
+  const body = FOUND ? { action:'guardLogin', ic: IC, photo: PHOTO } : { action:'guardRegister', ic: IC, name: $('nName').value.trim(), phone: $('nPhone').value, photo: PHOTO };
+  let r; try { r = await api(body, 60000); } catch (e) { r = { ok:false, error:'Tiada sambungan / masa tamat. Tekan sekali lagi.' }; }
+  busy = false; setBusy(b, false);
+  if (!r.ok){ if (r.code === 'exists'){ FOUND = true; toast('Profil sudah wujud — log masuk diteruskan.'); return submitCam(); } setMsg('camMsg', r.error || 'Gagal', 'err'); buzz([60, 40, 60]); return; }
+  store.set('gd_token', r.token); store.set('gd_exp', String(Date.now() + 13.5 * 3600 * 1000)); store.set('gd_name', r.name); store.set('gd_ic', r.ic);
+  const thumb = PHOTO; PHOTO = ''; home(r.name, r.ic, thumb, r.created ? 'Profil dicipta · selamat bertugas!' : (r.newDevice ? 'Log masuk dari telefon baharu direkodkan.' : 'Log masuk berjaya · selamat bertugas!'));
+}
+
+/* ---------- home ---------- */
+function home(name, ic, thumb, note){
+  $('hName').textContent = name; $('hSub').textContent = 'IC ' + ic.slice(0, 6) + '-' + ic.slice(6, 8) + '-' + ic.slice(8);
+  const av = $('av'); av.innerHTML = thumb ? '<img alt="" src="' + thumb + '">' : ''; if (!thumb) av.textContent = (name || '?').trim().charAt(0);
+  buildTl(); tick(); clearInterval(clockT); clockT = setInterval(tick, 1000); go('sHome'); if (note) toast(note);
+}
+const SLOTS = [7, 9, 11, 13, 15, 17, 19, 21, 23, 1, 3, 5];
+function kl(){ return new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Kuala_Lumpur' })); }
+function slotNow(d){ const h = d.getHours() + d.getMinutes() / 60; let best = null; SLOTS.forEach(s => { const sh = s; let diff = h - sh; if (diff < 0) diff += 24; if (diff >= 0 && diff < 2 && best === null) best = s; }); return best; }
+function buildTl(){ const n = slotNow(kl()); $('tl').innerHTML = SLOTS.map(s => '<div data-s="' + s + '" class="' + (s === n ? 'now' : '') + '">' + String(s).padStart(2, '0') + ':00</div>').join(''); }
+function tick(){ const d = kl(), p = n => String(n).padStart(2, '0'); $('clk').textContent = p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  $('dte').textContent = d.toLocaleDateString('ms-MY', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); if (d.getSeconds() === 0) buildTl(); }
+function logout(){ if (!confirm('Log keluar?')) return; clearSession(); clearInterval(clockT); boot(); }
+boot();
+</script>
+</body>
+</html>
