@@ -104,8 +104,11 @@
     <div><div class="eb">Klinik Kesihatan Ayer Hitam</div><h1>🌡️ Suhu Peti Sejuk</h1><span class="me" id="me">…</span></div>
     <a class="back" href="./dashboard.html">← Dashboard</a>
   </div>
-  <div class="units" id="units" role="group" aria-label="Unit"><button data-u="OPD" aria-pressed="true">OPD</button><button data-u="MCH" aria-pressed="false">MCH</button></div>
-  <div class="fr" id="fr" role="group" aria-label="Peti sejuk"></div>
+  <div class="card" style="padding:12px 14px">
+  <label class="l" for="fridgeSel" style="margin-top:0">Peti sejuk</label>
+  <select class="fld" id="fridgeSel"></select>
+  <div class="dots" id="fdots" style="margin-top:8px"></div>
+</div>
 
   <div class="view show" id="v-log"><div id="logBody"><div class="empty"><div class="spin"></div>Memuatkan…</div></div></div>
 
@@ -214,30 +217,24 @@ async function switchTo_(dir, fn){
 }
 /* ---------------- shell ---------------- */
 function head(){
-  document.querySelectorAll('#units button').forEach(b => b.setAttribute('aria-pressed', b.dataset.u === S.unit));
-  $('fr').innerHTML = S.fridges.filter(f => f.unit === S.unit).map(f => {
-    const t = S.today[f.id] || {}, h = NOW.getHours();
-    const dot = (k, lab, due) => '<span class="dt ' + (t[k] ? 'ok' : (h >= due ? 'due' : '')) + '">' + lab + (t[k] ? ' ✓' : '') + '</span>';
-    return '<button data-f="' + f.id + '" aria-pressed="' + (f.id === S.fridge) + '">🧊 ' + esc(f.name.replace('Peti Sejuk ', 'Peti ')) + '<span class="dots">' + dot('am', 'AM', 8) + dot('pm', 'PM', 16) + '</span></button>';
-  }).join('');
+  const h = NOW.getHours(), units = [...new Set(S.fridges.map(f => f.unit))];
+  const st = f => { const t = S.today[f.id] || {}; return 'AM ' + (t.am ? '✓' : '○') + ' · PM ' + (t.pm ? '✓' : '○'); };
+  $('fridgeSel').innerHTML = units.map(u => '<optgroup label="' + esc(u) + '">' + S.fridges.filter(f => f.unit === u).map(f =>
+    '<option value="' + f.id + '"' + (f.id === S.fridge ? ' selected' : '') + '>' + esc(f.name) + ' — ' + st(f) + '</option>').join('') + '</optgroup>').join('');
+  const t = S.today[S.fridge] || {};
+  const dot = (k, lab, due) => '<span class="dt ' + (t[k] ? 'ok' : (h >= due ? 'due' : '')) + '">' + lab + (t[k] ? ' ✓' : '') + '</span>';
+  $('fdots').innerHTML = dot('am', 'AM', 8) + dot('pm', 'PM', 16);
   document.querySelectorAll('#nav button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === S.view));
   ['log','graph','rec'].forEach(v => $('v-' + v).classList.toggle('show', v === S.view));
 }
 function render(){ head(); if(S.view === 'log') renderLog(); if(S.view === 'graph') renderGraph(); if(S.view === 'rec') renderRec(); }
 $('nav').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; S.view = b.dataset.v; render(); window.scrollTo(0, 0); });
-$('units').addEventListener('click', e => {
-  const b = e.target.closest('button'); if(!b || b.dataset.u === S.unit) return;
-  const dir = b.dataset.u > S.unit ? 'r' : 'l';
-  document.querySelectorAll('#units button').forEach(x => x.setAttribute('aria-pressed', x === b));      // instant feedback
-  S.unit = b.dataset.u; S.fridge = (S.fridges.find(f => f.unit === S.unit) || {}).id; S.saved = false;
-  switchTo_(dir, loadMonth);
-});
-$('fr').addEventListener('click', e => {
-  const b = e.target.closest('[data-f]'); if(!b || b.dataset.f === S.fridge) return;
-  const ids = S.fridges.filter(f => f.unit === S.unit).map(f => f.id), dir = ids.indexOf(b.dataset.f) > ids.indexOf(S.fridge) ? 'r' : 'l';
-  document.querySelectorAll('#fr [data-f]').forEach(x => x.setAttribute('aria-pressed', x === b));        // instant feedback
+$('fridgeSel').addEventListener('change', e => {
+  const id = e.target.value; if(id === S.fridge) return;
+  const ids = S.fridges.map(f => f.id), dir = ids.indexOf(id) > ids.indexOf(S.fridge) ? 'r' : 'l';
+  S.fridge = id; S.unit = fr(id).unit; S.saved = false;
   if(navigator.vibrate) try{ navigator.vibrate(15); }catch(_){}
-  S.fridge = b.dataset.f; S.saved = false; try{ localStorage.setItem('kkah_temp_fridge', S.fridge); }catch(_){}
+  try{ localStorage.setItem('kkah_temp_fridge', S.fridge); }catch(_){}
   switchTo_(dir, loadMonth);
 });
 document.addEventListener('click', e => {
@@ -379,8 +376,12 @@ function renderRec(){
     '<thead><tr><th rowspan="2">Tkh</th><th colspan="4">AM · 8:00 pagi</th><th colspan="4">PM · 4:00 petang</th><th rowspan="2">Insiden</th></tr><tr>' + '<th>Maks</th><th>Min</th><th>Smsa</th><th>Oleh</th>'.repeat(2) + '</tr></thead><tbody>' +
     S.days.map(d => '<tr class="' + (isCurMonth() && d.day === NOW.getDate() ? 'today' : '') + '"><td class="dy">' + d.day + '</td>' + slot(d.am) + slot(d.pm) + '<td>' + esc((d.events || []).join(',')) + '</td></tr>').join('') + '</tbody>';
 }
-$('mail').onclick = () => { $('mUnit').value = S.unit; $('mailSub').textContent = 'PDF ' + MONTHS[S.m - 1] + ' ' + S.y + ' akan dihantar ke emel akaun SIAGA anda.'; $('mailMsg').innerHTML = ''; $('shMail').classList.add('show'); };
-$('mailGo').onclick = async () => {
+$('mail').onclick = () => {
+  const units = [...new Set(S.fridges.map(f => f.unit))];
+  $('mUnit').innerHTML = units.map(u => '<option value="' + esc(u) + '">' + esc(u) + '</option>').join('') + '<option value="ALL">Semua peti sejuk</option>';
+  $('mUnit').value = S.unit;
+  $('mailSub').textContent = 'PDF ' + MONTHS[S.m - 1] + ' ' + S.y + ' akan dihantar ke emel akaun SIAGA anda.'; $('mailMsg').innerHTML = ''; $('shMail').classList.add('show');
+};
   const b = $('mailGo'); b.disabled = true; b.textContent = 'Menghantar…'; $('mailMsg').innerHTML = '';
   try{
     const d = await api({ action:'tempEmailReport', unit:$('mUnit').value, year:S.y, month:S.m });
