@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F4530">
+<meta name="robots" content="noindex,nofollow">
+<title>Rondaan Pengawal</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<style>
+  :root{ --bg:#EEF3F1; --card:#fff; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB; --onacc:#0F4530;
+    --dg:#C0392B; --dgl:#FBEAE7; --warn:#B45309; --warnl:#FFF4D6; --ok:#1f9a57; --okl:#E3F4EA; }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --onacc:#A8EBCB;
+    --dg:#FF9A8D; --dgl:#3a1d19; --warn:#F0B35A; --warnl:#3a2c14; --ok:#6fd49a; --okl:#17352B; } }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; } html,body{ margin:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:Inter,'Segoe UI',system-ui,sans-serif; min-height:100vh; padding-bottom:calc(40px + env(safe-area-inset-bottom)); line-height:1.4; }
+  .top{ position:sticky; top:0; z-index:20; padding:calc(10px + env(safe-area-inset-top)) 14px 12px; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; box-shadow:0 6px 18px -10px rgba(0,0,0,.5); }
+  .top .row{ max-width:760px; margin:0 auto; display:flex; align-items:center; gap:10px; }
+  .back,.rf{ width:40px; height:40px; border:none; border-radius:12px; background:rgba(255,255,255,.16); color:#fff; font-size:19px; cursor:pointer; } .rf.spin{ animation:sp .8s linear infinite; }
+  .ttl{ flex:1; font-weight:800; font-size:17px; line-height:1.15; } .ttl small{ display:block; font-weight:500; font-size:11.5px; opacity:.85; }
+  .wrap{ max-width:760px; margin:0 auto; padding:14px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:14px; margin-bottom:12px; box-shadow:0 8px 22px -16px rgba(0,0,0,.35); }
+  .tabs{ display:grid; grid-template-columns:1fr 1fr; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:5px; margin-bottom:12px; }
+  .tabs button{ border:none; background:none; color:var(--mut); font:800 13.5px Inter,sans-serif; min-height:42px; border-radius:12px; cursor:pointer; } .tabs button.on{ background:var(--accl); color:var(--onacc); }
+  .dn{ display:flex; gap:8px; align-items:center; margin-bottom:12px; } .dn button{ width:44px; height:48px; border-radius:13px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font-size:20px; cursor:pointer; } .dn button:disabled{ opacity:.4; }
+  input[type=date],input[type=month]{ flex:1; min-width:0; height:48px; border-radius:13px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:700 16px Inter,sans-serif; padding:0 12px; text-align:center; }
+  .chips{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; } .chip{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:10px 6px; text-align:center; } .chip b{ display:block; font:800 22px 'IBM Plex Mono',ui-monospace,monospace; } .chip small{ color:var(--mut); font-size:11.5px; font-weight:700; } .chip.bad b{ color:var(--dg); } .chip.good b{ color:var(--ok); }
+  .rd{ border:1.5px solid var(--line); border-radius:18px; background:var(--card); margin-bottom:10px; overflow:hidden; } .rd.done{ border-color:rgba(31,154,87,.5); } .rd.missed{ border-color:rgba(192,57,43,.45); } .rd.open{ border-color:var(--acc); box-shadow:0 0 0 3px rgba(26,107,74,.14); } .rd.future{ opacity:.55; }
+  .rh{ display:flex; align-items:center; gap:10px; width:100%; padding:12px 14px; background:none; border:none; color:inherit; font:inherit; text-align:left; cursor:pointer; }
+  .rh .tm{ font:800 17px 'IBM Plex Mono',ui-monospace,monospace; min-width:62px; } .rh .mid{ flex:1; min-width:0; } .rh .mid b{ display:block; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .rh .mid small{ color:var(--mut); font-size:12px; }
+  .pill{ display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:800; white-space:nowrap; } .pill.d{ background:var(--okl); color:var(--ok); } .pill.m{ background:var(--dgl); color:var(--dg); } .pill.o{ background:var(--warnl); color:var(--warn); } .pill.f{ background:var(--accl); color:var(--mut); }
+  .rb{ display:none; padding:0 14px 14px; border-top:1px dashed var(--line); } .rd.ex .rb{ display:block; animation:in .25s ease; } @keyframes in{ from{ opacity:0; transform:translateY(-6px); } }
+  .cps{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:12px 0; } .cps div{ border:1px solid var(--line); border-radius:12px; padding:7px 4px; text-align:center; font:700 12px 'IBM Plex Mono',monospace; color:var(--mut); } .cps div.k{ border-color:var(--ok); color:var(--ok); background:var(--okl); } .cps small{ display:block; font:600 10px Inter,sans-serif; color:var(--mut); }
+  .amb{ display:inline-block; padding:5px 12px; border-radius:99px; font-weight:800; font-size:12.5px; } .amb.y{ background:var(--okl); color:var(--ok); } .amb.n{ background:var(--dgl); color:var(--dg); }
+  .lap{ background:var(--accl); border-radius:14px; padding:11px 13px; margin:10px 0; font-size:14px; white-space:pre-wrap; word-break:break-word; }
+  .ph{ display:flex; gap:8px; flex-wrap:wrap; } .ph button{ width:84px; height:84px; padding:0; border:1.5px solid var(--line); border-radius:14px; overflow:hidden; background:var(--accl); cursor:pointer; position:relative; } .ph img{ width:100%; height:100%; object-fit:cover; display:block; } .ph button span{ position:absolute; left:4px; bottom:4px; background:rgba(0,0,0,.65); color:#fff; font:700 10px Inter,sans-serif; padding:1px 6px; border-radius:8px; }
+  h3{ margin:18px 2px 8px; font-size:15px; } .lg{ display:flex; gap:12px; align-items:center; padding:10px; border:1px solid var(--line); border-radius:16px; background:var(--card); margin-bottom:8px; } .lg button{ width:54px; height:54px; border-radius:50%; overflow:hidden; border:2px solid var(--line); padding:0; background:var(--accl); cursor:pointer; flex:none; } .lg img{ width:100%; height:100%; object-fit:cover; } .lg b{ display:block; font-size:14px; } .lg small{ color:var(--mut); font-size:12px; }
+  .hd{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px 14px; border:1.5px solid var(--line); border-radius:16px; background:var(--card); color:inherit; font:inherit; margin-bottom:8px; cursor:pointer; } .hd:active{ transform:scale(.99); } .hd .dt{ min-width:86px; font-weight:800; font-size:14px; } .hd .dt small{ display:block; color:var(--mut); font-weight:600; font-size:11.5px; }
+  .bar{ flex:1; height:10px; border-radius:99px; background:var(--accl); overflow:hidden; } .bar i{ display:block; height:100%; background:linear-gradient(90deg,var(--acc2),var(--ok)); border-radius:99px; } .bar.w i{ background:linear-gradient(90deg,#B45309,#F0B35A); } .bar.r i{ background:var(--dg); }
+  .hd .n{ font:800 13px 'IBM Plex Mono',monospace; min-width:48px; text-align:right; }
+  .empty{ text-align:center; color:var(--mut); padding:26px 10px; font-size:14px; } .spin{ width:28px; height:28px; border:3px solid var(--line); border-top-color:var(--acc); border-radius:50%; animation:sp .8s linear infinite; margin:0 auto 8px; } @keyframes sp{ to{ transform:rotate(360deg); } }
+  .ov{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.92); display:none; align-items:center; justify-content:center; padding:16px; } .ov.on{ display:flex; animation:in .2s; } .ov img{ max-width:100%; max-height:86vh; border-radius:12px; } .ov .x{ position:absolute; top:calc(12px + env(safe-area-inset-top)); right:14px; width:44px; height:44px; border-radius:50%; border:none; background:rgba(255,255,255,.18); color:#fff; font-size:20px; cursor:pointer; } .ov .cap{ position:absolute; bottom:calc(18px + env(safe-area-inset-bottom)); left:0; right:0; text-align:center; color:#fff; font-size:13px; opacity:.85; }
+  .toast{ position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translate(-50%,24px); background:var(--ink); color:var(--bg); padding:12px 18px; border-radius:99px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:all .25s; z-index:99; max-width:92vw; text-align:center; } .toast.on{ opacity:1; transform:translate(-50%,0); }
+  [hidden]{ display:none!important; } @media (prefers-reduced-motion:reduce){ *{ animation:none!important; } }
+</style>
+</head>
+<body>
+<div class="top"><div class="row"><button class="back" onclick="location.href='./dashboard.html'" aria-label="Kembali">←</button><div class="ttl">🛡️ Rondaan Pengawal<small id="sub">Klinik Kesihatan Ayer Hitam</small></div><button class="rf" id="rf" onclick="reload()" aria-label="Muat semula">⟳</button></div></div>
+<div class="wrap">
+  <div class="tabs"><button id="tDay" class="on" onclick="tab('day')">Hari</button><button id="tHis" onclick="tab('his')">Sejarah</button></div>
+  <div id="pDay">
+    <div class="dn"><button id="prev" onclick="step(-1)" aria-label="Hari sebelum">‹</button><input type="date" id="dsel" onchange="pick(this.value)"><button id="next" onclick="step(1)" aria-label="Hari seterusnya">›</button></div>
+    <div id="dayBox"><div class="empty"><div class="spin"></div>Memuat…</div></div>
+  </div>
+  <div id="pHis" hidden>
+    <div class="dn"><input type="month" id="msel" onchange="loadHis()"></div>
+    <div id="hisBox"></div>
+  </div>
+</div>
+<div class="ov" id="ov" onclick="if(event.target===this)closeOv()"><button class="x" onclick="closeOv()" aria-label="Tutup">✕</button><div class="spin" id="ovSp"></div><img id="ovImg" alt="" hidden><div class="cap" id="ovCap"></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const token = sessionStorage.getItem('kkah_session_token');
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const p2 = n => String(n).padStart(2, '0'), MON = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'], HARI = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+function toLogin(){ location.replace('./login.html'); } if (!token) toLogin();
+function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove('on'), 3400); }
+function api(body, ms){ const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms || 40000);
+  return fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)), signal: ctl.signal }).then(r => r.json()).finally(() => clearTimeout(t)); }
+function expired(r){ return r && /expired|tidak tersedia pada log masuk/i.test(r.error || ''); }
+let DAY = null, date = '', today = '', open = {}, pollT = 0, cur = 'day'; const IMG = new Map();
+function fmtD(s){ const d = new Date(s + 'T12:00:00'); return HARI[d.getDay()] + ', ' + d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear(); }
+function shift(s, n){ const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); }
+function tab(t){ cur = t; $('tDay').classList.toggle('on', t === 'day'); $('tHis').classList.toggle('on', t === 'his'); $('pDay').hidden = t !== 'day'; $('pHis').hidden = t !== 'his'; if (t === 'his') loadHis(); else loadDay(); }
+function reload(){ cur === 'day' ? loadDay(true) : loadHis(); }
+function step(n){ if (!date) return; pick(shift(date, n)); }
+function pick(d){ if (!d) return; if (today && d > today) d = today; date = d; open = {}; loadDay(); }
+async function loadDay(quiet){
+  const box = $('dayBox'), rf = $('rf'); rf.classList.add('spin'); if (!quiet && !DAY) box.innerHTML = '<div class="empty"><div class="spin"></div>Memuat…</div>';
+  let r; try { r = await api({ action:'gdsupDay', date }); } catch (e) { rf.classList.remove('spin'); if (!DAY) box.innerHTML = '<div class="empty">Tiada sambungan. <button class="rd" style="padding:8px 14px" onclick="loadDay()">Cuba lagi</button></div>'; return; }
+  rf.classList.remove('spin'); if (expired(r)) return toLogin(); if (!r.ok){ box.innerHTML = '<div class="empty">' + esc(r.error || 'Gagal') + '</div>'; return; }
+  DAY = r; date = r.date; if (r.isToday) today = r.date; $('dsel').value = date; $('dsel').max = today || date; $('next').disabled = !!today && date >= today; $('sub').textContent = fmtD(date) + ' · 07:00 – 07:00';
+  renderDay(); clearInterval(pollT); if (r.isToday) pollT = setInterval(() => { if (!document.hidden && cur === 'day') loadDay(true); }, 60000);
+}
+function cnt(s){ return s.cps.filter(Boolean).length; }
+function renderDay(){
+  const S = DAY.slots, done = S.filter(s => s.state === 'done'), missed = S.filter(s => s.state === 'missed'), last = done.slice().reverse().find(s => s.ambulans), ambNo = done.filter(s => s.ambulans === 'TIDAK');
+  let h = '<div class="chips"><div class="chip good"><b>' + done.length + '/12</b><small>Selesai</small></div><div class="chip ' + (missed.length ? 'bad' : '') + '"><b>' + missed.length + '</b><small>Tidak dilaksana</small></div><div class="chip ' + (ambNo.length ? 'bad' : last ? 'good' : '') + '"><b>' + (last ? (last.ambulans === 'YA' ? 'Ya' : 'Tidak') : '–') + '</b><small>Ambulans (terkini)</small></div></div>';
+  S.forEach((s, i) => { const st = s.state, pc = st === 'done' ? ['d', 'Selesai ✓'] : st === 'missed' ? ['m', cnt(s) ? cnt(s) + '/4 · tidak lengkap' : 'Tidak dilaksana'] : st === 'open' ? ['o', cnt(s) ? cnt(s) + '/4 berjalan' : 'Sedang berjalan'] : ['f', 'Akan datang'];
+    h += '<div class="rd ' + st + (open[s.key] ? ' ex' : '') + '"><button class="rh" onclick="tg(\'' + s.key + '\')"><span class="tm">' + s.hr + '</span><span class="mid"><b>' + (s.nama ? esc(s.nama) : '—') + '</b><small>' + (s.tamat ? 'Siap ' + esc(s.tamat.slice(11, 16)) : s.hr + ' – ' + s.end) + (s.photos.length ? ' · 📷 ' + s.photos.length : '') + '</small></span>' + (s.ambulans ? '<span class="amb ' + (s.ambulans === 'YA' ? 'y' : 'n') + '">🚑 ' + (s.ambulans === 'YA' ? 'Ya' : 'Tidak') + '</span>' : '') + '<span class="pill ' + pc[0] + '">' + pc[1] + '</span></button>';
+    if (st !== 'future'){ h += '<div class="rb"><div class="cps">' + DAY.cpNames.map((n, k) => '<div class="' + (s.cps[k] ? 'k' : '') + '">' + (s.cps[k] ? esc(s.cps[k].slice(11, 19)) : '–') + '<small>' + esc(n) + '</small></div>').join('') + '</div>';
+      if (s.laporan) h += '<div class="lap">' + esc(s.laporan) + '</div>';
+      if (s.ambulans) h += '<span class="amb ' + (s.ambulans === 'YA' ? 'y' : 'n') + '">🚑 Ambulans ' + (s.ambulans === 'YA' ? 'tersedia' : 'TIDAK tersedia') + '</span>';
+      if (s.photos.length) h += '<div class="ph" style="margin-top:10px">' + s.photos.map(p => '<button onclick="view(\'' + esc(p.id) + '\',\'' + esc(s.hr + ' · ' + p.cp + ' · ' + p.nama) + '\')"><img alt="" data-id="' + esc(p.id) + '"><span>' + esc(p.cp) + '</span></button>').join('') + '</div>';
+      if (!s.laporan && !s.photos.length && st !== 'done') h += '<div class="hint" style="color:var(--mut);font-size:12.5px">Belum ada laporan.</div>'; h += '</div>'; }
+    h += '</div>'; });
+  h += '<h3>Log masuk pengawal</h3>' + (DAY.logins.length ? DAY.logins.map(l => '<div class="lg"><button onclick="view(\'' + esc(l.foto) + '\',\'' + esc(l.nama + ' · ' + l.masa.slice(11, 16)) + '\')"><img alt="" data-id="' + esc(l.foto) + '"></button><div><b>' + esc(l.nama) + '</b><small>' + esc(l.masa.slice(11, 16)) + ' · ' + (l.jenis === 'DAFTAR' ? '🆕 profil baharu' : 'log masuk') + (l.baru ? ' · <span style="color:var(--dg);font-weight:800">📱 telefon lain</span>' : '') + ' · ' + esc(l.telefon) + '</small></div></div>').join('') : '<div class="empty">Tiada log masuk.</div>');
+  $('dayBox').innerHTML = h; lazy();
+}
+function tg(k){ open[k] = !open[k]; renderDay(); }
+/* images: load thumbnails 3 at a time, cache in memory */
+let q = [], run = 0;
+function lazy(){ document.querySelectorAll('img[data-id]').forEach(im => { const id = im.dataset.id; if (!id) return; const c = IMG.get('t' + id); if (c) im.src = c; else if (!q.some(x => x === im)){ q.push(im); } }); pump(); }
+function pump(){ while (run < 3 && q.length){ const im = q.shift(); if (!im.isConnected) continue; run++; fetchImg(im.dataset.id, true).then(d => { if (d && im.isConnected) im.src = d; }).finally(() => { run--; pump(); }); } }
+async function fetchImg(id, thumb){ const k = (thumb ? 't' : 'f') + id; if (IMG.has(k)) return IMG.get(k); let r; try { r = await api({ action:'gdsupImage', id, thumb: !!thumb }, 60000); } catch (e) { return ''; } if (expired(r)) { toLogin(); return ''; } if (r.ok){ IMG.set(k, r.data); return r.data; } return ''; }
+async function view(id, cap){ const ov = $('ov'), im = $('ovImg'); ov.classList.add('on'); im.hidden = true; $('ovSp').hidden = false; $('ovCap').textContent = cap || ''; const d = await fetchImg(id, false) || IMG.get('t' + id) || ''; if (!ov.classList.contains('on')) return; $('ovSp').hidden = true; if (d){ im.src = d; im.hidden = false; } else { toast('Gambar tidak dapat dibuka.'); closeOv(); } }
+function closeOv(){ $('ov').classList.remove('on'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeOv(); });
+/* history */
+async function loadHis(){
+  const m = $('msel'); if (!m.value) m.value = (date || new Date().toISOString().slice(0, 10)).slice(0, 7); const box = $('hisBox'); box.innerHTML = '<div class="empty"><div class="spin"></div>Memuat…</div>';
+  let r; try { r = await api({ action:'gdsupHistory', ym: m.value }); } catch (e) { box.innerHTML = '<div class="empty">Tiada sambungan.</div>'; return; }
+  if (expired(r)) return toLogin(); if (!r.ok){ box.innerHTML = '<div class="empty">' + esc(r.error || 'Gagal') + '</div>'; return; }
+  if (!r.days.length){ box.innerHTML = '<div class="empty">📭 Tiada data untuk bulan ini.</div>'; return; }
+  const tot = r.days.reduce((a, d) => a + d.done, 0), exp = r.days.reduce((a, d) => a + d.expected, 0), amb = r.days.reduce((a, d) => a + d.ambNo, 0);
+  box.innerHTML = '<div class="chips"><div class="chip good"><b>' + tot + '</b><small>Rondaan selesai</small></div><div class="chip ' + (exp - tot ? 'bad' : '') + '"><b>' + (exp - tot) + '</b><small>Tidak dilaksana</small></div><div class="chip ' + (amb ? 'bad' : 'good') + '"><b>' + amb + '</b><small>Ambulans tidak ada</small></div></div>'
+    + r.days.map(d => { const pc = Math.round(d.done / d.expected * 100), cl = pc >= 100 ? '' : pc >= 70 ? 'w' : 'r', dt = new Date(d.date + 'T12:00:00');
+      return '<button class="hd" onclick="goDay(\'' + d.date + '\')"><span class="dt">' + dt.getDate() + ' ' + MON[dt.getMonth()] + '<small>' + HARI[dt.getDay()] + '</small></span><span class="bar ' + cl + '"><i style="width:' + Math.min(100, pc) + '%"></i></span><span class="n">' + d.done + '/' + d.expected + '</span>' + (d.ambNo ? '<span class="amb n">🚑✕</span>' : '') + '</button>'; }).join('');
+}
+function goDay(d){ tab('day'); pick(d); }
+const dp = new URLSearchParams(location.search).get('d'); if (dp && /^\d{4}-\d{2}-\d{2}$/.test(dp)) date = dp;
+document.addEventListener('visibilitychange', () => { if (!document.hidden && cur === 'day' && token) loadDay(true); });
+loadDay();
+</script>
+</body>
+</html>
