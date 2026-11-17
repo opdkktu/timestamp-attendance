@@ -382,6 +382,7 @@ $('mail').onclick = () => {
   $('mUnit').value = S.unit;
   $('mailSub').textContent = 'PDF ' + MONTHS[S.m - 1] + ' ' + S.y + ' akan dihantar ke emel akaun SIAGA anda.'; $('mailMsg').innerHTML = ''; $('shMail').classList.add('show');
 };
+$('mailGo').onclick = async () => {
   const b = $('mailGo'); b.disabled = true; b.textContent = 'Menghantar…'; $('mailMsg').innerHTML = '';
   try{
     const d = await api({ action:'tempEmailReport', unit:$('mUnit').value, year:S.y, month:S.m });
