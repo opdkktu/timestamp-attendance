@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F4530">
+<title>Surat Masuk</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<style>
+  :root{ --bg:#EEF3F1; --card:#fff; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB; --onacc:#0F4530;
+    --dg:#C0392B; --dgl:#FBEAE7; --warn:#B45309; --warnl:#FFF4D6; --ok:#1f9a57; --okl:#E3F4EA; --blue:#2F6FB5; --bluel:#E4EEF9; }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --onacc:#A8EBCB;
+    --dg:#FF9A8D; --dgl:#3a1d19; --warn:#F0B35A; --warnl:#3a2c14; --ok:#6fd49a; --okl:#17352B; --blue:#8DB9EE; --bluel:#16283b; } }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; } html,body{ margin:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:Inter,'Segoe UI',system-ui,sans-serif; min-height:100vh; padding-bottom:calc(100px + env(safe-area-inset-bottom)); line-height:1.4; }
+  .top{ position:sticky; top:0; z-index:20; padding:calc(10px + env(safe-area-inset-top)) 14px 12px; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; box-shadow:0 6px 18px -10px rgba(0,0,0,.5); }
+  .top .row{ max-width:760px; margin:0 auto; display:flex; align-items:center; gap:10px; }
+  .back{ width:40px; height:40px; border:none; border-radius:12px; background:rgba(255,255,255,.16); color:#fff; font-size:20px; cursor:pointer; }
+  .ttl{ flex:1; font-weight:800; font-size:17px; line-height:1.15; } .ttl small{ display:block; font-weight:500; font-size:11.5px; opacity:.85; }
+  .wrap{ max-width:760px; margin:0 auto; padding:14px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; margin-bottom:12px; box-shadow:0 8px 22px -16px rgba(0,0,0,.35); }
+  h2{ margin:0 0 4px; font-size:18px; } .sub{ margin:0 0 12px; color:var(--mut); font-size:13px; }
+  label,.lb{ display:block; font-size:12.5px; font-weight:700; margin:12px 0 5px; } label small,.lb small{ font-weight:500; color:var(--mut); } .req{ color:var(--dg); }
+  input[type=text],input[type=month],input[type=search],select,textarea{ width:100%; border-radius:14px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 16px Inter,system-ui,sans-serif; padding:0 14px; height:50px; outline:none; }
+  textarea{ height:auto; min-height:84px; padding:12px 14px; resize:vertical; font-weight:500; }
+  input:focus,select:focus,textarea:focus{ border-color:var(--acc); box-shadow:0 0 0 4px rgba(26,107,74,.16); }
+  .bad{ border-color:var(--dg)!important; box-shadow:0 0 0 4px rgba(192,57,43,.14); animation:shake .3s; } @keyframes shake{ 25%{ transform:translateX(-5px); } 75%{ transform:translateX(5px); } }
+  .mono{ font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace; } .hint{ font-size:12px; color:var(--mut); margin-top:5px; }
+  .btn{ min-height:52px; border-radius:14px; border:none; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; font:800 15px Inter,sans-serif; cursor:pointer; padding:0 18px; } .btn:disabled{ opacity:.55; }
+  .btn.full{ width:100%; } .btn2{ min-height:46px; border-radius:13px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 13.5px Inter,sans-serif; padding:0 14px; cursor:pointer; }
+  .btn.dg{ background:var(--dg); color:#fff; }
+  .link{ background:none; border:none; color:var(--onacc); font-weight:800; font-size:13px; padding:8px 0; cursor:pointer; text-decoration:underline; }
+  .tabs{ display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:5px; margin-bottom:12px; }
+  .tabs button{ border:none; background:none; color:var(--mut); font:800 13.5px Inter,sans-serif; min-height:42px; border-radius:12px; cursor:pointer; } .tabs button.on{ background:var(--accl); color:var(--onacc); }
+  .srch{ display:flex; gap:8px; margin-bottom:10px; } .srch input{ flex:1; min-width:0; } .srch input[type=month]{ flex:0 0 160px; }
+  .it{ display:block; width:100%; text-align:left; border:1.5px solid var(--line); border-radius:16px; padding:12px 14px; margin-top:9px; background:var(--card); color:var(--ink); cursor:pointer; font:inherit; }
+  .it:active{ transform:scale(.99); } .it.unread{ border-color:var(--acc); box-shadow:0 0 0 3px rgba(26,107,74,.12); }
+  .it .r1{ display:flex; gap:8px; align-items:center; justify-content:space-between; font-size:12px; color:var(--mut); font-weight:700; } .it .t{ font-weight:800; font-size:15px; margin:4px 0 2px; word-break:break-word; }
+  .it .r2{ font-size:12px; color:var(--mut); word-break:break-word; }
+  .pill{ display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:800; } .pill.n{ background:var(--warnl); color:var(--warn); } .pill.a{ background:var(--okl); color:var(--ok); } .pill.u{ background:var(--accl); color:var(--onacc); }
+  .empty{ text-align:center; color:var(--mut); padding:26px 10px; font-size:14px; }
+  .fab{ position:fixed; right:16px; bottom:calc(18px + env(safe-area-inset-bottom)); z-index:25; min-height:56px; padding:0 22px; border-radius:99px; border:none; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; font:800 15.5px Inter,sans-serif; box-shadow:0 14px 30px -10px rgba(0,0,0,.5); cursor:pointer; }
+  .view{ display:none; } .view.on{ display:block; } [hidden]{ display:none!important; }
+  .toast{ position:fixed; left:50%; bottom:100px; transform:translate(-50%,20px); background:var(--ink); color:var(--bg); padding:12px 18px; border-radius:99px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:all .25s; z-index:99999; max-width:92vw; text-align:center; } .toast.on{ opacity:1; transform:translate(-50%,0); }
+  .spin{ width:26px; height:26px; border:3px solid var(--line); border-top-color:var(--acc); border-radius:50%; animation:sp .8s linear infinite; margin:0 auto 10px; } @keyframes sp{ to{ transform:rotate(360deg); } }
+  /* crop */
+  .cropw{ position:relative; background:#111; border-radius:16px; overflow:hidden; touch-action:none; } .cropw canvas{ display:block; width:100%; height:auto; }
+  .tools{ display:flex; gap:8px; margin:10px 0; flex-wrap:wrap; } .tools .btn2{ flex:1; min-width:110px; }
+  /* overlay */
+  .ov{ position:fixed; inset:0; z-index:9000; background:rgba(8,16,13,.72); display:none; align-items:flex-end; justify-content:center; } .ov.on{ display:flex; }
+  .sheet{ width:100%; max-width:760px; max-height:94vh; overflow:auto; background:var(--bg); border-radius:24px 24px 0 0; padding:16px 14px calc(22px + env(safe-area-inset-bottom)); animation:up .25s ease; } @keyframes up{ from{ transform:translateY(40px); opacity:0; } }
+  .sheet .hd{ display:flex; align-items:center; gap:10px; margin-bottom:10px; } .sheet .hd b{ flex:1; font-size:16px; } .x{ width:38px; height:38px; border-radius:12px; border:none; background:var(--card); border:1px solid var(--line); color:var(--ink); font-size:18px; cursor:pointer; }
+  .imgbox{ background:#0d1512; border-radius:16px; overflow:auto; max-height:56vh; text-align:center; min-height:120px; display:flex; align-items:center; justify-content:center; } .imgbox img{ width:100%; display:block; cursor:zoom-in; } .imgbox.z img{ width:230%; max-width:none; cursor:zoom-out; }
+  .refs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; } .refs div{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px 12px; } .refs small{ display:block; color:var(--mut); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; } .refs b{ font-size:13.5px; overflow-wrap:anywhere; } .refs .w{ grid-column:1 / -1; }
+  .tl{ margin:8px 0 0; padding:0; list-style:none; } .tl li{ border-left:3px solid var(--acc); padding:2px 0 10px 12px; margin-left:6px; font-size:13px; } .tl small{ color:var(--mut); display:block; }
+  .pts{ background:var(--okl); color:var(--ok); border-radius:14px; padding:10px 12px; font-weight:800; margin:10px 0; text-align:center; animation:pop .5s ease; } @keyframes pop{ from{ transform:scale(.9); opacity:0; } }
+  .opts{ max-height:34vh; overflow:auto; border:1.5px solid var(--line); border-radius:14px; background:var(--card); } .ck{ display:flex; gap:10px; align-items:center; padding:10px 12px; border-bottom:1px solid var(--line); font-size:14px; font-weight:600; } .ck:last-child{ border-bottom:none; } .ck input{ width:20px; height:20px; accent-color:var(--acc); flex:none; } .ck small{ color:var(--mut); font-weight:500; }
+  /* report */
+  .kpis{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; } .kpi{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px 8px; text-align:center; } .kpi b{ display:block; font-size:26px; line-height:1.1; color:var(--onacc); } .kpi small{ color:var(--mut); font-weight:700; font-size:11.5px; }
+  .bars{ display:flex; align-items:flex-end; gap:3px; height:110px; margin-top:8px; } .bars i{ flex:1; background:linear-gradient(180deg,var(--acc),var(--acc2)); border-radius:4px 4px 0 0; min-height:2px; position:relative; } .bars i.z{ background:var(--line); } .bars i span{ position:absolute; top:-15px; left:50%; transform:translateX(-50%); font-size:9.5px; font-style:normal; font-weight:800; color:var(--mut); }
+  .axis{ display:flex; gap:3px; margin-top:4px; font-size:9.5px; color:var(--mut); text-align:center; font-weight:700; } .axis span{ flex:1; }
+  .row2{ display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px dashed var(--line); font-size:13.5px; } .row2:last-child{ border-bottom:none; } .row2 b{ color:var(--onacc); }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+</head>
+<body>
+<div class="top"><div class="row"><button class="back" onclick="goBack()" aria-label="Kembali">←</button>
+  <div class="ttl">📨 Surat Masuk<small id="sub">Klinik Kesihatan Ayer Hitam</small></div></div></div>
+
+<div class="wrap">
+  <!-- HOME -->
+  <div class="view on" id="vHome">
+    <div class="tabs" role="tablist"><button class="on" id="tList" onclick="tab('list')">Senarai</button><button id="tRep" onclick="tab('rep')">Laporan</button></div>
+    <div id="pList">
+      <div class="srch"><input type="search" id="q" placeholder="Cari tajuk / no. rujukan…" aria-label="Cari surat" oninput="debounceList()"><input type="month" id="mth" aria-label="Bulan" onchange="loadList()"></div>
+      <div id="listBox"><div class="empty"><div class="spin"></div>Memuat…</div></div>
+    </div>
+    <div id="pRep" hidden>
+      <div class="srch"><input type="month" id="rmth" aria-label="Bulan laporan" onchange="loadReport()" style="flex:1"><input type="search" id="rq" placeholder="Cari tajuk (kira)…" aria-label="Cari tajuk" oninput="debounceRep()"></div>
+      <div id="repBox"><div class="empty"><div class="spin"></div>Memuat…</div></div>
+    </div>
+  </div>
+
+  <!-- NEW LETTER -->
+  <div class="view" id="vNew">
+    <div class="card" id="nPick">
+      <h2>Surat baharu</h2><p class="sub">Ambil gambar <b>muka hadapan</b> surat. Sempadan gambar akan dipotong mengikut kertas.</p>
+      <input type="file" id="file" accept="image/*" capture="environment" hidden>
+      <input type="file" id="file2" accept="image/*" hidden>
+      <button class="btn full" onclick="$('file').click()">📷 Ambil gambar</button>
+      <button class="btn2 full" style="margin-top:10px" onclick="$('file2').click()">🖼️ Pilih dari galeri / fail</button>
+    </div>
+    <div class="card" id="nCrop" hidden>
+      <h2>Laraskan sempadan</h2><p class="sub">Seret garisan hijau supaya tepat pada tepi kertas.</p>
+      <div class="cropw"><canvas id="cv"></canvas></div>
+      <div class="tools"><button class="btn2" onclick="rotate(-1)">⟲ Putar kiri</button><button class="btn2" onclick="rotate(1)">⟳ Putar kanan</button><button class="btn2" onclick="autoBox(true)">✨ Auto</button></div>
+      <button class="btn full" id="useBtn" onclick="useImage()">Guna gambar ini →</button>
+      <button class="link" onclick="resetNew()">Ambil semula</button>
+    </div>
+    <div class="card" id="nBusy" hidden style="text-align:center"><div class="spin"></div><b id="busyT">Memuat naik & membaca surat…</b><div class="hint">Mengambil tajuk dan no. rujukan surat. Ini mengambil masa 5–20 saat.</div></div>
+    <div class="card" id="nForm" hidden>
+      <h2>Semak maklumat</h2><p class="sub">Dibaca automatik dari gambar — betulkan jika salah.</p>
+      <img id="thumb" alt="Pratonton" style="width:100%;max-height:220px;object-fit:contain;background:#0d1512;border-radius:14px">
+      <div class="hint" id="ocrNote"></div>
+      <label for="title">Tajuk surat <span class="req">*</span></label><textarea id="title" maxlength="280" placeholder="Tajuk / Perkara surat"></textarea>
+      <label for="origin">No. rujukan surat asal <small>(tercetak pada surat — "Ruj. Kami")</small></label><input type="text" id="origin" maxlength="80" placeholder="cth KKM.600-1/3/2 Jld.4 (25)" autocomplete="off">
+      <button class="btn full" style="margin-top:16px" id="saveBtn" onclick="saveLetter()">Hantar & maklumkan penyelia</button>
+      <button class="link" onclick="resetNew()">Batal</button>
+    </div>
+    <div class="card" id="nDone" hidden style="text-align:center">
+      <div style="font-size:44px">✅</div><h2>Surat direkodkan</h2>
+      <p class="sub" style="margin-bottom:6px">No. rujukan klinik</p><div class="mono" style="font-size:19px;font-weight:800;word-break:break-all" id="doneRef"></div>
+      <p class="hint" id="doneNote"></p>
+      <button class="btn full" style="margin-top:12px" onclick="resetNew()">＋ Surat seterusnya</button><button class="btn2 full" style="margin-top:8px" onclick="goHome()">Ke senarai</button>
+    </div>
+  </div>
+</div>
+
+<button class="fab" id="fab" hidden onclick="startNew()">＋ Surat baharu</button>
+
+<!-- DETAIL / IMAGE BOX -->
+<div class="ov" id="ovDet" role="dialog" aria-modal="true" aria-label="Surat"><div class="sheet" id="detBody"></div></div>
+<!-- DISTRIBUTE -->
+<div class="ov" id="ovAg" role="dialog" aria-modal="true" aria-label="Agih surat"><div class="sheet" id="agBody"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const token = sessionStorage.getItem('kkah_session_token');
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+function toLogin(){ location.replace('./login.html'); }
+if (!token) toLogin();
+function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove('on'), 3600); }
+function api(body, ms){ const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms || 40000);
+  return fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)), signal: ctl.signal }).then(r => r.json()).finally(() => clearTimeout(t)); }
+function expired(r){ return r && /expired|tidak tersedia pada log masuk/i.test(r.error || ''); }
+const p2 = n => String(n).padStart(2, '0'), nowYm = () => { const d = new Date(); return d.getFullYear() + '-' + p2(d.getMonth() + 1); };
+const MON = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
+let ME = null, view = 'home', curTab = 'list', curId = '', lt = 0, rt = 0;
+
+/* ---------- navigation ---------- */
+function show(v){ view = v; $('vHome').classList.toggle('on', v === 'home'); $('vNew').classList.toggle('on', v === 'new'); $('fab').hidden = !(v === 'home' && curTab === 'list' && ME && ME.canUpload); window.scrollTo({ top:0 }); }
+function goHome(){ show('home'); loadList(); }
+function goBack(){ if ($('ovAg').classList.contains('on')) return closeAg(); if ($('ovDet').classList.contains('on')) return closeDet(); if (view === 'new'){ show('home'); return; } location.href = './dashboard.html'; }
+function tab(t){ curTab = t; $('tList').classList.toggle('on', t === 'list'); $('tRep').classList.toggle('on', t === 'rep'); $('pList').hidden = t !== 'list'; $('pRep').hidden = t !== 'rep'; $('fab').hidden = !(t === 'list' && ME && ME.canUpload); if (t === 'rep') loadReport(); else loadList(); }
+
+/* ---------- list ---------- */
+function debounceList(){ clearTimeout(lt); lt = setTimeout(loadList, 350); }
+async function loadList(){
+  const box = $('listBox'); box.innerHTML = '<div class="empty"><div class="spin"></div>Memuat…</div>';
+  let r; try { r = await api({ action:'suratList', q: $('q').value.trim(), ym: $('mth').value || '' }); } catch (e) { box.innerHTML = '<div class="empty">Tiada sambungan. <button class="link" onclick="loadList()">Cuba lagi</button></div>'; return; }
+  if (expired(r)) return toLogin(); if (!r.ok){ box.innerHTML = '<div class="empty">' + esc(r.error || 'Gagal') + '</div>'; return; }
+  if (!r.rows.length){ box.innerHTML = '<div class="empty">📭 Tiada surat' + ($('q').value || $('mth').value ? ' untuk carian ini' : '') + '.</div>'; return; }
+  box.innerHTML = r.rows.map(x => '<button class="it' + (x.read ? '' : ' unread') + '" onclick="openLetter(\'' + esc(x.id) + '\')"><div class="r1"><span class="mono">' + esc(x.ref) + '</span><span class="pill ' + (x.status === 'AGIH' ? 'a' : 'n') + '">' + (x.status === 'AGIH' ? 'Diagihkan' : 'Baharu') + '</span></div>'
+    + '<div class="t">' + esc(x.title) + '</div><div class="r2">' + (x.origin ? 'Ruj. asal: ' + esc(x.origin) + ' · ' : '') + esc(x.date) + ' ' + esc(x.time) + (x.read ? '' : ' · <b>belum dibuka</b>') + '</div></button>').join('')
+    + (r.more ? '<div class="empty">Memaparkan 300 terkini — gunakan carian untuk menapis.</div>' : '');
+}
+
+/* ---------- report ---------- */
+function debounceRep(){ clearTimeout(rt); rt = setTimeout(loadReport, 400); }
+async function loadReport(){
+  if (!$('rmth').value) $('rmth').value = nowYm();
+  const box = $('repBox'); box.innerHTML = '<div class="empty"><div class="spin"></div>Memuat…</div>';
+  let r; try { r = await api({ action:'suratReport', ym: $('rmth').value, q: $('rq').value.trim() }); } catch (e) { box.innerHTML = '<div class="empty">Tiada sambungan.</div>'; return; }
+  if (expired(r)) return toLogin(); if (!r.ok){ box.innerHTML = '<div class="empty">' + esc(r.error || 'Gagal') + '</div>'; return; }
+  const y = +r.ym.slice(0, 4), m = +r.ym.slice(5, 7), nd = new Date(y, m, 0).getDate(), mx = Math.max(1, ...Object.values(r.days)), mx2 = Math.max(1, ...Object.values(r.months));
+  let dh = '', da = ''; for (let d = 1; d <= nd; d++){ const n = r.days[p2(d)] || 0; dh += '<i class="' + (n ? '' : 'z') + '" style="height:' + Math.max(2, Math.round(n / mx * 100)) + '%" title="' + d + ' ' + MON[m - 1] + ': ' + n + '">' + (n ? '<span>' + n + '</span>' : '') + '</i>'; da += '<span>' + (d % 5 === 1 || d === nd ? d : '') + '</span>'; }
+  let mh = '', ma = ''; for (let k = 1; k <= 12; k++){ const n = r.months[p2(k)] || 0; mh += '<i class="' + (n ? '' : 'z') + '" style="height:' + Math.max(2, Math.round(n / mx2 * 100)) + '%">' + (n ? '<span>' + n + '</span>' : '') + '</i>'; ma += '<span>' + MON[k - 1] + '</span>'; }
+  let h = '<div class="kpis"><div class="kpi"><b>' + r.today + '</b><small>Hari ini</small></div><div class="kpi"><b>' + r.month + '</b><small>' + MON[m - 1] + ' ' + y + '</small></div><div class="kpi"><b>' + r.year + '</b><small>Tahun ' + y + '</small></div></div>';
+  if (r.q) h += '<div class="card" style="margin-top:12px"><h2>Carian "' + esc(r.q) + '"</h2><p class="sub"><b>' + r.match + '</b> surat dijumpai pada tahun ' + y + '</p>' + (r.found.length ? r.found.map(x => '<button class="it" onclick="openLetter(\'' + esc(x.id) + '\')"><div class="r1"><span class="mono">' + esc(x.ref) + '</span><span>' + esc(x.date) + '</span></div><div class="t">' + esc(x.title) + '</div>' + (x.origin ? '<div class="r2">Ruj. asal: ' + esc(x.origin) + '</div>' : '') + '</button>').join('') : '<div class="empty">Tiada padanan.</div>') + '</div>';
+  h += '<div class="card" style="margin-top:12px"><b>Surat setiap hari — ' + MON[m - 1] + ' ' + y + '</b><div class="bars">' + dh + '</div><div class="axis">' + da + '</div></div>'
+     + '<div class="card"><b>Surat setiap bulan — ' + y + '</b><div class="bars">' + mh + '</div><div class="axis">' + ma + '</div></div>'
+     + '<div class="card"><b>Status bulan ini</b><div class="row2"><span>Baharu (belum diagih)</span><b>' + r.status.BARU + '</b></div><div class="row2"><span>Telah diagihkan</span><b>' + r.status.AGIH + '</b></div></div>';
+  if (r.top.length) h += '<div class="card"><b>Tajuk paling kerap (bulan ini)</b>' + r.top.map(t => '<div class="row2"><span>' + esc(t.title) + '</span><b>' + t.n + '</b></div>').join('') + '</div>';
+  box.innerHTML = h;
+}
+
+/* ---------- detail / first-page image box ---------- */
+function closeDet(){ $('ovDet').classList.remove('on'); history.replaceState(null, '', location.pathname); }
+async function openLetter(id){
+  curId = id; const b = $('detBody'); $('ovDet').classList.add('on');
+  b.innerHTML = '<div class="hd"><b>Surat</b><button class="x" onclick="closeDet()" aria-label="Tutup">✕</button></div><div class="empty"><div class="spin"></div>Membuka surat…</div>';
+  let r, im; try { [r, im] = await Promise.all([api({ action:'suratGet', id }), api({ action:'suratImage', id }, 60000)]); } catch (e) { b.innerHTML = '<div class="hd"><b>Surat</b><button class="x" onclick="closeDet()">✕</button></div><div class="empty">Tiada sambungan. Cuba lagi.</div>'; return; }
+  if (expired(r)) return toLogin();
+  if (!r.ok){ b.innerHTML = '<div class="hd"><b>Surat</b><button class="x" onclick="closeDet()">✕</button></div><div class="empty">' + esc(r.error || 'Gagal') + '</div>'; return; }
+  const c = r.rec;
+  b.innerHTML = '<div class="hd"><b>📨 Surat masuk</b><button class="x" onclick="closeDet()" aria-label="Tutup">✕</button></div>'
+    + (r.points ? '<div class="pts">🎉 +' + r.points + ' mata — terima kasih kerana membuka surat</div>' : '')
+    + '<div class="imgbox" id="imgbox">' + (im && im.ok ? '<img src="' + im.data + '" alt="Muka hadapan surat" onclick="$(\'imgbox\').classList.toggle(\'z\')">' : '<div style="color:#fff;padding:20px">' + esc((im && im.error) || 'Gambar tidak dapat dibuka') + '</div>') + '</div><div class="hint">Ketik gambar untuk zum.</div>'
+    + '<h2 style="margin-top:12px">' + esc(c.title) + '</h2>'
+    + '<div class="refs"><div class="w"><small>No. rujukan klinik</small><b class="mono">' + esc(c.ref) + '</b></div><div class="w"><small>No. rujukan surat asal</small><b class="mono">' + (esc(c.origin) || '—') + '</b></div>'
+    + '<div><small>Diterima</small><b>' + esc(c.date) + ' · ' + esc(c.time) + '</b></div><div><small>Direkod oleh</small><b>' + esc(c.by) + '</b></div></div>'
+    + (r.canDistribute ? '<button class="btn full" onclick="openAg()">📤 Agihkan surat</button>' : '')
+    + (r.dist.length ? '<h2 style="margin-top:16px;font-size:15px">Agihan</h2><ul class="tl">' + r.dist.map(d => '<li><b>' + esc(d.type === 'ALL' ? 'Semua kakitangan' : d.type === 'UNIT' ? 'Unit: ' + d.target : d.type === 'UNITALL' ? d.target : d.target) + '</b>' + (d.note ? ' — ' + esc(d.note) : '') + '<small>oleh ' + esc(d.by) + ' · ' + esc(d.time.slice(0, 16)) + '</small></li>').join('') + '</ul>' : '')
+    + (r.readers ? '<h2 style="margin-top:16px;font-size:15px">Telah dibuka (' + r.readers.length + ')</h2>' + (r.readers.length ? '<div class="hint">' + r.readers.map(x => esc(x.name)).join(' · ') + '</div>' : '<div class="hint">Belum ada.</div>') : '')
+    + '<div class="hint" style="margin-top:12px">Disimpan sehingga ' + esc(c.keep) + ' · ' + esc(c.folder) + '</div>';
+  window._det = r;
+}
+
+/* ---------- distribute ---------- */
+function closeAg(){ $('ovAg').classList.remove('on'); }
+let agMode = 'PERSON';
+function openAg(){
+  const r = window._det, isTop = ME.isTop; agMode = isTop ? 'UNIT' : 'PERSON'; $('ovAg').classList.add('on');
+  const units = isTop ? ME.allUnits : r.unitScope.map(u => (ME.allUnits || []).find(x => x.toLowerCase() === u.toLowerCase()) || u);
+  $('agBody').innerHTML = '<div class="hd"><b>📤 Agihkan surat</b><button class="x" onclick="closeAg()" aria-label="Tutup">✕</button></div>'
+    + '<p class="sub">' + esc(r.rec.title) + '</p>'
+    + '<div class="tabs" id="agTabs">' + (isTop ? '<button data-m="UNIT" class="on">Unit</button><button data-m="PERSON">Individu</button><button data-m="ALL">Semua</button>' : '<button data-m="PERSON" class="on">Individu</button><button data-m="UNITALL">Semua dalam unit</button>') + '</div>'
+    + '<div id="agUnits" hidden><div class="opts">' + units.map(u => '<label class="ck"><input type="checkbox" class="u" value="' + esc(u) + '"><span>' + esc(u) + '</span></label>').join('') + '</div><div class="hint">' + (isTop ? 'Penyelia unit akan dimaklumkan untuk mengagihkan kepada kakitangan.' : 'Semua kakitangan unit akan dimaklumkan.') + '</div></div>'
+    + '<div id="agStaff" hidden><input type="search" id="agQ" placeholder="Cari nama…" oninput="filterStaff()" aria-label="Cari nama"><div class="opts" id="agList" style="margin-top:8px">' + (ME.staff || []).map(s => '<label class="ck" data-n="' + esc(s.name.toLowerCase()) + '"><input type="checkbox" class="s" value="' + esc(s.ic) + '"><span>' + esc(s.name) + '<br><small>' + esc(s.unit) + '</small></span></label>').join('') + '</div>' + (isTop ? '<div class="hint">Penyelia individu itu juga akan dimaklumkan.</div>' : '') + '</div>'
+    + '<div id="agAll" hidden><div class="card" style="margin:0">Surat akan dimaklumkan kepada <b>semua kakitangan</b>.</div></div>'
+    + '<label for="agNote">Nota <small>(pilihan)</small></label><input type="text" id="agNote" maxlength="160" placeholder="cth: Sila ambil tindakan sebelum 20/11">'
+    + '<button class="btn full" style="margin-top:14px" id="agGo" onclick="doAg()">Hantar</button>';
+  $('agTabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; agMode = b.dataset.m; [...$('agTabs').children].forEach(x => x.classList.toggle('on', x === b)); syncAg(); }; syncAg();
+}
+function syncAg(){ $('agUnits').hidden = !(agMode === 'UNIT' || agMode === 'UNITALL'); $('agStaff').hidden = agMode !== 'PERSON'; $('agAll').hidden = agMode !== 'ALL'; }
+function filterStaff(){ const q = $('agQ').value.trim().toLowerCase(); document.querySelectorAll('#agList .ck').forEach(l => l.hidden = q && l.dataset.n.indexOf(q) === -1); }
+async function doAg(){
+  const units = [...document.querySelectorAll('.u:checked')].map(x => x.value), ics = [...document.querySelectorAll('.s:checked')].map(x => x.value);
+  if ((agMode === 'UNIT' || agMode === 'UNITALL') && !units.length) return toast('Pilih sekurang-kurangnya satu unit.');
+  if (agMode === 'PERSON' && !ics.length) return toast('Pilih sekurang-kurangnya seorang.');
+  if (agMode === 'ALL' && !confirm('Hantar kepada SEMUA kakitangan?')) return;
+  const b = $('agGo'); b.disabled = true; b.textContent = 'Menghantar…';
+  let r; try { r = await api({ action:'suratDistribute', id: curId, mode: agMode, units, ics, note: $('agNote').value }); } catch (e) { r = { ok:false, error:'Tiada sambungan.' }; }
+  b.disabled = false; b.textContent = 'Hantar'; if (expired(r)) return toLogin();
+  if (!r.ok) return toast(r.error || 'Gagal menghantar');
+  closeAg(); toast('✅ Dihantar · ' + r.notified + ' notifikasi' + ((r.warnings || []).length ? ' · ' + r.warnings[0] : '')); openLetter(curId); loadList();
+}
+
+/* ---------- NEW: photo → crop → OCR → save ---------- */
+let SRC = null, BOX = { x:0, y:0, w:1, h:1 }, SC = 1, drag = null, FID = '', FINAL = '';
+function startNew(){ resetNew(); show('new'); }
+function resetNew(){ ['nCrop','nBusy','nForm','nDone'].forEach(i => $(i).hidden = true); $('nPick').hidden = false; $('file').value = ''; $('file2').value = ''; SRC = null; FID = ''; FINAL = ''; $('title').value = ''; $('origin').value = ''; if (view !== 'new') show('new'); }
+['file','file2'].forEach(id => $(id).addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) loadFile(f); }));
+async function loadFile(f){
+  if (!/^image\//.test(f.type)) return toast('Sila pilih fail gambar.');
+  let bmp; try { bmp = await createImageBitmap(f, { imageOrientation:'from-image' }); } catch (e) { try { bmp = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = URL.createObjectURL(f); }); } catch (e2) { return toast('Gambar tidak dapat dibaca.'); } }
+  const w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight, k = Math.min(1, 2400 / Math.max(w, h));
+  SRC = document.createElement('canvas'); SRC.width = Math.round(w * k); SRC.height = Math.round(h * k); SRC.getContext('2d').drawImage(bmp, 0, 0, SRC.width, SRC.height);
+  $('nPick').hidden = true; $('nCrop').hidden = false; autoBox(); draw();
+}
+function rotate(dir){ if (!SRC) return; const c = document.createElement('canvas'); c.width = SRC.height; c.height = SRC.width; const x = c.getContext('2d'); x.translate(c.width / 2, c.height / 2); x.rotate(dir * Math.PI / 2); x.drawImage(SRC, -SRC.width / 2, -SRC.height / 2); SRC = c; autoBox(); draw(); }
+/** finds the paper: bright region (Otsu) → rows/columns where most pixels are paper */
+function autoBox(redraw){
+  const W = SRC.width, H = SRC.height, k = 320 / Math.max(W, H), w = Math.max(8, Math.round(W * k)), h = Math.max(8, Math.round(H * k));
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d', { willReadFrequently:true }); x.drawImage(SRC, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h).data, g = new Uint8Array(w * h), hist = new Array(256).fill(0);
+  for (let i = 0; i < w * h; i++){ const v = (d[i * 4] * 0.3 + d[i * 4 + 1] * 0.59 + d[i * 4 + 2] * 0.11) | 0; g[i] = v; hist[v]++; }
+  let sum = 0; for (let i = 0; i < 256; i++) sum += i * hist[i]; let sB = 0, wB = 0, best = 0, thr = 128; const tot = w * h;
+  for (let t = 0; t < 256; t++){ wB += hist[t]; if (!wB) continue; const wF = tot - wB; if (!wF) break; sB += t * hist[t]; const mB = sB / wB, mF = (sum - sB) / wF, v = wB * wF * (mB - mF) * (mB - mF); if (v > best){ best = v; thr = t; } }
+  const row = new Float32Array(h), col = new Float32Array(w);
+  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) if (g[yy * w + xx] > thr){ row[yy]++; col[xx]++; }
+  const first = (arr, n, lim) => { for (let i = 0; i < n; i++) if (arr[i] / lim > 0.4) return i; return 0; }, last = (arr, n, lim) => { for (let i = n - 1; i >= 0; i--) if (arr[i] / lim > 0.4) return i; return n - 1; };
+  let y0 = first(row, h, w), y1 = last(row, h, w), x0 = first(col, w, h), x1 = last(col, w, h);
+  const mx = Math.round(w * 0.01), my = Math.round(h * 0.01); x0 = Math.max(0, x0 - mx); x1 = Math.min(w - 1, x1 + mx); y0 = Math.max(0, y0 - my); y1 = Math.min(h - 1, y1 + my);
+  if ((x1 - x0) * (y1 - y0) < w * h * 0.25){ x0 = 0; y0 = 0; x1 = w - 1; y1 = h - 1; }                        // not sure → whole photo, the user adjusts
+  BOX = { x: x0 / w * W, y: y0 / h * H, w: (x1 - x0 + 1) / w * W, h: (y1 - y0 + 1) / h * H }; if (redraw) draw();
+}
+function draw(){
+  const cv = $('cv'), W = SRC.width, H = SRC.height, maxW = Math.min(720, cv.parentElement.clientWidth || 360), s = maxW / W; SC = s;
+  cv.width = Math.round(W * s); cv.height = Math.round(H * s); const x = cv.getContext('2d'); x.drawImage(SRC, 0, 0, cv.width, cv.height);
+  const b = { x: BOX.x * s, y: BOX.y * s, w: BOX.w * s, h: BOX.h * s };
+  x.fillStyle = 'rgba(0,0,0,.55)'; x.fillRect(0, 0, cv.width, b.y); x.fillRect(0, b.y + b.h, cv.width, cv.height - b.y - b.h); x.fillRect(0, b.y, b.x, b.h); x.fillRect(b.x + b.w, b.y, cv.width - b.x - b.w, b.h);
+  x.strokeStyle = '#2ee59d'; x.lineWidth = 3; x.strokeRect(b.x, b.y, b.w, b.h); x.fillStyle = '#2ee59d';
+  [[b.x, b.y], [b.x + b.w, b.y], [b.x, b.y + b.h], [b.x + b.w, b.y + b.h], [b.x + b.w / 2, b.y], [b.x + b.w / 2, b.y + b.h], [b.x, b.y + b.h / 2], [b.x + b.w, b.y + b.h / 2]].forEach(p => { x.beginPath(); x.arc(p[0], p[1], 8, 0, 7); x.fill(); });
+}
+(function(){
+  const cv = $('cv'); const pt = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * cv.width / r.width / SC, y: (e.clientY - r.top) * cv.height / r.height / SC }; };
+  cv.addEventListener('pointerdown', e => { if (!SRC) return; const p = pt(e), t = 34 / SC / (cv.width / cv.getBoundingClientRect().width), L = Math.abs(p.x - BOX.x) < t, R = Math.abs(p.x - (BOX.x + BOX.w)) < t, T = Math.abs(p.y - BOX.y) < t, B = Math.abs(p.y - (BOX.y + BOX.h)) < t;
+    if (L || R || T || B){ drag = { L, R, T, B }; } else if (p.x > BOX.x && p.x < BOX.x + BOX.w && p.y > BOX.y && p.y < BOX.y + BOX.h){ drag = { move:true, dx: p.x - BOX.x, dy: p.y - BOX.y }; } else drag = null;
+    if (drag) cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', e => { if (!drag) return; const p = pt(e), W = SRC.width, H = SRC.height, min = 60; let { x, y, w, h } = BOX;
+    if (drag.move){ x = Math.min(Math.max(0, p.x - drag.dx), W - w); y = Math.min(Math.max(0, p.y - drag.dy), H - h); }
+    else { if (drag.L){ const nx = Math.min(Math.max(0, p.x), x + w - min); w += x - nx; x = nx; } if (drag.R) w = Math.min(Math.max(min, p.x - x), W - x); if (drag.T){ const ny = Math.min(Math.max(0, p.y), y + h - min); h += y - ny; y = ny; } if (drag.B) h = Math.min(Math.max(min, p.y - y), H - y); }
+    BOX = { x, y, w, h }; draw(); });
+  ['pointerup','pointercancel'].forEach(n => cv.addEventListener(n, () => drag = null));
+})();
+function cropToJpeg(){
+  const k = Math.min(1, 1800 / Math.max(BOX.w, BOX.h)), c = document.createElement('canvas'); c.width = Math.round(BOX.w * k); c.height = Math.round(BOX.h * k);
+  c.getContext('2d').drawImage(SRC, BOX.x, BOX.y, BOX.w, BOX.h, 0, 0, c.width, c.height);
+  let q = 0.85, d = c.toDataURL('image/jpeg', q); while (d.length > 2300000 && q > 0.45){ q -= 0.1; d = c.toDataURL('image/jpeg', q); } return d;     // Drive OCR accepts images up to ~2 MB
+}
+async function useImage(){
+  FINAL = cropToJpeg(); $('nCrop').hidden = true; $('nBusy').hidden = false; $('busyT').textContent = 'Memuat naik & membaca surat…';
+  let r; try { r = await api({ action:'suratOcr', image: FINAL }, 90000); } catch (e) { r = { ok:false, error:'Tiada sambungan / masa tamat. Cuba lagi.' }; }
+  $('nBusy').hidden = true; if (expired(r)) return toLogin();
+  if (!r.ok){ toast(r.error || 'Gagal'); $('nCrop').hidden = false; return; }
+  FID = r.fid; $('thumb').src = FINAL; $('title').value = r.title || ''; $('origin').value = r.origin || '';
+  $('ocrNote').textContent = r.ocrErr ? '⚠️ Bacaan automatik tidak berjaya (' + r.ocrErr + '). Sila taip tajuk dan no. rujukan.' : (r.title ? '✔ Tajuk dibaca automatik' + (r.origin ? ' · no. rujukan asal ditemui' : ' · no. rujukan asal tidak ditemui — taip jika ada') + '. Semak sebelum hantar.' : 'Tajuk tidak dapat dikesan — sila taip.');
+  $('nForm').hidden = false;
+}
+let saving = false;
+async function saveLetter(){
+  if (saving) return; const t = $('title').value.trim(); if (t.length < 3){ $('title').classList.add('bad'); setTimeout(() => $('title').classList.remove('bad'), 600); return toast('Sila isi tajuk surat.'); }
+  saving = true; const b = $('saveBtn'); b.disabled = true; b.textContent = 'Menghantar…';
+  let r; try { r = await api({ action:'suratSave', fid: FID, title: t, origin: $('origin').value.trim() }, 60000); } catch (e) { r = { ok:false, error:'Tiada sambungan. Tekan Hantar sekali lagi.' }; }
+  saving = false; b.disabled = false; b.textContent = 'Hantar & maklumkan penyelia'; if (expired(r)) return toLogin();
+  if (!r.ok) return toast(r.error || 'Gagal menyimpan');
+  $('nForm').hidden = true; $('nDone').hidden = false; $('doneRef').textContent = r.ref; $('doneNote').textContent = r.notified ? '🔔 ' + r.notified + ' penyelia telah dimaklumkan.' : 'Tiada penyelia untuk dimaklumkan (semak jadual Supervisors).';
+}
+
+/* ---------- start ---------- */
+(async function init(){
+  $('mth').value = ''; $('rmth').value = nowYm();
+  let r; try { r = await api({ action:'suratMe' }); } catch (e) { toast('Tiada sambungan.'); return; }
+  if (expired(r)) return toLogin(); if (!r.ok){ toast(r.error || 'Gagal'); return; }
+  ME = r; $('fab').hidden = !ME.canUpload; loadList();
+  const id = new URLSearchParams(location.search).get('id'); if (id) openLetter(id.replace(/[^\w]/g, ''));
+})();
+</script>
+</body>
+</html>v
