@@ -106,6 +106,7 @@
       <div class="hint" id="ocrNote"></div>
       <label for="title">Tajuk surat <span class="req">*</span></label><textarea id="title" maxlength="280" placeholder="Tajuk / Perkara surat"></textarea>
       <label for="origin">No. rujukan surat asal <small>(tercetak pada surat — "Ruj. Kami")</small></label><input type="text" id="origin" maxlength="80" placeholder="cth KKM.600-1/3/2 Jld.4 (25)" autocomplete="off">
+      <label for="odate">Tarikh surat asal <small>(bawah "Ruj. Kami" — tulisan tangan? semak)</small></label><input type="date" id="odate">
       <button class="btn full" style="margin-top:16px" id="saveBtn" onclick="saveLetter()">Hantar & maklumkan penyelia</button>
       <button class="link" onclick="resetNew()">Batal</button>
     </div>
@@ -155,7 +156,7 @@ async function loadList(){
   if (expired(r)) return toLogin(); if (!r.ok){ box.innerHTML = '<div class="empty">' + esc(r.error || 'Gagal') + '</div>'; return; }
   if (!r.rows.length){ box.innerHTML = '<div class="empty">📭 Tiada surat' + ($('q').value || $('mth').value ? ' untuk carian ini' : '') + '.</div>'; return; }
   box.innerHTML = r.rows.map(x => '<button class="it' + (x.read ? '' : ' unread') + '" onclick="openLetter(\'' + esc(x.id) + '\')"><div class="r1"><span class="mono">' + esc(x.ref) + '</span><span class="pill ' + (x.status === 'AGIH' ? 'a' : 'n') + '">' + (x.status === 'AGIH' ? 'Diagihkan' : 'Baharu') + '</span></div>'
-    + '<div class="t">' + esc(x.title) + '</div><div class="r2">' + (x.origin ? 'Ruj. asal: ' + esc(x.origin) + ' · ' : '') + esc(x.date) + ' ' + esc(x.time) + (x.read ? '' : ' · <b>belum dibuka</b>') + '</div></button>').join('')
+    + '<div class="t">' + esc(x.title) + '</div><div class="r2">' + (x.origin ? 'Ruj. asal: ' + esc(x.origin) + (x.odate ? ' (' + esc(x.odate) + ')' : '') + ' · ' : '') + esc(x.date) + ' ' + esc(x.time) + (x.read ? '' : ' · <b>belum dibuka</b>') + '</div></button>').join('')
     + (r.more ? '<div class="empty">Memaparkan 300 terkini — gunakan carian untuk menapis.</div>' : '');
 }
 
@@ -192,7 +193,7 @@ async function openLetter(id){
     + '<div class="imgbox" id="imgbox">' + (im && im.ok ? '<img src="' + im.data + '" alt="Muka hadapan surat" onclick="$(\'imgbox\').classList.toggle(\'z\')">' : '<div style="color:#fff;padding:20px">' + esc((im && im.error) || 'Gambar tidak dapat dibuka') + '</div>') + '</div><div class="hint">Ketik gambar untuk zum.</div>'
     + '<h2 style="margin-top:12px">' + esc(c.title) + '</h2>'
     + '<div class="refs"><div class="w"><small>No. rujukan klinik</small><b class="mono">' + esc(c.ref) + '</b></div><div class="w"><small>No. rujukan surat asal</small><b class="mono">' + (esc(c.origin) || '—') + '</b></div>'
-    + '<div><small>Diterima</small><b>' + esc(c.date) + ' · ' + esc(c.time) + '</b></div><div><small>Direkod oleh</small><b>' + esc(c.by) + '</b></div></div>'
+    + '<div><small>Tarikh surat asal</small><b>' + (esc(c.odate) || '—') + '</b></div><div><small>Diterima</small><b>' + esc(c.date) + ' · ' + esc(c.time) + '</b></div><div><small>Direkod oleh</small><b>' + esc(c.by) + '</b></div></div>'
     + (r.canDistribute ? '<button class="btn full" onclick="openAg()">📤 Agihkan surat</button>' : '')
     + (r.dist.length ? '<h2 style="margin-top:16px;font-size:15px">Agihan</h2><ul class="tl">' + r.dist.map(d => '<li><b>' + esc(d.type === 'ALL' ? 'Semua kakitangan' : d.type === 'UNIT' ? 'Unit: ' + d.target : d.type === 'UNITALL' ? d.target : d.target) + '</b>' + (d.note ? ' — ' + esc(d.note) : '') + '<small>oleh ' + esc(d.by) + ' · ' + esc(d.time.slice(0, 16)) + '</small></li>').join('') + '</ul>' : '')
     + (r.readers ? '<h2 style="margin-top:16px;font-size:15px">Telah dibuka (' + r.readers.length + ')</h2>' + (r.readers.length ? '<div class="hint">' + r.readers.map(x => esc(x.name)).join(' · ') + '</div>' : '<div class="hint">Belum ada.</div>') : '')
@@ -233,7 +234,7 @@ async function doAg(){
 /* ---------- NEW: photo → crop → OCR → save ---------- */
 let SRC = null, BOX = { x:0, y:0, w:1, h:1 }, SC = 1, drag = null, FID = '', FINAL = '';
 function startNew(){ resetNew(); show('new'); }
-function resetNew(){ ['nCrop','nBusy','nForm','nDone'].forEach(i => $(i).hidden = true); $('nPick').hidden = false; $('file').value = ''; $('file2').value = ''; SRC = null; FID = ''; FINAL = ''; $('title').value = ''; $('origin').value = ''; if (view !== 'new') show('new'); }
+function resetNew(){ ['nCrop','nBusy','nForm','nDone'].forEach(i => $(i).hidden = true); $('nPick').hidden = false; $('file').value = ''; $('file2').value = ''; SRC = null; FID = ''; FINAL = ''; $('title').value = ''; $('origin').value = ''; $('odate').value = ''; if (view !== 'new') show('new'); }
 ['file','file2'].forEach(id => $(id).addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) loadFile(f); }));
 async function loadFile(f){
   if (!/^image\//.test(f.type)) return toast('Sila pilih fail gambar.');
@@ -288,7 +289,7 @@ async function useImage(){
   let r; try { r = await api({ action:'suratOcr', image: FINAL }, 90000); } catch (e) { r = { ok:false, error:'Tiada sambungan / masa tamat. Cuba lagi.' }; }
   $('nBusy').hidden = true; if (expired(r)) return toLogin();
   if (!r.ok){ toast(r.error || 'Gagal'); $('nCrop').hidden = false; return; }
-  FID = r.fid; $('thumb').src = FINAL; $('title').value = r.title || ''; $('origin').value = r.origin || '';
+  FID = r.fid; $('thumb').src = FINAL; $('title').value = r.title || ''; $('origin').value = r.origin || ''; $('odate').value = r.odate || '';
   $('ocrNote').textContent = r.ocrErr ? '⚠️ Bacaan automatik tidak berjaya (' + r.ocrErr + '). Sila taip tajuk dan no. rujukan.' : (r.title ? '✔ Tajuk dibaca automatik' + (r.origin ? ' · no. rujukan asal ditemui' : ' · no. rujukan asal tidak ditemui — taip jika ada') + '. Semak sebelum hantar.' : 'Tajuk tidak dapat dikesan — sila taip.');
   $('nForm').hidden = false;
 }
@@ -296,7 +297,7 @@ let saving = false;
 async function saveLetter(){
   if (saving) return; const t = $('title').value.trim(); if (t.length < 3){ $('title').classList.add('bad'); setTimeout(() => $('title').classList.remove('bad'), 600); return toast('Sila isi tajuk surat.'); }
   saving = true; const b = $('saveBtn'); b.disabled = true; b.textContent = 'Menghantar…';
-  let r; try { r = await api({ action:'suratSave', fid: FID, title: t, origin: $('origin').value.trim() }, 60000); } catch (e) { r = { ok:false, error:'Tiada sambungan. Tekan Hantar sekali lagi.' }; }
+  let r; try { r = await api({ action:'suratSave', fid: FID, title: t, origin: $('origin').value.trim(), odate: $('odate').value }, 60000); } catch (e) { r = { ok:false, error:'Tiada sambungan. Tekan Hantar sekali lagi.' }; }
   saving = false; b.disabled = false; b.textContent = 'Hantar & maklumkan penyelia'; if (expired(r)) return toLogin();
   if (!r.ok) return toast(r.error || 'Gagal menyimpan');
   $('nForm').hidden = true; $('nDone').hidden = false; $('doneRef').textContent = r.ref; $('doneNote').textContent = r.notified ? '🔔 ' + r.notified + ' penyelia telah dimaklumkan.' : 'Tiada penyelia untuk dimaklumkan (semak jadual Supervisors).';
