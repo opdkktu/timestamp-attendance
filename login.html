@@ -148,6 +148,15 @@
   .sos-card.done .sos-go{ background:#0a8f5a; box-shadow:none; }
   @media (max-width:480px){ .login-box{ padding:32px 22px; } }
   @media (prefers-reduced-motion:reduce){ .blob, .logo, .login-box::before, .login-btn::before, .login-btn::after{ animation:none; } }
+  .inst-btn{display:none;width:100%;margin-top:14px;min-height:48px;border-radius:14px;border:1.5px dashed rgba(255,255,255,.45);background:rgba(255,255,255,.08);color:inherit;font:700 14px inherit;cursor:pointer}
+  .inst-btn.show{display:block}
+  .inst-ov{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
+  .inst-ov.on{display:flex}
+  .inst-sh{width:100%;max-width:480px;background:#0B3D3A;color:#fff;border-radius:22px 22px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));animation:instUp .3s ease}
+  @keyframes instUp{from{transform:translateY(40px);opacity:0}}
+  .inst-sh h3{margin:0 0 6px;font-size:18px}.inst-sh ol{margin:10px 0 14px;padding-left:20px;line-height:1.7;font-size:14.5px}
+  .inst-sh button{width:100%;min-height:46px;border-radius:12px;border:none;font:700 14px inherit;cursor:pointer;margin-top:8px}
+  .inst-sh .p{background:#0fa;color:#052013}.inst-sh .g{background:rgba(255,255,255,.12);color:#fff}
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
@@ -186,7 +195,13 @@
     </div>
   </form>
   <p style="text-align:center;font-size:12px;opacity:.75;margin:14px 0 0">Dengan log masuk anda bersetuju dengan <a href="./terms.html" style="color:inherit;font-weight:700">Terma</a> &amp; <a href="./privacy.html" style="color:inherit;font-weight:700">Dasar Privasi</a> SIAGA.</p>
-
+   <button type="button" class="inst-btn" id="instBtn" onclick="installApp()">📲 Pasang aplikasi SIAGA</button>
+  <div class="inst-ov" id="instOv" onclick="if(event.target===this)closeInst()"><div class="inst-sh">
+    <h3>📲 Pasang SIAGA di telefon</h3>
+    <div id="instBody"></div>
+    <button class="p" id="instCopy" onclick="copyLink()">📋 Salin pautan (tampal di Chrome)</button>
+    <button class="g" onclick="closeInst()">Tutup</button>
+  </div></div>
   <!-- Step 2: Verify 2FA (only for staff who opted into 2-Step Verification in Profile > Security) -->
   <form class="step" id="stepTotp" onsubmit="event.preventDefault(); handleVerifyCode();">
     <div class="hint-text">Enter the 6-digit code from your authenticator app</div>
@@ -331,6 +346,26 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+let _ip = null;
+const _isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); _ip = e; });
+window.addEventListener('appinstalled', () => { _ip = null; const b = document.getElementById('instBtn'); if (b) b.classList.remove('show'); });
+window.addEventListener('DOMContentLoaded', () => { if (!_isStandalone()) document.getElementById('instBtn').classList.add('show'); });
+async function installApp(){
+  if (_ip){ _ip.prompt(); try { await _ip.userChoice; } catch(e){} _ip = null; return; }
+  const ua = navigator.userAgent, ios = /iPhone|iPad|iPod/i.test(ua), inApp = /FBAN|FBAV|Instagram|Line\/|MicroMessenger|WhatsApp|Telegram|; wv\)/i.test(ua), sam = /SamsungBrowser/i.test(ua);
+  let h;
+  if (inApp) h = '<p>Anda sedang membuka pautan di dalam aplikasi lain (WhatsApp / Facebook). Pemasangan tidak boleh dibuat di sini.</p><ol><li>Tekan <b>Salin pautan</b> di bawah</li><li>Buka <b>Chrome</b> dan tampal pautan</li><li>Buka menu <b>⋮</b> → <b>Pasang aplikasi</b> / <b>Tambah ke skrin utama</b></li></ol>';
+  else if (ios) h = '<ol><li>Buka halaman ini dalam <b>Safari</b></li><li>Tekan butang <b>Kongsi</b> (kotak dengan anak panah ke atas)</li><li>Pilih <b>Tambah ke Skrin Utama</b> → <b>Tambah</b></li></ol>';
+  else if (sam) h = '<ol><li>Tekan menu <b>☰</b> (kanan bawah)</li><li>Pilih <b>Tambah halaman ke</b> → <b>Skrin utama</b></li></ol>';
+  else h = '<ol><li>Buka menu <b>⋮</b> di penjuru kanan atas Chrome</li><li>Pilih <b>Pasang aplikasi</b> atau <b>Tambah ke skrin utama</b></li><li>Tekan <b>Pasang / Tambah</b></li></ol><p style="font-size:13px;opacity:.85">Tiada pilihan itu? Pastikan bukan mod <b>Incognito</b> dan <b>Laman desktop</b> dimatikan. Jika telefon terlalu lama, cuba pelayar <b>Samsung Internet</b>, <b>Edge</b> atau <b>Firefox</b> — pilihan <b>Tambah ke skrin utama</b> biasanya ada.</p>';
+  document.getElementById('instBody').innerHTML = h; document.getElementById('instOv').classList.add('on');
+}
+function closeInst(){ document.getElementById('instOv').classList.remove('on'); }
+async function copyLink(){
+  const u = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'login.html', b = document.getElementById('instCopy');
+  try { await navigator.clipboard.writeText(u); b.textContent = '✓ Pautan disalin'; } catch(e){ prompt('Salin pautan ini:', u); }
+}
 function togglePw(){
   const i = document.getElementById('passwordInput'), b = document.getElementById('pwToggle');
   const show = i.type === 'password';
