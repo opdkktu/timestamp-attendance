@@ -285,9 +285,13 @@ function cropToJpeg(){
   c.getContext('2d').drawImage(SRC, BOX.x, BOX.y, BOX.w, BOX.h, 0, 0, c.width, c.height);
   let q = 0.85, d = c.toDataURL('image/jpeg', q); while (d.length > 2300000 && q > 0.45){ q -= 0.1; d = c.toDataURL('image/jpeg', q); } return d;     // Drive OCR accepts images up to ~2 MB
 }
+function cornerCrop(src){                                   // top-right 55% x 38% of the letter, enlarged: where "Ruj. Kami" and "Tarikh" usually are
+  return new Promise(res => { const im = new Image(); im.onload = () => { try { const x = Math.round(im.width * 0.45), w = im.width - x, h = Math.round(im.height * 0.38), k = Math.min(2, 1400 / w), c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+    c.getContext('2d').drawImage(im, x, 0, w, h, 0, 0, c.width, c.height); let q = 0.85, d = c.toDataURL('image/jpeg', q); while (d.length > 1800000 && q > 0.4){ q -= 0.1; d = c.toDataURL('image/jpeg', q); } res(d); } catch (e) { res(''); } }; im.onerror = () => res(''); im.src = src; });
+}
 async function useImage(){
   FINAL = cropToJpeg(); $('nCrop').hidden = true; $('nBusy').hidden = false; $('busyT').textContent = 'Memuat naik & membaca surat…';
-  let r; try { r = await api({ action:'suratOcr', image: FINAL }, 90000); } catch (e) { r = { ok:false, error:'Tiada sambungan / masa tamat. Cuba lagi.' }; }
+  let r; try { r = await api({ action:'suratOcr', image: FINAL, crop: await cornerCrop(FINAL) }, 110000); } catch (e) { r = { ok:false, error:'Tiada sambungan / masa tamat. Cuba lagi.' }; }
   $('nBusy').hidden = true; if (expired(r)) return toLogin();
   if (!r.ok){ toast(r.error || 'Gagal'); $('nCrop').hidden = false; return; }
   FID = r.fid; $('thumb').src = FINAL; $('title').value = r.title || ''; $('origin').value = r.origin || ''; $('odate').value = r.odate || '';
