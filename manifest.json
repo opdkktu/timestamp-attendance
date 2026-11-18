@@ -1,6 +1,8 @@
 {
   "name": "SIAGA",
   "short_name": "SIAGA",
+  "id": "./login.html",
+  "scope": "./",
   "description": "Staff portal for Klinik Kesihatan Ayer Hitam — attendance, checklists, notifications and more",
   "start_url": "./login.html",
   "display": "standalone",
