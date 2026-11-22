@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ms"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#0F4530">
+<title>Cetak Dokumen</title><link rel="icon" type="image/png" href="./siaga-192.png">
+<style>
+:root{--bg:#EEF3F1;--card:#fff;--ink:#16231F;--mut:#5E7069;--line:#D6E0DB;--acc:#1A6B4A;--acc2:#0F4530;--accl:#E3F0EB;--onacc:#0F4530;--ok:#1f9a57;--warn:#B45309;--bad:#C0392B;--warnbg:#FFF3E0;--badbg:#FDECEA;--sh:0 6px 22px rgba(15,69,48,.10)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1A17;--card:#15251F;--ink:#E7F1ED;--mut:#97ADA5;--line:#27403A;--accl:#17352B;--onacc:#A8EBCB;--ok:#6fd49a;--warn:#F0B35A;--bad:#F08A7E;--warnbg:#3a2c14;--badbg:#3b1c19;--sh:none}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Inter,'Segoe UI',system-ui,sans-serif;min-height:100vh;line-height:1.4;padding-bottom:110px}
+.top{position:sticky;top:0;z-index:30;padding:calc(10px + env(safe-area-inset-top)) 14px 12px;background:linear-gradient(135deg,var(--acc2),var(--acc));color:#fff}
+.top .row{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.back{width:40px;height:40px;border:none;border-radius:12px;background:rgba(255,255,255,.16);color:#fff;font-size:19px;cursor:pointer}
+.ttl{flex:1;font-weight:800;font-size:17px}.ttl small{display:block;font-weight:500;font-size:12px;opacity:.85}
+.chip{display:none;align-items:center;gap:6px;border:none;background:rgba(255,255,255,.16);color:#fff;border-radius:99px;padding:6px 11px;font:700 12px Inter,"Segoe UI",system-ui,sans-serif;cursor:pointer}.chip.show{display:inline-flex;animation:pop .35s both}
+.chip i{width:8px;height:8px;border-radius:50%;background:#7CF0B0;box-shadow:0 0 0 3px rgba(124,240,176,.3)}.chip.warn i{background:#FFC857;box-shadow:0 0 0 3px rgba(255,200,87,.3)}
+.wrap{max-width:760px;margin:0 auto;padding:14px}
+.steps{display:flex;align-items:center;margin:4px 6px 16px;padding:0;list-style:none}
+.steps li{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--mut);transition:.3s}
+.steps li b{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:2px solid var(--line);font-size:12px;transition:.35s}
+.steps li.on{color:var(--ink)}.steps li.on b{background:var(--acc);border-color:var(--acc);color:#fff;box-shadow:0 0 0 5px var(--accl)}
+.steps li.done b{background:var(--ok);border-color:var(--ok);color:#fff}.steps li.done{color:var(--ink)}
+.steps .ln{flex:1;height:3px;margin:0 8px;border-radius:9px;background:var(--line);position:relative;overflow:hidden}.steps .ln::after{content:"";position:absolute;inset:0;background:var(--ok);transform:scaleX(0);transform-origin:left;transition:transform .6s cubic-bezier(.2,.8,.2,1)}.steps .ln.fill::after{transform:scaleX(1)}
+section{animation:slide .45s cubic-bezier(.2,.8,.2,1) both}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--sh);margin-bottom:12px}
+h2{margin:0 0 2px;font-size:18px}.sub{color:var(--mut);font-size:13px;margin:0 0 12px}
+/* check rows */
+.ck{display:flex;gap:13px;align-items:flex-start;padding:14px 4px;border-top:1px dashed var(--line);transition:.3s}.ck:first-of-type{border-top:none}
+.ck.idle{opacity:.45}
+.ico{position:relative;width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--accl);font-size:21px}
+.ico::before,.ico::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--acc);opacity:0}
+.ck.run .ico::before{animation:ping 1.4s ease-out infinite}.ck.run .ico::after{animation:ping 1.4s ease-out .5s infinite}
+.ck.ok .ico{background:var(--ok);color:#fff}.ck.warn .ico{background:var(--warnbg);color:var(--warn)}.ck.bad .ico{background:var(--badbg);color:var(--bad)}
+.ico svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:30;stroke-dashoffset:30}.ck.ok .ico svg,.ck.warn .ico svg,.ck.bad .ico svg{animation:draw .5s .05s forwards}
+.ck .t b{display:block;font-size:15px}.ck .t span{font-size:13px;color:var(--mut)}.ck.warn .t span{color:var(--warn)}.ck.bad .t span{color:var(--bad)}
+.dots::after{content:"";animation:dots 1.2s steps(4) infinite}
+.note{font-size:12px;color:var(--mut);background:var(--accl);border-radius:13px;padding:10px 12px;margin-top:6px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btns:empty{display:none}
+.btn{flex:1;min-width:130px;height:46px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:700 14px Inter,"Segoe UI",system-ui,sans-serif;cursor:pointer;transition:.15s}.btn:active{transform:scale(.97)}
+.btn.p{background:var(--acc);border-color:var(--acc);color:#fff}
+/* docs */
+.docs{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.doc{all:unset;box-sizing:border-box;cursor:pointer;background:var(--card);border:1.5px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--sh);transition:.2s;animation:slide .5s both;position:relative}
+.doc:hover{transform:translateY(-3px);border-color:var(--acc)}.doc:active{transform:scale(.98)}.doc:focus-visible{outline:3px solid var(--acc)}
+.doc .e{font-size:30px}.doc b{font-size:15px}.doc span{font-size:12.5px;color:var(--mut)}
+.doc.soon{opacity:.55;cursor:default}.doc.soon:hover{transform:none;border-color:var(--line)}.doc em{position:absolute;top:12px;right:12px;font:800 10px Inter,"Segoe UI",system-ui,sans-serif;background:var(--accl);color:var(--onacc);padding:3px 8px;border-radius:99px;font-style:normal}
+/* options */
+.opts{display:grid;gap:10px;grid-template-columns:1fr 1fr}.opts label{font-size:11.5px;font-weight:800;color:var(--mut);display:block;margin-bottom:4px;letter-spacing:.3px}
+.opts .w{grid-column:1/-1}
+select{width:100%;height:48px;border-radius:13px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:700 15px Inter,"Segoe UI",system-ui,sans-serif;padding:0 12px}select:focus{outline:3px solid var(--accl);border-color:var(--acc)}
+.pvbox{position:relative;overflow:hidden;border-radius:14px;background:#cfd8d4;padding:0;margin-top:4px}
+#pv{transform-origin:top left;width:794px}
+.sheet{width:794px;min-height:600px;background:#fff;color:#000;padding:48px 56px;font-family:Arial,Helvetica,sans-serif;font-size:13px;box-shadow:0 4px 18px rgba(0,0,0,.18);animation:paper .5s both}
+.sheet h1{margin:0;text-align:center;font-size:17px;letter-spacing:.3px}.sheet .k{text-align:center;font-weight:700;font-size:14px;margin-bottom:14px}
+.sheet .j{text-align:center;font-weight:700;font-size:15px}.sheet .s{text-align:center;font-size:12px;margin-top:2px}
+.sheet .tb{display:flex;justify-content:center;gap:34px;margin:14px 0;font-weight:700}
+.sheet table{width:100%;border-collapse:collapse;margin-top:6px}.sheet th,.sheet td{border:1px solid #000;padding:7px 9px;text-align:left;font-size:13px}.sheet th{background:#e9e9e9;text-align:center}.sheet td.c{text-align:center}
+.sheet tr{break-inside:avoid}
+.sheet .fn{font-size:11px;margin-top:12px}.sheet .sg{margin-top:34px;font-size:12.5px;line-height:1.5}.sg .sp{height:46px}
+.skel{height:320px;background:linear-gradient(90deg,#e6ece9 25%,#f4f7f6 50%,#e6ece9 75%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:10px}
+.empty{text-align:center;color:var(--mut);padding:28px 12px;font-size:14px}.empty .e{font-size:34px;display:block;margin-bottom:6px}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:25;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);transform:translateY(110%);transition:transform .4s cubic-bezier(.2,.8,.2,1)}.bar.show{transform:none}
+.bar .in{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center}.bar .in div{flex:1;font-size:12.5px;color:var(--mut)}.bar .in div b{display:block;color:var(--ink);font-size:14px}
+.bar .btn{flex:none;min-width:150px}.bar .btn:disabled{opacity:.4}
+[hidden]{display:none!important}
+@keyframes ping{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.9);opacity:0}}
+@keyframes draw{to{stroke-dashoffset:0}}@keyframes slide{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}@keyframes paper{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+@keyframes sh{to{background-position:-200% 0}}@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ico svg{stroke-dashoffset:0}}
+@page{size:A4;margin:12mm}
+@media print{
+ body{background:#fff;padding:0}.top,.steps,.bar,.nonprint,section>.card:not(.pvcard),.opts{display:none!important}
+ .wrap{padding:0;max-width:none}.pvcard{border:none;box-shadow:none;padding:0;margin:0}
+ .pvbox{overflow:visible;background:none;height:auto!important}#pv{transform:none!important;width:auto!important}
+ .sheet{width:auto;min-height:0;padding:0;box-shadow:none;animation:none}
+}
+</style></head><body>
+<div class="top"><div class="row"><button class="back" onclick="goBack()" aria-label="Kembali">←</button><div class="ttl">🖨️ Cetak Dokumen<small id="sub">Semak sambungan dahulu</small></div><button class="chip" id="chip" onclick="recheck()" aria-label="Semak semula"><i></i><span id="chipT">Bersedia</span></button></div></div>
+<div class="wrap">
+ <ol class="steps"><li id="st1" class="on"><b>1</b>Sambungan</li><span class="ln" id="l1"></span><li id="st2"><b>2</b>Dokumen</li><span class="ln" id="l2"></span><li id="st3"><b>3</b>Cetak</li></ol>
+
+ <section id="s1">
+  <div class="card">
+   <h2>Semakan sambungan</h2><p class="sub">Pencetak klinik hanya boleh dicapai dari Wi-Fi / LAN klinik.</p>
+   <div class="ck idle" id="ckNet"><div class="ico"><span class="em">📶</span><svg viewBox="0 0 24 24" hidden><path d="M4 12.5l5 5L20 6.5"/></svg></div><div class="t"><b>Rangkaian</b><span>Menunggu…</span></div></div>
+   <div class="ck idle" id="ckPrn"><div class="ico"><span class="em">🖨️</span><svg viewBox="0 0 24 24" hidden><path d="M4 12.5l5 5L20 6.5"/></svg></div><div class="t"><b>Pencetak</b><span>Menunggu…</span></div></div>
+   <div class="btns" id="ckBtns"></div>
+   <div class="note" id="ckNote" hidden>Semakan ini <b>anggaran sahaja</b> — pelayar tidak boleh membaca nama Wi-Fi atau status sebenar pencetak. Jika ragu, teruskan dan cuba cetak.</div>
+  </div>
+ </section>
+
+ <section id="s2" hidden>
+  <h2 style="margin:0 4px 2px">Pilih dokumen</h2><p class="sub" style="margin:0 4px 12px">Ketik dokumen yang hendak dicetak.</p>
+  <div class="docs" id="docs"></div>
+ </section>
+
+ <section id="s3" hidden>
+  <div class="card">
+   <h2 id="dTitle">Jadual On Call</h2><p class="sub">Pilih bulan dan jenis, semak pratonton, kemudian cetak.</p>
+   <div class="opts">
+    <div><label for="oYear">TAHUN</label><select id="oYear"></select></div>
+    <div><label for="oMonth">BULAN</label><select id="oMonth"></select></div>
+    <div class="w"><label for="oType">JENIS ON CALL</label><select id="oType"></select></div>
+   </div>
+  </div>
+  <div class="card pvcard"><div class="pvbox" id="pvbox"><div id="pv"></div></div></div>
+ </section>
+</div>
+<div class="bar" id="bar"><div class="in"><div><b id="bT">–</b><span id="bS">–</span></div><button class="btn p" id="bPrint" onclick="doPrint()">🖨️ Cetak</button></div></div>
+
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec', token=sessionStorage.getItem('kkah_session_token');
+const $=id=>document.getElementById(id), esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])), wait=ms=>new Promise(r=>setTimeout(r,ms));
+if(!token) location.replace('./login.html');
+const MON=['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'], DAY=['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+const DOCS=[{id:'oncall',e:'📞',t:'Jadual On Call',d:'Dressing · Methadone · CSSD & Dressing',ready:true},{id:'bulanan',e:'🗓️',t:'Jadual Bertugas Bulanan',d:'PPP & pemandu on call, nama petugas',ready:false}];
+let META=null, step=1, doc=null, rows=[], reqN=0, running=false;
+function api(b){return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({token},b))}).then(r=>r.json());}
+
+/* ---------- steps ---------- */
+function show(n){
+  step=n;['s1','s2','s3'].forEach((id,i)=>$(id).hidden=(i+1)!==n);
+  [1,2,3].forEach(i=>{const e=$('st'+i);e.className=i===n?'on':i<n?'done':'';e.firstChild.textContent=i<n?'✓':i;});
+  $('l1').classList.toggle('fill',n>1);$('l2').classList.toggle('fill',n>2);
+  $('bar').classList.toggle('show',n===3&&rows.length>0);
+  $('sub').textContent=['','Semak sambungan dahulu','Pilih dokumen','Pratonton & cetak'][n];
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function goBack(){ if(step===3) show(2); else if(step===2) show(1); else location.href='./dashboard.html'; }
+
+/* ---------- connection checks ---------- */
+function setRow(id,state,detail){
+  const r=$(id);r.className='ck '+state;const ic=r.querySelector('.ico'),sv=ic.querySelector('svg'),em=ic.querySelector('.em');
+  if(state==='ok'||state==='warn'||state==='bad'){em.hidden=true;sv.removeAttribute('hidden');sv.firstElementChild.setAttribute('d',state==='ok'?'M4 12.5l5 5L20 6.5':state==='warn'?'M12 6v7M12 18h.01':'M6 6l12 12M18 6L6 18');
+    sv.style.animation='none';void sv.offsetWidth;sv.style.animation='';}
+  else{em.hidden=false;sv.setAttribute('hidden','');}
+  r.querySelector('.t span').innerHTML=detail||'';
+}
+function probe(ip){
+  return new Promise(res=>{
+    const t0=performance.now(),ac=new AbortController(),to=setTimeout(()=>{ac.abort();res('timeout');},3500);
+    fetch('https://'+ip+'/',{mode:'no-cors',cache:'no-store',signal:ac.signal})
+      .then(()=>{clearTimeout(to);res('up');})
+      .catch(()=>{clearTimeout(to);res(performance.now()-t0<2300?'up':'timeout');});   // quick refusal/TLS error = something answered
+  });
+}
+async function runChecks(){
+  if(running)return;running=true;$('ckBtns').innerHTML='';$('ckNote').hidden=true;$('chip').classList.remove('show');
+  setRow('ckNet','idle','Menunggu…');setRow('ckPrn','idle','Menunggu…');
+  // 1) network
+  setRow('ckNet','run','Menyemak sambungan<span class="dots"></span>');await wait(700);
+  const con=navigator.connection||{}, kind=({wifi:'Wi-Fi',ethernet:'LAN',cellular:'Data mudah alih'})[con.type]||'';
+  if(!navigator.onLine){setRow('ckNet','bad','Tiada internet. Sambung ke Wi-Fi / LAN klinik.');return fail('Cuba lagi');}
+  try{META=await api({action:'printMeta'});}catch(e){META=null;}
+  if(!META||!META.ok){
+    if(META&&/expired/i.test(META.error||''))return location.replace('./login.html');
+    setRow('ckNet','bad','Pelayan SIAGA tidak dapat dicapai. Semak internet.');return fail('Cuba lagi');}
+  const cell=con.type==='cellular';
+  setRow('ckNet',cell?'warn':'ok',cell?'Data mudah alih dikesan. Sambung ke Wi-Fi klinik untuk mencetak.':'Disambungkan'+(kind?' · '+kind:''));
+  // 2) printer
+  await wait(450);setRow('ckPrn','run','Mencari '+esc(META.printer.name)+'<span class="dots"></span>');
+  const [pr]=await Promise.all([probe(META.printer.ip),wait(1100)]);
+  const up=pr==='up';
+  setRow('ckPrn',up?'ok':'warn',up?esc(META.printer.name)+' dikesan di rangkaian':'Tidak dapat disahkan dari peranti ini. Pastikan pencetak dihidupkan dan anda di Wi-Fi/LAN klinik.');
+  running=false;
+  const good=up&&!cell;
+  $('chipT').textContent=good?'Bersedia':'Belum pasti';$('chip').classList.toggle('warn',!good);$('chip').classList.add('show');
+  if(good){await wait(900);if(step===1)show(2);return;}
+  $('ckNote').hidden=false;
+  $('ckBtns').innerHTML='<button class="btn" onclick="runChecks()">↻ Semak semula</button><button class="btn p" onclick="show(2)">Teruskan juga →</button>';
+  function fail(t){running=false;$('ckBtns').innerHTML='<button class="btn p" onclick="runChecks()">↻ '+t+'</button>';}
+}
+function recheck(){show(1);runChecks();}
+
+/* ---------- documents ---------- */
+function buildDocs(){
+  $('docs').innerHTML=DOCS.map((d,i)=>'<button class="doc'+(d.ready?'':' soon')+'" style="animation-delay:'+i*90+'ms" '+(d.ready?'onclick="openDoc(\''+d.id+'\')"':'tabindex="-1" aria-disabled="true"')+'><span class="e">'+d.e+'</span><b>'+esc(d.t)+'</b><span>'+esc(d.d)+'</span>'+(d.ready?'':'<em>AKAN DATANG</em>')+'</button>').join('');
+}
+function openDoc(id){
+  doc=id;const now=META.today?new Date(META.today+'T12:00:00'):new Date();
+  $('oYear').innerHTML=(META.years.length?META.years:[now.getFullYear()]).map(y=>'<option>'+y+'</option>').join('');
+  if(META.years.includes(now.getFullYear()))$('oYear').value=now.getFullYear();
+  $('oMonth').innerHTML=MON.map((m,i)=>'<option value="'+(i+1)+'">'+m+'</option>').join('');$('oMonth').value=now.getMonth()+1;
+  $('oType').innerHTML=META.types.map(t=>'<option value="'+esc(t.key)+'">'+esc(t.label)+'</option>').join('');
+  show(3);load();
+}
+['oYear','oMonth','oType'].forEach(id=>$(id).addEventListener('change',()=>load()));
+
+/* ---------- preview ---------- */
+function fit(){const b=$('pvbox'),p=$('pv');if(!b.clientWidth)return;const s=Math.min(1,b.clientWidth/794);p.style.transform='scale('+s+')';b.style.height=(p.offsetHeight*s)+'px';}
+addEventListener('resize',fit);
+async function load(){
+  const n=++reqN,y=$('oYear').value,m=$('oMonth').value,t=$('oType').value;
+  $('bar').classList.remove('show');$('pv').innerHTML='<div class="skel"></div>';fit();
+  let r;try{r=await api({action:'printOnCall',year:y,month:m,type:t});}catch(e){r={ok:false,error:'Tiada sambungan.'};}
+  if(n!==reqN)return;
+  if(!r.ok){if(/expired/i.test(r.error||''))return location.replace('./login.html');rows=[];$('pv').innerHTML='<div class="empty"><span class="e">⚠️</span>'+esc(r.error)+'</div>';fit();return;}
+  rows=r.rows;
+  if(!rows.length){$('pv').innerHTML='<div class="empty" style="background:var(--card);border-radius:14px"><span class="e">📭</span>Tiada petugas <b>'+esc($('oType').selectedOptions[0].text)+'</b> pada '+MON[m-1]+' '+y+'.</div>';fit();return;}
+  $('pv').innerHTML=sheetHtml(y,m,t);fit();
+  $('bT').textContent=$('oType').selectedOptions[0].text;$('bS').textContent=MON[m-1]+' '+y+' · '+rows.length+' baris';$('bar').classList.add('show');
+}
+function sheetHtml(y,m,t){
+  const ty=META.types.find(x=>x.key===t)||{label:t,sub:''},H=META.header;
+  const tr=rows.map(r=>{const d=r.date.split('-');return '<tr><td class="c">'+d[2]+'/'+d[1]+'/'+d[0]+'</td><td class="c">'+DAY[r.dow]+'</td><td class="c">'+esc(r.time)+'</td><td>'+esc(r.name)+'</td></tr>';}).join('');
+  return '<div class="sheet"><h1>'+esc(H.klinik)+'</h1><div class="k">&nbsp;</div><div class="j">JADUAL '+esc(ty.label.toUpperCase())+'</div>'+(ty.sub?'<div class="s">'+esc(ty.sub)+'</div>':'')+
+   '<div class="tb"><span>TAHUN : '+y+'</span><span>BULAN : '+MON[m-1].toUpperCase()+'</span></div>'+
+   '<table><thead><tr><th>TARIKH</th><th>HARI</th><th>MASA</th><th>NAMA PETUGAS</th></tr></thead><tbody>'+tr+'</tbody></table>'+
+   '<div class="fn">*JADUAL TUGAS ON CALL INI BOLEH BERUBAH SEKIRANYA STAF YANG BERTUGAS TIDAK DAPAT HADIR ATAS SEBAB YANG TIDAK DAPAT DIELAKKAN.</div>'+
+   '<div class="sg">Disahkan oleh<div class="sp"></div><b>'+esc(H.ketua)+'</b><br>'+esc(H.jawatan)+'<br>NO. PENDAFTARAN : '+esc(H.noreg)+'<br>'+esc(H.klinik)+'</div></div>';
+}
+function doPrint(){
+  if(!rows.length)return;const old=document.title,t=$('oType').selectedOptions[0].text.replace(/[^\w]+/g,'_');
+  document.title='Jadual_'+t+'_'+$('oYear').value+'-'+String($('oMonth').value).padStart(2,'0');
+  setTimeout(()=>{window.print();setTimeout(()=>document.title=old,500);},50);
+}
+buildDocs();runChecks();
+</script></body></html>
