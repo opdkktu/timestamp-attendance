@@ -236,7 +236,7 @@
   <div id="shOdoWrap"><label for="shOdo">Bacaan odometer (km) — pilihan</label><input type="number" id="shOdo" inputmode="numeric" min="0" placeholder="cth. 125430"></div>
   <div class="hint" id="shOdoNote" style="display:none">Ambulans: odometer diambil daripada <b>Ambulance checklist</b> yang diisi pemandu setiap hari — tidak perlu diisi di sini.</div>
 
-  <label class="confirm" for="shOk"><input type="checkbox" id="shOk"><span>Saya <b>sahkan</b> amaun, liter dan tarikh di atas sepadan dengan resit.</span></label>
+  <label class="confirm" for="shOk"><input type="checkbox" id="shOk"><span>Saya <b>sahkan</b> amaun, liter, tarikh dan odometer (jika ada) di atas sepadan dengan resit.</span></label>
   <div class="btns"><button class="btn ghost" id="shCancel" type="button">Batal</button><button class="btn primary" id="shSave" type="button" disabled>Simpan resit</button></div>
 </div></div>
 
@@ -561,9 +561,9 @@ $('csvBtn').onclick = () => {
 };
 
 /* ---------- add-receipt sheet ---------- */
-let imgB64 = '', autoFilled = { amt:null, lit:null, date:null }, usedAuto = false, saving = false, reading = false;
+let imgB64 = '', autoFilled = { amt:null, lit:null, date:null, odo:null }, usedAuto = false, saving = false, reading = false;
 function openSheet(){
-  imgB64 = ''; autoFilled = { amt:null, lit:null, date:null }; usedAuto = false;
+  imgB64 = ''; autoFilled = { amt:null, lit:null, date:null, odo:null }; usedAuto = false;
   $('shVeh').innerHTML = ov.vehicles.map(v => '<option value="' + esc(v.id) + '"' + (v.id === vid ? ' selected' : '') + '>' + esc(v.name) + (v.plate && v.plate.indexOf('ISI') !== 0 ? ' — ' + esc(v.plate) : '') + '</option>').join('');
   ['shAmt','shLit','shOdo'].forEach(i => { $(i).value = ''; $(i).classList.remove('auto'); });
   $('shDate').classList.remove('auto');
@@ -634,22 +634,27 @@ async function onReceiptPicked(ev){
       const put = (id, v, key) => { if(v !== null && v !== undefined && v !== ''){ $(id).value = v; $(id).classList.add('auto'); autoFilled[key] = String(v); } };
       if(res.amount !== null){ put('shAmt', res.amount.toFixed(2), 'amt'); put('shLit', res.litres, 'lit'); usedAuto = true; }
       if(res.date) put('shDate', res.date, 'date');
+      if(res.odo && $('shOdoWrap').style.display !== 'none') put('shOdo', res.odo, 'odo');   // not for ambulans (its odometer comes from the checklist)
       if(res.confidence === 'high') setRead('ok', '✅ Resit dibaca: <b>' + rm(res.amount) + '</b> · <b>' + res.litres + ' L</b>. Sila semak dengan resit anda, kemudian sahkan.');
       else if(res.confidence === 'medium') setRead('warn', '⚠️ Resit dibaca separa — <b>semak dengan teliti</b> amaun dan liter (ditandakan hijau muda) sebelum sahkan.');
-      else setRead('err', 'Resit tidak dapat dibaca dengan jelas. Sila taip amaun, liter dan tarikh daripada resit.');
+      if(res.odo && $('shOdoWrap').style.display !== 'none'){
+       const last = (ov && ov.km && ov.km.latest && $('shVeh').value === vid) ? ov.km.latest.odo : null;
+       $('shRead').innerHTML += ' Odometer: <b>' + nf(res.odo, 0) + ' km</b>' + (last !== null && res.odo < last ? ' — ⚠️ <b>lebih rendah</b> daripada bacaan terakhir (' + nf(last, 0) + ' km), semak semula.' : '.');
+     }else setRead('err', 'Resit tidak dapat dibaca dengan jelas. Sila taip amaun, liter dan tarikh daripada resit.');
     }
   }catch(err){ setRead('err', esc(err.message || 'Gambar tidak dapat dibaca')); imgB64 = ''; }
   $('shBar').style.display = 'none'; reading = false; updatePpl(); updateSave();
 }
 $('shFile').addEventListener('change', onReceiptPicked);
-['shAmt','shLit','shDate'].forEach(id => $(id).addEventListener('input', () => $(id).classList.remove('auto')));
+['shAmt','shLit','shDate','shOdo'].forEach(id => $(id).addEventListener('input', () => $(id).classList.remove('auto')));
 
 $('shSave').onclick = async () => {
   if(saving) return;
   const edited = usedAuto && (
     (autoFilled.amt !== null && parseFloat($('shAmt').value) !== parseFloat(autoFilled.amt)) ||
     (autoFilled.lit !== null && parseFloat($('shLit').value) !== parseFloat(autoFilled.lit)) ||
-    (autoFilled.date !== null && $('shDate').value !== autoFilled.date));
+    (autoFilled.date !== null && $('shDate').value !== autoFilled.date)) ||
+    (autoFilled.odo !== null && $('shOdo').value !== autoFilled.odo));
   const body = { action:'addFuelLog', vehicleId: $('shVeh').value, date: $('shDate').value, amount: $('shAmt').value, litres: $('shLit').value,
     odometer: $('shOdoWrap').style.display === 'none' ? '' : $('shOdo').value, fuelType: $('shType').value, imageBase64: imgB64, autoRead: usedAuto, edited: edited };
   saving = true; $('shSave').disabled = true; $('shSave').textContent = 'Menyimpan…';
