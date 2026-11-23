@@ -48,7 +48,18 @@
     }
     return best;
   }
-
+/** Odometer printed on the receipt (fleet / card receipts): number on the same line as ODO / ODOMETER / MILEAGE / KM — or on the next line. */
+  function odoFrom(text) {
+    var lines = String(text || '').toUpperCase().split(/\r?\n/), LAB = /(ODOMET|\bODO\b|MILEAGE|\bKM\b|KILOMET|BACAAN\s*ODO)/;
+    for (var i = 0; i < lines.length; i++) {
+      if (!LAB.test(lines[i]) || /LITRE|LITER|\bLTR\b/.test(lines[i])) continue;
+      var seg = lines[i].slice(lines[i].search(LAB)) + ' ' + (lines[i + 1] || '');          // label → end of line, plus next line
+      seg = seg.replace(/(\d)[ ,](?=\d{3}(?!\d))/g, '$1').replace(/(\d)O(?=\d)/g, '$10');
+      var m, re = /(\d{4,7})(?![\d]|[.,]\d)/g;
+      while ((m = re.exec(seg))) { var v = parseInt(m[1], 10); if (v >= 1000) return v; }
+    }
+    return null;
+  }
   function parse(text) {
     var t = clean(text), lines = t.split(/\r?\n/);
     var amtC = [], litC = [], price = null, all = [];
@@ -104,7 +115,7 @@
     }
     return {
       amount: amount, litres: litres, price: (amount && litres) ? Math.round(amount / litres * 1000) / 1000 : null,
-      date: parseDate(t), confidence: confidence, raw: String(text || '')
+      date: parseDate(t),odo: odoFrom(text), confidence: confidence, raw: String(text || '')
     };
   }
 
@@ -153,44 +164,6 @@
     var timeout = new Promise(function (_, rej) { setTimeout(function () { rej(new Error('Bacaan resit mengambil masa terlalu lama.')); }, 60000); });
     return Promise.race([work, timeout]);
   }
-/* ---------------- odometer (dashboard photo) ---------------- */
-  /** Picks the odometer from OCR text: whole numbers of 4–7 digits (trip meters have a decimal → ignored). */
-  function parseOdo(text) {
-    var t = String(text || '').toUpperCase().replace(/[O]/g, '0').replace(/[IL|]/g, '1');
-    var toks = t.match(/\d+(?:[.,]\d+)?/g) || [], c = [];
-    toks.forEach(function (k) {
-      if (/[.,]/.test(k)) return;                                   // 123.4 = trip meter
-      if (k.length >= 4 && k.length <= 7) c.push(k);
-    });
-    if (!c.length) return { odo: null, confidence: 'low', raw: String(text || '') };
-    c.sort(function (a, b) { return b.length - a.length || +b - +a; });
-    return { odo: parseInt(c[0], 10), confidence: c.length === 1 ? 'high' : 'medium', raw: String(text || '') };
-  }
-  function invertCanvas(src) {
-    var c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
-    var x = c.getContext('2d'); x.drawImage(src, 0, 0);
-    try { var d = x.getImageData(0, 0, c.width, c.height), p = d.data; for (var i = 0; i < p.length; i += 4) { p[i] = p[i + 1] = p[i + 2] = 255 - p[i]; } x.putImageData(d, 0, 0); } catch (e) {}
-    return c;
-  }
-  /** SiagaReceipt.readOdo(file, onProgress) → { odo, confidence, raw }. Tries normal, then inverted (light digits on a dark LCD). */
-  function readOdo(file, onProgress) {
-    var work = loadScript(TESS_URL).then(function () { return prepare(file); }).then(function (canvas) {
-      return root.Tesseract.createWorker('eng', 1, {
-        logger: function (m) { if (onProgress && m && m.status === 'recognizing text') onProgress(Math.round((m.progress || 0) * 100)); }
-      }).then(function (w) {
-        var done = function (p) { return w.terminate().then(function () { return p; }); };
-        var fail = function (e) { return w.terminate().then(function () { throw e; }); };
-        return w.setParameters({ tessedit_char_whitelist: '0123456789.', tessedit_pageseg_mode: '11' })
-          .then(function () { return w.recognize(canvas); })
-          .then(function (r) {
-            var p = parseOdo(r.data.text); if (p.odo !== null) return p;
-            return w.recognize(invertCanvas(canvas)).then(function (r2) { var p2 = parseOdo(r2.data.text); return p2.odo !== null ? p2 : p; });
-          }).then(done, fail);
-      });
-    });
-    var timeout = new Promise(function (_, rej) { setTimeout(function () { rej(new Error('Bacaan odometer mengambil masa terlalu lama.')); }, 60000); });
-    return Promise.race([work, timeout]);
-  }
-  root.SiagaReceipt = { read: read, parse: parse,readOdo: readOdo, parseOdo: parseOdo };
+  root.SiagaReceipt = { read: read, parse: parse};
   if (typeof module !== 'undefined') module.exports = root.SiagaReceipt;
 })(typeof window !== 'undefined' ? window : globalThis);
