@@ -637,10 +637,11 @@ async function onReceiptPicked(ev){
       if(res.odo && $('shOdoWrap').style.display !== 'none') put('shOdo', res.odo, 'odo');   // not for ambulans (its odometer comes from the checklist)
       if(res.confidence === 'high') setRead('ok', '✅ Resit dibaca: <b>' + rm(res.amount) + '</b> · <b>' + res.litres + ' L</b>. Sila semak dengan resit anda, kemudian sahkan.');
       else if(res.confidence === 'medium') setRead('warn', '⚠️ Resit dibaca separa — <b>semak dengan teliti</b> amaun dan liter (ditandakan hijau muda) sebelum sahkan.');
+      else setRead('err', 'Resit tidak dapat dibaca dengan jelas. Sila taip amaun, liter dan tarikh daripada resit.');
       if(res.odo && $('shOdoWrap').style.display !== 'none'){
-       const last = (ov && ov.km && ov.km.latest && $('shVeh').value === vid) ? ov.km.latest.odo : null;
-       $('shRead').innerHTML += ' Odometer: <b>' + nf(res.odo, 0) + ' km</b>' + (last !== null && res.odo < last ? ' — ⚠️ <b>lebih rendah</b> daripada bacaan terakhir (' + nf(last, 0) + ' km), semak semula.' : '.');
-     }else setRead('err', 'Resit tidak dapat dibaca dengan jelas. Sila taip amaun, liter dan tarikh daripada resit.');
+        const last = (ov && ov.km && ov.km.latest && $('shVeh').value === vid) ? ov.km.latest.odo : null;
+        $('shRead').innerHTML += ' Odometer: <b>' + nf(res.odo, 0) + ' km</b>' + (last !== null && res.odo < last ? ' — ⚠️ <b>lebih rendah</b> daripada bacaan terakhir (' + nf(last, 0) + ' km), semak semula.' : '.');
+      }
     }
   }catch(err){ setRead('err', esc(err.message || 'Gambar tidak dapat dibaca')); imgB64 = ''; }
   $('shBar').style.display = 'none'; reading = false; updatePpl(); updateSave();
@@ -653,7 +654,7 @@ $('shSave').onclick = async () => {
   const edited = usedAuto && (
     (autoFilled.amt !== null && parseFloat($('shAmt').value) !== parseFloat(autoFilled.amt)) ||
     (autoFilled.lit !== null && parseFloat($('shLit').value) !== parseFloat(autoFilled.lit)) ||
-    (autoFilled.date !== null && $('shDate').value !== autoFilled.date)) ||
+    (autoFilled.date !== null && $('shDate').value !== autoFilled.date) ||
     (autoFilled.odo !== null && $('shOdo').value !== autoFilled.odo));
   const body = { action:'addFuelLog', vehicleId: $('shVeh').value, date: $('shDate').value, amount: $('shAmt').value, litres: $('shLit').value,
     odometer: $('shOdoWrap').style.display === 'none' ? '' : $('shOdo').value, fuelType: $('shType').value, imageBase64: imgB64, autoRead: usedAuto, edited: edited };
