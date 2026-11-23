@@ -210,7 +210,7 @@ function renderSheet(){if(!rows.length)return;$('pv').innerHTML=sheetHtml($('oYe
 function sheetHtml(y,m,t){
   const ty=META.types.find(x=>x.key===t)||{label:t,sub:''},H=META.header,sg=$('oSign').value==='-1'?{name:$('cN').value,jawatan:$('cJ').value,noreg:$('cR').value,sig:''}:SIGNER;
   const tr=rows.map(r=>{const d=r.date.split('-');return '<tr><td class="c">'+d[2]+'/'+d[1]+'/'+d[0]+'</td><td class="c">'+DAY[r.dow]+'</td><td class="c">'+esc(r.time)+'</td><td>'+esc(r.name)+'</td></tr>';}).join('');
-  return '<div class="sheet"><div class="hd"><img src="./jata-negara.png" alt="" onerror="this.remove()"><h1>'+esc(H.klinik)+'</h1></div><div class="j">JADUAL '+esc(ty.label.toUpperCase())+'</div>'+(ty.sub?'<div class="s">'+esc(ty.sub)+'</div>':'')+
+  return '<div class="sheet"><div class="hd"><img src="./logo.png" alt="" onerror="this.remove()"><h1>'+esc(H.klinik)+'</h1></div><div class="j">JADUAL '+esc(ty.label.toUpperCase())+'</div>'+(ty.sub?'<div class="s">'+esc(ty.sub)+'</div>':'')+
    '<div class="tb"><span>TAHUN : '+y+'</span><span>BULAN : '+MON[m-1].toUpperCase()+'</span></div>'+
    '<table><thead><tr><th>TARIKH</th><th>HARI</th><th>MASA</th><th>NAMA PETUGAS</th></tr></thead><tbody>'+tr+'</tbody></table>'+
    '<div class="fn">*JADUAL TUGAS ON CALL INI BOLEH BERUBAH SEKIRANYA STAF YANG BERTUGAS TIDAK DAPAT HADIR ATAS SEBAB YANG TIDAK DAPAT DIELAKKAN.</div>'+
