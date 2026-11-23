@@ -153,7 +153,44 @@
     var timeout = new Promise(function (_, rej) { setTimeout(function () { rej(new Error('Bacaan resit mengambil masa terlalu lama.')); }, 60000); });
     return Promise.race([work, timeout]);
   }
-
-  root.SiagaReceipt = { read: read, parse: parse };
+/* ---------------- odometer (dashboard photo) ---------------- */
+  /** Picks the odometer from OCR text: whole numbers of 4–7 digits (trip meters have a decimal → ignored). */
+  function parseOdo(text) {
+    var t = String(text || '').toUpperCase().replace(/[O]/g, '0').replace(/[IL|]/g, '1');
+    var toks = t.match(/\d+(?:[.,]\d+)?/g) || [], c = [];
+    toks.forEach(function (k) {
+      if (/[.,]/.test(k)) return;                                   // 123.4 = trip meter
+      if (k.length >= 4 && k.length <= 7) c.push(k);
+    });
+    if (!c.length) return { odo: null, confidence: 'low', raw: String(text || '') };
+    c.sort(function (a, b) { return b.length - a.length || +b - +a; });
+    return { odo: parseInt(c[0], 10), confidence: c.length === 1 ? 'high' : 'medium', raw: String(text || '') };
+  }
+  function invertCanvas(src) {
+    var c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+    var x = c.getContext('2d'); x.drawImage(src, 0, 0);
+    try { var d = x.getImageData(0, 0, c.width, c.height), p = d.data; for (var i = 0; i < p.length; i += 4) { p[i] = p[i + 1] = p[i + 2] = 255 - p[i]; } x.putImageData(d, 0, 0); } catch (e) {}
+    return c;
+  }
+  /** SiagaReceipt.readOdo(file, onProgress) → { odo, confidence, raw }. Tries normal, then inverted (light digits on a dark LCD). */
+  function readOdo(file, onProgress) {
+    var work = loadScript(TESS_URL).then(function () { return prepare(file); }).then(function (canvas) {
+      return root.Tesseract.createWorker('eng', 1, {
+        logger: function (m) { if (onProgress && m && m.status === 'recognizing text') onProgress(Math.round((m.progress || 0) * 100)); }
+      }).then(function (w) {
+        var done = function (p) { return w.terminate().then(function () { return p; }); };
+        var fail = function (e) { return w.terminate().then(function () { throw e; }); };
+        return w.setParameters({ tessedit_char_whitelist: '0123456789.', tessedit_pageseg_mode: '11' })
+          .then(function () { return w.recognize(canvas); })
+          .then(function (r) {
+            var p = parseOdo(r.data.text); if (p.odo !== null) return p;
+            return w.recognize(invertCanvas(canvas)).then(function (r2) { var p2 = parseOdo(r2.data.text); return p2.odo !== null ? p2 : p; });
+          }).then(done, fail);
+      });
+    });
+    var timeout = new Promise(function (_, rej) { setTimeout(function () { rej(new Error('Bacaan odometer mengambil masa terlalu lama.')); }, 60000); });
+    return Promise.race([work, timeout]);
+  }
+  root.SiagaReceipt = { read: read, parse: parse,readOdo: readOdo, parseOdo: parseOdo };
   if (typeof module !== 'undefined') module.exports = root.SiagaReceipt;
 })(typeof window !== 'undefined' ? window : globalThis);
