@@ -60,7 +60,7 @@ select{width:100%;height:48px;border-radius:13px;border:1.5px solid var(--line);
 .empty{text-align:center;color:var(--mut);padding:28px 12px;font-size:14px}.empty .e{font-size:34px;display:block;margin-bottom:6px}
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:25;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);transform:translateY(110%);transition:transform .4s cubic-bezier(.2,.8,.2,1)}.bar.show{transform:none}
 .bar .in{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center}.bar .in div{flex:1;font-size:12.5px;color:var(--mut)}.bar .in div b{display:block;color:var(--ink);font-size:14px}
-.bar .btn{flex:none;min-width:150px}.bar .btn:disabled{opacity:.4}
+.bar .btn{flex:none;min-width:110px;padding:0 14px}.bar .in div.hint{display:none}.bar .btn:disabled{opacity:.4}
 [hidden]{display:none!important}
 @keyframes ping{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.9);opacity:0}}
 @keyframes draw{to{stroke-dashoffset:0}}@keyframes slide{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -69,7 +69,7 @@ select{width:100%;height:48px;border-radius:13px;border:1.5px solid var(--line);
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ico svg{stroke-dashoffset:0}}
 @page{size:A4;margin:12mm}
 @media print{
- body{background:#fff;padding:0}.top,.steps,.bar,.nonprint,section>.card:not(.pvcard),.opts{display:none!important}
+ html,body{background:#fff;padding:0;min-height:0!important;height:auto!important}#tst,.top,.steps,.bar,.nonprint,section>.card:not(.pvcard),.opts{display:none!important}
  .wrap{padding:0;max-width:none}.pvcard{border:none;box-shadow:none;padding:0;margin:0}
  .pvbox{overflow:visible;background:none;height:auto!important}#pv{transform:none!important;width:auto!important}
  .sheet{width:auto;min-height:0;padding:0;box-shadow:none;animation:none}
@@ -107,7 +107,7 @@ select{width:100%;height:48px;border-radius:13px;border:1.5px solid var(--line);
   <div class="card pvcard"><div class="pvbox" id="pvbox"><div id="pv"></div></div></div>
  </section>
 </div>
-<div class="bar" id="bar"><div class="in"><div><b id="bT">–</b><span id="bS">–</span></div><button class="btn p" id="bPrint" onclick="doPrint()">🖨️ Cetak</button></div></div>
+<div class="bar" id="bar"><div class="in"><div><b id="bT">–</b><span id="bS">–</span></div><button class="btn" id="bPdf" onclick="doPdf()">📄 PDF</button><button class="btn p" id="bPrint" onclick="doPrint()">🖨️ Cetak</button></div></div>
 
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec', token=sessionStorage.getItem('kkah_session_token');
@@ -216,10 +216,39 @@ function sheetHtml(y,m,t){
    '<div class="fn">*JADUAL TUGAS ON CALL INI BOLEH BERUBAH SEKIRANYA STAF YANG BERTUGAS TIDAK DAPAT HADIR ATAS SEBAB YANG TIDAK DAPAT DIELAKKAN.</div>'+
    '<div class="sg">Disahkan oleh'+(sg.sig?'<img src="'+sg.sig+'" alt="">':'<div class="sp"></div>')+(sg.name?'<b>'+esc(sg.name)+'</b>':'<b>&nbsp;</b>')+(sg.jawatan?'<br>'+esc(sg.jawatan):'')+(sg.noreg?'<br>NO. PENDAFTARAN : '+esc(sg.noreg):'')+'<br>'+esc(H.klinik)+'</div></div>';
 }
+function fname(){return 'Jadual_'+$('oType').selectedOptions[0].text.replace(/[^\w]+/g,'_')+'_'+$('oYear').value+'-'+String($('oMonth').value).padStart(2,'0');}
+/* print() MUST run straight inside the tap (Safari ignores it after a timer). */
 function doPrint(){
-  if(!rows.length)return;const old=document.title,t=$('oType').selectedOptions[0].text.replace(/[^\w]+/g,'_');
-  document.title='Jadual_'+t+'_'+$('oYear').value+'-'+String($('oMonth').value).padStart(2,'0');
-  setTimeout(()=>{window.print();setTimeout(()=>document.title=old,500);},50);
+  if(!rows.length)return;const old=document.title;document.title=fname();
+  addEventListener('afterprint',()=>{document.title=old;},{once:true});
+  try{window.print();}catch(e){toast('Cetak tidak disokong pada pelayar ini. Guna butang PDF.');}
 }
+/* ---------- PDF (works on any phone: share / save, then print from the clinic PC or a print app) ---------- */
+function loadJs(u){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=()=>rej(new Error('Gagal memuat alat PDF (rangkaian).'));document.head.appendChild(s);});}
+async function doPdf(){
+  if(!rows.length||$('bPdf').disabled)return;const b=$('bPdf'),old=b.textContent;b.disabled=true;b.textContent='⏳ …';
+  let host=null;
+  try{
+    if(!window.html2canvas)await loadJs('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    if(!window.jspdf)await loadJs('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    host=document.createElement('div');host.style.cssText='position:fixed;left:-10000px;top:0;width:794px;background:#fff';
+    host.innerHTML=sheetHtml($('oYear').value,$('oMonth').value,$('oType').value);document.body.appendChild(host);
+    const el=host.firstElementChild;el.style.animation='none';el.style.boxShadow='none';
+    await Promise.all([...host.querySelectorAll('img')].map(im=>im.complete?1:new Promise(r=>{im.onload=im.onerror=r;})));
+    const cv=await html2canvas(el,{scale:2,backgroundColor:'#fff',useCORS:true});
+    const pdf=new jspdf.jsPDF({unit:'mm',format:'a4',orientation:'p'}),W=210,H=297,pxPage=Math.floor(cv.width*H/W);
+    for(let y=0,pg=0;y<cv.height;y+=pxPage,pg++){
+      const h=Math.min(pxPage,cv.height-y),c=document.createElement('canvas');c.width=cv.width;c.height=h;
+      const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,h);x.drawImage(cv,0,y,cv.width,h,0,0,cv.width,h);
+      if(pg)pdf.addPage();pdf.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',0,0,W,h*W/cv.width);
+    }
+    const blob=pdf.output('blob'),file=new File([blob],fname()+'.pdf',{type:'application/pdf'});
+    let shared=false;
+    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:fname()});shared=true;}catch(e){if(e&&e.name==='AbortError')shared=true;}}
+    if(!shared){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);toast('PDF disimpan ✓');}
+  }catch(e){toast(e.message||'PDF gagal dijana');}
+  if(host)host.remove();b.disabled=false;b.textContent=old;
+}
+function toast(m){let t=$('tst');if(!t){t=document.createElement('div');t.id='tst';t.style.cssText='position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#16231F;color:#fff;padding:10px 16px;border-radius:12px;font:600 13px Inter,system-ui,sans-serif;z-index:99;max-width:90vw;text-align:center;transition:opacity .3s';document.body.appendChild(t);}t.textContent=m;t.style.opacity=1;clearTimeout(t._h);t._h=setTimeout(()=>t.style.opacity=0,3500);}
 buildDocs();runChecks();
 </script></body></html>
