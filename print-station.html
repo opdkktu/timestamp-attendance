@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ms"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#0F4530">
+<title>Stesen Cetak KKAH</title><link rel="icon" type="image/png" href="./siaga-192.png">
+<style>
+:root{--bg:#0E1A17;--card:#15251F;--ink:#E7F1ED;--mut:#97ADA5;--line:#27403A;--acc:#1A6B4A;--ok:#6fd49a;--warn:#F0B35A;--bad:#F08A7E}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:radial-gradient(900px 600px at 50% -10%,#17352B,var(--bg));color:var(--ink);font-family:Inter,'Segoe UI',system-ui,sans-serif;min-height:100vh;display:grid;place-items:center;padding:20px}
+.st{width:100%;max-width:560px;background:var(--card);border:1px solid var(--line);border-radius:26px;padding:26px;box-shadow:0 20px 60px -20px #000}
+h1{margin:0;font-size:20px}.sub{color:var(--mut);font-size:13px;margin:2px 0 18px}
+.hero{display:flex;align-items:center;gap:16px;padding:18px;border-radius:20px;background:#0f2019;border:1px solid var(--line)}
+.dot{position:relative;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:#17352B;flex:none}
+.dot::before,.dot::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--ok);opacity:0}
+.hero.wait .dot::before{animation:ping 2.2s ease-out infinite}.hero.wait .dot::after{animation:ping 2.2s ease-out 1.1s infinite}
+.hero.busy .dot{animation:spin 1.2s linear infinite;background:#3a2c14}.hero.busy .dot::before{border-color:var(--warn);opacity:.7}
+.hero.bad .dot{background:#3b1c19}.hero.bad .dot::before{border-color:var(--bad);opacity:.7}
+.hero b{display:block;font-size:17px}.hero span{font-size:13px;color:var(--mut)}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.pill{font-size:12px;font-weight:700;padding:5px 11px;border-radius:99px;background:#0f2019;border:1px solid var(--line);color:var(--mut)}
+.pill.ok{color:var(--ok);border-color:#2c5a45}.pill.warn{color:var(--warn);border-color:#6b4f1d}.pill.bad{color:var(--bad);border-color:#6b2c26}
+.btns{display:flex;gap:8px;flex-wrap:wrap}.btn{flex:1;min-width:140px;height:44px;border-radius:13px;border:1.5px solid var(--line);background:#0f2019;color:var(--ink);font:700 13px Inter,system-ui,sans-serif;cursor:pointer}.btn:active{transform:scale(.97)}.btn.p{background:var(--acc);border-color:var(--acc);color:#fff}
+.log{margin:16px 0 0;padding:0;list-style:none;font-size:13px;max-height:210px;overflow:auto}.log li{display:flex;gap:10px;padding:7px 0;border-top:1px dashed var(--line);color:var(--mut)}.log li b{color:var(--ink);font-weight:600}.log li i{font-style:normal;flex:none;width:18px}
+.help{margin-top:14px;font-size:12px;color:var(--mut);line-height:1.5;background:#0f2019;border-radius:12px;padding:10px 12px}
+[hidden]{display:none!important}
+@keyframes ping{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.9);opacity:0}}@keyframes spin{to{transform:rotate(360deg)}}
+/* ---- the sheet that gets printed (same look as print.html) ---- */
+#out{display:none}
+.sheet{width:794px;background:#fff;color:#000;padding:48px 56px;font-family:Arial,Helvetica,sans-serif;font-size:13px}
+.sheet h1{margin:0;text-align:center;font-size:17px;letter-spacing:.3px}.sheet .j{text-align:center;font-weight:700;font-size:15px}.sheet .s{text-align:center;font-size:12px;margin-top:2px}
+.sheet .hd{position:relative;min-height:74px;margin-bottom:6px}.sheet .hd img{position:absolute;left:0;top:0;height:74px;width:auto}.sheet .hd h1{padding:0 90px;line-height:74px;color:#000}
+.sheet .tb{display:flex;justify-content:center;gap:34px;margin:14px 0;font-weight:700}
+.sheet table{width:100%;border-collapse:collapse;margin-top:6px}.sheet th,.sheet td{border:1px solid #000;padding:7px 9px;text-align:left;font-size:13px}.sheet th{background:#e9e9e9;text-align:center}.sheet td.c{text-align:center}.sheet tr{break-inside:avoid}
+.sheet .fn{font-size:11px;margin-top:12px}.sheet .sg{margin-top:34px;font-size:12.5px;line-height:1.5}.sheet .sg .sp{height:46px}.sheet .sg img{display:block;height:58px;max-width:200px;margin:2px 0;mix-blend-mode:multiply}
+@page{size:A4;margin:12mm}
+@media print{html,body{background:#fff!important;min-height:0!important;height:auto!important;padding:0;display:block}.st{display:none!important}#out{display:block}.sheet{width:auto;padding:0}}
+</style></head><body>
+<div class="st" id="ui">
+ <h1>🖨️ Stesen Cetak KKAH</h1><p class="sub">Biarkan halaman ini terbuka di PC klinik. Kerja cetak dari SIAGA akan dicetak sendiri.</p>
+ <div class="hero wait" id="hero"><div class="dot" id="dot">🖨️</div><div><b id="hT">Menyambung…</b><span id="hS">Sila tunggu</span></div></div>
+ <div class="pills"><span class="pill" id="pKey">Kunci: –</span><span class="pill" id="pPush">Notifikasi: –</span><span class="pill" id="pNet">Rangkaian: –</span><span class="pill" id="pLast">Semakan terakhir: –</span></div>
+ <div class="btns"><button class="btn p" id="bNow">↻ Semak kerja sekarang</button><button class="btn" id="bTest">🧪 Cetak ujian</button><button class="btn" id="bPerm" hidden>🔔 Aktifkan notifikasi</button></div>
+ <ul class="log" id="log"></ul>
+ <div class="help" id="help" hidden></div>
+</div>
+<div id="out"></div>
+
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const ONESIGNAL_APP_ID='e6ffc7a0-2572-46da-b664-2a03c6dd210a', STATION_ID='PRINTSTATION';
+const SAFETY_MIN=10;            // one slow safety check (also the heartbeat). 0 = switch it off (push only)
+const $=id=>document.getElementById(id), esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])), wait=ms=>new Promise(r=>setTimeout(r,ms));
+const MON=['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'], DAY=['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+let KEY='';try{KEY=localStorage.getItem('ps_key')||'';}catch(e){}
+(function(){const m=/[#&]key=([A-Za-z0-9]+)/.exec(location.hash);if(m){KEY=m[1];try{localStorage.setItem('ps_key',KEY);}catch(e){}history.replaceState(null,'',location.pathname);}})();
+function api(b){return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({key:KEY},b))}).then(r=>r.json());}
+function pill(id,cls,t){const e=$(id);e.className='pill '+cls;e.textContent=t;}
+function hero(cls,ico,t,s){$('hero').className='hero '+cls;$('dot').textContent=ico;$('hT').textContent=t;$('hS').textContent=s||'';}
+const LOG=[];function log(ic,t){LOG.unshift([ic,t,new Date().toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'})]);LOG.length=Math.min(LOG.length,12);$('log').innerHTML=LOG.map(x=>'<li><i>'+x[0]+'</i><span><b>'+esc(x[1])+'</b> · '+x[2]+'</span></li>').join('');}
+function idle(){hero('wait','🖨️','Menunggu kerja cetak','Stesen aktif. Anda boleh biarkan tetingkap ini.');}
+
+/* ---------- sheet ---------- */
+function sheetHtml(d){
+  const H=d.header,sg=d.signer||{},tr=d.rows.map(r=>{const x=r.date.split('-');return '<tr><td class="c">'+x[2]+'/'+x[1]+'/'+x[0]+'</td><td class="c">'+DAY[r.dow]+'</td><td class="c">'+esc(r.time)+'</td><td>'+esc(r.name)+'</td></tr>';}).join('');
+  return '<div class="sheet"><div class="hd"><img src="./jata-negara.png" alt="" onerror="this.remove()"><h1>'+esc(H.klinik)+'</h1></div><div class="j">JADUAL '+esc(d.typeLabel.toUpperCase())+'</div>'+(d.sub?'<div class="s">'+esc(d.sub)+'</div>':'')+
+   '<div class="tb"><span>TAHUN : '+d.year+'</span><span>BULAN : '+MON[d.month-1].toUpperCase()+'</span></div>'+
+   '<table><thead><tr><th>TARIKH</th><th>HARI</th><th>MASA</th><th>NAMA PETUGAS</th></tr></thead><tbody>'+tr+'</tbody></table>'+
+   '<div class="fn">*JADUAL TUGAS ON CALL INI BOLEH BERUBAH SEKIRANYA STAF YANG BERTUGAS TIDAK DAPAT HADIR ATAS SEBAB YANG TIDAK DAPAT DIELAKKAN.</div>'+
+   '<div class="sg">Disahkan oleh'+(sg.sig?'<img src="'+sg.sig+'" alt="">':'<div class="sp"></div>')+(sg.name?'<b>'+esc(sg.name)+'</b>':'<b>&nbsp;</b>')+(sg.jawatan?'<br>'+esc(sg.jawatan):'')+(sg.noreg?'<br>NO. PENDAFTARAN : '+esc(sg.noreg):'')+'<br>'+esc(H.klinik)+'</div></div>';
+}
+function testHtml(){return '<div class="sheet" style="min-height:300px"><h1>UJIAN CETAK — STESEN CETAK KKAH</h1><p style="text-align:center;margin-top:24px">Jika anda membaca ini di atas kertas, stesen cetak berfungsi.</p><p style="text-align:center">'+new Date().toLocaleString('ms-MY')+'</p></div>';}
+async function imagesReady(){await Promise.all([...$('out').querySelectorAll('img')].map(im=>im.complete?1:new Promise(r=>{im.onload=im.onerror=r;})));}
+function printOnce(){
+  return new Promise(res=>{let done=false;const t0=Date.now(),fin=()=>{if(!done){done=true;res(Date.now()-t0);}};
+    addEventListener('afterprint',fin,{once:true});try{window.print();}catch(e){fin();}setTimeout(fin,25000);});
+}
+async function printHtml(html,copies){
+  $('out').innerHTML=html;await imagesReady();await wait(150);
+  let slow=false;for(let i=0;i<copies;i++){const ms=await printOnce();if(ms>20000)slow=true;await wait(600);}
+  $('out').innerHTML='';
+  $('help').hidden=!slow;if(slow)$('help').innerHTML='⚠️ Cetakan mengambil masa lama — kemungkinan tetingkap cetak Chrome terbuka. Chrome mesti dimulakan dengan <b>--kiosk-printing</b> (lihat arahan pemasangan) dan pencetak lalai ialah Sharp.';
+}
+
+/* ---------- jobs ---------- */
+let busy=false,again=false;
+async function pull(why){
+  if(!KEY)return;if(busy){again=true;return;}busy=true;
+  try{
+    do{again=false;
+      let r;try{r=await api({action:'printStationPull'});}catch(e){pill('pNet','bad','Rangkaian: terputus');hero('bad','⚠️','Tiada sambungan','Akan cuba lagi bila rangkaian pulih.');return;}
+      pill('pNet','ok','Rangkaian: baik');
+      if(!r.ok){pill('pKey','bad','Kunci: tidak sah');hero('bad','🔑','Kunci stesen tidak sah','Buka semula URL pemasangan daripada printSetup().');return;}
+      pill('pKey','ok','Kunci: sah');pill('pLast','ok','Semakan terakhir: '+new Date().toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'}));
+      for(const j of r.jobs){
+        hero('busy','⏳','Mencetak…',j.label+' · oleh '+j.by);
+        try{await printHtml(sheetHtml(j.data),j.copies);await api({action:'printStationDone',id:j.id,ok:true});log('✅',j.label+' — '+j.by);}
+        catch(e){try{await api({action:'printStationDone',id:j.id,ok:false,note:String(e.message||e)});}catch(_){}log('❌',j.label+' gagal');}
+      }
+      if(r.jobs.length>=5)again=true;
+    }while(again);
+    idle();
+  }finally{busy=false;}
+}
+
+/* ---------- start-up ---------- */
+$('bNow').onclick=()=>pull('manual');
+$('bTest').onclick=async()=>{if(busy)return;busy=true;hero('busy','🧪','Cetak ujian…','');try{await printHtml(testHtml(),1);log('🧪','Cetak ujian dihantar');}finally{busy=false;idle();}};
+addEventListener('online',()=>pull('online'));addEventListener('offline',()=>pill('pNet','bad','Rangkaian: terputus'));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pull('visible');});
+if('serviceWorker' in navigator){navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.type==='siaga-print')pull('push');});}
+if(SAFETY_MIN>0)setInterval(()=>pull('safety'),SAFETY_MIN*60000);
+
+/* OneSignal: this page logs in as PRINTSTATION so the server can push a wake-up to it */
+function permUi(){try{const ok=window._os&&window._os.Notifications.permission;pill('pPush',ok?'ok':'warn','Notifikasi: '+(ok?'aktif':'belum dibenarkan'));$('bPerm').hidden=!!ok;}catch(e){}}
+window.OneSignalDeferred=window.OneSignalDeferred||[];
+setTimeout(()=>{if(!window._osReady)pill('pPush','bad','Notifikasi: tidak dimuatkan');},12000);
+OneSignalDeferred.push(async function(OneSignal){
+  try{
+    const base=location.pathname.replace(/[^/]*$/,'');
+    await OneSignal.init({appId:ONESIGNAL_APP_ID,serviceWorkerPath:base+'sw.js',serviceWorkerParam:{scope:base},notifyButton:{enable:false},allowLocalhostAsSecureOrigin:true});
+    window._os=OneSignal;window._osReady=true;
+    await OneSignal.login(STATION_ID);
+    OneSignal.Notifications.addEventListener('foregroundWillDisplay',ev=>{const d=(ev&&ev.notification&&ev.notification.additionalData)||{};if(d.type==='print')pull('push-fg');});
+    OneSignal.Notifications.addEventListener('permissionChange',permUi);
+    permUi();
+  }catch(e){pill('pPush','bad','Notifikasi: ralat');console.warn(e);}
+});
+$('bPerm').onclick=async()=>{try{await window._os.Notifications.requestPermission();}catch(e){}permUi();};
+
+if(!KEY){pill('pKey','bad','Kunci: belum ada');hero('bad','🔑','Stesen belum disediakan','Buka URL pemasangan (daripada printSetup() di Apps Script) sekali di PC ini.');}
+else{pill('pKey','warn','Kunci: menyemak…');api({action:'printStationPing'}).then(r=>{if(!r.ok){pill('pKey','bad','Kunci: tidak sah');hero('bad','🔑','Kunci stesen tidak sah',r.error||'');return;}pill('pKey','ok','Kunci: sah');pill('pNet','ok','Rangkaian: baik');idle();if(r.pending)pull('start');}).catch(()=>{pill('pNet','bad','Rangkaian: terputus');hero('bad','⚠️','Tiada sambungan','Akan cuba lagi.');});}
+</script></body></html>
