@@ -15,6 +15,16 @@ self.addEventListener('push', (event) => {
     }));
   } catch (e) {}
 });
+// Print station: a push meant for the clinic PC wakes its print-station page.
+self.addEventListener('push', (event) => {
+  try {
+    let raw = ''; try { raw = event.data ? event.data.text() : ''; } catch (e) {}
+    if (raw.indexOf('print-station.html') < 0) return;
+    event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      list.forEach((c) => { try { c.postMessage({ type: 'siaga-print' }); } catch (e) {} });
+    }));
+  } catch (e) {}
+});
 const CACHE_NAME = 'kkah-hr-shell-' + APP_VERSION;
 const SHELL_FILES = [
   './login.html',
