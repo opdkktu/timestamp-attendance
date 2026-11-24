@@ -59,8 +59,8 @@ select{width:100%;height:48px;border-radius:13px;border:1.5px solid var(--line);
 .skel{height:320px;background:linear-gradient(90deg,#e6ece9 25%,#f4f7f6 50%,#e6ece9 75%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:10px}
 .empty{text-align:center;color:var(--mut);padding:28px 12px;font-size:14px}.empty .e{font-size:34px;display:block;margin-bottom:6px}
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:25;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);transform:translateY(110%);transition:transform .4s cubic-bezier(.2,.8,.2,1)}.bar.show{transform:none}
-.bar .in{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center}.bar .in div{flex:1;font-size:12.5px;color:var(--mut)}.bar .in div b{display:block;color:var(--ink);font-size:14px}
-.bar .btn{flex:none;min-width:110px;padding:0 14px}.bar .in div.hint{display:none}.bar .btn:disabled{opacity:.4}
+.bar .in{max-width:760px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.bar .in div{flex:1 1 100%;font-size:12.5px;color:var(--mut)}.bar .in div b{display:block;color:var(--ink);font-size:14px}
+.bar .btn{flex:1 1 0;min-width:0;padding:0 8px;font-size:13px;height:44px}.bar .btn.p{flex:1.6 1 0}.bar .in div.hint{display:none}.bar .btn:disabled{opacity:.4}
 [hidden]{display:none!important}
 @keyframes ping{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.9);opacity:0}}
 @keyframes draw{to{stroke-dashoffset:0}}@keyframes slide{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -81,11 +81,11 @@ select{width:100%;height:48px;border-radius:13px;border:1.5px solid var(--line);
 
  <section id="s1">
   <div class="card">
-   <h2>Semakan sambungan</h2><p class="sub">Pencetak klinik hanya boleh dicapai dari Wi-Fi / LAN klinik.</p>
+   <h2>Semakan sambungan</h2><p class="sub">Cetakan dihantar ke PC klinik, jadi anda boleh guna Wi-Fi atau data mudah alih.</p>
    <div class="ck idle" id="ckNet"><div class="ico"><span class="em">📶</span><svg viewBox="0 0 24 24" hidden><path d="M4 12.5l5 5L20 6.5"/></svg></div><div class="t"><b>Rangkaian</b><span>Menunggu…</span></div></div>
-   <div class="ck idle" id="ckPrn"><div class="ico"><span class="em">🖨️</span><svg viewBox="0 0 24 24" hidden><path d="M4 12.5l5 5L20 6.5"/></svg></div><div class="t"><b>Pencetak</b><span>Menunggu…</span></div></div>
+   <div class="ck idle" id="ckPrn"><div class="ico"><span class="em">🖨️</span><svg viewBox="0 0 24 24" hidden><path d="M4 12.5l5 5L20 6.5"/></svg></div><div class="t"><b>Stesen cetak klinik</b><span>Menunggu…</span></div></div>
    <div class="btns" id="ckBtns"></div>
-   <div class="note" id="ckNote" hidden>Semakan ini <b>anggaran sahaja</b> — pelayar tidak boleh membaca nama Wi-Fi atau status sebenar pencetak. Jika ragu, teruskan dan cuba cetak.</div>
+   <div class="note" id="ckNote" hidden>Jika stesen tidak aktif, kerja cetak tetap <b>disimpan</b> dan dicetak sendiri bila PC klinik dihidupkan (dalam 12 jam). Anda juga boleh simpan PDF atau cetak dari peranti ini.</div>
   </div>
  </section>
 
@@ -102,12 +102,13 @@ select{width:100%;height:48px;border-radius:13px;border:1.5px solid var(--line);
     <div><label for="oMonth">BULAN</label><select id="oMonth"></select></div>
     <div class="w"><label for="oType">JENIS ON CALL</label><select id="oType"></select></div>
     <div class="w"><label for="oSign">DISAHKAN OLEH</label><select id="oSign"></select><div class="cust" id="cust" hidden><input id="cN" placeholder="Nama" maxlength="80"><input id="cJ" placeholder="Jawatan" maxlength="120"><input id="cR" placeholder="No. pendaftaran (pilihan)" maxlength="30"></div></div>
+    <div><label for="oCopy">SALINAN</label><select id="oCopy"><option>1</option><option>2</option><option>3</option></select></div>
    </div>
   </div>
   <div class="card pvcard"><div class="pvbox" id="pvbox"><div id="pv"></div></div></div>
  </section>
 </div>
-<div class="bar" id="bar"><div class="in"><div><b id="bT">–</b><span id="bS">–</span></div><button class="btn" id="bPdf" onclick="doPdf()">📄 PDF</button><button class="btn p" id="bPrint" onclick="doPrint()">🖨️ Cetak</button></div></div>
+<div class="bar" id="bar"><div class="in"><div><b id="bT">–</b><span id="bS">–</span></div><button class="btn p" id="bSend" onclick="sendToStation()">🚀 Cetak di klinik</button><button class="btn" id="bPdf" onclick="doPdf()">📄 PDF</button><button class="btn" id="bPrint" onclick="doPrint()">🖨️ Di sini</button></div></div>
 
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec', token=sessionStorage.getItem('kkah_session_token');
@@ -137,14 +138,7 @@ function setRow(id,state,detail){
   else{em.hidden=false;sv.setAttribute('hidden','');}
   r.querySelector('.t span').innerHTML=detail||'';
 }
-function probe(ip){
-  return new Promise(res=>{
-    const t0=performance.now(),ac=new AbortController(),to=setTimeout(()=>{ac.abort();res('timeout');},3500);
-    fetch('https://'+ip+'/',{mode:'no-cors',cache:'no-store',signal:ac.signal})
-      .then(()=>{clearTimeout(to);res('up');})
-      .catch(()=>{clearTimeout(to);res(performance.now()-t0<2300?'up':'timeout');});   // quick refusal/TLS error = something answered
-  });
-}
+function agoTxt(a){return a<90?'baru sahaja':a<5400?Math.round(a/60)+' min lalu':Math.round(a/3600)+' jam lalu';}
 async function runChecks(){
   if(running)return;running=true;$('ckBtns').innerHTML='';$('ckNote').hidden=true;$('chip').classList.remove('show');
   setRow('ckNet','idle','Menunggu…');setRow('ckPrn','idle','Menunggu…');
@@ -156,16 +150,14 @@ async function runChecks(){
   if(!META||!META.ok){
     if(META&&/expired/i.test(META.error||''))return location.replace('./login.html');
     setRow('ckNet','bad','Pelayan SIAGA tidak dapat dicapai. Semak internet.');return fail('Cuba lagi');}
-  const cell=con.type==='cellular';
-  setRow('ckNet',cell?'warn':'ok',cell?'Data mudah alih dikesan. Sambung ke Wi-Fi klinik untuk mencetak.':'Disambungkan'+(kind?' · '+kind:''));
-  // 2) printer
-  await wait(450);setRow('ckPrn','run','Mencari '+esc(META.printer.name)+'<span class="dots"></span>');
-  const [pr]=await Promise.all([probe(META.printer.ip),wait(1100)]);
-  const up=pr==='up';
-  setRow('ckPrn',up?'ok':'warn',up?esc(META.printer.name)+' dikesan di rangkaian':'Tidak dapat disahkan dari peranti ini. Pastikan pencetak dihidupkan dan anda di Wi-Fi/LAN klinik.');
+  setRow('ckNet','ok','Disambungkan'+(kind?' · '+kind:''));
+  // 2) print station (the clinic PC reports in when it is on)
+  await wait(450);setRow('ckPrn','run','Menyemak stesen cetak<span class="dots"></span>');await wait(900);
+  const ago=META.station&&META.station.ago, alive=ago!==null&&ago!==undefined&&ago<=1200;
+  setRow('ckPrn',alive?'ok':'warn',alive?'Stesen aktif · dilihat '+agoTxt(ago):(ago==null?'Stesen belum dikesan. PC klinik mungkin belum dihidupkan.':'Stesen senyap sejak '+agoTxt(ago)+'. PC klinik mungkin dimatikan.'));
   running=false;
-  const good=up&&!cell;
-  $('chipT').textContent=good?'Bersedia':'Belum pasti';$('chip').classList.toggle('warn',!good);$('chip').classList.add('show');
+  const good=alive;
+  $('chipT').textContent=good?'Stesen aktif':'Stesen senyap';$('chip').classList.toggle('warn',!good);$('chip').classList.add('show');
   if(good){await wait(900);if(step===1)show(2);return;}
   $('ckNote').hidden=false;
   $('ckBtns').innerHTML='<button class="btn" onclick="runChecks()">↻ Semak semula</button><button class="btn p" onclick="show(2)">Teruskan juga →</button>';
@@ -210,11 +202,29 @@ function renderSheet(){if(!rows.length)return;$('pv').innerHTML=sheetHtml($('oYe
 function sheetHtml(y,m,t){
   const ty=META.types.find(x=>x.key===t)||{label:t,sub:''},H=META.header,sg=$('oSign').value==='-1'?{name:$('cN').value,jawatan:$('cJ').value,noreg:$('cR').value,sig:''}:SIGNER;
   const tr=rows.map(r=>{const d=r.date.split('-');return '<tr><td class="c">'+d[2]+'/'+d[1]+'/'+d[0]+'</td><td class="c">'+DAY[r.dow]+'</td><td class="c">'+esc(r.time)+'</td><td>'+esc(r.name)+'</td></tr>';}).join('');
-  return '<div class="sheet"><div class="hd"><img src="./logo.png" alt="" onerror="this.remove()"><h1>'+esc(H.klinik)+'</h1></div><div class="j">JADUAL '+esc(ty.label.toUpperCase())+'</div>'+(ty.sub?'<div class="s">'+esc(ty.sub)+'</div>':'')+
+  return '<div class="sheet"><div class="hd"><img src="./jata-negara.png" alt="" onerror="this.remove()"><h1>'+esc(H.klinik)+'</h1></div><div class="j">JADUAL '+esc(ty.label.toUpperCase())+'</div>'+(ty.sub?'<div class="s">'+esc(ty.sub)+'</div>':'')+
    '<div class="tb"><span>TAHUN : '+y+'</span><span>BULAN : '+MON[m-1].toUpperCase()+'</span></div>'+
    '<table><thead><tr><th>TARIKH</th><th>HARI</th><th>MASA</th><th>NAMA PETUGAS</th></tr></thead><tbody>'+tr+'</tbody></table>'+
    '<div class="fn">*JADUAL TUGAS ON CALL INI BOLEH BERUBAH SEKIRANYA STAF YANG BERTUGAS TIDAK DAPAT HADIR ATAS SEBAB YANG TIDAK DAPAT DIELAKKAN.</div>'+
    '<div class="sg">Disahkan oleh'+(sg.sig?'<img src="'+sg.sig+'" alt="">':'<div class="sp"></div>')+(sg.name?'<b>'+esc(sg.name)+'</b>':'<b>&nbsp;</b>')+(sg.jawatan?'<br>'+esc(sg.jawatan):'')+(sg.noreg?'<br>NO. PENDAFTARAN : '+esc(sg.noreg):'')+'<br>'+esc(H.klinik)+'</div></div>';
+}
+let jobWatch=0;
+async function sendToStation(){
+  if(!rows.length||$('bSend').disabled)return;const b=$('bSend'),old=b.textContent;b.disabled=true;b.textContent='⏳ Menghantar…';
+  const sv=$('oSign').value,custom=sv==='-1'?{name:$('cN').value,jawatan:$('cJ').value,noreg:$('cR').value}:null;
+  let r;try{r=await api({action:'printSubmit',doc:'oncall',year:$('oYear').value,month:$('oMonth').value,type:$('oType').value,signer:sv==='-1'?0:sv,custom,copies:$('oCopy').value});}catch(e){r={ok:false,error:'Tiada sambungan.'};}
+  if(!r.ok){if(/expired/i.test(r.error||''))return location.replace('./login.html');toast(r.error||'Gagal menghantar');b.disabled=false;b.textContent=old;return;}
+  const alive=r.station&&r.station.ago!=null&&r.station.ago<=1200,my=++jobWatch;
+  toast(alive?'Dihantar ke pencetak klinik ✓':'Stesen tidak aktif — kerja disimpan, dicetak bila PC klinik hidup.');
+  b.textContent='📨 Dihantar…';
+  for(let i=0;i<10&&my===jobWatch;i++){                       // short look after sending only (you also get a notification when it is done)
+    await wait(4000);let s;try{s=await api({action:'printJobStatus',id:r.id});}catch(e){continue;}
+    if(!s.ok)break;
+    if(s.status==='PRINTING')b.textContent='🖨️ Sedang dicetak…';
+    if(s.status==='PRINTED'){toast('Dicetak di klinik ✓');break;}
+    if(s.status==='FAILED'||s.status==='EXPIRED'){toast('Cetakan gagal: '+(s.note||s.status));break;}
+  }
+  b.disabled=false;b.textContent=old;
 }
 function fname(){return 'Jadual_'+$('oType').selectedOptions[0].text.replace(/[^\w]+/g,'_')+'_'+$('oYear').value+'-'+String($('oMonth').value).padStart(2,'0');}
 /* print() MUST run straight inside the tap (Safari ignores it after a timer). */
