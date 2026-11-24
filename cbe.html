@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F4530">
+<title>CBE · Pemeriksaan Payudara</title>
+<link rel="icon" type="image/png" href="./siaga-192.png">
+<style>
+  :root{ --bg:#EEF3F1; --card:#fff; --ink:#16231F; --mut:#5E7069; --line:#D6E0DB; --acc:#1A6B4A; --acc2:#0F4530; --accl:#E3F0EB; --onacc:#0F4530;
+    --dg:#C0392B; --dgl:#FBEAE7; --warn:#B45309; --warnl:#FFF4D6; --ok:#1f9a57; --okl:#E3F4EA; }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#0E1A17; --card:#15251F; --ink:#E7F1ED; --mut:#97ADA5; --line:#27403A; --accl:#17352B; --onacc:#A8EBCB;
+    --dg:#FF9A8D; --dgl:#3a1d19; --warn:#F0B35A; --warnl:#3a2c14; --ok:#6fd49a; --okl:#17352B; } }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; } html,body{ margin:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:Inter,'Segoe UI',system-ui,sans-serif; min-height:100vh; padding-bottom:calc(110px + env(safe-area-inset-bottom)); line-height:1.4; }
+  .top{ position:sticky; top:0; z-index:20; padding:calc(10px + env(safe-area-inset-top)) 14px 12px; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; box-shadow:0 6px 18px -10px rgba(0,0,0,.5); }
+  .top .row{ max-width:760px; margin:0 auto; display:flex; align-items:center; gap:10px; }
+  .back{ width:40px; height:40px; border:none; border-radius:12px; background:rgba(255,255,255,.16); color:#fff; font-size:20px; cursor:pointer; }
+  .ttl{ flex:1; font-weight:800; font-size:17px; line-height:1.15; } .ttl small{ display:block; font-weight:500; font-size:11.5px; opacity:.85; }
+  .prog{ max-width:760px; margin:10px auto 0; height:5px; border-radius:99px; background:rgba(255,255,255,.28); overflow:hidden; } .prog i{ display:block; height:100%; width:0; background:#fff; transition:width .35s; }
+  .wrap{ max-width:760px; margin:0 auto; padding:14px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; margin-bottom:12px; box-shadow:0 8px 22px -16px rgba(0,0,0,.35); }
+  h2{ margin:0 0 4px; font-size:18px; } .sub{ margin:0 0 12px; color:var(--mut); font-size:13px; }
+  label,.lb{ display:block; font-size:12.5px; font-weight:700; margin:12px 0 5px; } label small,.lb small{ font-weight:500; color:var(--mut); } .req{ color:var(--dg); }
+  input[type=text],input[type=tel],input[type=number],input[type=date],select,textarea{ width:100%; border-radius:14px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:600 16px Inter,system-ui,sans-serif; padding:0 14px; height:50px; outline:none; appearance:none; -webkit-appearance:none; }
+  textarea{ height:auto; min-height:84px; padding:12px 14px; resize:vertical; font-weight:500; }
+  input:focus,select:focus,textarea:focus{ border-color:var(--acc); box-shadow:0 0 0 4px rgba(26,107,74,.16); }
+  .bad{ border-color:var(--dg)!important; box-shadow:0 0 0 4px rgba(192,57,43,.14); animation:shake .3s; } @keyframes shake{ 25%{ transform:translateX(-5px); } 75%{ transform:translateX(5px); } }
+  .mono{ font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace; letter-spacing:.1em; } .hint{ font-size:12px; color:var(--mut); margin-top:5px; min-height:16px; } .hint.err{ color:var(--dg); font-weight:700; }
+  .g2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; } .g3{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .srch{ display:flex; gap:8px; } .srch input{ flex:1; min-width:0; height:54px; font-size:17px; }
+  .btn{ min-width:92px; height:54px; border-radius:14px; border:none; background:linear-gradient(135deg,var(--acc2),var(--acc)); color:#fff; font:800 15px Inter,sans-serif; cursor:pointer; padding:0 14px; } .btn:disabled{ opacity:.55; }
+  .btn2{ height:46px; border-radius:13px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); font:800 13.5px Inter,sans-serif; padding:0 14px; cursor:pointer; }
+  .link{ background:none; border:none; color:var(--onacc); font-weight:800; font-size:13px; padding:8px 0; cursor:pointer; text-decoration:underline; }
+  .seg{ display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:8px; } .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .opt{ position:relative; } .opt input{ position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer; margin:0; }
+  .opt span{ display:flex; align-items:center; justify-content:center; text-align:center; min-height:48px; padding:6px 12px; border-radius:14px; border:1.5px solid var(--line); background:var(--card); font-weight:700; font-size:14px; transition:all .15s; }
+  .opt input:checked + span{ border-color:var(--acc); background:var(--accl); color:var(--onacc); box-shadow:0 0 0 3px rgba(26,107,74,.14); }
+  .opt.yes input:checked + span{ border-color:var(--dg); background:var(--dgl); color:var(--dg); } .opt.sm span{ min-height:42px; padding:4px 10px; font-size:13.5px; }
+  .opt input:focus-visible + span{ outline:3px solid var(--acc); outline-offset:2px; }
+  .pt{ border:1.5px solid var(--line); border-radius:16px; padding:12px 14px; display:flex; gap:12px; align-items:center; margin-top:10px; background:var(--card); }
+  .pt .mid{ flex:1; min-width:0; } .pt b{ display:block; font-size:15px; word-break:break-word; } .pt small{ color:var(--mut); font-size:12.5px; }
+  .pill{ display:inline-block; padding:3px 10px; border-radius:99px; font-size:11.5px; font-weight:800; } .pill.l0{ background:var(--okl); color:var(--ok); } .pill.l2{ background:var(--dgl); color:var(--dg); } .pill.l1{ background:var(--warnl); color:var(--warn); } .pill.na{ background:var(--accl); color:var(--mut); }
+  .dots{ display:flex; gap:4px; margin-top:6px; } .dots i{ width:10px; height:10px; border-radius:50%; background:var(--line); } .dots i.l0{ background:var(--ok); } .dots i.l2{ background:var(--dg); } .dots i.na{ background:var(--mut); opacity:.5; }
+  .empty{ text-align:center; color:var(--mut); padding:22px 10px; font-size:14px; }
+  .dom{ scroll-margin-top:90px; } .dom .hd{ display:flex; align-items:center; gap:10px; margin-bottom:6px; } .dom .hd .ic{ font-size:24px; } .dom .hd b{ flex:1; font-size:16px; }
+  .qtxt{ font-size:14px; margin:10px 0 6px; font-weight:600; } .qtxt small{ color:var(--mut); font-weight:500; display:block; }
+  .sug{ margin-top:12px; padding:10px 12px; border-radius:14px; background:var(--bg); font-size:13px; } .sug b{ display:block; margin-bottom:2px; } .sug ul{ margin:4px 0 0; padding-left:18px; } .sug .nt{ color:var(--mut); }
+  .sug.l0{ background:var(--okl); } .sug.l2{ background:var(--dgl); }
+  .conf{ margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px; } .conf.three{ grid-template-columns:1fr 1fr 1fr; }
+  .conf button{ min-height:48px; border-radius:14px; border:2px dashed var(--line); background:var(--card); color:var(--ink); font:800 13.5px Inter,sans-serif; cursor:pointer; padding:6px 8px; }
+  .conf button.sg{ border-color:var(--acc); } .conf button.on{ border-style:solid; color:#fff; } .conf button.on.l0{ background:var(--ok); border-color:var(--ok); color:#06210f; } .conf button.on.l2{ background:var(--dg); border-color:var(--dg); color:#2a0500; } .conf button.on.na{ background:var(--mut); border-color:var(--mut); color:#111; }
+  .cfd{ font-size:12px; color:var(--mut); margin-top:6px; }
+  .bar{ position:fixed; left:0; right:0; bottom:0; z-index:25; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,transparent,var(--bg) 30%); }
+  .bar .in{ max-width:760px; margin:0 auto; display:flex; gap:10px; align-items:center; position:relative; } .bar .btn{ flex:1; height:56px; font-size:16px; } .status{ position:absolute; left:0; right:0; top:-26px; text-align:center; font-weight:700; font-size:13px; color:var(--dg); }
+  .ovr{ padding:14px; border-radius:16px; font-weight:800; font-size:16px; text-align:center; margin:4px 0 6px; } .ovr.l0{ background:var(--okl); color:var(--ok); } .ovr.l2{ background:var(--dgl); color:var(--dg); } .ovr.na{ background:var(--bg); color:var(--mut); }
+  .toast{ position:fixed; left:50%; bottom:100px; transform:translate(-50%,20px); background:var(--ink); color:var(--bg); padding:12px 18px; border-radius:99px; font-weight:700; font-size:14px; opacity:0; pointer-events:none; transition:all .25s; z-index:50; max-width:90vw; } .toast.on{ opacity:1; transform:translate(-50%,0); }
+  .view{ display:none; } .view.on{ display:block; } [hidden]{ display:none!important; }
+  .spin{ width:22px; height:22px; border:3px solid var(--line); border-top-color:var(--acc); border-radius:50%; animation:sp .8s linear infinite; margin:0 auto 8px; } @keyframes sp{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } }
+  .fr{ padding:12px 0; border-top:1px dashed var(--line); } .fr:first-of-type{ border-top:none; } .fr .qtxt{ margin-top:0; } .fr input[type=text]{ height:42px; font-size:14px; margin-top:8px; font-weight:500; }
+  .fr .lb{ margin:6px 0 4px; text-align:center; } .opt.no input:checked + span{ border-color:var(--ok); background:var(--okl); color:var(--ok); }
+  .hr{ display:flex; gap:12px; align-items:flex-start; padding:11px 0; border-top:1px dashed var(--line); } .hr:first-of-type{ border-top:none; } .hr .qtxt{ flex:1; margin:0; } .hr .seg{ width:150px; flex:none; }
+  .risk{ margin-top:10px; padding:10px 12px; border-radius:14px; background:var(--warnl); color:var(--warn); font-size:13px; font-weight:700; }
+</style>
+<script src="./version.js"></script>
+<script src="./version-ui.js"></script>
+</head>
+<body>
+<div class="top"><div class="row"><button class="back" id="backBtn" onclick="goBack()" aria-label="Kembali">←</button>
+  <div class="ttl">CBE · Pemeriksaan Klinikal Payudara<small id="sub">Klinik Kesihatan Ayer Hitam</small></div></div>
+  <div class="prog" id="progW" hidden><i id="prog"></i></div></div>
+
+<div class="wrap">
+<section class="view on" id="vHome">
+  <div class="card"><h2>Cari pesakit</h2><p class="sub">Taip <b>IC</b>, no. giliran atau nama (min. 3 aksara). Pesakit yang didaftarkan <b>hari ini</b> di PRIMA dipaparkan.</p>
+    <form class="srch" id="sf" autocomplete="off"><input type="text" id="q" inputmode="search" enterkeyhint="search" maxlength="40" placeholder="cth. 850102025533" aria-label="Carian pesakit"><button class="btn" id="go" type="submit">Cari</button></form>
+    <div id="res"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="btn2" onclick="manualFromQuery()">✍ Tiada dalam senarai — isi manual</button><button class="btn2" onclick="scanFirst()">📷 Imbas MyKad</button></div></div>
+  <div class="card"><h2>Pemeriksaan yang telah dibuat</h2><div class="g2" style="margin:8px 0"><input type="date" id="ld" aria-label="Tarikh"><input type="text" id="lq" placeholder="Cari nama / IC" aria-label="Tapis senarai"></div><div id="list"><div class="empty"><div class="spin"></div>Memuatkan…</div></div></div>
+</section>
+
+<section class="view" id="vForm">
+  <div class="card"><h2>Butiran klien</h2><p class="sub" id="infoSub">Isi atau semak maklumat pesakit.</p>
+    <label for="serial">No. siri borang <small>(jika ada pada kertas)</small></label><input type="text" id="serial" maxlength="20" inputmode="numeric">
+    <label for="name">Nama <span class="req">*</span></label><input type="text" id="name" autocomplete="off" autocapitalize="characters" placeholder="NAMA SEPERTI DALAM IC">
+    <div id="icBox"><label for="ic">No. kad pengenalan <span class="req">*</span> <small>12 digit, tanpa “-”</small></label><input type="text" id="ic" class="mono" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="000000000000"><div class="hint" id="icHint"></div>
+      <button type="button" class="link" onclick="setPass(true)">Pemegang pasport (tiada IC Malaysia)</button></div>
+    <div id="passBox" hidden><label for="passport">No. pasport <span class="req">*</span></label><input type="text" id="passport" maxlength="20" autocapitalize="characters">
+      <label for="dob">Tarikh lahir</label><input type="date" id="dob"><button type="button" class="link" onclick="setPass(false)">← Guna No. IC Malaysia</button></div>
+    <div class="g2"><div><label for="eth">Etnik</label><select id="eth"><option value="">— pilih —</option><option>Melayu</option><option>Cina</option><option>India</option><option>Bumiputera Sabah</option><option>Bumiputera Sarawak</option><option>Orang Asli</option><option>Lain-lain</option></select></div>
+      <div><label for="cit">Warganegara</label><select id="cit"><option>Warganegara</option><option>Bukan warganegara</option></select></div></div>
+    <div class="g2"><div><label for="age">Umur</label><input type="number" id="age" inputmode="numeric" min="0" max="130"></div><div><label for="phone">No. telefon</label><input type="tel" id="phone" class="mono" inputmode="numeric" maxlength="11" value="01" autocomplete="off"></div></div>
+    <label for="addr">Alamat <small>(tidak wajib)</small></label><textarea id="addr" maxlength="200" rows="2"></textarea>
+    <div class="lb">Kes <span class="req">*</span></div><div class="seg"><label class="opt"><input type="radio" name="case" value="B"><span>Baru</span></label><label class="opt"><input type="radio" name="case" value="U"><span>Ulangan</span></label></div>
+  </div>
+  <div class="card" id="cHist"><h2>Butiran klinikal</h2><p class="sub">Sejarah & faktor risiko.</p><div id="hist"></div><div class="risk" id="risk" hidden></div></div>
+  <div class="card" id="cFind"><h2>Hasil pemeriksaan klinikal payudara</h2><p class="sub">Penemuan bagi payudara kanan dan kiri.</p><div id="finds"></div><button type="button" class="link" id="allNo">Semua tiada penemuan</button></div>
+  <div class="card" id="cInt"><h2>Interpretasi klinikal</h2>
+    <div class="sug" id="sg"></div><div class="conf" id="cf"><button type="button" data-c="NORMAL" class="l0">Sahkan: Normal</button><button type="button" data-c="ABNORMAL" class="l2">Sahkan: Abnormal</button></div><div class="cfd" id="cd"></div>
+    <label for="ref">Rujukan <small>(tidak wajib)</small></label><textarea id="ref" maxlength="800" rows="2"></textarea>
+    <label for="notes">Catatan <small>(tidak wajib)</small></label><textarea id="notes" maxlength="1500" rows="3"></textarea>
+    <label for="post">Jawatan / cop pemeriksa <small>(tidak wajib)</small></label><input type="text" id="post" maxlength="60" placeholder="cth. PPP / JM">
+    <div class="cfd" id="meta"></div></div>
+</section>
+</div>
+
+<div class="bar" id="bar" hidden><div class="in"><div class="status" id="status" role="status" aria-live="polite"></div>
+  <button class="btn2" id="prn" onclick="printRec()" style="height:56px" hidden>🖨</button><button class="btn" id="save" onclick="save()">Simpan pemeriksaan</button></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="./ic-scan.js?v=3"></script>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
+const token = sessionStorage.getItem('kkah_session_token');
+const $ = id => document.getElementById(id);
+const VIA_QR = sessionStorage.getItem('kkah_via') === 'qr', DESKTOP = !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+function toLogin(){ location.replace((VIA_QR || DESKTOP) ? './qr-login.html?next=cbe.html' : './login.html'); }
+if (!token) toLogin();
+const HIST = [['ph','Sejarah peribadi kanser payudara','Personal history of breast cancer'],['brca','Mutasi BRCA yang telah dikenal pasti','Identified BRCA mutation'],['rad','Sejarah radiasi pada usia muda','History of radiation at an early age'],
+  ['rel','Saudara peringkat pertama pembawa BRCA yang belum diuji','First-degree relatives of BRCA carrier not tested'],['f1','Sejarah keluarga peringkat pertama (ibu, ayah, adik-beradik, anak) kanser ovari atau payudara','First-degree relatives history of ovarian / breast cancer'],
+  ['f2','Sejarah keluarga peringkat kedua (datuk, nenek, ibu/bapa saudara, anak saudara) kanser ovari atau payudara','Second-degree relatives history of ovarian / breast cancer']];
+const FIND = [['lump','Benjolan di payudara','Lump in breast'],['disc','Discaj dari puting','Nipple discharge'],['retr','Puting tertarik ke dalam','Nipple retraction'],['pain','Rasa tidak selesa / sakit bila disentuh / rasa sakit','Discomfort / tenderness / pain'],['node','Bengkak di nodus ketiak','Axillary nodes swelling'],['skin','Perubahan kulit','Skin changes']];
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove('on'), 3200); }
+function api(body, ms){ const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms || 30000);
+  return fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)), signal: ctl.signal }).then(r => r.json()).finally(() => clearTimeout(t)); }
+function expired(r){ return r && /expired|tidak tersedia pada log masuk/i.test(r.error || ''); }
+function fmtIc(s){ const d = String(s || '').replace(/\D/g, ''); return d.length === 12 ? d.slice(0, 6) + '-' + d.slice(6, 8) + '-' + d.slice(8) : (s || ''); }
+const today = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+let A = { h:{}, f:{}, n:{} }, R = '', S = { r:'', why:[] }, REC = null, view = 'home', passMode = false, source = 'MANUAL', patients = [], listRows = [], saving = false, dirty = false;
+
+function show(v){ view = v; $('vHome').classList.toggle('on', v === 'home'); $('vForm').classList.toggle('on', v === 'form'); $('bar').hidden = v !== 'form'; $('progW').hidden = v !== 'form';
+  $('sub').textContent = v === 'form' ? (REC ? 'Kemas kini pemeriksaan' : 'Pemeriksaan baharu') : 'Klinik Kesihatan Ayer Hitam'; window.scrollTo({ top:0 }); }
+function goBack(){ if (view === 'form'){ if (dirty && !confirm('Keluar tanpa menyimpan?')) return; show('home'); loadList(); return; } if (VIA_QR) return logoutQr(); location.href = './dashboard.html'; }
+async function logoutQr(){ if (!confirm('Log keluar laptop ini?')) return; try { await api({ action:'qrLogout' }, 8000); } catch(e){} try { sessionStorage.clear(); } catch(e){} location.replace('./qr-login.html?next=cbe.html'); }
+setInterval(() => { if (VIA_QR && !document.hidden) api({ action:'qrPing' }, 8000).catch(() => {}); }, 240000);
+
+/* ---------- home ---------- */
+$('sf').addEventListener('submit', async e => {
+  e.preventDefault(); const q = $('q').value.trim(); if (q.length < 3){ toast('Masukkan sekurang-kurangnya 3 aksara'); return; }
+  $('go').disabled = true; $('res').innerHTML = '<div class="empty"><div class="spin"></div>Mencari…</div>';
+  let r; try { r = await api({ action:'cbeFind', q }, 30000); } catch(x){ r = { ok:false, error:'Sambungan gagal. Cuba lagi.' }; }
+  $('go').disabled = false; if (expired(r)) return toLogin();
+  if (!r.ok){ $('res').innerHTML = '<div class="empty">' + esc(r.error || 'Carian gagal') + '</div>'; return; }
+  patients = r.rows || [];
+  $('res').innerHTML = patients.length ? patients.map((p, i) => '<div class="pt"><div class="mid"><b>' + esc(p.nama) + '</b><small>' + esc(p.ic ? fmtIc(p.ic) : (p.passport || '')) + (p.queueNum ? ' · No. ' + esc(p.queueNum) : '') + '</small></div><button class="btn" style="height:46px;min-width:80px" data-i="' + i + '">Pilih ›</button></div>').join('')
+    : '<div class="empty">Tiada pesakit sepadan hari ini.<br>Semak ejaan, atau isi secara manual.</div>';
+});
+$('res').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) newForm(patients[+b.dataset.i]); });
+function manualFromQuery(){ const q = $('q').value.trim(), digits = q.replace(/\D/g, ''); newForm(null); if (!q) return;
+  if (digits.length >= 5 && digits.length <= 12){ $('ic').value = digits; $('ic').dispatchEvent(new Event('input')); setTimeout(() => $('name').focus(), 100); }
+  else if (/[A-Za-z]/.test(q)){ $('name').value = q; $('name').dispatchEvent(new Event('input')); setTimeout(() => $('name').focus(), 100); } dirty = false; }
+async function scanFirst(){ newForm(null); await scanIc(); }
+$('ld').value = today(); $('ld').addEventListener('change', loadList); $('lq').addEventListener('input', drawList);
+async function loadList(){
+  $('list').innerHTML = '<div class="empty"><div class="spin"></div>Memuatkan…</div>';
+  let r; try { r = await api({ action:'cbeList', date: $('ld').value || today() }, 30000); } catch(x){ r = { ok:false, error:'Sambungan gagal.' }; }
+  if (expired(r)) return toLogin(); if (!r.ok){ $('list').innerHTML = '<div class="empty">' + esc(r.error || 'Gagal memuatkan') + '</div>'; return; }
+  listRows = r.rows || []; drawList();
+}
+function drawList(){
+  const q = $('lq').value.trim().toLowerCase().replace(/[-\s]/g, ''), rows = listRows.filter(x => !q || (x.name + x.ic + x.passport).toLowerCase().replace(/[-\s]/g, '').indexOf(q) !== -1), ab = listRows.filter(x => x.interp === 'ABNORMAL').length;
+  $('list').innerHTML = (listRows.length ? '<div class="sub">' + listRows.length + ' pemeriksaan · <b>' + ab + '</b> abnormal</div>' : '') +
+    (rows.length ? rows.map(x => '<div class="pt" role="button" tabindex="0" data-o="' + esc(x.id) + '" style="cursor:pointer"><div class="mid"><b>' + esc(x.name) + '</b><small>' + esc(x.age) + ' th · ' + esc(x.ic ? fmtIc(x.ic) : x.passport) + ' · ' + esc(x.caseType) + ' · ' + esc(x.time) + ' · ' + esc(x.by) + '</small></div><span class="pill ' + (x.interp === 'ABNORMAL' ? 'l2' : 'l0') + '">' + (x.interp === 'ABNORMAL' ? 'Abnormal' : 'Normal') + '</span></div>').join('')
+      : '<div class="empty">' + (listRows.length ? 'Tiada padanan.' : 'Belum ada pemeriksaan pada tarikh ini.') + '</div>');
+}
+$('list').addEventListener('click', e => { const b = e.target.closest('[data-o]'); if (b) openRec(b.dataset.o); });
+$('list').addEventListener('keydown', e => { if (e.key === 'Enter'){ const b = e.target.closest('[data-o]'); if (b) openRec(b.dataset.o); } });
+async function openRec(id){ toast('Membuka…'); let r; try { r = await api({ action:'cbeGet', id }, 30000); } catch(x){ r = { ok:false, error:'Sambungan gagal.' }; }
+  if (expired(r)) return toLogin(); if (!r.ok) return toast(r.error || 'Gagal membuka'); REC = r.rec; loadRec(r.rec); }
+
+/* ---------- patient fields ---------- */
+function parseIc(ic){ if (!/^\d{12}$/.test(ic)) return null; const yy = +ic.slice(0,2), mm = +ic.slice(2,4), dd = +ic.slice(4,6), now = new Date(); let yr = 2000 + yy; if (new Date(yr, mm-1, dd) > now) yr = 1900 + yy;
+  const dt = new Date(yr, mm-1, dd); if (dt.getMonth() !== mm-1 || dt.getDate() !== dd) return null; let age = now.getFullYear() - yr; if (now < new Date(now.getFullYear(), mm-1, dd)) age--; return { yob: yr, age: Math.max(0, age), gender: (+ic.slice(-1)) % 2 ? 'Lelaki' : 'Perempuan' }; }
+$('name').addEventListener('input', e => { const p = e.target.selectionStart; e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9 '\/.@\-]/g, ''); try { e.target.setSelectionRange(p, p); } catch(x){} dirty = true; });
+$('ic').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 12); dirty = true; const v = e.target.value, h = $('icHint'); h.className = 'hint';
+  if (v.length < 12){ h.textContent = v.length ? v.length + ' / 12 digit' : ''; return; } const p = parseIc(v);
+  if (!p){ h.textContent = 'No. IC tidak sah — semak tarikh lahir.'; h.className = 'hint err'; return; }
+  h.innerHTML = 'Lahir ' + p.yob + ' · ' + p.age + ' tahun' + (p.gender === 'Lelaki' ? ' · <span style="color:var(--warn)">pesakit lelaki — sahkan</span>' : ''); $('age').value = p.age; });
+$('passport').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); dirty = true; });
+function setPass(on){ passMode = on; $('icBox').hidden = on; $('passBox').hidden = !on; $('icHint').textContent = ''; if (on) $('cit').value = 'Bukan warganegara'; setTimeout(() => (on ? $('passport') : $('ic')).focus(), 50); }
+const ph = $('phone'); ph.addEventListener('input', () => { let d = ph.value.replace(/\D/g, ''); if (!d.startsWith('01')) d = '01' + d.replace(/^0+/, '').replace(/^1/, ''); ph.value = d.slice(0, 11); dirty = true; });
+ph.addEventListener('keydown', e => { if (e.key === 'Backspace' && ph.value.length <= 2) e.preventDefault(); });
+['serial', 'addr', 'age', 'ref', 'notes', 'post', 'eth', 'cit', 'dob'].forEach(id => $(id).addEventListener('input', () => { dirty = true; }));
+document.querySelectorAll('input[name=case]').forEach(r => r.addEventListener('change', () => { dirty = true; }));
+async function scanIc(){
+  if (!window.SiagaIcScan){ toast('Pengimbas tidak tersedia pada peranti ini.'); return; }
+  let r; try { r = await SiagaIcScan.open({}); } catch(e){ toast('Kamera tidak dapat dibuka. Sila taip sendiri.'); return; } if (!r) return;
+  if (passMode) setPass(false); if (r.name){ $('name').value = r.name.toUpperCase(); $('name').dispatchEvent(new Event('input')); } if (r.ic){ $('ic').value = r.ic; $('ic').dispatchEvent(new Event('input')); }
+}
+$('infoSub').insertAdjacentHTML('afterend', '<button class="btn2" type="button" onclick="scanIc()" style="width:100%;margin-bottom:6px">📷 Imbas MyKad (isi nama &amp; IC automatik)</button>');
+
+/* ---------- clinical questions ---------- */
+const yn = (p, a, b) => '<div class="seg" role="radiogroup">' + [['N', a || 'Tidak', 'no'], ['Y', b || 'Ya', 'yes']].map(o => '<label class="opt ' + o[2] + '"><input type="radio" name="' + p + '" data-p="' + p + '" value="' + o[0] + '"><span>' + o[1] + '</span></label>').join('') + '</div>';
+$('hist').innerHTML = HIST.map(h => '<div class="hr"><div class="qtxt">' + h[1] + '<small>' + h[2] + '</small></div>' + yn('h.' + h[0], 'Tidak', 'Ya') + '</div>').join('');
+$('finds').innerHTML = FIND.map(f => '<div class="fr"><div class="qtxt">' + f[1] + '<small>' + f[2] + '</small></div><div class="g2"><div><div class="lb">Kanan / Right</div>' + yn('f.' + f[0] + '.R', 'Tiada', 'Ada') + '</div><div><div class="lb">Kiri / Left</div>' + yn('f.' + f[0] + '.L', 'Tiada', 'Ada') + '</div></div><input type="text" data-p="n.' + f[0] + '" maxlength="120" placeholder="Catatan (jika ada)" aria-label="Catatan ' + esc(f[1]) + '"></div>').join('');
+function getP(p){ return p.split('.').reduce((o, k) => (o == null ? undefined : o[k]), A); }
+function setP(p, v){ const a = p.split('.'); let o = A; a.slice(0, -1).forEach(k => { o = o[k] = o[k] || {}; }); o[a[a.length - 1]] = v; }
+function paintInputs(){ document.querySelectorAll('#vForm [data-p]').forEach(el => { const v = getP(el.dataset.p); if (el.type === 'radio') el.checked = v !== undefined && String(v) === el.value; else el.value = v == null ? '' : v; }); }
+$('vForm').addEventListener('input', e => { const el = e.target; if (!el.dataset.p) return; setP(el.dataset.p, el.value); dirty = true; if (el.type === 'radio') refresh(true); });
+$('allNo').addEventListener('click', () => { FIND.forEach(f => { setP('f.' + f[0] + '.R', 'N'); setP('f.' + f[0] + '.L', 'N'); }); paintInputs(); dirty = true; refresh(true); });
+
+/* ---------- suggestion + confirmation ---------- */
+function suggest(){
+  const bad = [], miss = []; FIND.forEach(f => ['R', 'L'].forEach(s => { const v = getP('f.' + f[0] + '.' + s); if (v === 'Y') bad.push(f[1] + ' (' + (s === 'R' ? 'kanan' : 'kiri') + ')'); else if (v !== 'N') miss.push(1); }));
+  if (bad.length) return { r:'ABNORMAL', why:bad };
+  return miss.length ? { r:'', why:['Isi semua penemuan kanan & kiri untuk mendapatkan cadangan'] } : { r:'NORMAL', why:['Tiada penemuan abnormal pada kedua-dua payudara'] };
+}
+function refresh(changed){
+  S = suggest(); if (changed && R && S.r && S.r !== R) R = '';
+  const box = $('sg'); box.className = 'sug ' + (S.r === 'NORMAL' ? 'l0' : S.r === 'ABNORMAL' ? 'l2' : '');
+  box.innerHTML = S.r ? '<b>Cadangan sistem: ' + (S.r === 'NORMAL' ? '✓ Normal' : '⚠ Abnormal') + '</b>' + (S.r === 'ABNORMAL' ? '<ul>' + S.why.map(w => '<li>' + esc(w) + '</li>').join('') + '</ul>' : '<span class="nt">' + esc(S.why[0]) + '</span>') : '<span class="nt">' + esc(S.why[0]) + '</span>';
+  $('cf').querySelectorAll('button').forEach(b => { b.classList.toggle('on', R === b.dataset.c); b.classList.toggle('sg', S.r === b.dataset.c && R !== b.dataset.c); });
+  $('cd').textContent = R ? (S.r && R !== S.r ? 'Keputusan staf berbeza daripada cadangan sistem.' : 'Disahkan oleh staf.') : '';
+  const yes = HIST.filter(h => getP('h.' + h[0]) === 'Y'); $('risk').hidden = !yes.length; $('risk').textContent = yes.length ? '⚠ Faktor risiko: ' + yes.map(h => h[1].split(' (')[0]).join('; ') : '';
+  const need = 1 + 6 + 12 + 1, done = (document.querySelector('input[name=case]:checked') ? 1 : 0) + HIST.filter(h => getP('h.' + h[0])).length + FIND.reduce((n, f) => n + (getP('f.' + f[0] + '.R') ? 1 : 0) + (getP('f.' + f[0] + '.L') ? 1 : 0), 0) + (R ? 1 : 0);
+  $('prog').style.width = Math.round(done / need * 100) + '%';
+}
+$('cf').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b){ R = b.dataset.c; dirty = true; refresh(); } });
+document.querySelectorAll('input[name=case]').forEach(r => r.addEventListener('change', () => refresh()));
+
+/* ---------- open / new ---------- */
+function setCase(v){ document.querySelectorAll('input[name=case]').forEach(r => r.checked = r.value === v); }
+function resetForm(){
+  A = { h:{}, f:{}, n:{} }; R = ''; passMode = false; dirty = false; $('icBox').hidden = false; $('passBox').hidden = true;
+  ['serial', 'name', 'ic', 'passport', 'dob', 'age', 'addr', 'ref', 'notes', 'eth'].forEach(id => $(id).value = ''); $('phone').value = '01'; $('cit').value = 'Warganegara'; $('icHint').textContent = ''; setCase(''); $('meta').textContent = ''; $('prn').hidden = true;
+  try { $('post').value = localStorage.getItem('cbe_post') || ''; } catch(e){ $('post').value = ''; }
+}
+function newForm(p){
+  REC = null; resetForm(); source = 'MANUAL';
+  if (p){ source = 'PRIMA'; $('name').value = String(p.nama || '').toUpperCase(); if (p.ic){ $('ic').value = String(p.ic).replace(/\D/g, '').slice(0, 12); $('ic').dispatchEvent(new Event('input')); } else if (p.passport){ setPass(true); $('passport').value = String(p.passport).toUpperCase(); }
+    const t = String(p.phone || '').replace(/\D/g, ''); if (/^01\d{8,9}$/.test(t)) $('phone').value = t; $('name').dispatchEvent(new Event('input')); }
+  paintInputs(); refresh(); dirty = false; show('form'); if (!p) setTimeout(() => $('name').focus(), 100);
+}
+function loadRec(r){
+  resetForm(); source = r.source || 'MANUAL'; $('serial').value = r.serial || ''; $('name').value = r.name || '';
+  if (r.passport && !r.ic){ setPass(true); $('passport').value = r.passport; $('dob').value = r.dob || ''; } else { $('ic').value = r.ic || ''; }
+  $('phone').value = r.phone || '01'; $('age').value = r.age || ''; $('addr').value = r.address || ''; $('eth').value = r.ethnicity || ''; $('cit').value = r.citizenship || 'Warganegara'; setCase(r.caseType === 'Ulangan' ? 'U' : r.caseType === 'Baru' ? 'B' : '');
+  $('ref').value = r.referral || ''; $('notes').value = r.notes || ''; $('post').value = r.post || '';
+  A = { h:Object.assign({}, r.h), f:JSON.parse(JSON.stringify(r.f || {})), n:Object.assign({}, r.n) }; paintInputs(); refresh(); R = r.interp || ''; refresh();
+  $('meta').textContent = 'Tarikh ' + r.date + ' · diperiksa oleh ' + r.by + (r.updatedBy && r.updatedBy !== r.by ? ' · dikemas kini oleh ' + r.updatedBy : '');
+  $('prn').hidden = false; dirty = false; show('form');
+}
+
+/* ---------- save ---------- */
+function flash(m){ const s = $('status'); s.textContent = m || ''; if (m) setTimeout(() => { if (s.textContent === m) s.textContent = ''; }, 4500); }
+function bad(el, m){ el.classList.add('bad'); setTimeout(() => el.classList.remove('bad'), 1500); flash(m); try { el.focus({ preventScroll:true }); } catch(x){} el.scrollIntoView({ block:'center', behavior:'smooth' }); return false; }
+function collect(forceNew){
+  return { id: REC ? REC.id : '', serial: $('serial').value.trim(), name: $('name').value.trim(), passportMode: passMode, ic: $('ic').value, passport: $('passport').value, dob: $('dob').value, phone: $('phone').value, age: $('age').value,
+    ethnicity: $('eth').value, citizenship: $('cit').value, address: $('addr').value.trim(), caseType: (document.querySelector('input[name=case]:checked') || {}).value || '', source,
+    h: A.h, f: A.f, n: A.n, interp: R, referral: $('ref').value.trim(), notes: $('notes').value.trim(), post: $('post').value.trim(), forceNew: !!forceNew };
+}
+function validate(){
+  if ($('name').value.trim().length < 3) return bad($('name'), 'Sila isi nama pesakit.');
+  if (passMode){ if ($('passport').value.length < 5) return bad($('passport'), 'Sila isi no. pasport.'); } else if (!parseIc($('ic').value)) return bad($('ic'), 'No. IC mesti 12 digit yang sah.');
+  const p = $('phone').value; if (p.length > 2 && !/^01\d{8,9}$/.test(p)) return bad($('phone'), 'No. telefon tidak sah (10–11 digit).');
+  if (!document.querySelector('input[name=case]:checked')){ flash('Pilih jenis kes (Baru / Ulangan).'); document.querySelector('input[name=case]').closest('.seg').scrollIntoView({ block:'center', behavior:'smooth' }); return false; }
+  const mh = HIST.filter(h => !getP('h.' + h[0])); if (mh.length){ $('cHist').scrollIntoView({ block:'start', behavior:'smooth' }); flash('Jawab semua soalan butiran klinikal (' + mh.length + ' belum).'); return false; }
+  const mf = FIND.filter(f => !getP('f.' + f[0] + '.R') || !getP('f.' + f[0] + '.L')); if (mf.length){ $('cFind').scrollIntoView({ block:'start', behavior:'smooth' }); flash('Isi penemuan kanan & kiri: ' + mf[0][1] + (mf.length > 1 ? ' +' + (mf.length - 1) : '')); return false; }
+  if (!R){ $('cInt').scrollIntoView({ block:'start', behavior:'smooth' }); flash('Sahkan interpretasi klinikal (Normal / Abnormal).'); return false; }
+  return true;
+}
+async function save(forceNew){
+  if (saving || !validate()) return; saving = true; const b = $('save'); b.disabled = true; b.textContent = 'Menyimpan…';
+  let r; try { r = await api({ action:'cbeSave', rec: collect(forceNew === true) }, 30000); } catch(x){ r = { ok:false, error:'Ralat sambungan. Data anda masih ada — cuba lagi.' }; }
+  saving = false; b.disabled = false; b.textContent = 'Simpan pemeriksaan'; if (expired(r)) return toLogin();
+  if (r.ok){ dirty = false; try { localStorage.setItem('cbe_post', $('post').value.trim()); } catch(e){} toast((r.updated ? '✓ Dikemas kini · ' : '✓ Disimpan · ') + (r.interp === 'ABNORMAL' ? 'Abnormal' : 'Normal')); if (navigator.vibrate) navigator.vibrate(60);
+    REC = REC || { id: r.id }; show('home'); loadList(); return; }
+  if (r.code === 'dup'){ if (confirm('Pesakit ini sudah diperiksa hari ini.\n\nOK = buka rekod yang sedia ada\nBatal = simpan sebagai pemeriksaan baharu')) { dirty = false; openRec(r.id); } else save(true); return; }
+  flash(r.error || 'Gagal menyimpan.'); if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+}
+
+/* ---------- print ---------- */
+function printRec(){
+  const c = collect(), w = window.open('', '_blank'); if (!w){ toast('Benarkan pop-up untuk mencetak.'); return; }
+  const t = v => v === 'Y' ? 'Ya' : v === 'N' ? 'Tidak' : '—', s = v => v === 'Y' ? '<b>Ada</b>' : v === 'N' ? 'Tiada' : '—';
+  w.document.write('<!doctype html><meta charset="utf-8"><title>CBE</title><style>body{font:13px/1.5 system-ui,sans-serif;max-width:760px;margin:20px auto;padding:0 14px;color:#111}h1{font-size:17px;margin:0}table{border-collapse:collapse;width:100%;margin:6px 0}td,th{border-bottom:1px solid #ddd;padding:5px 4px;text-align:left;vertical-align:top}.r{font-size:15px;font-weight:800;margin:10px 0}</style>' +
+    '<h1>Borang Pemeriksaan Klinikal Payudara (CBE)</h1><div>Klinik Kesihatan Ayer Hitam · ' + esc((REC && REC.date) || today()) + (c.serial ? ' · No. siri ' + esc(c.serial) : '') + '</div>' +
+    '<p><b>' + esc(c.name) + '</b> · ' + esc(c.passportMode ? c.passport : fmtIc(c.ic)) + ' · ' + esc(c.age) + ' tahun · ' + esc(c.ethnicity) + ' · ' + esc(c.citizenship) + ' · Kes ' + (c.caseType === 'U' ? 'Ulangan' : c.caseType === 'B' ? 'Baru' : '—') + (c.phone.length > 2 ? ' · ' + esc(c.phone) : '') + (c.address ? '<br>' + esc(c.address) : '') + '</p>' +
+    '<table>' + HIST.map(h => '<tr><td>' + h[1] + '</td><td>' + t(getP('h.' + h[0])) + '</td></tr>').join('') + '</table>' +
+    '<table><tr><th>Penemuan</th><th>Kanan</th><th>Kiri</th><th>Catatan</th></tr>' + FIND.map(f => '<tr><td>' + f[1] + '</td><td>' + s(getP('f.' + f[0] + '.R')) + '</td><td>' + s(getP('f.' + f[0] + '.L')) + '</td><td>' + esc(getP('n.' + f[0]) || '') + '</td></tr>').join('') + '</table>' +
+    '<div class="r">Interpretasi klinikal: ' + (R === 'ABNORMAL' ? 'ABNORMAL' : R === 'NORMAL' ? 'NORMAL' : '—') + '</div>' + (c.referral ? '<p><b>Rujukan:</b> ' + esc(c.referral) + '</p>' : '') + (c.notes ? '<p><b>Catatan:</b> ' + esc(c.notes) + '</p>' : '') +
+    '<p style="color:#555">Pemeriksa: ' + esc((REC && (REC.updatedBy || REC.by)) || '') + (c.post ? ' · ' + esc(c.post) : '') + '</p><script>setTimeout(function(){window.print()},300)<\/script>');
+  w.document.close();
+}
+window.addEventListener('beforeunload', e => { if (view === 'form' && dirty){ e.preventDefault(); e.returnValue = ''; } });
+refresh(); loadList();
+</script>
+</body>
+</html>
