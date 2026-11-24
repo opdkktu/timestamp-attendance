@@ -1481,6 +1481,7 @@ async function setupSupervisorAndLog(){
   addModuleCard('Clinical Guideline Library', '📚', './guidelines.html');
   addModuleCard('Log masuk Laptop (QR)', '💻', './qr-approve.html');
   addModuleCard('Cetak Dokumen', '🖨️', './print.html');
+  addModuleCard('Clinical Breast Examination', '🎀', './cbe.html');
   try{
     const res = await fetch(API_URL_DASHBOARD, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'getSupervisorScope', token: sessionStorage.getItem('kkah_session_token') }) });
