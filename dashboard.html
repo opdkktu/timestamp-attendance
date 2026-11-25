@@ -670,6 +670,14 @@
   @keyframes bubbleOff{ 0%{ transform:scale(1); opacity:1 } 30%{ transform:scale(1.05); opacity:1 } 100%{ transform:scale(.4); opacity:0; max-height:0; margin-bottom:0; padding-top:0; padding-bottom:0; border-width:0 } }
   @keyframes bubFly{ 0%{ transform:translateY(0) scale(.4); opacity:.9 } 100%{ transform:translateY(-38px) scale(1.5); opacity:0 } }
   @media (prefers-reduced-motion:reduce){ .blink-wait,.blink-prog,.tr-task.prog,.tr-task.late,.po-card.prog,.po-card.late,.tr-line.blink-wait .n{ animation:none !important } .pop-out{ animation:none !important; display:none } }
+  @keyframes bellShake{
+    0%,60%,100%{ transform:rotate(0) }
+    5%{ transform:rotate(16deg) } 15%{ transform:rotate(-14deg) } 25%{ transform:rotate(12deg) }
+    35%{ transform:rotate(-10deg) } 45%{ transform:rotate(6deg) } 52%{ transform:rotate(-3deg) }
+  }
+  .hbtn.l.unread{ animation:bellShake 2.4s ease-in-out infinite; transform-origin:50% 12%; }
+  .pnav .it.unread svg{ animation:bellShake 2.4s ease-in-out infinite; transform-origin:50% 12%; }
+  @media (prefers-reduced-motion:reduce){ .hbtn.l.unread, .pnav .it.unread svg{ animation:none; } }
 </style>
 <script src="./version.js"></script>
 <script src="./version-ui.js"></script>
@@ -1413,6 +1421,7 @@ async function loadInbox(){
   }
   updateInboxBadge();
 }
+let _lastUnread = null;
 function updateInboxBadge(){
   const seen = inboxSeen();
   const n = inboxItems.filter(i => i.at > seen).length;
@@ -1421,6 +1430,11 @@ function updateInboxBadge(){
   document.querySelector('.menu-btn').classList.toggle('has-unread', n > 0);
   const txt = n > 99 ? '99+' : String(n);
   ['heroBadge','navBadge'].forEach(id => { const e = document.getElementById(id); if(e){ e.style.display = n ? 'inline-flex' : 'none'; e.textContent = txt; } });
+  document.querySelector('.hbtn.l').classList.toggle('unread', n > 0);
+  const nb = document.getElementById('navBadge'); if(nb && nb.parentElement) nb.parentElement.classList.toggle('unread', n > 0);
+  // vibrate only when the unread count goes UP (not on first page load)
+  if(_lastUnread !== null && n > _lastUnread && document.visibilityState === 'visible' && navigator.vibrate){ try{ navigator.vibrate([200, 100, 200]); }catch(e){} }
+  _lastUnread = n;
 }
 function inboxWhen(at){
   const d = new Date(String(at).replace(' ', 'T')), now = new Date();
@@ -3035,6 +3049,7 @@ function initOneSignal(ic){
       try{
         OneSignal.Notifications.addEventListener('foregroundWillDisplay', (ev) => {
           const d = (ev && ev.notification && ev.notification.additionalData) || {};
+           try{ if(navigator.vibrate) navigator.vibrate([200, 100, 200]); }catch(e){} 
           if(d.type === 'emergency' && window.SiagaEmergency) SiagaEmergency.fromPush(d);
           if(d.type === 'Prosedur'){ _poAmo = null; setTimeout(loadProcTasks_, 600); }
         });
