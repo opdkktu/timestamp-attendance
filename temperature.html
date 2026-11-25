@@ -297,12 +297,17 @@ function validate(){
 }
 function bindForm(){
   ['f-max','f-min','f-cur'].forEach(id => $(id).addEventListener('input', validate));
-  $('f-save').onclick = () => {
+    $('f-save').onclick = () => {
     const { v, ok } = validate(); if(!ok) return;
+    const f = fr(S.fridge), slotLabel = S.slot === 'am' ? 'AM (8:00 pagi)' : 'PM (4:00 petang)';
     const row = (k, val, c) => '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span class="sub">' + k + '</span><b style="color:var(--' + c + ')">' + val + '°C</b></div>';
-    $('confBox').innerHTML = '<h3>Sahkan simpan ' + S.slot.toUpperCase() + '?</h3><div class="sub" style="margin-bottom:8px">' + esc(fr(S.fridge).unit) + ' · ' + esc(fr(S.fridge).name) + ' · ' + S.day + '/' + S.m + '/' + S.y + '</div>' +
-      (v.max != null ? row('Maks', v.max, 'red') : '') + (v.min != null ? row('Min', v.min, 'green') : '') + (v.cur != null ? row('Semasa', v.cur, 'blue') : '') + '<div class="msg warn">🔒 Selepas disimpan, rekod <b>tidak boleh diubah</b>.</div>' +
-      '<div class="row2"><button class="btn ghost" data-close>Semak semula</button><button class="btn" id="confGo" type="button">Ya, simpan</button></div>';
+    $('confBox').innerHTML = '<h3>Sahkan penghantaran</h3>' +
+      '<div class="msg warn" style="margin:0 0 10px;font-size:14.5px;line-height:1.6">Anda pasti mahu menghantar bacaan untuk<br>' +
+        '<b style="font-size:16px">' + esc(f.unit) + ' · ' + esc(f.name) + '</b><br>' +
+        '<b style="font-size:16px">Sesi ' + slotLabel + '</b> <span class="sub">(' + S.day + '/' + S.m + '/' + S.y + ')</span> ?</div>' +
+      (v.max != null ? row('Maks', v.max, 'red') : '') + (v.min != null ? row('Min', v.min, 'green') : '') + (v.cur != null ? row('Semasa', v.cur, 'blue') : '') +
+      '<div class="msg err" style="margin-top:10px">🔒 Selepas disimpan, rekod <b>tidak boleh diubah</b>. Semak peti sejuk &amp; sesi dengan betul.</div>' +
+      '<div class="row2"><button class="btn ghost" data-close>Semak semula</button><button class="btn" id="confGo" type="button">Ya, hantar</button></div>';
     $('shConf').classList.add('show'); $('confGo').onclick = doSave;
   };
   validate();
