@@ -341,7 +341,6 @@ window.addEventListener('DOMContentLoaded', () => {
     return;
   }
   checkBiometricAvailable();
-  autoLogin();
     // auto-prompt Face ID / Touch ID once per tab if this phone is already enrolled
   if (localStorage.getItem('kkah_biometric_device_token') && !sessionStorage.getItem('bio_auto_tried')) {
     sessionStorage.setItem('bio_auto_tried', '1');   // only once, so a cancel doesn't loop
@@ -536,6 +535,7 @@ async function handleVerifyCode(){
 
 /** Shared tail end for every successful login path (password-only, 2FA, or biometric). */
 async function finishLogin(data){
+  localStorage.removeItem('kkah_no_auto');
   sessionStorage.setItem('kkah_session_token', data.token);
   sessionStorage.setItem('kkah_role', data.role);
   sessionStorage.setItem('kkah_ic', data.ic);
@@ -692,6 +692,7 @@ async function handleBiometricLogin(){
         localStorage.removeItem('kkah_biometric_credential_id');
       }
     }else{
+      localStorage.removeItem('kkah_no_auto');
       sessionStorage.setItem('kkah_session_token', data.token);
       sessionStorage.setItem('kkah_role', data.role);
       sessionStorage.setItem('kkah_ic', data.ic);
