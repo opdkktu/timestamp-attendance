@@ -341,6 +341,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return;
   }
   checkBiometricAvailable();
+  autoLogin();
     // auto-prompt Face ID / Touch ID once per tab if this phone is already enrolled
   if (localStorage.getItem('kkah_biometric_device_token') && !sessionStorage.getItem('bio_auto_tried')) {
     sessionStorage.setItem('bio_auto_tried', '1');   // only once, so a cancel doesn't loop
@@ -618,7 +619,35 @@ async function handleEnableBiometric(){
   }
   busy(false);
 }
-
+/* Auto login on a trusted phone (one that already has the saved device token) */
+async function autoLogin(){
+  const deviceToken = localStorage.getItem('kkah_biometric_device_token');
+  if(!deviceToken || localStorage.getItem('kkah_no_auto') === '1') return;   // not enrolled, or user logged out on purpose
+  const last = Number(sessionStorage.getItem('kkah_auto_ts') || 0);
+  if(Date.now() - last < 15000) return;                                      // never loop
+  sessionStorage.setItem('kkah_auto_ts', String(Date.now()));
+  showBanner('Log masuk automatik…', 'info');
+  try{
+    const did = (window.SiagaDevice && SiagaDevice.id) ? SiagaDevice.id() : '';
+    const res = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'biometricLogin', deviceToken, device: navigator.userAgent, deviceId: did })
+    });
+    const data = await res.json();
+    if(!data.ok){
+      showBanner(data.error || 'Log masuk automatik gagal. Sila log masuk.', data.code === 'DEVICE_PENDING' ? 'info' : 'error');
+      if(!/^DEVICE_/.test(data.code || '') && /expired|not recognized|not found/i.test(data.error || '')){
+        localStorage.removeItem('kkah_biometric_device_token');
+        localStorage.removeItem('kkah_biometric_credential_id');
+      }
+      return;
+    }
+    sessionStorage.setItem('kkah_session_token', data.token);
+    sessionStorage.setItem('kkah_role', data.role);
+    sessionStorage.setItem('kkah_ic', data.ic);
+    showSuccess(data.token, data.ic, goToDashboard);
+  }catch(e){ showBanner('Tiada sambungan — log masuk secara manual.'); }
+}
 async function handleBiometricLogin(){
   const deviceToken = localStorage.getItem('kkah_biometric_device_token');
   const credentialId = localStorage.getItem('kkah_biometric_credential_id');
