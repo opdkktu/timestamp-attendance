@@ -3275,6 +3275,7 @@ async function handleLogout(){
   sessionStorage.removeItem('kkah_role');
   sessionStorage.removeItem('kkah_ic');
   sessionStorage.removeItem('kkah_login_ts');
+  try{ localStorage.setItem('kkah_no_auto', '1'); }catch(e){}
   window.location.href = './login.html';
 }
 
