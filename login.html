@@ -341,6 +341,11 @@ window.addEventListener('DOMContentLoaded', () => {
     return;
   }
   checkBiometricAvailable();
+    // auto-prompt Face ID / Touch ID once per tab if this phone is already enrolled
+  if (localStorage.getItem('kkah_biometric_device_token') && !sessionStorage.getItem('bio_auto_tried')) {
+    sessionStorage.setItem('bio_auto_tried', '1');   // only once, so a cancel doesn't loop
+    setTimeout(handleBiometricLogin, 400);
+  }
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
