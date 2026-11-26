@@ -38,6 +38,7 @@
     <h1>Log masuk laptop</h1>
     <p class="sub">Guna telefon anda yang sudah log masuk SIAGA. Tiada kata laluan ditaip di laptop ini.</p>
     <div class="pages" id="pages" role="group" aria-label="Halaman"></div>
+    <div class="pages" id="rooms" style="margin-bottom:16px"></div>
     <ol>
       <li>Buka <b>SIAGA</b> pada telefon → <b>Imbas QR Laptop</b></li>
       <li>Halakan kamera ke kod QR di sebelah</li>
@@ -53,23 +54,37 @@
 </main>
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbxOamlCtYPlZCvQOys1VTjkZu7aVqMsdDStTdytPex7eH5jNGuIBiR91BfougaEF3SI/exec';
-const PAGES = { 'prima-room.html':['📣','Panggilan nombor','Kaunter A–C & Bilik 1–5'], 'prima-reg.html':['📝','Pendaftaran','PRIMA'], 'nhsi.html':['🩺','NHSI Saringan','Stesen A, B & C'] , 'bssk-consult':['🧑‍⚕️','BSSK Remaja','Konsultasi MO']};
+const PAGES = { 'room.html':['🚪','Bilik Doktor','Bilik 1–6 · panggil, makmal, ubat, prosedur'],
+  'prima-room.html':['📣','Kaunter A–C','Panggilan nombor'], 'prima-reg.html':['📝','Pendaftaran','PRIMA'],
+  'nhsi.html':['🩺','NHSI Saringan','Stesen A, B & C'], 'bssk-consult':['🧑‍⚕️','BSSK Remaja','Konsultasi MO'] };
+const ROOMS = [['R1','Bilik 1',''],['R2','Bilik 2',''],['R3','Bilik 3',''],['R4','Bilik 4',''],['R5','Bilik 5','PPP'],['R6','Bilik 6','Lawatan / Konsultasi']];
 const EXT = { 'bssk-consult': 'https://script.google.com/a/moh.gov.my/macros/s/AKfycbz8MRx_Y1wqugtLwLwSi8QGDlKys9WrNLaMfk6ywWk8Y45G7SrgdkkJgbfbyXLdHzKKjg/exec?kk=ayerhitam&mode=consultation' };
 const $ = id => document.getElementById(id);
 const q = new URLSearchParams(location.search);
-let page = PAGES[q.get('next')] ? q.get('next') : 'prima-room.html', cur = null, pollT = 0, tickT = 0, busy = false;
+let page = PAGES[q.get('next')] ? q.get('next') : 'room.html';
+let room = /^R[1-6]$/.test(q.get('room')||'') ? q.get('room') : '';   // qr-login.html?room=R3 skips step 1
+let cur = null, pollT = 0, tickT = 0;
 
 function dev(){ const u = navigator.userAgent; const b = /Edg\//.test(u) ? 'Edge' : /Chrome\//.test(u) ? 'Chrome' : /Firefox\//.test(u) ? 'Firefox' : /Safari\//.test(u) ? 'Safari' : 'Pelayar'; const o = /Windows/.test(u) ? 'Windows' : /Mac OS/.test(u) ? 'Mac' : /Linux/.test(u) ? 'Linux' : ''; return (b + ' · ' + o).slice(0, 40); }
 async function post(b){ const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(b) }); return r.json(); }
+
 function drawPages(){
   $('pages').innerHTML = Object.keys(PAGES).map(k => '<button class="pg" data-p="' + k + '" aria-pressed="' + (k === page) + '">' + PAGES[k][0] + ' ' + PAGES[k][1] + '<small>' + PAGES[k][2] + '</small></button>').join('');
+  drawRooms();
+}
+function drawRooms(){
+  $('rooms').innerHTML = page !== 'room.html' ? '' : ROOMS.map(r =>
+    '<button class="pg" data-r="' + r[0] + '" aria-pressed="' + (r[0] === room) + '">' + r[1] + (r[2] ? '<small>' + r[2] + '</small>' : '') + '</button>').join('');
 }
 $('pages').addEventListener('click', e => { const b = e.target.closest('.pg'); if(!b || b.dataset.p === page) return; page = b.dataset.p; drawPages(); start(); });
+$('rooms').addEventListener('click', e => { const b = e.target.closest('.pg'); if(!b) return; room = b.dataset.r; drawRooms(); start(); });
 function overlay(html){ $('qrb').classList.toggle('dim', !!html); $('ov').innerHTML = html || ''; }
 
 async function start(){
-  clearTimeout(pollT); clearInterval(tickT); cur = null; overlay('Menjana kod…'); $('pin').textContent = '····';
-  let d; try{ d = await post({ action:'qrStart', page, dev: dev() }); }catch(e){ d = null; }
+  clearTimeout(pollT); clearInterval(tickT); cur = null; $('pin').textContent = '····';
+  if(page === 'room.html' && !room){ $('qr').innerHTML = ''; overlay('① Pilih bilik dahulu'); return; }
+  overlay('Menjana kod…');
+  let d; try{ d = await post({ action:'qrStart', page, room: page === 'room.html' ? room : '', dev: dev() }); }catch(e){ d = null; }
   if(!d || !d.ok){ overlay((d && d.error) || 'Tiada sambungan.<br><button onclick="start()">Cuba lagi</button>'); return; }
   cur = d; $('qr').innerHTML = ''; new QRCode($('qr'), { text: d.url, width: 232, height: 232, correctLevel: QRCode.CorrectLevel.M });
   $('pin').textContent = d.pin; overlay('');
@@ -78,7 +93,7 @@ async function start(){
   poll();
 }
 async function poll(){
-  if(!cur || document.hidden && false) return;
+  if(!cur) return;
   let d = null; try{ d = await post({ action:'qrPoll', code: cur.code, secret: cur.secret }); }catch(e){}
   if(d && d.ok && d.status === 'DONE'){ return done(d); }
   if(d && d.ok && d.status === 'GONE'){ clearInterval(tickT); overlay(d.denied ? 'Ditolak dari telefon.<br><button onclick="start()">Cuba lagi</button>' : 'Kod tamat tempoh<br><button onclick="start()">Jana QR baharu</button>'); return; }
@@ -86,8 +101,9 @@ async function poll(){
 }
 function done(d){
   clearInterval(tickT);
-  try{ sessionStorage.setItem('kkah_session_token', d.token); sessionStorage.setItem('kkah_ic', d.ic); sessionStorage.setItem('kkah_via', 'qr'); sessionStorage.setItem('kkah_qr_page', page); }catch(e){}
-  $('box').innerHTML = '<div class="ok" style="grid-column:1/-1"><div class="tick">✅</div><h1>Selamat datang, ' + String(d.name || '').split(' ')[0].replace(/[<>&]/g,'') + '</h1><p class="sub">Membuka ' + PAGES[page][1] + '…<br>Sesi laptop tamat selepas ' + d.idleMin + ' minit tidak digunakan.</p></div>';
+  try{ sessionStorage.setItem('kkah_session_token', d.token); sessionStorage.setItem('kkah_ic', d.ic); sessionStorage.setItem('kkah_via', 'qr'); sessionStorage.setItem('kkah_qr_page', page); sessionStorage.setItem('kkah_room', d.room || ''); }catch(e){}
+  const label = PAGES[page][1] + (d.room ? ' · Bilik ' + d.room.slice(1) : '');
+  $('box').innerHTML = '<div class="ok" style="grid-column:1/-1"><div class="tick">✅</div><h1>Selamat datang, ' + String(d.name || '').split(' ')[0].replace(/[<>&]/g,'') + '</h1><p class="sub">Membuka ' + label + '…<br>Sesi laptop tamat selepas ' + d.idleMin + ' minit tidak digunakan.</p></div>';
   setTimeout(() => { location.replace(EXT[page] || ('./' + page)); }, 1300);
 }
 drawPages(); start();
